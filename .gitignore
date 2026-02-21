@@ -143,11 +143,13 @@ vite.config.ts.timestamp-*
 
 # Terraform
 infrastructure/terraform/.terraform
+infrastructure/terraform/**/.terraform
 infrastructure/terraform/*.tfstate
 infrastructure/terraform/*.tfstate.*
 infrastructure/terraform/*.tfvars
 infrastructure/terraform/.terraform.lock.hcl
-!infrastructure/terraform/*.tfvars.example
+infrastructure/terraform/**/.terraform.lock.hcl
+!infrastructure/terraform/environments/*.tfvars
 
 # Prisma
 packages/db/node_modules/.prisma
