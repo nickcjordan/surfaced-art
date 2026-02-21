@@ -22,6 +22,10 @@
     "security:dependabot": "node scripts/security-scan.cjs --dependabot",
     "security:pr-reviews": "node scripts/security-scan.cjs --pr-reviews"
   },
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@typescript-eslint/eslint-plugin": "^8.33.0",
