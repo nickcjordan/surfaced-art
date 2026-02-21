@@ -1,0 +1,429 @@
+// Surfaced Art Database Schema
+// Matches Data Model v1.0
+// All monetary values in cents (integers)
+// All primary keys are UUIDs
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRoleType {
+  buyer
+  artist
+  admin
+  curator
+  moderator
+}
+
+enum ArtistStatusType {
+  pending
+  approved
+  suspended
+}
+
+enum ListingStatusType {
+  available
+  reserved_system
+  reserved_artist
+  sold
+}
+
+enum ListingTypeType {
+  standard
+  commission
+}
+
+enum CategoryType {
+  ceramics
+  painting
+  print
+  jewelry
+  illustration
+  photography
+  woodworking
+  fibers
+  mixed_media
+}
+
+enum CommissionStatusType {
+  proposed
+  accepted
+  in_progress
+  completed
+  cancelled
+}
+
+enum OrderStatusType {
+  pending
+  paid
+  shipped
+  delivered
+  complete
+  disputed
+  refunded
+}
+
+enum CvEntryTypeType {
+  exhibition
+  award
+  education
+  press
+  residency
+  other
+}
+
+enum ProcessMediaTypeType {
+  photo
+  video
+}
+
+// ============================================================================
+// MODELS
+// ============================================================================
+
+/// Base authentication record for every person on the platform
+model User {
+  id                       String    @id @default(uuid()) @db.Uuid
+  cognitoId                String    @unique @map("cognito_id")
+  email                    String    @unique
+  fullName                 String    @map("full_name")
+  avatarUrl                String?   @map("avatar_url")
+  preferences              Json?     @db.JsonB
+  lastActiveAt             DateTime? @map("last_active_at")
+  acquisitionUtmSource     String?   @map("acquisition_utm_source")
+  acquisitionUtmMedium     String?   @map("acquisition_utm_medium")
+  acquisitionUtmCampaign   String?   @map("acquisition_utm_campaign")
+  acquisitionSelfReported  String?   @map("acquisition_self_reported")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  roles                    UserRole[]
+  artistProfile            ArtistProfile?
+  rolesGrantedByMe         UserRole[]          @relation("RoleGrantedBy")
+  commissionsAsBuyer       Commission[]
+  ordersAsBuyer            Order[]
+  reviewsAsBuyer           Review[]
+  saves                    Save[]
+  follows                  Follow[]
+
+  @@map("users")
+}
+
+/// Role assignment for a user
+model UserRole {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  role      UserRoleType
+  grantedAt DateTime     @default(now()) @map("granted_at")
+  grantedBy String?      @map("granted_by") @db.Uuid
+
+  // Relations
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grantedByUser User?    @relation("RoleGrantedBy", fields: [grantedBy], references: [id])
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+/// Artist profile, created when a user is accepted as an artist
+model ArtistProfile {
+  id              String           @id @default(uuid()) @db.Uuid
+  userId          String           @unique @map("user_id") @db.Uuid
+  displayName     String           @map("display_name")
+  slug            String           @unique
+  bio             String           @db.Text
+  location        String
+  websiteUrl      String?          @map("website_url")
+  instagramUrl    String?          @map("instagram_url")
+  stripeAccountId String?          @map("stripe_account_id")
+  originZip       String           @map("origin_zip")
+  status          ArtistStatusType @default(pending)
+  commissionsOpen Boolean          @default(false) @map("commissions_open")
+  coverImageUrl   String?          @map("cover_image_url")
+  profileImageUrl String?          @map("profile_image_url")
+  applicationSource String?        @map("application_source")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories      ArtistCategory[]
+  cvEntries       ArtistCvEntry[]
+  processMedia    ArtistProcessMedia[]
+  listings        Listing[]
+  ordersAsArtist  Order[]
+  reviewsAsArtist Review[]
+  followers       Follow[]
+
+  @@index([status])
+  @@map("artist_profiles")
+}
+
+/// Category assignment for an artist
+model ArtistCategory {
+  id        String       @id @default(uuid()) @db.Uuid
+  artistId  String       @map("artist_id") @db.Uuid
+  category  CategoryType
+
+  // Relations
+  artist    ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, category])
+  @@map("artist_categories")
+}
+
+/// CV entry for artist profile
+model ArtistCvEntry {
+  id          String         @id @default(uuid()) @db.Uuid
+  artistId    String         @map("artist_id") @db.Uuid
+  type        CvEntryTypeType
+  title       String
+  institution String?
+  year        Int
+  description String?        @db.Text
+  sortOrder   Int            @map("sort_order")
+
+  // Relations
+  artist      ArtistProfile  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@map("artist_cv_entries")
+}
+
+/// Process media for artist profile (photos and videos)
+model ArtistProcessMedia {
+  id              String              @id @default(uuid()) @db.Uuid
+  artistId        String              @map("artist_id") @db.Uuid
+  type            ProcessMediaTypeType
+  url             String?             // CloudFront URL for photos
+  videoAssetId    String?             @map("video_asset_id")
+  videoPlaybackId String?             @map("video_playback_id")
+  videoProvider   String?             @map("video_provider") // e.g., "mux"
+  sortOrder       Int                 @map("sort_order")
+  createdAt       DateTime            @default(now()) @map("created_at")
+
+  // Relations
+  artist          ArtistProfile       @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@map("artist_process_media")
+}
+
+/// Core listing entity - all monetary values in cents
+model Listing {
+  id                String            @id @default(uuid()) @db.Uuid
+  artistId          String            @map("artist_id") @db.Uuid
+  type              ListingTypeType   @default(standard)
+  title             String
+  description       String            @db.Text
+  medium            String
+  category          CategoryType
+  price             Int               // In cents
+  status            ListingStatusType @default(available)
+  isDocumented      Boolean           @default(false) @map("is_documented")
+  quantityTotal     Int               @default(1) @map("quantity_total")
+  quantityRemaining Int               @default(1) @map("quantity_remaining")
+  // Artwork dimensions (the piece itself, in inches)
+  artworkLength     Decimal?          @map("artwork_length") @db.Decimal(10, 2)
+  artworkWidth      Decimal?          @map("artwork_width") @db.Decimal(10, 2)
+  artworkHeight     Decimal?          @map("artwork_height") @db.Decimal(10, 2)
+  // Packed dimensions (shipping box, in inches) - required for Shippo
+  packedLength      Decimal           @map("packed_length") @db.Decimal(10, 2)
+  packedWidth       Decimal           @map("packed_width") @db.Decimal(10, 2)
+  packedHeight      Decimal           @map("packed_height") @db.Decimal(10, 2)
+  packedWeight      Decimal           @map("packed_weight") @db.Decimal(10, 2) // In lbs
+  // Edition info
+  editionNumber     Int?              @map("edition_number")
+  editionTotal      Int?              @map("edition_total")
+  // System reservation - checked on read
+  reservedUntil     DateTime?         @map("reserved_until")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  artist            ArtistProfile     @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  images            ListingImage[]
+  commission        Commission?
+  orders            Order[]
+  reviews           Review[]
+  saves             Save[]
+
+  @@index([artistId])
+  @@index([status])
+  @@index([category])
+  @@index([artistId, status])
+  @@map("listings")
+}
+
+/// Listing image
+model ListingImage {
+  id             String   @id @default(uuid()) @db.Uuid
+  listingId      String   @map("listing_id") @db.Uuid
+  url            String   // CloudFront URL
+  isProcessPhoto Boolean  @default(false) @map("is_process_photo")
+  sortOrder      Int      @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  listing        Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([listingId, isProcessPhoto])
+  @@map("listing_images")
+}
+
+/// Commission details - only exists when listing.type = 'commission'
+model Commission {
+  id             String               @id @default(uuid()) @db.Uuid
+  listingId      String               @unique @map("listing_id") @db.Uuid
+  buyerId        String               @map("buyer_id") @db.Uuid
+  description    String               @db.Text
+  timelineDays   Int?                 @map("timeline_days")
+  status         CommissionStatusType @default(proposed)
+  acceptedAt     DateTime?            @map("accepted_at")
+  daysToComplete Int?                 @map("days_to_complete")
+  notes          String?              @db.Text // Internal notes, artist-only
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+
+  // Relations
+  listing        Listing              @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer          User                 @relation(fields: [buyerId], references: [id])
+  updates        CommissionUpdate[]
+
+  @@index([buyerId])
+  @@index([status])
+  @@map("commissions")
+}
+
+/// Commission progress update
+model CommissionUpdate {
+  id           String     @id @default(uuid()) @db.Uuid
+  commissionId String     @map("commission_id") @db.Uuid
+  content      String     @db.Text
+  imageUrl     String?    @map("image_url") // CloudFront URL
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  commission   Commission @relation(fields: [commissionId], references: [id], onDelete: Cascade)
+
+  @@map("commission_updates")
+}
+
+/// Order record - all financial values snapshotted at purchase time, in cents
+model Order {
+  id                    String          @id @default(uuid()) @db.Uuid
+  listingId             String          @map("listing_id") @db.Uuid
+  buyerId               String          @map("buyer_id") @db.Uuid
+  artistId              String          @map("artist_id") @db.Uuid // Denormalized
+  stripePaymentIntentId String          @unique @map("stripe_payment_intent_id")
+  artworkPrice          Int             @map("artwork_price") // In cents
+  shippingCost          Int             @map("shipping_cost") // In cents, pass-through
+  platformCommission    Int             @map("platform_commission") // In cents, 30%
+  artistPayout          Int             @map("artist_payout") // In cents, 70%
+  taxAmount             Int             @map("tax_amount") // In cents
+  status                OrderStatusType @default(pending)
+  shippingCarrier       String?         @map("shipping_carrier")
+  trackingNumber        String?         @map("tracking_number")
+  daysToFulfill         Int?            @map("days_to_fulfill")
+  shippedAt             DateTime?       @map("shipped_at")
+  deliveredAt           DateTime?       @map("delivered_at")
+  payoutReleasedAt      DateTime?       @map("payout_released_at")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  listing               Listing         @relation(fields: [listingId], references: [id])
+  buyer                 User            @relation(fields: [buyerId], references: [id])
+  artist                ArtistProfile   @relation(fields: [artistId], references: [id])
+  review                Review?
+
+  @@index([buyerId])
+  @@index([artistId])
+  @@index([listingId])
+  @@index([status])
+  @@map("orders")
+}
+
+/// Review from buyer - multi-dimensional ratings
+model Review {
+  id                  String        @id @default(uuid()) @db.Uuid
+  orderId             String        @unique @map("order_id") @db.Uuid
+  listingId           String        @map("listing_id") @db.Uuid // Denormalized
+  buyerId             String        @map("buyer_id") @db.Uuid
+  artistId            String        @map("artist_id") @db.Uuid // Denormalized
+  ratingProduct       Int           @map("rating_product") // 1-5
+  ratingCommunication Int           @map("rating_communication") // 1-5
+  ratingPackaging     Int           @map("rating_packaging") // 1-5
+  overallRating       Decimal       @map("overall_rating") @db.Decimal(3, 2) // Computed
+  headline            String?
+  content             String?       @db.Text
+  arrivedDamaged      Boolean       @default(false) @map("arrived_damaged")
+  arrivedLate         Boolean       @default(false) @map("arrived_late")
+  shippingIssue       Boolean       @default(false) @map("shipping_issue")
+  artistResponse      String?       @map("artist_response") @db.Text
+  artistRespondedAt   DateTime?     @map("artist_responded_at")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  order               Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listing             Listing       @relation(fields: [listingId], references: [id])
+  buyer               User          @relation(fields: [buyerId], references: [id])
+  artist              ArtistProfile @relation(fields: [artistId], references: [id])
+
+  @@index([artistId])
+  @@index([listingId])
+  @@map("reviews")
+}
+
+/// Saved listing (bookmark) - no inventory hold
+model Save {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  listingId String   @map("listing_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([userId])
+  @@index([listingId])
+  @@map("saves")
+}
+
+/// Artist follow - for notifications when new work is listed
+model Follow {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  artistId  String        @map("artist_id") @db.Uuid
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artist    ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, artistId])
+  @@index([userId])
+  @@index([artistId])
+  @@map("follows")
+}
+
+/// Waitlist email capture
+model Waitlist {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("waitlist")
+}
