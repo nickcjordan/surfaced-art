@@ -14,7 +14,12 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "security:scan": "node scripts/security-scan.js",
+    "security:npm": "node scripts/security-scan.js --npm",
+    "security:trivy": "node scripts/security-scan.js --trivy",
+    "security:semgrep": "node scripts/security-scan.js --semgrep",
+    "security:dependabot": "node scripts/security-scan.js --dependabot"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.3",

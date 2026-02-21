@@ -168,3 +168,6 @@ Thumbs.db
 
 # Vercel
 .vercel
+
+# Security scan reports (generated locally)
+.security-reports/

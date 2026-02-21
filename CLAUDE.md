@@ -160,6 +160,60 @@ AWS_REGION=us-east-1
 - [ ] Monetary values stored as cents
 - [ ] UUIDs used for primary keys
 
+## Security Scanning (For Claude Code)
+
+When the user asks to fix security issues or review scan results, use these commands:
+
+### Run Local Security Scans
+
+```bash
+# Run all scans (npm audit, Trivy, Semgrep, Dependabot)
+npm run security:scan
+
+# Run individual scans
+npm run security:npm        # npm audit only
+npm run security:trivy      # Trivy filesystem + IaC
+npm run security:semgrep    # Semgrep code analysis
+npm run security:dependabot # Fetch GitHub Dependabot alerts
+```
+
+### Read Scan Results
+
+After running scans, reports are saved to `.security-reports/`:
+
+```bash
+# Read summary of all findings
+cat .security-reports/summary.json
+
+# Read detailed reports
+cat .security-reports/npm-audit.json
+cat .security-reports/trivy-fs.json
+cat .security-reports/trivy-iac.json
+cat .security-reports/semgrep.json
+cat .security-reports/dependabot.json
+```
+
+### Security Fix Workflow
+
+1. Run `npm run security:scan` to get current findings
+2. Read `.security-reports/summary.json` to understand scope
+3. For each finding:
+   - Read the detailed report for context
+   - Determine the fix (update dependency, change code, update Terraform)
+   - Make the fix
+   - Run tests to ensure no regressions
+4. Re-run scan to verify fix
+5. Commit with message: `fix(security): description of what was fixed`
+
+### Tool Requirements
+
+For full scanning, these tools should be installed locally:
+- **Trivy**: `choco install trivy` (Windows) or `brew install trivy` (Mac)
+- **Semgrep**: `pip install semgrep`
+- **GitHub CLI**: For Dependabot, needs `GITHUB_TOKEN` env var with `security_events` scope
+
+npm audit works out of the box with no additional setup.
+
 ## Future Infrastructure Tasks
 
 - [ ] Add dev/staging environment (separate RDS, Lambda, etc.) - currently prod-only to minimize costs
