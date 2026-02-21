@@ -3,16 +3,17 @@
  * Local security scanning script for Claude Code integration
  *
  * Usage:
- *   node scripts/security-scan.js              # Run all scans
- *   node scripts/security-scan.js --npm        # npm audit only
- *   node scripts/security-scan.js --trivy      # Trivy only
- *   node scripts/security-scan.js --semgrep    # Semgrep only
- *   node scripts/security-scan.js --dependabot # GitHub Dependabot alerts
+ *   node scripts/security-scan.cjs              # Run all scans
+ *   node scripts/security-scan.cjs --npm        # npm audit only
+ *   node scripts/security-scan.cjs --trivy      # Trivy only
+ *   node scripts/security-scan.cjs --semgrep    # Semgrep only
+ *   node scripts/security-scan.cjs --dependabot # GitHub Dependabot alerts
+ *   node scripts/security-scan.cjs --pr-reviews # Bot review comments on open PRs
  *
- * Output: JSON results to stdout or .security-reports/ directory
+ * Output: JSON results to .security-reports/ directory
  */
 
-const { execSync, spawnSync } = require('child_process');
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -198,6 +199,113 @@ async function fetchDependabotAlerts() {
   }
 }
 
+async function fetchPrBotComments() {
+  console.log('Fetching PR bot review comments from GitHub...');
+
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  if (!token) {
+    // Fall back to gh CLI if no token
+    try {
+      execSync('gh auth status', { stdio: 'pipe' });
+    } catch {
+      console.error('No GITHUB_TOKEN and gh CLI not authenticated. Skipping PR reviews.');
+      return null;
+    }
+  }
+
+  // Get repo info from git remote
+  let owner, repo;
+  try {
+    const remote = execSync('git remote get-url origin', { encoding: 'utf-8' }).trim();
+    const match = remote.match(/github\.com[:/]([^/]+)\/([^/.]+)/);
+    if (match) { owner = match[1]; repo = match[2]; }
+  } catch {
+    console.error('Could not determine GitHub repo from git remote');
+    return null;
+  }
+
+  const headers = token
+    ? { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${token}`, 'X-GitHub-Api-Version': '2022-11-28' }
+    : { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+
+  // Known bot logins to collect suggestions from
+  const BOT_LOGINS = ['sourcery-ai[bot]', 'github-actions[bot]', 'coderabbitai[bot]', 'dependabot[bot]'];
+
+  try {
+    // Get open PRs
+    let prsUrl = `https://api.github.com/repos/${owner}/${repo}/pulls?state=open&per_page=100`;
+    let prs = [];
+
+    if (token) {
+      const prsRes = await fetch(prsUrl, { headers });
+      if (!prsRes.ok) { console.error(`GitHub API error fetching PRs: ${prsRes.status}`); return null; }
+      prs = await prsRes.json();
+    } else {
+      const result = execSync(`gh api repos/${owner}/${repo}/pulls --paginate`, { encoding: 'utf-8' });
+      prs = JSON.parse(result);
+    }
+
+    const prReviews = [];
+
+    for (const pr of prs) {
+      const prNumber = pr.number;
+      let reviews = [], comments = [];
+
+      if (token) {
+        const [reviewsRes, commentsRes] = await Promise.all([
+          fetch(`https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}/reviews`, { headers }),
+          fetch(`https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}/comments`, { headers }),
+        ]);
+        if (reviewsRes.ok) reviews = await reviewsRes.json();
+        if (commentsRes.ok) comments = await commentsRes.json();
+      } else {
+        try {
+          reviews = JSON.parse(execSync(`gh api repos/${owner}/${repo}/pulls/${prNumber}/reviews`, { encoding: 'utf-8' }));
+          comments = JSON.parse(execSync(`gh api repos/${owner}/${repo}/pulls/${prNumber}/comments`, { encoding: 'utf-8' }));
+        } catch { continue; }
+      }
+
+      // Filter to bot reviews
+      const botReviews = reviews.filter(r => BOT_LOGINS.includes(r.user?.login));
+      // Filter to bot inline comments, excluding ones already marked addressed
+      const botComments = comments.filter(c =>
+        BOT_LOGINS.includes(c.user?.login) &&
+        !c.body?.includes('✅')
+      );
+
+      if (botReviews.length === 0 && botComments.length === 0) continue;
+
+      prReviews.push({
+        pr: prNumber,
+        title: pr.title,
+        url: pr.html_url,
+        reviews: botReviews.map(r => ({
+          bot: r.user.login,
+          state: r.state,
+          body: r.body,
+          submitted_at: r.submitted_at,
+        })),
+        comments: botComments.map(c => ({
+          bot: c.user.login,
+          path: c.path,
+          line: c.line,
+          body: c.body,
+          url: c.html_url,
+        })),
+      });
+    }
+
+    fs.writeFileSync(
+      path.join(REPORTS_DIR, 'pr-reviews.json'),
+      JSON.stringify(prReviews, null, 2)
+    );
+    return prReviews;
+  } catch (error) {
+    console.error('Failed to fetch PR bot comments:', error.message);
+    return null;
+  }
+}
+
 function summarizeFindings(npmReport, trivyFs, trivyIac, semgrepReport, dependabotAlerts) {
   const summary = {
     timestamp: new Date().toISOString(),
@@ -314,12 +422,14 @@ async function main() {
   const runTrivy = runAll || args.includes('--trivy');
   const runSemgrepFlag = runAll || args.includes('--semgrep');
   const runDependabot = runAll || args.includes('--dependabot');
+  const runPrReviews = runAll || args.includes('--pr-reviews');
 
   let npmReport = null;
   let trivyFs = null;
   let trivyIac = null;
   let semgrepReport = null;
   let dependabotAlerts = null;
+  let prReviews = null;
 
   if (runNpm) npmReport = runNpmAudit();
   if (runTrivy) {
@@ -328,6 +438,7 @@ async function main() {
   }
   if (runSemgrepFlag) semgrepReport = runSemgrep();
   if (runDependabot) dependabotAlerts = await fetchDependabotAlerts();
+  if (runPrReviews) prReviews = await fetchPrBotComments();
 
   const summary = summarizeFindings(npmReport, trivyFs, trivyIac, semgrepReport, dependabotAlerts);
 
@@ -344,6 +455,15 @@ async function main() {
   console.log(`Trivy IaC:     ${summary.trivyIac.total} issues (${summary.trivyIac.critical} critical, ${summary.trivyIac.high} high)`);
   console.log(`Semgrep:       ${summary.semgrep.total} issues (${summary.semgrep.error} errors, ${summary.semgrep.warning} warnings)`);
   console.log(`Dependabot:    ${summary.dependabot.total} alerts (${summary.dependabot.critical} critical, ${summary.dependabot.high} high)`);
+
+  if (prReviews !== null) {
+    const totalBotComments = prReviews.reduce((acc, pr) => acc + pr.comments.length, 0);
+    console.log(`PR bot reviews: ${prReviews.length} PRs with bot feedback, ${totalBotComments} unaddressed inline comments`);
+    for (const pr of prReviews) {
+      console.log(`  PR #${pr.pr} (${pr.title}): ${pr.comments.length} comment(s)`);
+    }
+  }
+
   console.log(`\nReports saved to: ${REPORTS_DIR}/`);
   console.log('============================================\n');
 

@@ -167,7 +167,7 @@ When the user asks to fix security issues or review scan results, use these comm
 ### Run Local Security Scans
 
 ```bash
-# Run all scans (npm audit, Trivy, Semgrep, Dependabot)
+# Run all scans (npm audit, Trivy, Semgrep, Dependabot, PR bot reviews)
 npm run security:scan
 
 # Run individual scans
@@ -175,6 +175,7 @@ npm run security:npm        # npm audit only
 npm run security:trivy      # Trivy filesystem + IaC
 npm run security:semgrep    # Semgrep code analysis
 npm run security:dependabot # Fetch GitHub Dependabot alerts
+npm run security:pr-reviews # Fetch bot review comments from open PRs (Sourcery, etc.)
 ```
 
 ### Read Scan Results
@@ -191,6 +192,7 @@ cat .security-reports/trivy-fs.json
 cat .security-reports/trivy-iac.json
 cat .security-reports/semgrep.json
 cat .security-reports/dependabot.json
+cat .security-reports/pr-reviews.json  # Bot comments from Sourcery, etc. on open PRs
 ```
 
 ### Security Fix Workflow
