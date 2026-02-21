@@ -59,6 +59,13 @@ Before making changes, read the relevant documentation in `docs/`:
 - Create feature branches from `dev` for larger features
 - Merge to `main` triggers production deployment
 
+### Pull Request Rules (CRITICAL)
+
+- **NEVER merge to `main`** — merging to main is always a human action
+- When work is ready to merge, open a PR from CLI with a full description and stop
+- Update PR descriptions with accurate summaries of what changed and why
+- Prepare commit messages for human review, but do not execute the merge
+
 ### Commit Message Format
 
 ```
