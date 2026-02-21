@@ -1,0 +1,45 @@
+{
+  "name": "surfaced-art",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "security:scan": "node scripts/security-scan.cjs",
+    "security:npm": "node scripts/security-scan.cjs --npm",
+    "security:trivy": "node scripts/security-scan.cjs --trivy",
+    "security:semgrep": "node scripts/security-scan.cjs --semgrep",
+    "security:dependabot": "node scripts/security-scan.cjs --dependabot",
+    "security:pr-reviews": "node scripts/security-scan.cjs --pr-reviews"
+  },
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.33.0",
+    "@typescript-eslint/parser": "^8.33.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.5.0",
+    "turbo": "^2.4.0",
+    "typescript-eslint": "^8.56.0"
+  },
+  "overrides": {
+    "minimatch": ">=10.2.1"
+  },
+  "packageManager": "npm@10.8.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

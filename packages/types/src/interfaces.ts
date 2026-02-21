@@ -1,0 +1,264 @@
+import type {
+  UserRoleType,
+  ArtistStatusType,
+  ListingStatusType,
+  ListingTypeType,
+  CategoryType,
+  CommissionStatusType,
+  OrderStatusType,
+  CvEntryTypeType,
+  ProcessMediaTypeType,
+} from './enums'
+
+/**
+ * Base authentication record for every person on the platform
+ */
+export interface User {
+  id: string // UUID
+  cognitoId: string
+  email: string
+  fullName: string
+  avatarUrl: string | null
+  preferences: Record<string, unknown> | null // JSONB
+  lastActiveAt: Date | null
+  acquisitionUtmSource: string | null
+  acquisitionUtmMedium: string | null
+  acquisitionUtmCampaign: string | null
+  acquisitionSelfReported: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Role assignment for a user
+ * A user can hold multiple roles simultaneously
+ */
+export interface UserRole {
+  id: string // UUID
+  userId: string // FK -> users.id
+  role: UserRoleType
+  grantedAt: Date
+  grantedBy: string | null // FK -> users.id, null for system-assigned
+}
+
+/**
+ * Artist profile, created when a user is accepted as an artist
+ */
+export interface ArtistProfile {
+  id: string // UUID
+  userId: string // FK -> users.id
+  displayName: string
+  slug: string // Unique, used in URL
+  bio: string
+  location: string
+  websiteUrl: string | null
+  instagramUrl: string | null
+  stripeAccountId: string | null // Set after Stripe Connect onboarding
+  originZip: string // Required for shipping rate calculation
+  status: ArtistStatusType
+  commissionsOpen: boolean
+  coverImageUrl: string | null
+  profileImageUrl: string | null
+  applicationSource: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Category assignment for an artist
+ * An artist can work across multiple categories
+ */
+export interface ArtistCategory {
+  id: string // UUID
+  artistId: string // FK -> artist_profiles.id
+  category: CategoryType
+}
+
+/**
+ * CV entry for artist profile
+ * Exhibition history, awards, education, press, residencies
+ */
+export interface ArtistCvEntry {
+  id: string // UUID
+  artistId: string // FK -> artist_profiles.id
+  type: CvEntryTypeType
+  title: string
+  institution: string | null
+  year: number
+  description: string | null
+  sortOrder: number
+}
+
+/**
+ * Process media for artist profile
+ * Photos and videos showing the artist making their work
+ */
+export interface ArtistProcessMedia {
+  id: string // UUID
+  artistId: string // FK -> artist_profiles.id
+  type: ProcessMediaTypeType
+  url: string | null // CloudFront URL for photos
+  videoAssetId: string | null // Video provider's internal asset ID
+  videoPlaybackId: string | null // Video provider's public playback ID
+  videoProvider: string | null // e.g., "mux"
+  sortOrder: number
+  createdAt: Date
+}
+
+/**
+ * Core listing entity
+ * All monetary values in cents
+ */
+export interface Listing {
+  id: string // UUID
+  artistId: string // FK -> artist_profiles.id
+  type: ListingTypeType
+  title: string
+  description: string
+  medium: string
+  category: CategoryType
+  price: number // In cents
+  status: ListingStatusType
+  isDocumented: boolean // True when at least one process photo exists
+  quantityTotal: number // For editions
+  quantityRemaining: number // Decrements on sale
+  // Artwork dimensions (the piece itself, in inches)
+  artworkLength: number | null
+  artworkWidth: number | null
+  artworkHeight: number | null
+  // Packed dimensions (shipping box, in inches) - required for Shippo
+  packedLength: number
+  packedWidth: number
+  packedHeight: number
+  packedWeight: number // In lbs
+  // Edition info
+  editionNumber: number | null
+  editionTotal: number | null
+  // System reservation
+  reservedUntil: Date | null // Checked on read
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Listing image
+ */
+export interface ListingImage {
+  id: string // UUID
+  listingId: string // FK -> listings.id
+  url: string // CloudFront URL
+  isProcessPhoto: boolean // Behind-the-scenes photo
+  sortOrder: number
+  createdAt: Date
+}
+
+/**
+ * Commission details
+ * Only exists when listing.type = 'commission'
+ */
+export interface Commission {
+  id: string // UUID
+  listingId: string // FK -> listings.id
+  buyerId: string // FK -> users.id
+  description: string
+  timelineDays: number | null
+  status: CommissionStatusType
+  acceptedAt: Date | null
+  daysToComplete: number | null // Calculated on completion
+  notes: string | null // Internal notes, artist-only
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Commission progress update
+ */
+export interface CommissionUpdate {
+  id: string // UUID
+  commissionId: string // FK -> commissions.id
+  content: string
+  imageUrl: string | null // CloudFront URL
+  createdAt: Date
+}
+
+/**
+ * Order record
+ * All financial values snapshotted at purchase time, in cents
+ */
+export interface Order {
+  id: string // UUID
+  listingId: string // FK -> listings.id
+  buyerId: string // FK -> users.id
+  artistId: string // FK -> artist_profiles.id (denormalized)
+  stripePaymentIntentId: string
+  artworkPrice: number // In cents
+  shippingCost: number // In cents, pass-through (no commission)
+  platformCommission: number // In cents, 30% of artwork_price
+  artistPayout: number // In cents, 70% of artwork_price
+  taxAmount: number // In cents, from Stripe Tax
+  status: OrderStatusType
+  shippingCarrier: string | null
+  trackingNumber: string | null
+  daysToFulfill: number | null // Days from created_at to shipped_at
+  shippedAt: Date | null
+  deliveredAt: Date | null
+  payoutReleasedAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Review from buyer
+ * Multi-dimensional ratings
+ */
+export interface Review {
+  id: string // UUID
+  orderId: string // FK -> orders.id
+  listingId: string // FK -> listings.id (denormalized)
+  buyerId: string // FK -> users.id
+  artistId: string // FK -> artist_profiles.id (denormalized)
+  ratingProduct: number // 1-5
+  ratingCommunication: number // 1-5
+  ratingPackaging: number // 1-5
+  overallRating: number // Computed weighted average
+  headline: string | null
+  content: string | null
+  arrivedDamaged: boolean // Flag, doesn't affect rating
+  arrivedLate: boolean // Flag, doesn't affect rating
+  shippingIssue: boolean // Flag, doesn't affect rating
+  artistResponse: string | null
+  artistRespondedAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Saved listing (bookmark)
+ * No inventory hold
+ */
+export interface Save {
+  id: string // UUID
+  userId: string // FK -> users.id
+  listingId: string // FK -> listings.id
+  createdAt: Date
+}
+
+/**
+ * Artist follow
+ * For notifications when new work is listed
+ */
+export interface Follow {
+  id: string // UUID
+  userId: string // FK -> users.id
+  artistId: string // FK -> artist_profiles.id
+  createdAt: Date
+}
+
+/**
+ * Waitlist email capture
+ */
+export interface Waitlist {
+  id: string // UUID
+  email: string
+  createdAt: Date
+}
