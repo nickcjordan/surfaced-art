@@ -16,7 +16,8 @@
       "Bash(git push:*)",
       "Bash(aws sts get-caller-identity:*)",
       "Bash(terraform apply:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm run security:npm:*)"
     ]
   }
 }
