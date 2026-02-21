@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nchore: add GitHub PR and issue templates\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: initialize turborepo monorepo structure\n\n- Add root package.json with workspaces configuration\n- Add turbo.json with build pipeline \\(build, dev, test, lint, typecheck\\)\n- Add root tsconfig.json with strict TypeScript settings\n- Add .nvmrc pinned to Node 20 LTS\n- Add Prettier configuration\n- Update .gitignore for Turborepo, Terraform, Prisma, Vercel\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npm run build:*)",
+      "Bash(git commit:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npm run lint:*)",
+      "Bash(terraform --version:*)",
+      "Bash(terraform init:*)",
+      "Bash(terraform validate:*)"
+    ]
+  }
+}
