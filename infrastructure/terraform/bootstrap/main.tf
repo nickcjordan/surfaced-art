@@ -59,6 +59,7 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
 }
 
 # Enable server-side encryption
+# trivy:ignore:AVD-AWS-0132 - CMK adds KMS cost, AES256 sufficient for Terraform state bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -88,6 +89,10 @@ resource "aws_dynamodb_table" "terraform_locks" {
   attribute {
     name = "LockID"
     type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
   }
 
   tags = {

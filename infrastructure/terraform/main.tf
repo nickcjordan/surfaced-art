@@ -89,6 +89,7 @@ module "lambda_api" {
   environment     = var.environment
   aws_region      = var.aws_region
   vpc_id          = data.aws_vpc.default.id
+  vpc_cidr        = data.aws_vpc.default.cidr_block
   subnet_ids      = data.aws_subnets.default.ids
   memory_size     = var.lambda_memory_size
   timeout         = var.lambda_timeout

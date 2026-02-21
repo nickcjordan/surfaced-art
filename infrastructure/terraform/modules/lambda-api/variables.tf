@@ -18,6 +18,11 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "vpc_cidr" {
+  description = "VPC CIDR block for restricting database egress"
+  type        = string
+}
+
 variable "subnet_ids" {
   description = "Subnet IDs for Lambda VPC configuration"
   type        = list(string)

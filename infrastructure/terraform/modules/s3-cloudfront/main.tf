@@ -26,6 +26,7 @@ resource "aws_s3_bucket_versioning" "media" {
 }
 
 # Server-side encryption
+# trivy:ignore:AVD-AWS-0132 - CMK adds KMS cost, AES256 sufficient for Phase 1/2
 resource "aws_s3_bucket_server_side_encryption_configuration" "media" {
   bucket = aws_s3_bucket.media.id
 
@@ -59,6 +60,8 @@ resource "aws_cloudfront_origin_access_control" "media" {
 }
 
 # CloudFront distribution
+#trivy:ignore:AVD-AWS-0011 - WAF adds ~$5+/month cost, deferred to Phase 3
+#trivy:ignore:AVD-AWS-0010 - Access logging adds complexity, deferred to Phase 3
 resource "aws_cloudfront_distribution" "media" {
   enabled             = true
   is_ipv6_enabled     = true

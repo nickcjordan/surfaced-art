@@ -13,12 +13,8 @@ resource "aws_security_group" "rds" {
     description     = "PostgreSQL from Lambda"
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # No egress rules - RDS never initiates outbound connections
+  # AWS SGs default to deny all when no egress rules are defined in Terraform
 
   tags = {
     Name = "${var.project_name}-${var.environment}-rds-sg"
@@ -59,6 +55,10 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   publicly_accessible    = false
 
+  # trivy:ignore:AVD-AWS-0176 - IAM DB auth requires app-level changes, deferred to Phase 3
+  # trivy:ignore:AVD-AWS-0177 - Deletion protection is conditionally enabled for prod (line below)
+  iam_database_authentication_enabled = false
+
   # Backup and maintenance
   backup_retention_period = 7
   backup_window           = "03:00-04:00"
@@ -71,7 +71,7 @@ resource "aws_db_instance" "main" {
   # Other settings
   skip_final_snapshot     = var.environment != "prod"
   final_snapshot_identifier = var.environment == "prod" ? "${var.project_name}-${var.environment}-final-snapshot" : null
-  deletion_protection     = var.environment == "prod"
+  deletion_protection     = var.environment == "prod" #trivy:ignore:AVD-AWS-0177 - enabled conditionally for prod
   copy_tags_to_snapshot   = true
   auto_minor_version_upgrade = true
 

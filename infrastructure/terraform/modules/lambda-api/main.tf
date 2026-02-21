@@ -4,12 +4,23 @@ resource "aws_security_group" "lambda" {
   description = "Security group for Lambda functions"
   vpc_id      = var.vpc_id
 
-  # Allow all outbound traffic (to reach RDS, S3, SES, etc.)
+  # Allow HTTPS outbound for AWS service APIs (S3, Cognito, SES, etc.)
+  # trivy:ignore:AVD-AWS-0104 - HTTPS to 0.0.0.0/0 required for AWS service endpoint calls
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] #trivy:ignore:AVD-AWS-0104
+    description = "HTTPS to AWS service endpoints"
+  }
+
+  # Allow PostgreSQL outbound to VPC only (for RDS)
+  egress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "PostgreSQL to RDS within VPC"
   }
 
   tags = {

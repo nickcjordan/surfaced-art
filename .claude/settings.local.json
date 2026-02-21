@@ -17,7 +17,14 @@
       "Bash(aws sts get-caller-identity:*)",
       "Bash(terraform apply:*)",
       "Bash(git restore:*)",
-      "Bash(npm run security:npm:*)"
+      "Bash(npm run security:npm:*)",
+      "Bash(npm run security:scan:*)",
+      "Bash(npm audit fix:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npm info:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm run security:trivy:*)",
+      "Bash(npm run test:*)"
     ]
   }
 }
