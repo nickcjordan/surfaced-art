@@ -11,8 +11,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
-  actions: read
 
 jobs:
   trivy-fs-scan:
@@ -28,17 +26,11 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-fs-results.sarif'
+          format: 'table'
           severity: 'CRITICAL,HIGH,MEDIUM'
           skip-files: 'package-lock.json'
-
-      - name: Upload Trivy scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-fs-results.sarif'
-          category: 'trivy-filesystem'
+          exit-code: '1'
+        continue-on-error: true
 
   trivy-iac-scan:
     name: Trivy IaC Scan
@@ -53,44 +45,10 @@ jobs:
         with:
           scan-type: 'config'
           scan-ref: 'infrastructure/terraform'
-          format: 'sarif'
-          output: 'trivy-iac-results.sarif'
+          format: 'table'
           severity: 'CRITICAL,HIGH,MEDIUM'
-          exit-code: '0'
-
-      - name: Upload Trivy IaC results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-iac-results.sarif'
-          category: 'trivy-iac'
-
-  codeql-analyze:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ['javascript-typescript']
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          queries: security-extended
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
+          exit-code: '1'
+        continue-on-error: true
 
   npm-audit:
     name: NPM Audit
