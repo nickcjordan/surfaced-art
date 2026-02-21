@@ -2,10 +2,10 @@ name: Deploy
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
 
 concurrency:
-  group: deploy-${{ github.ref_name }}
+  group: deploy-prod
   cancel-in-progress: false
 
 permissions:
@@ -18,21 +18,6 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
 
 jobs:
-  setup:
-    name: Setup
-    runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ steps.set-env.outputs.environment }}
-    steps:
-      - name: Set environment
-        id: set-env
-        run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "environment=prod" >> $GITHUB_OUTPUT
-          else
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          fi
-
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -73,10 +58,10 @@ jobs:
           retention-days: 1
 
   terraform:
-    name: Terraform Apply (${{ needs.setup.outputs.environment }})
+    name: Terraform Apply (prod)
     runs-on: ubuntu-latest
-    needs: [setup, build]
-    environment: ${{ needs.setup.outputs.environment }}
+    needs: build
+    environment: prod
 
     outputs:
       lambda_function_name: ${{ steps.output.outputs.lambda_function_name }}
@@ -103,13 +88,13 @@ jobs:
         working-directory: infrastructure/terraform
         run: |
           terraform init \
-            -backend-config="key=${{ needs.setup.outputs.environment }}/terraform.tfstate"
+            -backend-config="key=prod/terraform.tfstate"
 
       - name: Terraform Apply
         working-directory: infrastructure/terraform
         run: |
           terraform apply -auto-approve -input=false \
-            -var-file="environments/${{ needs.setup.outputs.environment }}.tfvars" \
+            -var-file="environments/prod.tfvars" \
             -var="db_password=${{ secrets.TF_VAR_db_password }}" \
             -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
             -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}"
@@ -122,9 +107,9 @@ jobs:
           echo "api_gateway_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
 
   deploy-lambda:
-    name: Deploy Lambda (${{ needs.setup.outputs.environment }})
+    name: Deploy Lambda
     runs-on: ubuntu-latest
-    needs: [setup, build, terraform]
+    needs: [build, terraform]
 
     steps:
       - name: Download API artifact
@@ -157,9 +142,9 @@ jobs:
             --function-name ${{ needs.terraform.outputs.lambda_function_name }}
 
   migrate-database:
-    name: Run Migrations (${{ needs.setup.outputs.environment }})
+    name: Run Migrations
     runs-on: ubuntu-latest
-    needs: [setup, terraform, deploy-lambda]
+    needs: [terraform, deploy-lambda]
 
     steps:
       - name: Checkout
@@ -188,9 +173,9 @@ jobs:
         run: npx prisma migrate deploy
 
   verify:
-    name: Verify (${{ needs.setup.outputs.environment }})
+    name: Verify Deployment
     runs-on: ubuntu-latest
-    needs: [setup, terraform, deploy-lambda, migrate-database]
+    needs: [terraform, deploy-lambda, migrate-database]
 
     steps:
       - name: Health Check

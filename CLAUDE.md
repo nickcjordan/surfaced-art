@@ -159,3 +159,12 @@ AWS_REGION=us-east-1
 - [ ] No `@vercel/*` imports added
 - [ ] Monetary values stored as cents
 - [ ] UUIDs used for primary keys
+
+## Future Infrastructure Tasks
+
+- [ ] Add dev/staging environment (separate RDS, Lambda, etc.) - currently prod-only to minimize costs
+- [ ] Set up Google OAuth credentials and replace placeholders in GitHub secrets
+- [ ] Set up Apple Sign In credentials
+- [ ] Configure custom domain for CloudFront CDN
+- [ ] Add RDS Proxy when Lambda concurrency causes connection issues
+- [ ] Migrate from Vercel to OpenNext when costs justify
