@@ -262,3 +262,23 @@ export interface Waitlist {
   email: string
   createdAt: Date
 }
+
+// ─── API Response Types ─────────────────────────────────────────────
+
+/**
+ * Listing with its images, as returned within an artist profile response
+ */
+export interface ListingWithImages extends Listing {
+  images: ListingImage[]
+}
+
+/**
+ * Full artist profile response for GET /artists/:slug
+ * Contains the profile plus all related data needed to render the page
+ */
+export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 'stripeAccountId' | 'originZip' | 'applicationSource'> {
+  categories: CategoryType[]
+  cvEntries: ArtistCvEntry[]
+  processMedia: ArtistProcessMedia[]
+  listings: ListingWithImages[]
+}
