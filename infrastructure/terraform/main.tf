@@ -128,6 +128,42 @@ resource "aws_ecr_lifecycle_policy" "migrate" {
   })
 }
 
+# ECR repository for image processor Lambda container images
+resource "aws_ecr_repository" "image_processor" {
+  name                 = "${var.project_name}-${var.environment}-image-processor"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-image-processor-ecr"
+  }
+}
+
+resource "aws_ecr_repository_policy" "image_processor" {
+  repository = aws_ecr_repository.image_processor.name
+  policy     = data.aws_iam_policy_document.ecr_lambda.json
+}
+
+resource "aws_ecr_lifecycle_policy" "image_processor" {
+  repository = aws_ecr_repository.image_processor.name
+
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep last 10 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 10
+      }
+      action = { type = "expire" }
+    }]
+  })
+}
+
 # IAM module - creates roles and policies
 module "iam" {
   source = "./modules/iam"
@@ -138,7 +174,7 @@ module "iam" {
 
   s3_bucket_arn              = module.s3_cloudfront.bucket_arn
   ses_domain                 = var.ses_domain
-  lambda_ecr_repository_arns = [aws_ecr_repository.api.arn, aws_ecr_repository.migrate.arn]
+  lambda_ecr_repository_arns = [aws_ecr_repository.api.arn, aws_ecr_repository.migrate.arn, aws_ecr_repository.image_processor.arn]
 }
 
 # RDS PostgreSQL module
@@ -235,4 +271,19 @@ module "lambda_migrate" {
   database_url          = module.rds.connection_string
 
   depends_on = [aws_ecr_repository_policy.migrate]
+}
+
+# Image processor Lambda module — generates WebP variants for uploaded images.
+# NOT in a VPC — only needs S3 access, no database connectivity required.
+module "lambda_image_processor" {
+  source = "./modules/lambda-image-processor"
+
+  project_name          = var.project_name
+  environment           = var.environment
+  lambda_role_arn       = module.iam.lambda_role_arn
+  placeholder_image_uri = var.placeholder_image_uri
+  s3_bucket_name        = module.s3_cloudfront.bucket_name
+  s3_bucket_arn         = module.s3_cloudfront.bucket_arn
+
+  depends_on = [aws_ecr_repository_policy.image_processor]
 }
