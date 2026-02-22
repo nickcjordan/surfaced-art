@@ -23,7 +23,7 @@ variable "ses_domain" {
   type        = string
 }
 
-variable "lambda_ecr_repository_arn" {
-  description = "ARN of the ECR repository used by the Lambda container image"
-  type        = string
+variable "lambda_ecr_repository_arns" {
+  description = "ARNs of the ECR repositories used by Lambda container images"
+  type        = list(string)
 }
