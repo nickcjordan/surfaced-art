@@ -91,6 +91,18 @@ jobs:
           terraform init \
             -backend-config="key=prod/terraform.tfstate"
 
+      # One-time migration: ECR repo was moved from module.lambda_api to root.
+      # State mv is idempotent — no-ops silently if already at the target address.
+      - name: Migrate Terraform State (ECR repo move)
+        working-directory: infrastructure/terraform
+        run: |
+          terraform state mv \
+            module.lambda_api.aws_ecr_repository.api \
+            aws_ecr_repository.api 2>/dev/null || true
+          terraform state mv \
+            module.lambda_api.aws_ecr_lifecycle_policy.api \
+            aws_ecr_lifecycle_policy.api 2>/dev/null || true
+
       - name: Terraform Apply
         working-directory: infrastructure/terraform
         run: |
