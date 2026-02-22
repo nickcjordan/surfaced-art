@@ -61,7 +61,7 @@ export const handler = async (
     if (event.command === 'migrate') {
       const { execSync } = await import('child_process')
       try {
-        const output = execSync('node_modules/.bin/prisma migrate deploy', {
+        const output = execSync('npx prisma migrate deploy', {
           cwd: process.env.LAMBDA_TASK_ROOT ?? '/var/task',
           encoding: 'utf-8',
         })
