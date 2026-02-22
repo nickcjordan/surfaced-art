@@ -14,10 +14,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
-    "hono": "^4.7.0",
-    "@surfaced-art/db": "*",
-    "@surfaced-art/types": "*",
-    "@surfaced-art/utils": "*"
+    "hono": "^4.7.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.148",
