@@ -1,5 +1,6 @@
 # Dedicated security group for the migration Lambda.
-# Only needs PostgreSQL egress to RDS — no HTTPS, no S3, no SES.
+# Needs PostgreSQL egress to RDS and HTTPS egress for AWS APIs
+# (CloudWatch Logs, STS token exchange).
 resource "aws_security_group" "migrate" {
   name        = "${var.project_name}-${var.environment}-migrate-sg"
   description = "Security group for database migration Lambda"
@@ -12,6 +13,15 @@ resource "aws_security_group" "migrate" {
     protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
     description = "PostgreSQL to RDS within VPC"
+  }
+
+  # Allow HTTPS outbound for AWS API access (CloudWatch Logs, STS)
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTPS to AWS APIs (CloudWatch, STS)"
   }
 
   tags = {

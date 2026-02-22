@@ -23,7 +23,7 @@ describe('migrate handler', () => {
   })
 
   it('should return error for unknown commands', async () => {
-    const result = await handler({ command: 'unknown' })
+    const result = await handler({ command: 'unknown' } as Parameters<typeof handler>[0])
     expect(result).toEqual({
       success: false,
       error: 'Unknown command: unknown',
