@@ -46,5 +46,5 @@ output "lambda_function_name" {
 
 output "ecr_repository_url" {
   description = "ECR repository URL for pushing Lambda container images"
-  value       = module.lambda_api.ecr_repository_url
+  value       = aws_ecr_repository.api.repository_url
 }

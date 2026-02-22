@@ -22,3 +22,8 @@ variable "ses_domain" {
   description = "Domain for SES email sending"
   type        = string
 }
+
+variable "lambda_ecr_repository_arn" {
+  description = "ARN of the ECR repository used by the Lambda container image"
+  type        = string
+}

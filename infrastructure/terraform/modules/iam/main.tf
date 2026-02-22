@@ -100,11 +100,13 @@ resource "aws_iam_role_policy" "lambda_ecr" {
           "ecr:BatchGetImage",
           "ecr:BatchCheckLayerAvailability"
         ]
-        Resource = "*"
+        # Scoped to this Lambda's ECR repository only
+        Resource = var.lambda_ecr_repository_arn
       },
       {
         Effect   = "Allow"
         Action   = "ecr:GetAuthorizationToken"
+        # Must remain "*" per AWS docs — not repository-scoped
         Resource = "*"
       }
     ]

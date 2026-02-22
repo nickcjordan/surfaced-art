@@ -75,3 +75,9 @@ variable "cloudfront_url" {
   description = "CloudFront distribution URL"
   type        = string
 }
+
+variable "placeholder_image_uri" {
+  description = "Pinned Lambda base image URI used as a placeholder until CI/CD deploys the service image."
+  type        = string
+  default     = "public.ecr.aws/lambda/nodejs20.x:1"
+}
