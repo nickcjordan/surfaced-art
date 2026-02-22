@@ -51,7 +51,7 @@ jobs:
         run: npm run test
 
       - name: Upload API artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: api-dist
           path: apps/api/dist/
