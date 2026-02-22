@@ -223,6 +223,27 @@ For full scanning, these tools should be installed locally:
 
 npm audit works out of the box with no additional setup.
 
+## GitHub CLI (`gh`) — Required PAT Permissions
+
+The `gh` CLI is used for PR creation, merging, and security scanning. If you hit
+`GraphQL: Resource not accessible by personal access token`, the fine-grained PAT
+is missing a permission. Here are all permissions required for full `gh` functionality:
+
+| Permission | Level | Used for |
+|---|---|---|
+| **Contents** | Read-only | Reading branch refs, commits — needed by `gh pr create` / `gh pr merge` |
+| **Pull requests** | Read and write | Creating and updating PRs |
+| **Security events** | Read and write | Dependabot alerts via `gh api` |
+| **Metadata** | Read-only | Automatically included, required for all operations |
+
+**To update the token**: GitHub → Settings → Developer settings → Personal access tokens →
+Fine-grained tokens → edit the token → update Repository permissions.
+
+**Common error → missing permission mapping**:
+- `repository.defaultBranchRef` → add **Contents: Read**
+- `repository.pullRequest.commits` → add **Contents: Read**
+- `repository.vulnerabilityAlerts` → add **Security events: Read**
+
 ## Future Infrastructure Tasks
 
 - [ ] Add dev/staging environment (separate RDS, Lambda, etc.) - currently prod-only to minimize costs
