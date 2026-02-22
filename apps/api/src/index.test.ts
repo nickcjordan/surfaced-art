@@ -1,5 +1,14 @@
-import { describe, it, expect } from 'vitest'
-import { app } from './index'
+import { describe, it, expect, vi } from 'vitest'
+
+vi.mock('@surfaced-art/db', () => ({
+  prisma: {
+    artistProfile: {
+      findUnique: vi.fn(),
+    },
+  },
+}))
+
+const { app } = await import('./index')
 
 describe('API', () => {
   describe('GET /', () => {
