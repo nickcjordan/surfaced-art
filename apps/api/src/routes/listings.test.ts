@@ -296,6 +296,14 @@ describe('GET /listings', () => {
       const call = mockPrisma.listing.findMany.mock.calls[0][0]
       expect(call.where.status).toBe('sold')
     })
+
+    it('should return 400 for invalid status', async () => {
+      const res = await app.request('/listings?status=bogus')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error).toContain('Invalid status')
+    })
   })
 
   describe('empty results', () => {
