@@ -22,6 +22,8 @@ data "aws_subnets" "default" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 # ECR repository for Lambda container images
 # Defined here (not in lambda-api module) so IAM can scope permissions to this ARN
 # without creating a circular dependency (lambda-api depends on iam for the role ARN).
@@ -36,6 +38,40 @@ resource "aws_ecr_repository" "api" {
   tags = {
     Name = "${var.project_name}-${var.environment}-api-ecr"
   }
+}
+
+# ECR resource policy: allows Lambda service to pull the container image.
+# Lambda container images require BOTH an identity-based policy on the execution
+# role AND a resource-based policy on the repository. Using the Lambda service
+# principal with an aws:SourceAccount condition avoids a circular dependency
+# (IAM module → ECR ARN → IAM role ARN) while scoping access to this account only.
+data "aws_iam_policy_document" "ecr_lambda" {
+  statement {
+    sid    = "LambdaECRImageRetrievalPolicy"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+
+    actions = [
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage",
+      "ecr:BatchCheckLayerAvailability",
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+}
+
+resource "aws_ecr_repository_policy" "api" {
+  repository = aws_ecr_repository.api.name
+  policy     = data.aws_iam_policy_document.ecr_lambda.json
 }
 
 # Keep only the last 10 images to minimize storage costs
@@ -117,6 +153,9 @@ module "ses" {
 }
 
 # Lambda + API Gateway module
+# depends_on ensures the ECR repository policy exists before Lambda is created,
+# so the function can pull its container image. This replaces the need for
+# -target ordering in CI for anything beyond the bootstrap image push.
 module "lambda_api" {
   source = "./modules/lambda-api"
 
@@ -138,4 +177,6 @@ module "lambda_api" {
   cognito_client_id    = module.cognito.client_id
   s3_bucket_name       = module.s3_cloudfront.bucket_name
   cloudfront_url       = module.s3_cloudfront.cloudfront_url
+
+  depends_on = [aws_ecr_repository_policy.api]
 }
