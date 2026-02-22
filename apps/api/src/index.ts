@@ -53,7 +53,8 @@ const honoHandler = handle(app)
 // .bin symlinks (broken by workspace hoisting) or npx being available.
 // prisma is a dep of @surfaced-art/db so npm installs it under that workspace.
 const LAMBDA_ROOT = process.env.LAMBDA_TASK_ROOT ?? '/var/task'
-const PRISMA_MIGRATE_CMD = `node packages/db/node_modules/prisma/build/index.js migrate deploy`
+const PRISMA_CLI = `${LAMBDA_ROOT}/packages/db/node_modules/prisma/build/index.js`
+const PRISMA_MIGRATE_CMD = `node ${PRISMA_CLI} migrate deploy`
 
 // Lambda handler — supports two invocation modes:
 //   1. API Gateway (normal HTTP traffic) — delegated to Hono

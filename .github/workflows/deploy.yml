@@ -203,21 +203,32 @@ jobs:
         env:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
+          # Keep in sync with PRISMA_CLI in apps/api/src/index.ts
+          PRISMA_CLI_PATH: /var/task/packages/db/node_modules/prisma/build/index.js
         run: |
           echo "Checking container has required files..."
-          docker run --rm --entrypoint="" $ECR_REPOSITORY_URL:$IMAGE_TAG \
-            sh -c "
-              set -e
-              echo '--- Handler bundle ---'
-              ls -la /var/task/index.js
-              echo '--- Prisma CLI ---'
-              ls -la /var/task/packages/db/node_modules/prisma/build/index.js
-              echo '--- Prisma schema ---'
-              ls -la /var/task/prisma/schema.prisma
-              echo '--- Prisma migrations ---'
-              ls /var/task/prisma/migrations/
-              echo 'All required files present.'
-            "
+          docker run --rm --entrypoint="" \
+            -e PRISMA_CLI_PATH="$PRISMA_CLI_PATH" \
+            $ECR_REPOSITORY_URL:$IMAGE_TAG \
+            sh -c '
+              ok=true
+              for f in \
+                /var/task/index.js \
+                "$PRISMA_CLI_PATH" \
+                /var/task/prisma/schema.prisma; do
+                if test -f "$f"; then
+                  echo "OK   $f"
+                else
+                  echo "MISSING $f" >&2; ok=false
+                fi
+              done
+              if ! test -d /var/task/prisma/migrations; then
+                echo "MISSING /var/task/prisma/migrations/" >&2; ok=false
+              else
+                echo "OK   /var/task/prisma/migrations/"
+              fi
+              $ok && echo "All required files present." || { echo "Validation failed" >&2; exit 1; }
+            '
 
       - name: Push Docker image
         env:
