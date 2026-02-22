@@ -92,6 +92,42 @@ resource "aws_ecr_lifecycle_policy" "api" {
   })
 }
 
+# ECR repository for migration Lambda container images
+resource "aws_ecr_repository" "migrate" {
+  name                 = "${var.project_name}-${var.environment}-migrate"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-migrate-ecr"
+  }
+}
+
+resource "aws_ecr_repository_policy" "migrate" {
+  repository = aws_ecr_repository.migrate.name
+  policy     = data.aws_iam_policy_document.ecr_lambda.json
+}
+
+resource "aws_ecr_lifecycle_policy" "migrate" {
+  repository = aws_ecr_repository.migrate.name
+
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep last ${var.migrate_ecr_max_images} images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = var.migrate_ecr_max_images
+      }
+      action = { type = "expire" }
+    }]
+  })
+}
+
 # IAM module - creates roles and policies
 module "iam" {
   source = "./modules/iam"
@@ -100,9 +136,9 @@ module "iam" {
   environment  = var.environment
   aws_region   = var.aws_region
 
-  s3_bucket_arn             = module.s3_cloudfront.bucket_arn
-  ses_domain                = var.ses_domain
-  lambda_ecr_repository_arn = aws_ecr_repository.api.arn
+  s3_bucket_arn              = module.s3_cloudfront.bucket_arn
+  ses_domain                 = var.ses_domain
+  lambda_ecr_repository_arns = [aws_ecr_repository.api.arn, aws_ecr_repository.migrate.arn]
 }
 
 # RDS PostgreSQL module
@@ -117,7 +153,11 @@ module "rds" {
   db_name         = var.db_name
   db_username     = var.db_username
   db_password     = var.db_password
-  lambda_sg_id    = module.lambda_api.security_group_id
+  # Not a circular dependency: Terraform resolves at the resource level, not module level.
+  # The SG resources in lambda_api/lambda_migrate have no dependency on RDS, so Terraform
+  # creates them first, then the RDS SG (which references them), then the DB instance,
+  # then the Lambda functions (which consume the connection string).
+  lambda_sg_ids   = [module.lambda_api.security_group_id, module.lambda_migrate.security_group_id]
 }
 
 # S3 + CloudFront module
@@ -179,4 +219,20 @@ module "lambda_api" {
   cloudfront_url       = module.s3_cloudfront.cloudfront_url
 
   depends_on = [aws_ecr_repository_policy.api]
+}
+
+# Migration Lambda module — runs prisma migrate deploy within the VPC
+module "lambda_migrate" {
+  source = "./modules/lambda-migrate"
+
+  project_name          = var.project_name
+  environment           = var.environment
+  vpc_id                = data.aws_vpc.default.id
+  vpc_cidr              = data.aws_vpc.default.cidr_block
+  subnet_ids            = data.aws_subnets.default.ids
+  lambda_role_arn       = module.iam.lambda_role_arn
+  placeholder_image_uri = var.placeholder_image_uri
+  database_url          = module.rds.connection_string
+
+  depends_on = [aws_ecr_repository_policy.migrate]
 }
