@@ -242,6 +242,12 @@ Red flags that indicate a hacky approach:
 - Swallowing errors to work around unexpected failures
 - Adding workarounds that "only need to run once" but stay in the codebase forever
 - Fighting the tool instead of using it as designed
+- Hand-editing generated files (lockfiles, build artifacts, etc.) instead of letting the toolchain regenerate them properly
+
+### Lockfile Rules
+
+- **NEVER delete `package-lock.json` and regenerate from scratch.** Regenerating on a single platform loses cross-platform optional dependency resolution (e.g., Linux native bindings needed by Vercel/CI). Always run `npm install` on the existing lockfile to apply incremental changes.
+- **NEVER hand-edit `package-lock.json`.** If npm leaves stale entries (e.g., after a workspace move), fix the root cause (remove stale `node_modules/` directories, re-run `npm install`) rather than editing the JSON directly. If `npm install` doesn't fix it, ask the user before taking manual action.
 
 If any of these arise, pause and present the user with:
 1. What the hack is and why it's needed
