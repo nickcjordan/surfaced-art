@@ -159,16 +159,26 @@ jobs:
           push_bootstrap_if_empty "$MIGRATE_ECR_URL" "Migrate"
 
           # Determine placeholder URI for Terraform (API ECR as source of truth).
-          # Both Lambda modules use this same URI on first create; lifecycle rules
-          # ignore image_uri after that and CI manages actual deployments.
+          # Both Lambda modules share this same placeholder_image_uri on initial
+          # creation only. After first deploy, lifecycle { ignore_changes = [image_uri] }
+          # takes over and CI manages each Lambda's image independently.
           API_ECR_REPO="${API_ECR_URL##*/}"
           if aws ecr describe-images \
               --repository-name "$API_ECR_REPO" \
               --image-ids imageTag=latest &>/dev/null; then
             echo "API ECR has :latest — using as placeholder"
             echo "placeholder_uri=$API_ECR_URL:latest" >> "$GITHUB_OUTPUT"
+          elif aws ecr describe-images \
+              --repository-name "$API_ECR_REPO" \
+              --image-ids imageTag=bootstrap &>/dev/null; then
+            echo "API ECR has :bootstrap — using as placeholder"
+            echo "placeholder_uri=$API_ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
           else
-            echo "Using :bootstrap as placeholder"
+            # Neither :latest nor :bootstrap exists (repo has only custom tags).
+            # Push :bootstrap so the placeholder URI points to a real image.
+            echo "No :latest or :bootstrap — pushing :bootstrap now"
+            docker tag "$LAMBDA_BOOTSTRAP_IMAGE" "$API_ECR_URL:bootstrap"
+            docker push "$API_ECR_URL:bootstrap"
             echo "placeholder_uri=$API_ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
           fi
 
@@ -235,6 +245,7 @@ jobs:
             -t $ECR_REPOSITORY_URL:latest \
             .
 
+      # Paths validated here must match the Dockerfile layout (apps/api/Dockerfile).
       - name: Validate API container
         env:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
@@ -274,6 +285,8 @@ jobs:
 
       # --- Migration Lambda ---
 
+      # Build context must be monorepo root (.) because the Dockerfile COPYs
+      # package.json, package-lock.json, and workspace manifests from the root.
       - name: Build migrate Docker image
         env:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.migrate_ecr_repository_url }}
@@ -284,6 +297,8 @@ jobs:
             -t $ECR_REPOSITORY_URL:latest \
             .
 
+      # Paths validated here must match the Dockerfile layout (tools/migrate/Dockerfile)
+      # and the runtime constants in tools/migrate/src/index.ts (PRISMA_CLI path).
       - name: Validate migrate container
         env:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.migrate_ecr_repository_url }}
