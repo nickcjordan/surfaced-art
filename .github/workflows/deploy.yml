@@ -18,9 +18,8 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
   # Bootstrap image: pushed to private ECR on first deploy so Lambda has a valid image URI.
   # Must match the default in infrastructure/terraform/modules/lambda-api/variables.tf.
-  # To pin to a digest: docker manifest inspect public.ecr.aws/lambda/nodejs:20
-  # then replace the tag with @sha256:<digest>.
-  LAMBDA_BOOTSTRAP_IMAGE: 'public.ecr.aws/lambda/nodejs:20'
+  # To update the digest: curl -sL "https://public.ecr.aws/token/?scope=repository:lambda/nodejs:pull&service=public.ecr.aws" | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])" | xargs -I{} curl -sI "https://public.ecr.aws/v2/lambda/nodejs/manifests/20" -H "Authorization: Bearer {}" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" | grep docker-content-digest
+  LAMBDA_BOOTSTRAP_IMAGE: 'public.ecr.aws/lambda/nodejs@sha256:b1d950b97aaedc054c6c9c5409c98cf5c8f29de370a6f344113e1aeeaa441707'
 
 jobs:
   build:
