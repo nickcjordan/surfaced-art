@@ -77,7 +77,6 @@ variable "cloudfront_url" {
 }
 
 variable "placeholder_image_uri" {
-  description = "Lambda base image URI used as a placeholder until CI/CD deploys the service image. Must match LAMBDA_BOOTSTRAP_IMAGE in .github/workflows/deploy.yml."
+  description = "Lambda base image URI used as a placeholder until CI/CD deploys the service image. Value is passed from the root module; source of truth is LAMBDA_BOOTSTRAP_IMAGE in .github/workflows/deploy.yml."
   type        = string
-  default     = "public.ecr.aws/lambda/nodejs@sha256:b1d950b97aaedc054c6c9c5409c98cf5c8f29de370a6f344113e1aeeaa441707"
 }

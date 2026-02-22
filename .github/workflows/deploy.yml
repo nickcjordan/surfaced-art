@@ -16,9 +16,10 @@ env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
-  # Bootstrap image: pushed to private ECR on first deploy so Lambda has a valid image URI.
-  # Must match the default in infrastructure/terraform/modules/lambda-api/variables.tf.
-  # To update the digest: curl -sL "https://public.ecr.aws/token/?scope=repository:lambda/nodejs:pull&service=public.ecr.aws" | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])" | xargs -I{} curl -sI "https://public.ecr.aws/v2/lambda/nodejs/manifests/20" -H "Authorization: Bearer {}" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" | grep docker-content-digest
+  # Bootstrap image: pulled and pushed to private ECR on first deploy so Lambda has a valid
+  # image URI at creation time. This is the single source of truth for the base image digest.
+  # The Terraform placeholder_image_uri variable default mirrors this value for local runs only;
+  # CI always overrides it via -var. To refresh the digest: bash scripts/get-lambda-bootstrap-digest.sh
   LAMBDA_BOOTSTRAP_IMAGE: 'public.ecr.aws/lambda/nodejs@sha256:b1d950b97aaedc054c6c9c5409c98cf5c8f29de370a6f344113e1aeeaa441707'
 
 jobs:
@@ -118,7 +119,8 @@ jobs:
             -var-file="environments/prod.tfvars" \
             -var="db_password=${{ secrets.TF_VAR_db_password }}" \
             -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
-            -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}"
+            -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}" \
+            -var="placeholder_image_uri=${{ env.LAMBDA_BOOTSTRAP_IMAGE }}"
 
       - name: Login to Amazon ECR (bootstrap)
         uses: aws-actions/amazon-ecr-login@v2
@@ -138,11 +140,11 @@ jobs:
             echo "ECR is empty — pushing bootstrap image..."
             docker pull "$LAMBDA_BOOTSTRAP_IMAGE"
             docker tag "$LAMBDA_BOOTSTRAP_IMAGE" "$ECR_URL:bootstrap"
-            docker push $ECR_URL:bootstrap
-            echo "placeholder_uri=$ECR_URL:bootstrap" >> $GITHUB_OUTPUT
+            docker push "$ECR_URL:bootstrap"
+            echo "placeholder_uri=$ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
           else
             echo "ECR already has $IMAGE_COUNT image(s) — skipping bootstrap"
-            echo "placeholder_uri=$ECR_URL:latest" >> $GITHUB_OUTPUT
+            echo "placeholder_uri=$ECR_URL:latest" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Terraform Apply
