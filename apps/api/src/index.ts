@@ -55,6 +55,7 @@ const honoHandler = handle(app)
 const LAMBDA_ROOT = process.env.LAMBDA_TASK_ROOT ?? '/var/task'
 const PRISMA_CLI = `${LAMBDA_ROOT}/packages/db/node_modules/prisma/build/index.js`
 const PRISMA_CMD = `node ${PRISMA_CLI}`
+const BASELINE_MIGRATION = '20250101000000_baseline'
 
 // Lambda handler — supports two invocation modes:
 //   1. API Gateway (normal HTTP traffic) — delegated to Hono
@@ -70,13 +71,18 @@ export const handler = async (
       const execOpts = { cwd: LAMBDA_ROOT, encoding: 'utf-8' as const }
       try {
         // Mark the baseline migration as already applied (DB was created
-        // with db push). No-ops after the first successful run. Errors
-        // are expected once the baseline is already recorded.
+        // with db push). No-ops after the first successful run; Prisma
+        // errors with "already recorded" once the baseline is in the table.
         try {
-          execSync(`${PRISMA_CMD} migrate resolve --applied 20250101000000_baseline`, execOpts)
+          execSync(`${PRISMA_CMD} migrate resolve --applied ${BASELINE_MIGRATION}`, execOpts)
           console.log('Baseline migration marked as applied')
-        } catch {
-          // Already resolved — safe to ignore
+        } catch (resolveErr: unknown) {
+          const msg = resolveErr instanceof Error ? resolveErr.message : String(resolveErr)
+          if (msg.includes('already recorded') || msg.includes('already been applied')) {
+            console.log('Baseline already applied, skipping')
+          } else {
+            console.warn('Baseline resolve failed (proceeding with deploy):', msg)
+          }
         }
 
         const output = execSync(`${PRISMA_CMD} migrate deploy`, execOpts)
