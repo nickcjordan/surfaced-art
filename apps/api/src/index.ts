@@ -49,6 +49,11 @@ type CommandEvent = {
 
 const honoHandler = handle(app)
 
+// Resolve Prisma CLI from node_modules directly — avoids depending on
+// .bin symlinks (broken by workspace hoisting) or npx being available.
+const LAMBDA_ROOT = process.env.LAMBDA_TASK_ROOT ?? '/var/task'
+const PRISMA_MIGRATE_CMD = `node node_modules/prisma/build/index.js migrate deploy`
+
 // Lambda handler — supports two invocation modes:
 //   1. API Gateway (normal HTTP traffic) — delegated to Hono
 //   2. Direct invocation with { command: 'migrate' } — runs Prisma migrations
@@ -61,8 +66,8 @@ export const handler = async (
     if (event.command === 'migrate') {
       const { execSync } = await import('child_process')
       try {
-        const output = execSync('node_modules/.bin/prisma migrate deploy', {
-          cwd: process.env.LAMBDA_TASK_ROOT ?? '/var/task',
+        const output = execSync(PRISMA_MIGRATE_CMD, {
+          cwd: LAMBDA_ROOT,
           encoding: 'utf-8',
         })
         console.log('Migration output:', output)
