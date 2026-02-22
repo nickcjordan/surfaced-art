@@ -20,6 +20,8 @@ COPY packages/utils/package.json ./packages/utils/package.json
 RUN npm ci
 
 # Copy the pre-built self-contained API bundle (produced by tsup in CI).
+# This is an ESM bundle — it relies on the root package.json "type": "module"
+# (copied above) so the Lambda Node 20 runtime loads it via import().
 COPY apps/api/dist/index.js ./index.js
 
 # Copy Prisma files needed by `prisma migrate deploy`:
