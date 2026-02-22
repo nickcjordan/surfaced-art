@@ -20,8 +20,7 @@ COPY packages/utils/package.json ./packages/utils/package.json
 RUN npm ci
 
 # Copy the pre-built self-contained API bundle (produced by tsup in CI).
-# Renamed from .cjs to .js for Lambda handler compatibility.
-COPY apps/api/dist/index.cjs ./index.js
+COPY apps/api/dist/index.js ./index.js
 
 # Copy Prisma files needed by `prisma migrate deploy`:
 #   prisma/schema.prisma   - schema definition
