@@ -282,3 +282,53 @@ export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 's
   processMedia: ArtistProcessMedia[]
   listings: ListingWithImages[]
 }
+
+// ─── Listings API Response Types ────────────────────────────────────
+
+/**
+ * Lightweight artist summary embedded in listing responses
+ */
+export interface ArtistSummary {
+  displayName: string
+  slug: string
+  profileImageUrl: string | null
+  location: string
+}
+
+/**
+ * Artist summary with categories, used in listing detail response
+ */
+export interface ArtistSummaryWithCategories extends ArtistSummary {
+  categories: CategoryType[]
+}
+
+/**
+ * A single listing in the paginated list response.
+ * Includes primary image (first by sort_order) and lightweight artist summary.
+ */
+export interface ListingListItem extends Listing {
+  primaryImage: ListingImage | null
+  artist: ArtistSummary
+}
+
+/**
+ * Full listing detail response for GET /listings/:id.
+ * Includes all images sorted by sort_order and artist summary with categories.
+ */
+export interface ListingDetailResponse extends Listing {
+  images: ListingImage[]
+  artist: ArtistSummaryWithCategories
+}
+
+/**
+ * Generic paginated response envelope
+ */
+export interface PaginatedResponse<T> {
+  data: T[]
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}

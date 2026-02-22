@@ -260,6 +260,13 @@ jobs:
                   echo "MISSING $f" >&2; ok=false
                 fi
               done
+              # Verify Prisma WASM query compiler chunks were copied
+              count=$(ls /var/task/query_compiler_fast_bg.postgresql*.js 2>/dev/null | wc -l)
+              if [ "$count" -ge 1 ]; then
+                echo "OK   Prisma WASM chunks ($count files)"
+              else
+                echo "MISSING Prisma WASM chunks (query_compiler_fast_bg.postgresql*.js)" >&2; ok=false
+              fi
               $ok && echo "All required files present." || { echo "Validation failed" >&2; exit 1; }
             '
 
