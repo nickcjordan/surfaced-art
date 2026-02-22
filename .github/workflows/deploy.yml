@@ -103,6 +103,44 @@ jobs:
             module.lambda_api.aws_ecr_lifecycle_policy.api \
             aws_ecr_lifecycle_policy.api 2>/dev/null || true
 
+      # Bootstrap: create ECR repo before Lambda so we can push an image.
+      # Lambda (package_type=Image) requires a private ECR image; public ECR URIs are invalid.
+      - name: Bootstrap ECR Repository
+        working-directory: infrastructure/terraform
+        run: |
+          terraform apply -auto-approve -input=false \
+            -target=aws_ecr_repository.api \
+            -target=aws_ecr_lifecycle_policy.api \
+            -var-file="environments/prod.tfvars" \
+            -var="db_password=${{ secrets.TF_VAR_db_password }}" \
+            -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
+            -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}"
+
+      - name: Login to Amazon ECR (bootstrap)
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Only push bootstrap image on first deploy (when ECR is empty).
+      # Subsequent deploys already have a valid image from a previous deploy-lambda run.
+      - name: Push bootstrap image to ECR if empty
+        id: bootstrap
+        working-directory: infrastructure/terraform
+        run: |
+          ECR_URL=$(terraform output -raw ecr_repository_url)
+          IMAGE_COUNT=$(aws ecr describe-images \
+            --repository-name surfaced-art-prod-api \
+            --query 'length(imageDetails)' \
+            --output text 2>/dev/null || echo "0")
+          if [ "$IMAGE_COUNT" = "0" ]; then
+            echo "ECR is empty — pushing bootstrap image..."
+            docker pull public.ecr.aws/lambda/nodejs20.x:latest
+            docker tag public.ecr.aws/lambda/nodejs20.x:latest $ECR_URL:bootstrap
+            docker push $ECR_URL:bootstrap
+            echo "placeholder_uri=$ECR_URL:bootstrap" >> $GITHUB_OUTPUT
+          else
+            echo "ECR already has $IMAGE_COUNT image(s) — skipping bootstrap"
+            echo "placeholder_uri=$ECR_URL:latest" >> $GITHUB_OUTPUT
+          fi
+
       - name: Terraform Apply
         working-directory: infrastructure/terraform
         run: |
@@ -110,7 +148,8 @@ jobs:
             -var-file="environments/prod.tfvars" \
             -var="db_password=${{ secrets.TF_VAR_db_password }}" \
             -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
-            -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}"
+            -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}" \
+            -var="placeholder_image_uri=${{ steps.bootstrap.outputs.placeholder_uri }}"
 
       - name: Get Terraform Outputs
         id: output
