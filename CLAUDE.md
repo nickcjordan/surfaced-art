@@ -37,9 +37,79 @@ Before making changes, read the relevant documentation in `docs/`:
 - Use Next.js Image with `unoptimized` prop
 - Use Sharp for image processing
 
-## Development Workflow
+## Issue-Driven Development Process
 
-### For Every Task
+### Planning → Issues → Implementation
+
+This project uses a two-layer workflow:
+
+- **Notion** is the planning layer — product decisions, phase planning, specs, design work
+- **GitHub Issues** are the execution layer — trackable dev tasks with clear acceptance criteria
+
+### How tasks flow
+
+1. **Design session** (Claude.ai or Claude Code) — discuss what to build, make decisions
+2. **Create GitHub Issue** — use the "Dev Task" template, capturing design context, acceptance criteria, and scope
+3. **Implementation** (Claude Code) — pick up the issue, create a feature branch, do the work
+4. **PR** — open a PR linked to the issue with "Closes #N" in the description
+5. **Review & merge** — human reviews and merges; issue auto-closes
+
+### Issue workflow labels
+
+| Label | Meaning |
+|-------|---------|
+| `ready` | Task is fully specified and ready to be picked up |
+| `in-progress` | Currently being worked on |
+| `blocked` | Waiting on a dependency or decision |
+
+### Creating issues (for Claude)
+
+When creating issues from a design session:
+
+1. Use the **Dev Task** issue template
+2. Fill in **Design Context** with key decisions and rationale from the session
+3. Link to relevant **Notion pages** for background
+4. Write **Acceptance Criteria** as specific, testable conditions
+5. List the **Scope** (affected packages/files) so the implementer knows the blast radius
+6. Add area labels (`frontend`, `backend`, `database`, `infrastructure`, etc.)
+7. Set the `ready` label when the issue is fully specified
+
+```bash
+# Create an issue from CLI
+gh issue create --title "feat(web): add artist profile header" \
+  --label "ready,frontend" \
+  --body "$(cat <<'EOF'
+## Summary
+...
+
+## Design Context
+...
+
+## Acceptance Criteria
+- [ ] ...
+EOF
+)"
+
+# Pick up an issue — label it in-progress
+gh issue edit <number> --remove-label "ready" --add-label "in-progress"
+
+# After opening the PR that closes it
+gh issue edit <number> --remove-label "in-progress"
+```
+
+### Picking up issues (for Claude Code)
+
+When starting work on an issue:
+
+1. Read the issue: `gh issue view <number>`
+2. Label it `in-progress`: `gh issue edit <number> --remove-label "ready" --add-label "in-progress"`
+3. Create a feature branch: `git checkout -b feat/<short-description> dev`
+4. Implement following the acceptance criteria
+5. Run all quality gates
+6. Open a PR with "Closes #N" in the body
+7. Remove `in-progress` label: `gh issue edit <number> --remove-label "in-progress"`
+
+### For Every Task (implementation)
 
 1. **Write tests first** (TDD approach using Vitest)
 2. **Implement code** to make tests pass
@@ -156,6 +226,25 @@ Required in `.env` files (never commit these):
 DATABASE_URL=postgresql://[user]:[password]@[host]:5432/[dbname]
 AWS_REGION=us-east-1
 ```
+
+## No Shortcuts Policy
+
+**NEVER take a shortcut or "convenient" approach.** This project is pre-launch with zero users — the cost of doing things right is at its lowest. Every shortcut taken now compounds later.
+
+Before implementing any approach, ask: **"Is this the proper way to do this, or am I cutting a corner?"** If you sense you're working around a problem rather than solving it properly, **STOP and explain the situation to the user** before continuing. Let the user decide whether to accept the tradeoff.
+
+Red flags that indicate a hacky approach:
+- Symlinks or path hacks to fix module resolution
+- Dual-purposing a component for unrelated responsibilities
+- Hardcoding internal paths of third-party packages
+- Swallowing errors to work around unexpected failures
+- Adding workarounds that "only need to run once" but stay in the codebase forever
+- Fighting the tool instead of using it as designed
+
+If any of these arise, pause and present the user with:
+1. What the hack is and why it's needed
+2. What the proper solution looks like
+3. The cost/effort difference between the two
 
 ## Quality Checklist Before Each Commit
 
