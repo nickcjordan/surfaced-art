@@ -128,8 +128,9 @@ module "lambda_api" {
   subnet_ids      = data.aws_subnets.default.ids
   memory_size     = var.lambda_memory_size
   timeout         = var.lambda_timeout
-  lambda_role_arn = module.iam.lambda_role_arn
-  frontend_url    = var.frontend_url
+  lambda_role_arn       = module.iam.lambda_role_arn
+  frontend_url          = var.frontend_url
+  placeholder_image_uri = var.placeholder_image_uri
 
   # Environment variables for Lambda
   database_url     = module.rds.connection_string
