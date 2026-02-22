@@ -1,4 +1,5 @@
 import { execSync } from 'child_process'
+import fs from 'node:fs'
 
 const LAMBDA_ROOT = process.env.LAMBDA_TASK_ROOT ?? '/var/task'
 
@@ -8,12 +9,13 @@ const PRISMA_CLI = `${LAMBDA_ROOT}/node_modules/prisma/build/index.js`
 const PRISMA_CMD = `node ${PRISMA_CLI}`
 
 // The baseline migration was created from the initial schema that was
-// bootstrapped with `prisma db push`. It must be marked as "already applied"
-// before `prisma migrate deploy` can run, since the tables already exist.
-const BASELINE_MIGRATION = '20250101000000_baseline'
+// bootstrapped with `prisma db push`. Configurable via env var so schema
+// changes or baseline regeneration don't require code changes.
+const BASELINE_MIGRATION =
+  process.env.BASELINE_MIGRATION ?? '20250101000000_baseline'
 
 interface MigrateEvent {
-  command: 'migrate'
+  command: string
 }
 
 interface MigrateResult {
@@ -24,6 +26,20 @@ interface MigrateResult {
 export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
   if (event.command !== 'migrate') {
     return { success: false, error: `Unknown command: ${event.command}` }
+  }
+
+  if (!fs.existsSync(LAMBDA_ROOT)) {
+    return {
+      success: false,
+      error: `Invalid LAMBDA_TASK_ROOT: ${LAMBDA_ROOT} (directory does not exist)`,
+    }
+  }
+
+  if (!fs.existsSync(PRISMA_CLI)) {
+    return {
+      success: false,
+      error: `Prisma CLI not found at expected path: ${PRISMA_CLI}`,
+    }
   }
 
   const execOpts = { cwd: LAMBDA_ROOT, encoding: 'utf-8' as const }
@@ -47,7 +63,8 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
       ) {
         console.log('Baseline already applied, skipping')
       } else {
-        console.warn('Baseline resolve failed (proceeding with deploy):', msg)
+        console.error('Baseline resolve failed:', msg)
+        return { success: false, error: `Baseline resolve failed: ${msg}` }
       }
     }
 
@@ -55,6 +72,17 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
     console.log('Migration output:', output)
     return { success: true }
   } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as NodeJS.ErrnoException).code === 'ENOENT'
+    ) {
+      return {
+        success: false,
+        error: `Prisma CLI not found at ${PRISMA_CLI} (ENOENT). Check LAMBDA_TASK_ROOT and deployment artifacts.`,
+      }
+    }
     const message = err instanceof Error ? err.message : String(err)
     console.error('Migration failed:', message)
     return { success: false, error: message }
