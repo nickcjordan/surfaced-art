@@ -16,6 +16,11 @@ env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  # Bootstrap image: pushed to private ECR on first deploy so Lambda has a valid image URI.
+  # Must match the default in infrastructure/terraform/modules/lambda-api/variables.tf.
+  # To pin to a digest: docker manifest inspect public.ecr.aws/lambda/nodejs:20
+  # then replace the tag with @sha256:<digest>.
+  LAMBDA_BOOTSTRAP_IMAGE: 'public.ecr.aws/lambda/nodejs:20'
 
 jobs:
   build:
@@ -132,8 +137,8 @@ jobs:
             --output text 2>/dev/null || echo "0")
           if [ "$IMAGE_COUNT" = "0" ]; then
             echo "ECR is empty — pushing bootstrap image..."
-            docker pull public.ecr.aws/lambda/nodejs:20
-            docker tag public.ecr.aws/lambda/nodejs:20 $ECR_URL:bootstrap
+            docker pull "$LAMBDA_BOOTSTRAP_IMAGE"
+            docker tag "$LAMBDA_BOOTSTRAP_IMAGE" "$ECR_URL:bootstrap"
             docker push $ECR_URL:bootstrap
             echo "placeholder_uri=$ECR_URL:bootstrap" >> $GITHUB_OUTPUT
           else
