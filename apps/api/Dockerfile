@@ -3,7 +3,7 @@
 # (including its native migration engine binary) is available for
 # running `prisma migrate deploy` from within the VPC.
 
-FROM public.ecr.aws/lambda/nodejs20.x:latest
+FROM public.ecr.aws/lambda/nodejs:20
 
 WORKDIR ${LAMBDA_TASK_ROOT}
 
