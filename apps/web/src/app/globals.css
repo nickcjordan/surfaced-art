@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
+/*
+ * Surfaced Art — Gallery-quality design tokens
+ *
+ * Palette: warm neutrals inspired by Aesop / Soho House / high-end gallery aesthetics.
+ * Typography: serif headings (DM Serif Display), clean sans body (DM Sans).
+ * No blue. No default Tailwind colors. No generic SaaS look.
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Background & surface */
+  --gallery-bg: #FAFAF8;
+  --gallery-surface: #F2F0ED;
+
+  /* Text */
+  --gallery-foreground: #1A1A1A;
+  --gallery-muted: #6B6460;
+
+  /* Borders & dividers */
+  --gallery-border: #E5E0DB;
+
+  /* Accents (muted gold & warm terracotta — used sparingly) */
+  --gallery-accent: #B8956A;
+  --gallery-accent-warm: #C4775A;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Gallery color palette */
+  --color-gallery-bg: var(--gallery-bg);
+  --color-gallery-surface: var(--gallery-surface);
+  --color-gallery-foreground: var(--gallery-foreground);
+  --color-gallery-muted: var(--gallery-muted);
+  --color-gallery-border: var(--gallery-border);
+  --color-gallery-accent: var(--gallery-accent);
+  --color-gallery-accent-warm: var(--gallery-accent-warm);
+
+  /*
+   * Font stacks: next/font injects --font-dm-serif-display and --font-dm-sans
+   * as CSS custom properties on <body>. We reference them here with fallbacks.
+   */
+  --font-serif: var(--font-dm-serif-display, Georgia), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-dm-sans, 'Helvetica Neue'), 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Remove dark mode for now — the gallery aesthetic is light */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--gallery-bg);
+  color: var(--gallery-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Gallery-quality typography defaults */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+}
+
+/* Links: clean by default, underline on hover/focus for discoverability */
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--gallery-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Selection highlight in warm accent */
+::selection {
+  background-color: var(--gallery-accent);
+  color: var(--gallery-bg);
 }
