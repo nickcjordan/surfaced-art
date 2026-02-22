@@ -2,8 +2,10 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { handle } from 'hono/aws-lambda'
+import { prisma } from '@surfaced-art/db'
 
 import { healthRoutes } from './routes/health'
+import { createArtistRoutes } from './routes/artists'
 
 // Create Hono app
 const app = new Hono()
@@ -21,6 +23,7 @@ app.use(
 
 // Mount routes
 app.route('/health', healthRoutes)
+app.route('/artists', createArtistRoutes(prisma))
 
 // Root route
 app.get('/', (c) => {

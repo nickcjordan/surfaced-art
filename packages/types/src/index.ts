@@ -37,4 +37,7 @@ export type {
   Save,
   Follow,
   Waitlist,
+  // API response types
+  ListingWithImages,
+  ArtistProfileResponse,
 } from './interfaces'

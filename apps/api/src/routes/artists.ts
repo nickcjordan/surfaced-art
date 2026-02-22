@@ -1,0 +1,116 @@
+import { Hono } from 'hono'
+import type { PrismaClient } from '@surfaced-art/db'
+import type { ArtistProfileResponse } from '@surfaced-art/types'
+
+export function createArtistRoutes(prisma: PrismaClient) {
+  const artists = new Hono()
+
+  /**
+   * GET /artists/:slug
+   * Returns a full artist profile with categories, CV entries, process media, and listings
+   */
+  artists.get('/:slug', async (c) => {
+    const slug = c.req.param('slug')
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { slug },
+      include: {
+        categories: true,
+        cvEntries: {
+          orderBy: { sortOrder: 'asc' },
+        },
+        processMedia: {
+          orderBy: { sortOrder: 'asc' },
+        },
+        listings: {
+          include: {
+            images: {
+              orderBy: { sortOrder: 'asc' },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    })
+
+    if (!artist || artist.status !== 'approved') {
+      return c.json({ error: 'Artist not found' }, 404)
+    }
+
+    const response: ArtistProfileResponse = {
+      id: artist.id,
+      displayName: artist.displayName,
+      slug: artist.slug,
+      bio: artist.bio,
+      location: artist.location,
+      websiteUrl: artist.websiteUrl,
+      instagramUrl: artist.instagramUrl,
+      status: artist.status,
+      commissionsOpen: artist.commissionsOpen,
+      coverImageUrl: artist.coverImageUrl,
+      profileImageUrl: artist.profileImageUrl,
+      createdAt: artist.createdAt,
+      updatedAt: artist.updatedAt,
+      categories: artist.categories.map((c) => c.category),
+      cvEntries: artist.cvEntries.map((entry) => ({
+        id: entry.id,
+        artistId: entry.artistId,
+        type: entry.type,
+        title: entry.title,
+        institution: entry.institution,
+        year: entry.year,
+        description: entry.description,
+        sortOrder: entry.sortOrder,
+      })),
+      processMedia: artist.processMedia.map((media) => ({
+        id: media.id,
+        artistId: media.artistId,
+        type: media.type,
+        url: media.url,
+        videoAssetId: media.videoAssetId,
+        videoPlaybackId: media.videoPlaybackId,
+        videoProvider: media.videoProvider,
+        sortOrder: media.sortOrder,
+        createdAt: media.createdAt,
+      })),
+      listings: artist.listings.map((listing) => ({
+        id: listing.id,
+        artistId: listing.artistId,
+        type: listing.type,
+        title: listing.title,
+        description: listing.description,
+        medium: listing.medium,
+        category: listing.category,
+        price: listing.price,
+        status: listing.status,
+        isDocumented: listing.isDocumented,
+        quantityTotal: listing.quantityTotal,
+        quantityRemaining: listing.quantityRemaining,
+        artworkLength: listing.artworkLength ? Number(listing.artworkLength) : null,
+        artworkWidth: listing.artworkWidth ? Number(listing.artworkWidth) : null,
+        artworkHeight: listing.artworkHeight ? Number(listing.artworkHeight) : null,
+        packedLength: Number(listing.packedLength),
+        packedWidth: Number(listing.packedWidth),
+        packedHeight: Number(listing.packedHeight),
+        packedWeight: Number(listing.packedWeight),
+        editionNumber: listing.editionNumber,
+        editionTotal: listing.editionTotal,
+        reservedUntil: listing.reservedUntil,
+        createdAt: listing.createdAt,
+        updatedAt: listing.updatedAt,
+        images: listing.images.map((img) => ({
+          id: img.id,
+          listingId: img.listingId,
+          url: img.url,
+          isProcessPhoto: img.isProcessPhoto,
+          sortOrder: img.sortOrder,
+          createdAt: img.createdAt,
+        })),
+      })),
+    }
+
+    return c.json(response)
+  })
+
+  return artists
+}
