@@ -162,6 +162,8 @@ Examples:
 │   ├── types/                # Shared TypeScript interfaces
 │   ├── db/                   # Prisma schema + client
 │   └── utils/                # Shared utilities
+├── tools/
+│   └── migrate/              # Database migration Lambda
 ├── infrastructure/
 │   └── terraform/            # All Terraform config
 ├── .github/

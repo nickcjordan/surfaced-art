@@ -10,7 +10,7 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 # Copy workspace package manifests so npm ci can resolve the full
 # dependency graph with the correct lock file.
 COPY package.json package-lock.json ./
-COPY apps/migrate/package.json ./apps/migrate/package.json
+COPY tools/migrate/package.json ./tools/migrate/package.json
 COPY packages/db/package.json ./packages/db/package.json
 COPY packages/types/package.json ./packages/types/package.json
 COPY packages/utils/package.json ./packages/utils/package.json
@@ -23,7 +23,7 @@ RUN npm ci
 
 # Copy the pre-built migration handler (produced by tsup in CI).
 # Root package.json "type": "module" (copied above) ensures ESM loading.
-COPY apps/migrate/dist/index.js ./index.js
+COPY tools/migrate/dist/index.js ./index.js
 
 # Copy Prisma files needed by `prisma migrate deploy`:
 #   prisma/schema.prisma   - schema definition
