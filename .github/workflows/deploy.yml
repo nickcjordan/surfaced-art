@@ -132,8 +132,9 @@ jobs:
         working-directory: infrastructure/terraform
         run: |
           ECR_URL=$(terraform output -raw ecr_repository_url)
+          ECR_REPO="${ECR_URL##*/}"
           IMAGE_COUNT=$(aws ecr describe-images \
-            --repository-name surfaced-art-prod-api \
+            --repository-name "$ECR_REPO" \
             --query 'length(imageDetails)' \
             --output text 2>/dev/null || echo "0")
           if [ "$IMAGE_COUNT" = "0" ]; then
@@ -143,8 +144,17 @@ jobs:
             docker push "$ECR_URL:bootstrap"
             echo "placeholder_uri=$ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
           else
-            echo "ECR already has $IMAGE_COUNT image(s) — skipping bootstrap"
-            echo "placeholder_uri=$ECR_URL:latest" >> "$GITHUB_OUTPUT"
+            # ECR has images. Prefer :latest (set by deploy-lambda on successful deploys).
+            # Fall back to :bootstrap if deploy-lambda has never completed successfully.
+            if aws ecr describe-images \
+                --repository-name "$ECR_REPO" \
+                --image-ids imageTag=latest &>/dev/null; then
+              echo "ECR has :latest — using it as placeholder"
+              echo "placeholder_uri=$ECR_URL:latest" >> "$GITHUB_OUTPUT"
+            else
+              echo "ECR has images but no :latest yet — using :bootstrap as placeholder"
+              echo "placeholder_uri=$ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
+            fi
           fi
 
       - name: Terraform Apply
