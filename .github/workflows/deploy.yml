@@ -189,7 +189,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         env:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
@@ -198,6 +198,32 @@ jobs:
             -t $ECR_REPOSITORY_URL:$IMAGE_TAG \
             -t $ECR_REPOSITORY_URL:latest \
             .
+
+      - name: Validate container contents
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "Checking container has required files..."
+          docker run --rm --entrypoint="" $ECR_REPOSITORY_URL:$IMAGE_TAG \
+            sh -c "
+              set -e
+              echo '--- Handler bundle ---'
+              ls -la /var/task/index.js
+              echo '--- Prisma CLI ---'
+              ls -la /var/task/packages/db/node_modules/prisma/build/index.js
+              echo '--- Prisma schema ---'
+              ls -la /var/task/prisma/schema.prisma
+              echo '--- Prisma migrations ---'
+              ls /var/task/prisma/migrations/
+              echo 'All required files present.'
+            "
+
+      - name: Push Docker image
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
           docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
           docker push $ECR_REPOSITORY_URL:latest
 
