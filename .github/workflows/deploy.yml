@@ -215,7 +215,8 @@ jobs:
               for f in \
                 /var/task/index.js \
                 "$PRISMA_CLI_PATH" \
-                /var/task/prisma/schema.prisma; do
+                /var/task/prisma/schema.prisma \
+                /var/task/node_modules/prisma/config.js; do
                 if test -f "$f"; then
                   echo "OK   $f"
                 else

@@ -17,7 +17,10 @@ COPY packages/utils/package.json ./packages/utils/package.json
 
 # Install dependencies. This downloads Prisma CLI with Linux-native
 # migration engine binaries matching the Lambda runtime environment.
-RUN npm ci
+# npm puts prisma in packages/db/node_modules/ (workspace dep). Symlink
+# it to the root so prisma.config.ts can resolve `import 'prisma/config'`.
+RUN npm ci && \
+    ln -s packages/db/node_modules/prisma node_modules/prisma
 
 # Copy the pre-built self-contained API bundle (produced by tsup in CI).
 # This is an ESM bundle — it relies on the root package.json "type": "module"
