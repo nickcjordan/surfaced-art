@@ -40,7 +40,7 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "lambda_sg_id" {
-  description = "Security group ID of the Lambda function"
-  type        = string
+variable "lambda_sg_ids" {
+  description = "Security group IDs of Lambda functions that need RDS access"
+  type        = list(string)
 }

@@ -40,9 +40,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma Client
-        run: npm run db:generate --workspace=@surfaced-art/db
-
       - name: Build
         run: npm run build
 
@@ -62,6 +59,13 @@ jobs:
           path: apps/api/dist/
           retention-days: 1
 
+      - name: Upload migrate artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: migrate-dist
+          path: tools/migrate/dist/
+          retention-days: 1
+
   terraform:
     name: Terraform Apply (prod)
     runs-on: ubuntu-latest
@@ -70,8 +74,10 @@ jobs:
 
     outputs:
       lambda_function_name: ${{ steps.output.outputs.lambda_function_name }}
+      migrate_function_name: ${{ steps.output.outputs.migrate_function_name }}
       api_gateway_url: ${{ steps.output.outputs.api_gateway_url }}
       ecr_repository_url: ${{ steps.output.outputs.ecr_repository_url }}
+      migrate_ecr_repository_url: ${{ steps.output.outputs.migrate_ecr_repository_url }}
 
     steps:
       - name: Checkout
@@ -96,15 +102,18 @@ jobs:
           terraform init \
             -backend-config="key=prod/terraform.tfstate"
 
-      # Bootstrap: create ECR repo before Lambda so we can push an image.
+      # Bootstrap: create ECR repos before Lambdas so we can push images.
       # Lambda (package_type=Image) requires a private ECR image; public ECR URIs are invalid.
-      - name: Bootstrap ECR Repository
+      - name: Bootstrap ECR Repositories
         working-directory: infrastructure/terraform
         run: |
           terraform apply -auto-approve -input=false \
             -target=aws_ecr_repository.api \
             -target=aws_ecr_lifecycle_policy.api \
             -target=aws_ecr_repository_policy.api \
+            -target=aws_ecr_repository.migrate \
+            -target=aws_ecr_lifecycle_policy.migrate \
+            -target=aws_ecr_repository_policy.migrate \
             -var-file="environments/prod.tfvars" \
             -var="db_password=${{ secrets.TF_VAR_db_password }}" \
             -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
@@ -114,36 +123,60 @@ jobs:
       - name: Login to Amazon ECR (bootstrap)
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Only push bootstrap image on first deploy (when ECR is empty).
-      # Subsequent deploys already have a valid image from a previous deploy-lambda run.
-      - name: Push bootstrap image to ECR if empty
+      # Push bootstrap image to any empty ECR repos on first deploy.
+      # Subsequent deploys already have valid images from previous deploy-lambdas runs.
+      - name: Push bootstrap image to ECR repos if empty
         id: bootstrap
         working-directory: infrastructure/terraform
         run: |
-          ECR_URL=$(terraform output -raw ecr_repository_url)
-          ECR_REPO="${ECR_URL##*/}"
-          IMAGE_COUNT=$(aws ecr describe-images \
-            --repository-name "$ECR_REPO" \
-            --query 'length(imageDetails)' \
-            --output text 2>/dev/null || echo "0")
-          if [ "$IMAGE_COUNT" = "0" ]; then
-            echo "ECR is empty — pushing bootstrap image..."
-            docker pull "$LAMBDA_BOOTSTRAP_IMAGE"
-            docker tag "$LAMBDA_BOOTSTRAP_IMAGE" "$ECR_URL:bootstrap"
-            docker push "$ECR_URL:bootstrap"
-            echo "placeholder_uri=$ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
-          else
-            # ECR has images. Prefer :latest (set by deploy-lambda on successful deploys).
-            # Fall back to :bootstrap if deploy-lambda has never completed successfully.
-            if aws ecr describe-images \
-                --repository-name "$ECR_REPO" \
-                --image-ids imageTag=latest &>/dev/null; then
-              echo "ECR has :latest — using it as placeholder"
-              echo "placeholder_uri=$ECR_URL:latest" >> "$GITHUB_OUTPUT"
-            else
-              echo "ECR has images but no :latest yet — using :bootstrap as placeholder"
-              echo "placeholder_uri=$ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
+          API_ECR_URL=$(terraform output -raw ecr_repository_url)
+          MIGRATE_ECR_URL=$(terraform output -raw migrate_ecr_repository_url)
+
+          push_bootstrap_if_empty() {
+            local ecr_url="$1"
+            local label="$2"
+            local ecr_repo="${ecr_url##*/}"
+            local image_count
+
+            image_count=$(aws ecr describe-images \
+              --repository-name "$ecr_repo" \
+              --query 'length(imageDetails)' \
+              --output text 2>/dev/null || echo "0")
+
+            if [ "$image_count" = "0" ]; then
+              echo "$label ECR is empty — pushing bootstrap image..."
+              docker tag "$LAMBDA_BOOTSTRAP_IMAGE" "$ecr_url:bootstrap"
+              docker push "$ecr_url:bootstrap"
             fi
+          }
+
+          # Pull bootstrap image once, push to any empty ECR repos
+          docker pull "$LAMBDA_BOOTSTRAP_IMAGE"
+          push_bootstrap_if_empty "$API_ECR_URL" "API"
+          push_bootstrap_if_empty "$MIGRATE_ECR_URL" "Migrate"
+
+          # Determine placeholder URI for Terraform (API ECR as source of truth).
+          # Both Lambda modules share this same placeholder_image_uri on initial
+          # creation only. After first deploy, lifecycle { ignore_changes = [image_uri] }
+          # takes over and CI manages each Lambda's image independently.
+          API_ECR_REPO="${API_ECR_URL##*/}"
+          if aws ecr describe-images \
+              --repository-name "$API_ECR_REPO" \
+              --image-ids imageTag=latest &>/dev/null; then
+            echo "API ECR has :latest — using as placeholder"
+            echo "placeholder_uri=$API_ECR_URL:latest" >> "$GITHUB_OUTPUT"
+          elif aws ecr describe-images \
+              --repository-name "$API_ECR_REPO" \
+              --image-ids imageTag=bootstrap &>/dev/null; then
+            echo "API ECR has :bootstrap — using as placeholder"
+            echo "placeholder_uri=$API_ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
+          else
+            # Neither :latest nor :bootstrap exists (repo has only custom tags).
+            # Push :bootstrap so the placeholder URI points to a real image.
+            echo "No :latest or :bootstrap — pushing :bootstrap now"
+            docker tag "$LAMBDA_BOOTSTRAP_IMAGE" "$API_ECR_URL:bootstrap"
+            docker push "$API_ECR_URL:bootstrap"
+            echo "placeholder_uri=$API_ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Terraform Apply
@@ -161,11 +194,13 @@ jobs:
         working-directory: infrastructure/terraform
         run: |
           echo "lambda_function_name=$(terraform output -raw lambda_function_name)" >> $GITHUB_OUTPUT
+          echo "migrate_function_name=$(terraform output -raw migrate_function_name)" >> $GITHUB_OUTPUT
           echo "api_gateway_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
           echo "ecr_repository_url=$(terraform output -raw ecr_repository_url)" >> $GITHUB_OUTPUT
+          echo "migrate_ecr_repository_url=$(terraform output -raw migrate_ecr_repository_url)" >> $GITHUB_OUTPUT
 
-  deploy-lambda:
-    name: Deploy Lambda
+  deploy-lambdas:
+    name: Deploy Lambdas
     runs-on: ubuntu-latest
     needs: [build, terraform]
 
@@ -179,6 +214,12 @@ jobs:
           name: api-dist
           path: apps/api/dist/
 
+      - name: Download migrate artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: migrate-dist
+          path: tools/migrate/dist/
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -189,7 +230,9 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build Docker image
+      # --- API Lambda ---
+
+      - name: Build API Docker image
         env:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
@@ -199,23 +242,75 @@ jobs:
             -t $ECR_REPOSITORY_URL:latest \
             .
 
-      - name: Validate container contents
+      # Paths validated here must match the Dockerfile layout (apps/api/Dockerfile).
+      - name: Validate API container
         env:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
-          # Keep in sync with PRISMA_CLI in apps/api/src/index.ts
-          PRISMA_CLI_PATH: /var/task/packages/db/node_modules/prisma/build/index.js
         run: |
-          echo "Checking container has required files..."
+          echo "Checking API container has required files..."
           docker run --rm --entrypoint="" \
-            -e PRISMA_CLI_PATH="$PRISMA_CLI_PATH" \
+            $ECR_REPOSITORY_URL:$IMAGE_TAG \
+            sh -c '
+              ok=true
+              for f in /var/task/index.js; do
+                if test -f "$f"; then
+                  echo "OK   $f"
+                else
+                  echo "MISSING $f" >&2; ok=false
+                fi
+              done
+              $ok && echo "All required files present." || { echo "Validation failed" >&2; exit 1; }
+            '
+
+      - name: Push API Docker image
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
+          docker push $ECR_REPOSITORY_URL:latest
+
+      - name: Deploy API Lambda
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ needs.terraform.outputs.lambda_function_name }} \
+            --image-uri $ECR_REPOSITORY_URL:$IMAGE_TAG
+
+      # --- Migration Lambda ---
+
+      # Build context must be monorepo root (.) because the Dockerfile COPYs
+      # package.json, package-lock.json, and workspace manifests from the root.
+      - name: Build migrate Docker image
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.migrate_ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f tools/migrate/Dockerfile \
+            -t $ECR_REPOSITORY_URL:$IMAGE_TAG \
+            -t $ECR_REPOSITORY_URL:latest \
+            .
+
+      # Paths validated here must match the Dockerfile layout (tools/migrate/Dockerfile)
+      # and the runtime constants in tools/migrate/src/index.ts (PRISMA_CLI path).
+      - name: Validate migrate container
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.migrate_ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "Checking migrate container has required files..."
+          docker run --rm --entrypoint="" \
             $ECR_REPOSITORY_URL:$IMAGE_TAG \
             sh -c '
               ok=true
               for f in \
                 /var/task/index.js \
-                "$PRISMA_CLI_PATH" \
-                /var/task/prisma/schema.prisma; do
+                /var/task/node_modules/prisma/build/index.js \
+                /var/task/prisma/schema.prisma \
+                /var/task/prisma.config.ts; do
                 if test -f "$f"; then
                   echo "OK   $f"
                 else
@@ -230,32 +325,36 @@ jobs:
               $ok && echo "All required files present." || { echo "Validation failed" >&2; exit 1; }
             '
 
-      - name: Push Docker image
+      - name: Push migrate Docker image
         env:
-          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.migrate_ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
           docker push $ECR_REPOSITORY_URL:latest
 
-      - name: Deploy to Lambda
+      - name: Deploy migrate Lambda
         env:
-          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.migrate_ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           aws lambda update-function-code \
-            --function-name ${{ needs.terraform.outputs.lambda_function_name }} \
+            --function-name ${{ needs.terraform.outputs.migrate_function_name }} \
             --image-uri $ECR_REPOSITORY_URL:$IMAGE_TAG
 
-      - name: Wait for Lambda update
+      # --- Wait for both updates ---
+
+      - name: Wait for Lambda updates
         run: |
           aws lambda wait function-updated \
             --function-name ${{ needs.terraform.outputs.lambda_function_name }}
+          aws lambda wait function-updated \
+            --function-name ${{ needs.terraform.outputs.migrate_function_name }}
 
   migrate-database:
     name: Run Migrations
     runs-on: ubuntu-latest
-    needs: [terraform, deploy-lambda]
+    needs: [terraform, deploy-lambdas]
 
     steps:
       - name: Setup Node.js
@@ -273,7 +372,7 @@ jobs:
       - name: Run migrations via Lambda
         run: |
           aws lambda invoke \
-            --function-name ${{ needs.terraform.outputs.lambda_function_name }} \
+            --function-name ${{ needs.terraform.outputs.migrate_function_name }} \
             --payload '{"command":"migrate"}' \
             --cli-binary-format raw-in-base64-out \
             /tmp/migrate-response.json
@@ -290,7 +389,7 @@ jobs:
   verify:
     name: Verify Deployment
     runs-on: ubuntu-latest
-    needs: [terraform, deploy-lambda, migrate-database]
+    needs: [terraform, deploy-lambdas, migrate-database]
 
     steps:
       - name: Health Check
