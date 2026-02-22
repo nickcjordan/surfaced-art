@@ -38,6 +38,32 @@ resource "aws_ecr_repository" "api" {
   }
 }
 
+# ECR resource policy: allows Lambda service to pull the container image.
+# Lambda container images require BOTH an identity-based policy on the execution
+# role AND a resource-based policy on the repository. Using the Lambda service
+# principal avoids a circular dependency (IAM module → ECR ARN → IAM role ARN).
+resource "aws_ecr_repository_policy" "api" {
+  repository = aws_ecr_repository.api.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "LambdaECRImageRetrievalPolicy"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+      }
+    ]
+  })
+}
+
 # Keep only the last 10 images to minimize storage costs
 resource "aws_ecr_lifecycle_policy" "api" {
   repository = aws_ecr_repository.api.name
