@@ -117,11 +117,11 @@ resource "aws_ecr_lifecycle_policy" "migrate" {
   policy = jsonencode({
     rules = [{
       rulePriority = 1
-      description  = "Keep last 5 images"
+      description  = "Keep last ${var.migrate_ecr_max_images} images"
       selection = {
         tagStatus   = "any"
         countType   = "imageCountMoreThan"
-        countNumber = 5
+        countNumber = var.migrate_ecr_max_images
       }
       action = { type = "expire" }
     }]
@@ -153,6 +153,10 @@ module "rds" {
   db_name         = var.db_name
   db_username     = var.db_username
   db_password     = var.db_password
+  # Not a circular dependency: Terraform resolves at the resource level, not module level.
+  # The SG resources in lambda_api/lambda_migrate have no dependency on RDS, so Terraform
+  # creates them first, then the RDS SG (which references them), then the DB instance,
+  # then the Lambda functions (which consume the connection string).
   lambda_sg_ids   = [module.lambda_api.security_group_id, module.lambda_migrate.security_group_id]
 }
 

@@ -109,6 +109,12 @@ variable "frontend_url" {
   default     = "https://surfaced.art"
 }
 
+variable "migrate_ecr_max_images" {
+  description = "Maximum number of images to retain in the migration ECR repository"
+  type        = number
+  default     = 5
+}
+
 variable "placeholder_image_uri" {
   description = "Lambda base image URI used as a placeholder until CI/CD deploys the service image. CI always passes this via -var from LAMBDA_BOOTSTRAP_IMAGE in deploy.yml (single source of truth). Default is used only for local terraform apply runs; update via: bash scripts/get-lambda-bootstrap-digest.sh"
   type        = string
