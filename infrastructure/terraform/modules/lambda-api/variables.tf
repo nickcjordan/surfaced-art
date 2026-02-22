@@ -79,5 +79,5 @@ variable "cloudfront_url" {
 variable "placeholder_image_uri" {
   description = "Lambda base image URI used as a placeholder until CI/CD deploys the service image."
   type        = string
-  default     = "public.ecr.aws/lambda/nodejs20.x:latest"
+  default     = "public.ecr.aws/lambda/nodejs:20"
 }

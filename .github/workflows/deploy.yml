@@ -132,8 +132,8 @@ jobs:
             --output text 2>/dev/null || echo "0")
           if [ "$IMAGE_COUNT" = "0" ]; then
             echo "ECR is empty — pushing bootstrap image..."
-            docker pull public.ecr.aws/lambda/nodejs20.x:latest
-            docker tag public.ecr.aws/lambda/nodejs20.x:latest $ECR_URL:bootstrap
+            docker pull public.ecr.aws/lambda/nodejs:20
+            docker tag public.ecr.aws/lambda/nodejs:20 $ECR_URL:bootstrap
             docker push $ECR_URL:bootstrap
             echo "placeholder_uri=$ECR_URL:bootstrap" >> $GITHUB_OUTPUT
           else
