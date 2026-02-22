@@ -77,7 +77,8 @@ async function processImage(
       continue
     }
 
-    const resized = sharp(imageBuffer)
+    const resized = sharpInstance
+      .clone()
       .resize(targetWidth, null, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: WEBP_QUALITY })
 

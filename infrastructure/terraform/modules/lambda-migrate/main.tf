@@ -16,11 +16,12 @@ resource "aws_security_group" "migrate" {
   }
 
   # Allow HTTPS outbound for AWS API access (CloudWatch Logs, STS)
+  # trivy:ignore:AVD-AWS-0104 - HTTPS to 0.0.0.0/0 required for AWS service endpoint calls
   egress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"] #trivy:ignore:AVD-AWS-0104
     description = "HTTPS to AWS APIs (CloudWatch, STS)"
   }
 

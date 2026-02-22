@@ -16,13 +16,15 @@ export function MobileNav() {
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
+    if (!isOpen) {
+      return
     }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.overflow = previousOverflow
     }
   }, [isOpen])
 
@@ -83,8 +85,10 @@ export function MobileNav() {
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         role="dialog"
-        aria-modal="true"
+        aria-modal={isOpen}
+        aria-hidden={!isOpen}
         aria-label="Navigation menu"
+        inert={!isOpen ? true : undefined}
       >
         {/* Close button */}
         <div className="flex items-center justify-end p-6">

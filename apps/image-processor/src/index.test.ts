@@ -12,8 +12,14 @@ const { mockToBuffer, mockWebp, mockResize, mockMetadata, mockSharp, mockSend } 
     const mockWebp = vi.fn(() => ({ toBuffer: mockToBuffer }))
     const mockResize = vi.fn(() => ({ webp: mockWebp }))
     const mockMetadata = vi.fn()
+    const mockClone = vi.fn(() => ({
+      resize: mockResize,
+      webp: mockWebp,
+      toBuffer: mockToBuffer,
+    }))
     const mockSharp = vi.fn(() => ({
       metadata: mockMetadata,
+      clone: mockClone,
       resize: mockResize,
       webp: mockWebp,
       toBuffer: mockToBuffer,
