@@ -58,3 +58,13 @@ output "migrate_ecr_repository_url" {
   description = "ECR repository URL for pushing migration Lambda container images"
   value       = aws_ecr_repository.migrate.repository_url
 }
+
+output "image_processor_function_name" {
+  description = "Image processor Lambda function name for deployments"
+  value       = module.lambda_image_processor.function_name
+}
+
+output "image_processor_ecr_repository_url" {
+  description = "ECR repository URL for pushing image processor Lambda container images"
+  value       = aws_ecr_repository.image_processor.repository_url
+}

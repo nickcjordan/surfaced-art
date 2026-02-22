@@ -15,7 +15,7 @@ const BASELINE_MIGRATION =
   process.env.BASELINE_MIGRATION ?? '20250101000000_baseline'
 
 interface MigrateEvent {
-  command: string
+  command: 'migrate'
 }
 
 interface MigrateResult {

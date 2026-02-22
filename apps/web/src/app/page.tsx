@@ -1,15 +1,17 @@
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center">
       <div className="text-center">
-        <h1 className="text-4xl font-light tracking-tight text-gray-900 sm:text-5xl">
+        <h1 className="font-serif text-4xl tracking-tight text-gallery-foreground sm:text-5xl lg:text-6xl">
           Surfaced Art
         </h1>
-        <p className="mt-4 text-lg text-gray-600">
+        <p className="mt-6 text-lg text-gallery-muted max-w-md mx-auto leading-relaxed">
           A curated digital gallery for real makers
         </p>
-        <p className="mt-2 text-sm text-gray-400">Coming soon</p>
+        <p className="mt-3 text-sm text-gallery-muted/50 tracking-wide uppercase">
+          Coming soon
+        </p>
       </div>
-    </main>
+    </div>
   )
 }
