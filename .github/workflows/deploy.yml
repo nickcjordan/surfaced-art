@@ -66,6 +66,7 @@ jobs:
     outputs:
       lambda_function_name: ${{ steps.output.outputs.lambda_function_name }}
       api_gateway_url: ${{ steps.output.outputs.api_gateway_url }}
+      ecr_repository_url: ${{ steps.output.outputs.ecr_repository_url }}
 
     steps:
       - name: Checkout
@@ -105,6 +106,7 @@ jobs:
         run: |
           echo "lambda_function_name=$(terraform output -raw lambda_function_name)" >> $GITHUB_OUTPUT
           echo "api_gateway_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
+          echo "ecr_repository_url=$(terraform output -raw ecr_repository_url)" >> $GITHUB_OUTPUT
 
   deploy-lambda:
     name: Deploy Lambda
@@ -112,11 +114,14 @@ jobs:
     needs: [build, terraform]
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Download API artifact
         uses: actions/download-artifact@v7
         with:
           name: api-dist
-          path: dist/
+          path: apps/api/dist/
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -125,16 +130,29 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Create deployment package
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          cd dist
-          zip -r ../lambda.zip .
+          docker build -f apps/api/Dockerfile \
+            -t $ECR_REPOSITORY_URL:$IMAGE_TAG \
+            -t $ECR_REPOSITORY_URL:latest \
+            .
+          docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
+          docker push $ECR_REPOSITORY_URL:latest
 
       - name: Deploy to Lambda
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           aws lambda update-function-code \
             --function-name ${{ needs.terraform.outputs.lambda_function_name }} \
-            --zip-file fileb://lambda.zip
+            --image-uri $ECR_REPOSITORY_URL:$IMAGE_TAG
 
       - name: Wait for Lambda update
         run: |
@@ -147,17 +165,10 @@ jobs:
     needs: [terraform, deploy-lambda]
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -166,11 +177,22 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Run Prisma migrations
-        working-directory: packages/db
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npx prisma migrate deploy
+      - name: Run migrations via Lambda
+        run: |
+          aws lambda invoke \
+            --function-name ${{ needs.terraform.outputs.lambda_function_name }} \
+            --payload '{"command":"migrate"}' \
+            --cli-binary-format raw-in-base64-out \
+            /tmp/migrate-response.json
+
+          echo "Migration response:"
+          cat /tmp/migrate-response.json
+
+          node -e "
+            const r = JSON.parse(require('fs').readFileSync('/tmp/migrate-response.json', 'utf8'));
+            if (!r.success) { console.error('Migration failed:', r.error); process.exit(1); }
+            console.log('Migrations completed successfully');
+          "
 
   verify:
     name: Verify Deployment

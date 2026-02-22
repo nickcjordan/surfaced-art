@@ -22,6 +22,40 @@ data "aws_subnets" "default" {
   }
 }
 
+# ECR repository for Lambda container images
+# Defined here (not in lambda-api module) so IAM can scope permissions to this ARN
+# without creating a circular dependency (lambda-api depends on iam for the role ARN).
+resource "aws_ecr_repository" "api" {
+  name                 = "${var.project_name}-${var.environment}-api"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-api-ecr"
+  }
+}
+
+# Keep only the last 10 images to minimize storage costs
+resource "aws_ecr_lifecycle_policy" "api" {
+  repository = aws_ecr_repository.api.name
+
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep last 10 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 10
+      }
+      action = { type = "expire" }
+    }]
+  })
+}
+
 # IAM module - creates roles and policies
 module "iam" {
   source = "./modules/iam"
@@ -30,8 +64,9 @@ module "iam" {
   environment  = var.environment
   aws_region   = var.aws_region
 
-  s3_bucket_arn = module.s3_cloudfront.bucket_arn
-  ses_domain    = var.ses_domain
+  s3_bucket_arn             = module.s3_cloudfront.bucket_arn
+  ses_domain                = var.ses_domain
+  lambda_ecr_repository_arn = aws_ecr_repository.api.arn
 }
 
 # RDS PostgreSQL module

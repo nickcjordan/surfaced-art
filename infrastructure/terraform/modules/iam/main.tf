@@ -85,6 +85,34 @@ resource "aws_iam_role_policy" "lambda_s3" {
   })
 }
 
+# ECR access policy — required for Lambda to pull its own container image
+resource "aws_iam_role_policy" "lambda_ecr" {
+  name = "${var.project_name}-${var.environment}-lambda-ecr"
+  role = aws_iam_role.lambda_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+        # Scoped to this Lambda's ECR repository only
+        Resource = var.lambda_ecr_repository_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = "ecr:GetAuthorizationToken"
+        # Must remain "*" per AWS docs — not repository-scoped
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # SES access policy
 resource "aws_iam_role_policy" "lambda_ses" {
   name = "${var.project_name}-${var.environment}-lambda-ses"

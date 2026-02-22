@@ -28,18 +28,17 @@ resource "aws_security_group" "lambda" {
   }
 }
 
-# Lambda function
+# Lambda function (container image)
 resource "aws_lambda_function" "api" {
   function_name = "${var.project_name}-${var.environment}-api"
   role          = var.lambda_role_arn
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  package_type  = "Image"
   memory_size   = var.memory_size
   timeout       = var.timeout
 
-  # Placeholder - actual code deployed via CI/CD
-  filename         = data.archive_file.placeholder.output_path
-  source_code_hash = data.archive_file.placeholder.output_base64sha256
+  # Public placeholder for initial Terraform apply before the ECR image exists.
+  # CI/CD pipeline manages actual image deployments via aws lambda update-function-code.
+  image_uri = var.placeholder_image_uri
 
   # VPC configuration for RDS access
   vpc_config {
@@ -59,19 +58,13 @@ resource "aws_lambda_function" "api" {
     }
   }
 
+  # CI/CD manages image deployments; Terraform manages all other configuration.
+  lifecycle {
+    ignore_changes = [image_uri]
+  }
+
   tags = {
     Name = "${var.project_name}-${var.environment}-api"
-  }
-}
-
-# Placeholder zip for initial deployment
-data "archive_file" "placeholder" {
-  type        = "zip"
-  output_path = "${path.module}/placeholder.zip"
-
-  source {
-    content  = "exports.handler = async () => ({ statusCode: 200, body: 'Placeholder' });"
-    filename = "index.js"
   }
 }
 
