@@ -5,6 +5,11 @@ vi.mock('@surfaced-art/db', () => ({
     artistProfile: {
       findUnique: vi.fn(),
     },
+    listing: {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+      findUnique: vi.fn(),
+    },
   },
 }))
 

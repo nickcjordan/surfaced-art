@@ -6,6 +6,7 @@ import { prisma } from '@surfaced-art/db'
 
 import { healthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
+import { createListingRoutes } from './routes/listings'
 
 // Create Hono app
 const app = new Hono()
@@ -24,6 +25,7 @@ app.use(
 // Mount routes
 app.route('/health', healthRoutes)
 app.route('/artists', createArtistRoutes(prisma))
+app.route('/listings', createListingRoutes(prisma))
 
 // Root route
 app.get('/', (c) => {
