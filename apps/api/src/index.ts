@@ -54,7 +54,8 @@ const honoHandler = handle(app)
 // prisma is a dep of @surfaced-art/db so npm installs it under that workspace.
 const LAMBDA_ROOT = process.env.LAMBDA_TASK_ROOT ?? '/var/task'
 const PRISMA_CLI = `${LAMBDA_ROOT}/packages/db/node_modules/prisma/build/index.js`
-const PRISMA_MIGRATE_CMD = `node ${PRISMA_CLI} migrate deploy`
+const PRISMA_CMD = `node ${PRISMA_CLI}`
+const BASELINE_MIGRATION = '20250101000000_baseline'
 
 // Lambda handler — supports two invocation modes:
 //   1. API Gateway (normal HTTP traffic) — delegated to Hono
@@ -67,11 +68,24 @@ export const handler = async (
   if ('command' in event) {
     if (event.command === 'migrate') {
       const { execSync } = await import('child_process')
+      const execOpts = { cwd: LAMBDA_ROOT, encoding: 'utf-8' as const }
       try {
-        const output = execSync(PRISMA_MIGRATE_CMD, {
-          cwd: LAMBDA_ROOT,
-          encoding: 'utf-8',
-        })
+        // Mark the baseline migration as already applied (DB was created
+        // with db push). No-ops after the first successful run; Prisma
+        // errors with "already recorded" once the baseline is in the table.
+        try {
+          execSync(`${PRISMA_CMD} migrate resolve --applied ${BASELINE_MIGRATION}`, execOpts)
+          console.log('Baseline migration marked as applied')
+        } catch (resolveErr: unknown) {
+          const msg = resolveErr instanceof Error ? resolveErr.message : String(resolveErr)
+          if (msg.includes('already recorded') || msg.includes('already been applied')) {
+            console.log('Baseline already applied, skipping')
+          } else {
+            console.warn('Baseline resolve failed (proceeding with deploy):', msg)
+          }
+        }
+
+        const output = execSync(`${PRISMA_CMD} migrate deploy`, execOpts)
         console.log('Migration output:', output)
         return { success: true }
       } catch (err: unknown) {
