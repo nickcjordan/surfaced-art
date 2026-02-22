@@ -22,3 +22,8 @@ output "security_group_id" {
   description = "Lambda security group ID"
   value       = aws_security_group.lambda.id
 }
+
+output "ecr_repository_url" {
+  description = "ECR repository URL for pushing Lambda container images"
+  value       = aws_ecr_repository.api.repository_url
+}

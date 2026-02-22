@@ -43,3 +43,8 @@ output "lambda_function_name" {
   description = "Lambda function name for deployments"
   value       = module.lambda_api.function_name
 }
+
+output "ecr_repository_url" {
+  description = "ECR repository URL for pushing Lambda container images"
+  value       = module.lambda_api.ecr_repository_url
+}

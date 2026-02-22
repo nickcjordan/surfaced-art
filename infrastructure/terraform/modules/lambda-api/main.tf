@@ -28,18 +28,49 @@ resource "aws_security_group" "lambda" {
   }
 }
 
-# Lambda function
+# ECR repository for Lambda container images
+resource "aws_ecr_repository" "api" {
+  name                 = "${var.project_name}-${var.environment}-api"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-api-ecr"
+  }
+}
+
+# Keep only the last 10 images to minimize storage costs
+resource "aws_ecr_lifecycle_policy" "api" {
+  repository = aws_ecr_repository.api.name
+
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep last 10 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 10
+      }
+      action = { type = "expire" }
+    }]
+  })
+}
+
+# Lambda function (container image)
 resource "aws_lambda_function" "api" {
   function_name = "${var.project_name}-${var.environment}-api"
   role          = var.lambda_role_arn
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  package_type  = "Image"
   memory_size   = var.memory_size
   timeout       = var.timeout
 
-  # Placeholder - actual code deployed via CI/CD
-  filename         = data.archive_file.placeholder.output_path
-  source_code_hash = data.archive_file.placeholder.output_base64sha256
+  # Public placeholder for initial Terraform apply before the ECR image exists.
+  # CI/CD pipeline manages actual image deployments via aws lambda update-function-code.
+  image_uri = "public.ecr.aws/lambda/nodejs20.x:latest"
 
   # VPC configuration for RDS access
   vpc_config {
@@ -59,19 +90,13 @@ resource "aws_lambda_function" "api" {
     }
   }
 
+  # CI/CD manages image deployments; Terraform manages all other configuration.
+  lifecycle {
+    ignore_changes = [image_uri]
+  }
+
   tags = {
     Name = "${var.project_name}-${var.environment}-api"
-  }
-}
-
-# Placeholder zip for initial deployment
-data "archive_file" "placeholder" {
-  type        = "zip"
-  output_path = "${path.module}/placeholder.zip"
-
-  source {
-    content  = "exports.handler = async () => ({ statusCode: 200, body: 'Placeholder' });"
-    filename = "index.js"
   }
 }
 
