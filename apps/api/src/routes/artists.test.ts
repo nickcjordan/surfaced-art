@@ -227,6 +227,29 @@ describe('GET /artists/:slug', () => {
       expect(sold.images).toHaveLength(0)
     })
 
+    it('should preserve zero-valued dimensions instead of coercing to null', async () => {
+      const artistWithZeroDimensions = {
+        ...mockApprovedArtist,
+        listings: [
+          {
+            ...mockApprovedArtist.listings[0],
+            artworkLength: 0,
+            artworkWidth: 0,
+            artworkHeight: 0,
+          },
+        ],
+      }
+      mockPrisma = createMockPrisma(artistWithZeroDimensions)
+      app = createTestApp(mockPrisma)
+
+      const res = await app.request('/artists/abbey-peters')
+      const data = await res.json()
+
+      expect(data.listings[0].artworkLength).toBe(0)
+      expect(data.listings[0].artworkWidth).toBe(0)
+      expect(data.listings[0].artworkHeight).toBe(0)
+    })
+
     it('should omit private fields (userId, stripeAccountId, originZip, applicationSource)', async () => {
       const res = await app.request('/artists/abbey-peters')
       const data = await res.json()
