@@ -68,3 +68,8 @@ output "image_processor_ecr_repository_url" {
   description = "ECR repository URL for pushing image processor Lambda container images"
   value       = aws_ecr_repository.image_processor.repository_url
 }
+
+output "cloudwatch_dashboard_url" {
+  description = "CloudWatch dashboard URL for platform health monitoring"
+  value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.platform.dashboard_name}"
+}
