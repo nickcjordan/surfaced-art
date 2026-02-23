@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { ArtistProfileResponse } from '@surfaced-art/types'
+import { logger } from '@surfaced-art/utils'
 
 export function createArtistRoutes(prisma: PrismaClient) {
   const artists = new Hono()
@@ -11,6 +12,7 @@ export function createArtistRoutes(prisma: PrismaClient) {
    */
   artists.get('/:slug', async (c) => {
     const slug = c.req.param('slug')
+    const start = Date.now()
 
     const artist = await prisma.artistProfile.findUnique({
       where: { slug },
@@ -34,6 +36,7 @@ export function createArtistRoutes(prisma: PrismaClient) {
     })
 
     if (!artist || artist.status !== 'approved') {
+      logger.warn('Artist not found', { slug })
       return c.json({ error: 'Artist not found' }, 404)
     }
 
@@ -108,6 +111,13 @@ export function createArtistRoutes(prisma: PrismaClient) {
         })),
       })),
     }
+
+    logger.info('Artist profile fetched', {
+      slug,
+      artistId: artist.id,
+      listingCount: artist.listings.length,
+      durationMs: Date.now() - start,
+    })
 
     return c.json(response)
   })

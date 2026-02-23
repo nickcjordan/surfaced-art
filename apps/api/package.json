@@ -16,6 +16,7 @@
     "@hono/node-server": "^1.14.0",
     "@surfaced-art/db": "^0.0.1",
     "@surfaced-art/types": "^0.0.1",
+    "@surfaced-art/utils": "^0.0.1",
     "hono": "^4.7.0"
   },
   "devDependencies": {
