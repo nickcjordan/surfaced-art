@@ -118,6 +118,7 @@ jobs:
             -var="db_password=${{ secrets.TF_VAR_db_password }}" \
             -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
             -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}" \
+            -var="alert_email_address=${{ secrets.TF_VAR_alert_email_address }}" \
             -var="placeholder_image_uri=${{ env.LAMBDA_BOOTSTRAP_IMAGE }}"
 
       - name: Login to Amazon ECR (bootstrap)
@@ -187,6 +188,7 @@ jobs:
             -var="db_password=${{ secrets.TF_VAR_db_password }}" \
             -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
             -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}" \
+            -var="alert_email_address=${{ secrets.TF_VAR_alert_email_address }}" \
             -var="placeholder_image_uri=${{ steps.bootstrap.outputs.placeholder_uri }}"
 
       - name: Get Terraform Outputs

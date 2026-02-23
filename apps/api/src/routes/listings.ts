@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma, Listing, ListingImage, ArtistProfile, ArtistCategory } from '@surfaced-art/db'
-import { validateUuid } from '@surfaced-art/utils'
+import { validateUuid, logger } from '@surfaced-art/utils'
 import {
   Category,
   ListingStatus,
@@ -62,6 +62,7 @@ export function createListingRoutes(prisma: PrismaClient) {
    * Each listing includes primary image and lightweight artist summary.
    */
   listings.get('/', async (c) => {
+    const start = Date.now()
     const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10) || 1)
     const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') ?? '20', 10) || 20))
     const category = c.req.query('category')
@@ -171,6 +172,15 @@ export function createListingRoutes(prisma: PrismaClient) {
       meta: { page, limit, total, totalPages },
     }
 
+    logger.info('Listings fetched', {
+      page,
+      limit,
+      total,
+      category: category ?? null,
+      status,
+      durationMs: Date.now() - start,
+    })
+
     return c.json(response)
   })
 
@@ -180,8 +190,10 @@ export function createListingRoutes(prisma: PrismaClient) {
    */
   listings.get('/:id', async (c) => {
     const id = c.req.param('id')
+    const start = Date.now()
 
     if (!validateUuid(id)) {
+      logger.warn('Invalid listing ID format', { listingId: id })
       return c.json({ error: 'Invalid listing ID format' }, 400)
     }
 
@@ -212,6 +224,7 @@ export function createListingRoutes(prisma: PrismaClient) {
     }) as ListingDetailPayload | null
 
     if (!listing || listing.artist.status !== 'approved') {
+      logger.warn('Listing not found', { listingId: id })
       return c.json({ error: 'Listing not found' }, 404)
     }
 
@@ -236,6 +249,12 @@ export function createListingRoutes(prisma: PrismaClient) {
         categories: listing.artist.categories.map((cat) => cat.category),
       },
     }
+
+    logger.info('Listing detail fetched', {
+      listingId: listing.id,
+      artistSlug: listing.artist.slug,
+      durationMs: Date.now() - start,
+    })
 
     return c.json(response)
   })
