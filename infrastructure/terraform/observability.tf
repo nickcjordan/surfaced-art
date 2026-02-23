@@ -6,8 +6,6 @@
 # do NOT define their own log groups — they are managed in this file so
 # retention policies and naming are consistent across the platform.
 #
-# Future issues will add to this file:
-#   - CloudWatch dashboard (#78)
 
 # -----------------------------------------------------------------------------
 # SNS Topic for Alarm Notifications
@@ -225,4 +223,183 @@ resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx" {
   tags = {
     Name = "${var.project_name}-${var.environment}-api-gateway-5xx-alarm"
   }
+}
+
+# -----------------------------------------------------------------------------
+# CloudWatch Dashboard
+# -----------------------------------------------------------------------------
+# A single dashboard provides a visual overview of platform health. Defined
+# entirely in Terraform as a JSON document — changes go through PR review.
+# When new Lambda functions are added, add a new row of widgets following
+# the same pattern.
+
+resource "aws_cloudwatch_dashboard" "platform" {
+  dashboard_name = "surfaced-art-platform"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      # --- Row 1: API Lambda metrics ---
+      {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          title = "API Lambda — Invocations & Errors"
+          metrics = [
+            ["AWS/Lambda", "Invocations", "FunctionName", module.lambda_api.function_name, { stat = "Sum", color = "#2ca02c" }],
+            ["AWS/Lambda", "Errors", "FunctionName", module.lambda_api.function_name, { stat = "Sum", color = "#d62728" }],
+            ["AWS/Lambda", "Throttles", "FunctionName", module.lambda_api.function_name, { stat = "Sum", color = "#ff7f0e" }]
+          ]
+          period  = 300
+          region  = var.aws_region
+          view    = "timeSeries"
+          stacked = false
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          title = "API Lambda — Duration"
+          metrics = [
+            ["AWS/Lambda", "Duration", "FunctionName", module.lambda_api.function_name, { stat = "Average", color = "#1f77b4" }],
+            ["AWS/Lambda", "Duration", "FunctionName", module.lambda_api.function_name, { stat = "p95", color = "#ff7f0e" }],
+            ["AWS/Lambda", "Duration", "FunctionName", module.lambda_api.function_name, { stat = "Maximum", color = "#d62728" }]
+          ]
+          period = 300
+          region = var.aws_region
+          view   = "timeSeries"
+        }
+      },
+
+      # --- Row 2: Image Processor Lambda ---
+      {
+        type   = "metric"
+        x      = 0
+        y      = 6
+        width  = 12
+        height = 6
+        properties = {
+          title = "Image Processor Lambda — Invocations & Errors"
+          metrics = [
+            ["AWS/Lambda", "Invocations", "FunctionName", module.lambda_image_processor.function_name, { stat = "Sum", color = "#2ca02c" }],
+            ["AWS/Lambda", "Errors", "FunctionName", module.lambda_image_processor.function_name, { stat = "Sum", color = "#d62728" }]
+          ]
+          period = 300
+          region = var.aws_region
+          view   = "timeSeries"
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 6
+        width  = 12
+        height = 6
+        properties = {
+          title = "Image Processor Lambda — Duration"
+          metrics = [
+            ["AWS/Lambda", "Duration", "FunctionName", module.lambda_image_processor.function_name, { stat = "Average", color = "#1f77b4" }],
+            ["AWS/Lambda", "Duration", "FunctionName", module.lambda_image_processor.function_name, { stat = "p95", color = "#ff7f0e" }]
+          ]
+          period = 300
+          region = var.aws_region
+          view   = "timeSeries"
+        }
+      },
+
+      # --- Row 3: API Gateway ---
+      {
+        type   = "metric"
+        x      = 0
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title = "API Gateway — Request Count & Errors"
+          metrics = [
+            ["AWS/ApiGateway", "Count", "ApiId", module.lambda_api.api_gateway_id, { stat = "Sum", color = "#1f77b4" }],
+            ["AWS/ApiGateway", "4xx", "ApiId", module.lambda_api.api_gateway_id, { stat = "Sum", color = "#ff7f0e" }],
+            ["AWS/ApiGateway", "5xx", "ApiId", module.lambda_api.api_gateway_id, { stat = "Sum", color = "#d62728" }]
+          ]
+          period = 300
+          region = var.aws_region
+          view   = "timeSeries"
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title = "API Gateway — Latency"
+          metrics = [
+            ["AWS/ApiGateway", "Latency", "ApiId", module.lambda_api.api_gateway_id, { stat = "Average", color = "#1f77b4" }],
+            ["AWS/ApiGateway", "Latency", "ApiId", module.lambda_api.api_gateway_id, { stat = "p95", color = "#ff7f0e" }]
+          ]
+          period = 300
+          region = var.aws_region
+          view   = "timeSeries"
+        }
+      },
+
+      # --- Row 4: RDS ---
+      {
+        type   = "metric"
+        x      = 0
+        y      = 18
+        width  = 8
+        height = 6
+        properties = {
+          title = "RDS — Connections"
+          metrics = [
+            ["AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", module.rds.identifier, { stat = "Maximum", color = "#9467bd" }]
+          ]
+          period = 300
+          region = var.aws_region
+          view   = "timeSeries"
+        }
+      },
+      {
+        type   = "metric"
+        x      = 8
+        y      = 18
+        width  = 8
+        height = 6
+        properties = {
+          title = "RDS — CPU Utilization"
+          metrics = [
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", module.rds.identifier, { stat = "Average", color = "#e377c2" }]
+          ]
+          period = 300
+          region = var.aws_region
+          view   = "timeSeries"
+          yAxis  = { left = { max = 100 } }
+        }
+      },
+      {
+        type   = "metric"
+        x      = 16
+        y      = 18
+        width  = 8
+        height = 6
+        properties = {
+          title = "RDS — Free Storage (GB)"
+          metrics = [
+            ["AWS/RDS", "FreeStorageSpace", "DBInstanceIdentifier", module.rds.identifier, { stat = "Minimum", color = "#17becf" }]
+          ]
+          period = 300
+          region = var.aws_region
+          view   = "timeSeries"
+        }
+      }
+    ]
+  })
 }
