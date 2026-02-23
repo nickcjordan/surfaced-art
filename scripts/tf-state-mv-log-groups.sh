@@ -42,7 +42,9 @@ echo ""
 STATE_LIST=$(terraform state list 2>/dev/null || true)
 
 # import_if_needed <terraform_address> <aws_log_group_name> <label>
-# Skips if the resource is already in state.
+# Skips if the resource is already in state. If the AWS resource doesn't
+# exist (already deleted), the import fails gracefully and terraform apply
+# will create it fresh.
 import_if_needed() {
   local address="$1"
   local log_group_name="$2"
@@ -54,7 +56,11 @@ import_if_needed() {
   fi
 
   echo "${label} — importing..."
-  terraform import "${address}" "${log_group_name}"
+  if terraform import "${address}" "${log_group_name}"; then
+    echo "${label} — imported successfully"
+  else
+    echo "${label} — not found in AWS, terraform apply will create it"
+  fi
 }
 
 import_if_needed \
