@@ -5,7 +5,7 @@ export default defineConfig({
     // Prisma's generated .ts files use .js extensions in imports (standard
     // ESM convention). Vitest needs to resolve those back to .ts source.
     extensions: ['.ts', '.js', '.mjs', '.json'],
-    conditions: ['import', 'module', 'default'],
+    conditions: ['node', 'import', 'module', 'default'],
   },
   test: {
     globals: true,
