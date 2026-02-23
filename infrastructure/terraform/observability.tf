@@ -21,7 +21,7 @@
 # the AWS email to activate the subscription. This is the only manual step.
 
 resource "aws_sns_topic" "platform_alerts" {
-  name = "${var.project_name}-platform-alerts"
+  name = "${var.project_name}-${var.environment}-platform-alerts"
 
   tags = {
     Name = "${var.project_name}-${var.environment}-platform-alerts"

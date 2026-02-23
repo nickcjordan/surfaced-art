@@ -120,6 +120,11 @@ variable "alert_email_address" {
   description = "Email address for CloudWatch alarm notifications via SNS. After terraform apply, the subscriber must click the AWS confirmation link to activate."
   type        = string
   sensitive   = true
+
+  validation {
+    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.alert_email_address))
+    error_message = "alert_email_address must be a valid email address (e.g., user@example.com)."
+  }
 }
 
 variable "placeholder_image_uri" {
