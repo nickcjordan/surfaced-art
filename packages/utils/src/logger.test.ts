@@ -138,7 +138,7 @@ describe('logger', () => {
     })
 
     it('should handle non-serializable data gracefully', () => {
-      const circular: Record<string, unknown> = {}
+      const circular: Record<string, unknown> = { route: '/artists' }
       circular.self = circular
 
       logger.info('circular ref', circular)
@@ -148,6 +148,30 @@ describe('logger', () => {
       expect(entry.level).toBe('info')
       expect(entry.message).toBe('circular ref')
       expect(entry.serializationError).toBeDefined()
+      // Fallback should include stringified data for debugging context
+      const data = entry.data as Record<string, unknown>
+      expect(data.route).toBe('/artists')
+    })
+
+    it('should redact sensitive keys in serialization fallback', () => {
+      const circular: Record<string, unknown> = {
+        userPassword: 'hunter2',
+        apiToken: 'abc123',
+        clientSecret: 'shhh',
+        route: '/login',
+      }
+      circular.self = circular
+
+      logger.info('sensitive circular', circular)
+
+      expect(consoleLogSpy).toHaveBeenCalledOnce()
+      const entry = parseOutput(consoleLogSpy)
+      expect(entry.serializationError).toBeDefined()
+      const data = entry.data as Record<string, unknown>
+      expect(data.userPassword).toBe('[REDACTED]')
+      expect(data.apiToken).toBe('[REDACTED]')
+      expect(data.clientSecret).toBe('[REDACTED]')
+      expect(data.route).toBe('/login')
     })
   })
 })

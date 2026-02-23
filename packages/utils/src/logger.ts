@@ -35,11 +35,31 @@ function log(
   try {
     serialized = JSON.stringify(entry)
   } catch (err) {
+    const SENSITIVE_KEYS = ['password', 'secret', 'token']
+    const redactedData =
+      data == null
+        ? undefined
+        : typeof data !== 'object'
+          ? String(data)
+          : Object.entries(data).reduce<Record<string, unknown>>(
+              (acc, [key, value]) => {
+                const lowerKey = key.toLowerCase()
+                if (SENSITIVE_KEYS.some((s) => lowerKey.includes(s))) {
+                  acc[key] = '[REDACTED]'
+                } else {
+                  acc[key] = String(value)
+                }
+                return acc
+              },
+              {}
+            )
+
     serialized = JSON.stringify({
       level,
       message,
       timestamp,
       serializationError: err instanceof Error ? err.message : 'Unknown serialization error',
+      data: redactedData,
     })
   }
 
