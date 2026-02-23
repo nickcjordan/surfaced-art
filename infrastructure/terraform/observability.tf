@@ -20,7 +20,7 @@
 # put log events into any CloudWatch log group.
 
 resource "aws_iam_role" "api_gateway_cloudwatch" {
-  name = "${var.project_name}-${var.environment}-api-gateway-cloudwatch"
+  name = "${var.project_name}-${var.environment}-${var.aws_region}-api-gateway-cloudwatch"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -34,7 +34,7 @@ resource "aws_iam_role" "api_gateway_cloudwatch" {
   })
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-api-gateway-cloudwatch"
+    Name = "${var.project_name}-${var.environment}-${var.aws_region}-api-gateway-cloudwatch"
   }
 }
 
