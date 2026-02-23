@@ -31,16 +31,6 @@ resource "aws_lambda_function" "image_processor" {
   }
 }
 
-# CloudWatch Log Group
-resource "aws_cloudwatch_log_group" "image_processor" {
-  name              = "/aws/lambda/${aws_lambda_function.image_processor.function_name}"
-  retention_in_days = var.log_retention_days
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-image-processor-logs"
-  }
-}
-
 # Allow S3 to invoke this Lambda function
 resource "aws_lambda_permission" "s3_invoke" {
   statement_id  = "AllowS3Invoke"
