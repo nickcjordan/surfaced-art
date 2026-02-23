@@ -12,12 +12,10 @@ export default defineConfig({
   noExternal: [/.*/],
   // Minify for smaller bundle size
   minify: true,
-  // Provide CJS globals (__dirname, __filename) for bundled dependencies.
-  shims: true,
-  // esbuild's CJS-to-ESM interop emits a `require` proxy that throws at
-  // runtime because `require` doesn't exist in ESM scope. Provide a real
-  // `require` via Node's createRequire so bundled CJS code can load Node
-  // builtins (path, fs, etc.).
+  // Provides a real require() for esbuild's CJS-to-ESM interop shim.
+  // Needed because @prisma/client/runtime and pg sub-deps are CJS.
+  // See: https://github.com/evanw/esbuild/issues/1921
+  // See: https://github.com/prisma/prisma/issues/28126
   banner: {
     js: "import { createRequire as __cr } from 'module'; var require = __cr(import.meta.url);",
   },
