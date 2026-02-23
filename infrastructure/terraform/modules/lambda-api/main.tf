@@ -96,14 +96,13 @@ resource "aws_apigatewayv2_stage" "main" {
   access_log_settings {
     destination_arn = var.api_gateway_log_group_arn
     format = jsonencode({
-      requestId          = "$context.requestId"
-      ip                 = "$context.identity.sourceIp"
-      requestTime        = "$context.requestTime"
-      httpMethod         = "$context.httpMethod"
-      routeKey           = "$context.routeKey"
-      status             = "$context.status"
-      responseLength     = "$context.responseLength"
-      integrationLatency = "$context.integrationLatency"
+      requestId               = "$context.requestId"
+      ip                      = "$context.identity.sourceIp"
+      httpMethod              = "$context.httpMethod"
+      path                    = "$context.path"
+      status                  = "$context.status"
+      responseLatency         = "$context.responseLatency"
+      integrationErrorMessage = "$context.integrationErrorMessage"
     })
   }
 
