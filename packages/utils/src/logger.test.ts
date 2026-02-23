@@ -123,5 +123,31 @@ describe('logger', () => {
       expect(entry.error).toBe('Connection refused')
       expect(entry.stack).toBe('Error: Connection refused\n    at ...')
     })
+
+    it('should not allow data to override core fields', () => {
+      logger.info('real message', {
+        level: 'error' as unknown as string,
+        message: 'overridden',
+        timestamp: '1999-01-01T00:00:00.000Z',
+      })
+
+      const entry = parseOutput(consoleLogSpy)
+      expect(entry.level).toBe('info')
+      expect(entry.message).toBe('real message')
+      expect(entry.timestamp).not.toBe('1999-01-01T00:00:00.000Z')
+    })
+
+    it('should handle non-serializable data gracefully', () => {
+      const circular: Record<string, unknown> = {}
+      circular.self = circular
+
+      logger.info('circular ref', circular)
+
+      expect(consoleLogSpy).toHaveBeenCalledOnce()
+      const entry = parseOutput(consoleLogSpy)
+      expect(entry.level).toBe('info')
+      expect(entry.message).toBe('circular ref')
+      expect(entry.serializationError).toBeDefined()
+    })
   })
 })
