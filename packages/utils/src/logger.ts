@@ -21,17 +21,32 @@ function log(
   message: string,
   data?: Record<string, unknown>
 ): void {
+  const timestamp = new Date().toISOString()
+
+  // Spread data first so callers cannot accidentally override core fields.
   const entry: LogEntry = {
+    ...data,
     level,
     message,
-    timestamp: new Date().toISOString(),
-    ...data,
+    timestamp,
+  }
+
+  let serialized: string
+  try {
+    serialized = JSON.stringify(entry)
+  } catch (err) {
+    serialized = JSON.stringify({
+      level,
+      message,
+      timestamp,
+      serializationError: err instanceof Error ? err.message : 'Unknown serialization error',
+    })
   }
 
   if (level === 'error') {
-    console.error(JSON.stringify(entry))
+    console.error(serialized)
   } else {
-    console.log(JSON.stringify(entry))
+    console.log(serialized)
   }
 }
 
