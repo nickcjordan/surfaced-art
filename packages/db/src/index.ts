@@ -1,4 +1,4 @@
-import { PrismaClient } from './generated/prisma/client'
+import { PrismaClient } from './generated/prisma/client.js'
 import { PrismaPg } from '@prisma/adapter-pg'
 
 // Create a global PrismaClient instance to prevent multiple instances in development
@@ -24,7 +24,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Re-export Prisma types
-export * from './generated/prisma/client'
+export * from './generated/prisma/client.js'
 
 // Export the client instance as default
 export default prisma

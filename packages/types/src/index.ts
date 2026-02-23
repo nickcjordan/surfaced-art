@@ -40,4 +40,9 @@ export type {
   // API response types
   ListingWithImages,
   ArtistProfileResponse,
+  ArtistSummary,
+  ArtistSummaryWithCategories,
+  ListingListItem,
+  ListingDetailResponse,
+  PaginatedResponse,
 } from './interfaces'

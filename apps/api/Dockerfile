@@ -12,7 +12,9 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 # runtime loads the ESM bundle via import().
 COPY package.json ./
 
-# Copy the pre-built self-contained API bundle (produced by tsup in CI).
-COPY apps/api/dist/index.js ./index.js
+# Copy the pre-built API bundle (produced by tsup in CI).
+# tsup may code-split Prisma's WASM query compiler into separate chunks,
+# so we copy all JS files from dist/, not just index.js.
+COPY apps/api/dist/*.js ./
 
 CMD ["index.handler"]
