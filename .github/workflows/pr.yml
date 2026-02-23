@@ -139,7 +139,8 @@ jobs:
             -var-file="environments/prod.tfvars" \
             -var="db_password=${{ secrets.TF_VAR_db_password }}" \
             -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
-            -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}"
+            -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}" \
+            -var="alert_email_address=${{ secrets.TF_VAR_alert_email_address }}"
         continue-on-error: true
 
       - name: Comment Plan on PR

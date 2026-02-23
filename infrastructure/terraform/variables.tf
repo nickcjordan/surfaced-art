@@ -115,6 +115,18 @@ variable "migrate_ecr_max_images" {
   default     = 5
 }
 
+# Observability variables
+variable "alert_email_address" {
+  description = "Email address for CloudWatch alarm notifications via SNS. After terraform apply, the subscriber must click the AWS confirmation link to activate."
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.alert_email_address))
+    error_message = "alert_email_address must be a valid email address (e.g., user@example.com)."
+  }
+}
+
 variable "placeholder_image_uri" {
   description = "Lambda base image URI used as a placeholder until CI/CD deploys the service image. Shared by both lambda_api and lambda_migrate modules on initial creation only; after that, lifecycle { ignore_changes = [image_uri] } takes over and CI manages each Lambda's image independently. CI always passes this via -var from LAMBDA_BOOTSTRAP_IMAGE in deploy.yml (single source of truth). Default is used only for local terraform apply runs; update via: bash scripts/get-lambda-bootstrap-digest.sh"
   type        = string
