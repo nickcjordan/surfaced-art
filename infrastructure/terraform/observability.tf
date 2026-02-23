@@ -8,30 +8,6 @@
 #
 
 # -----------------------------------------------------------------------------
-# SNS Topic for Alarm Notifications
-# -----------------------------------------------------------------------------
-# All CloudWatch alarms deliver to this single SNS topic. Email subscription
-# is configured for launch — Slack integration can be added later via AWS
-# Chatbot or a Lambda subscriber.
-#
-# NOTE: After terraform apply, someone must click the confirmation link in
-# the AWS email to activate the subscription. This is the only manual step.
-
-resource "aws_sns_topic" "platform_alerts" {
-  name = "${var.project_name}-${var.environment}-platform-alerts"
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-platform-alerts"
-  }
-}
-
-resource "aws_sns_topic_subscription" "alert_email" {
-  topic_arn = aws_sns_topic.platform_alerts.arn
-  protocol  = "email"
-  endpoint  = var.alert_email_address
-}
-
-# -----------------------------------------------------------------------------
 # API Gateway CloudWatch Logging — IAM Role & Account
 # -----------------------------------------------------------------------------
 # API Gateway requires a regional account-level setting to push logs to
@@ -65,6 +41,30 @@ resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
 
 resource "aws_api_gateway_account" "main" {
   cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
+}
+
+# -----------------------------------------------------------------------------
+# SNS Topic for Alarm Notifications
+# -----------------------------------------------------------------------------
+# All CloudWatch alarms deliver to this single SNS topic. Email subscription
+# is configured for launch — Slack integration can be added later via AWS
+# Chatbot or a Lambda subscriber.
+#
+# NOTE: After terraform apply, someone must click the confirmation link in
+# the AWS email to activate the subscription. This is the only manual step.
+
+resource "aws_sns_topic" "platform_alerts" {
+  name = "${var.project_name}-${var.environment}-platform-alerts"
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-platform-alerts"
+  }
+}
+
+resource "aws_sns_topic_subscription" "alert_email" {
+  topic_arn = aws_sns_topic.platform_alerts.arn
+  protocol  = "email"
+  endpoint  = var.alert_email_address
 }
 
 # -----------------------------------------------------------------------------
