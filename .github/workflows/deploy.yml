@@ -102,6 +102,20 @@ jobs:
           terraform init \
             -backend-config="key=prod/terraform.tfstate"
 
+      # One-time migration: import existing CloudWatch log groups into new
+      # centralized state addresses. Safe to re-run (skips if already imported).
+      # TODO: Remove this step after one successful deploy.
+      - name: Import CloudWatch log groups (one-time migration)
+        working-directory: infrastructure/terraform
+        env:
+          TF_CLI_ARGS_import: >-
+            -var-file="environments/prod.tfvars"
+            -var="db_password=${{ secrets.TF_VAR_db_password }}"
+            -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}"
+            -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}"
+            -var="placeholder_image_uri=${{ env.LAMBDA_BOOTSTRAP_IMAGE }}"
+        run: bash ../../scripts/tf-state-mv-log-groups.sh
+
       # Bootstrap: create ECR repos before Lambdas so we can push images.
       # Lambda (package_type=Image) requires a private ECR image; public ECR URIs are invalid.
       - name: Bootstrap ECR Repositories

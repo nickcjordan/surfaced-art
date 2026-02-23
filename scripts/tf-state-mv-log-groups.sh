@@ -3,17 +3,21 @@
 # Terraform State Migration — Centralize CloudWatch Log Groups
 # =============================================================================
 #
-# Run this ONCE before `terraform apply` after merging the observability.tf PR.
-# Moves log group resources from individual modules to the root configuration
-# so Terraform updates them in-place instead of destroying and recreating.
+# Imports existing CloudWatch log groups into the new centralized Terraform
+# addresses (observability.tf). Run before `terraform apply` so Terraform
+# manages existing log groups in-place instead of trying to recreate them.
 #
-# After successful apply, this script can be deleted.
+# The script is idempotent — safe to re-run. If a resource is already in
+# state, the import is skipped.
 #
-# The script is idempotent — safe to re-run if interrupted or if some
-# resources were already moved. It checks state before each move.
+# After a successful apply, remove this script AND the workflow step that
+# calls it.
 #
 # Usage (from anywhere in the repo):
 #   bash scripts/tf-state-mv-log-groups.sh
+#
+# Requires terraform vars to be passed via TF_CLI_ARGS_import or the
+# workflow must pass -var-file and -var flags via TF_CLI_ARGS_import.
 #
 # =============================================================================
 
@@ -30,59 +34,48 @@ fi
 
 cd "${TERRAFORM_DIR}"
 
-echo "=== Terraform State Migration: Centralize Log Groups ==="
+echo "=== Terraform State Migration: Import Centralized Log Groups ==="
 echo "Working directory: $(pwd)"
 echo ""
 
 # Cache the state list once to avoid repeated remote state reads
 STATE_LIST=$(terraform state list 2>/dev/null || true)
 
-# move_if_needed <source> <destination> <label>
-# Skips the move if the source no longer exists (already moved) or
-# the destination already exists in state.
-move_if_needed() {
-  local src="$1"
-  local dst="$2"
+# import_if_needed <terraform_address> <aws_log_group_name> <label>
+# Skips if the resource is already in state.
+import_if_needed() {
+  local address="$1"
+  local log_group_name="$2"
   local label="$3"
 
-  if echo "${STATE_LIST}" | grep -qF "${dst}"; then
-    echo "${label} — already at destination, skipping"
+  if echo "${STATE_LIST}" | grep -qF "${address}"; then
+    echo "${label} — already in state, skipping"
     return 0
   fi
 
-  if ! echo "${STATE_LIST}" | grep -qF "${src}"; then
-    echo "${label} — source not found in state, skipping"
-    return 0
-  fi
-
-  echo "${label} — moving..."
-  terraform state mv "${src}" "${dst}"
+  echo "${label} — importing..."
+  terraform import "${address}" "${log_group_name}"
 }
 
-move_if_needed \
-  'module.lambda_api.aws_cloudwatch_log_group.api' \
+import_if_needed \
   'aws_cloudwatch_log_group.api_lambda' \
+  '/aws/lambda/surfaced-art-prod-api' \
   '[1/4] API Lambda log group'
 
-move_if_needed \
-  'module.lambda_image_processor.aws_cloudwatch_log_group.image_processor' \
+import_if_needed \
   'aws_cloudwatch_log_group.image_processor_lambda' \
+  '/aws/lambda/surfaced-art-prod-image-processor' \
   '[2/4] Image Processor Lambda log group'
 
-move_if_needed \
-  'module.lambda_migrate.aws_cloudwatch_log_group.migrate' \
+import_if_needed \
   'aws_cloudwatch_log_group.migrate_lambda' \
+  '/aws/lambda/surfaced-art-prod-migrate' \
   '[3/4] Migration Lambda log group'
 
-move_if_needed \
-  'module.lambda_api.aws_cloudwatch_log_group.api_gateway' \
+import_if_needed \
   'aws_cloudwatch_log_group.api_gateway' \
+  '/aws/apigateway/surfaced-art-prod-api' \
   '[4/4] API Gateway log group'
 
 echo ""
 echo "=== Done ==="
-echo ""
-echo "Next steps:"
-echo "  1. Run 'terraform plan' — should show only retention updates (14→30 days)"
-echo "  2. Run 'terraform apply' to apply the retention changes"
-echo "  3. Delete this script (it's a one-time migration)"
