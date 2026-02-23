@@ -181,19 +181,19 @@ module "iam" {
 module "rds" {
   source = "./modules/rds"
 
-  project_name    = var.project_name
-  environment     = var.environment
-  vpc_id          = data.aws_vpc.default.id
-  subnet_ids      = data.aws_subnets.default.ids
-  instance_class  = var.db_instance_class
-  db_name         = var.db_name
-  db_username     = var.db_username
-  db_password     = var.db_password
+  project_name   = var.project_name
+  environment    = var.environment
+  vpc_id         = data.aws_vpc.default.id
+  subnet_ids     = data.aws_subnets.default.ids
+  instance_class = var.db_instance_class
+  db_name        = var.db_name
+  db_username    = var.db_username
+  db_password    = var.db_password
   # Not a circular dependency: Terraform resolves at the resource level, not module level.
   # The SG resources in lambda_api/lambda_migrate have no dependency on RDS, so Terraform
   # creates them first, then the RDS SG (which references them), then the DB instance,
   # then the Lambda functions (which consume the connection string).
-  lambda_sg_ids   = [module.lambda_api.security_group_id, module.lambda_migrate.security_group_id]
+  lambda_sg_ids = [module.lambda_api.security_group_id, module.lambda_migrate.security_group_id]
 }
 
 # S3 + CloudFront module
@@ -235,24 +235,27 @@ module "ses" {
 module "lambda_api" {
   source = "./modules/lambda-api"
 
-  project_name    = var.project_name
-  environment     = var.environment
-  aws_region      = var.aws_region
-  vpc_id          = data.aws_vpc.default.id
-  vpc_cidr        = data.aws_vpc.default.cidr_block
-  subnet_ids      = data.aws_subnets.default.ids
-  memory_size     = var.lambda_memory_size
-  timeout         = var.lambda_timeout
+  project_name          = var.project_name
+  environment           = var.environment
+  aws_region            = var.aws_region
+  vpc_id                = data.aws_vpc.default.id
+  vpc_cidr              = data.aws_vpc.default.cidr_block
+  subnet_ids            = data.aws_subnets.default.ids
+  memory_size           = var.lambda_memory_size
+  timeout               = var.lambda_timeout
   lambda_role_arn       = module.iam.lambda_role_arn
   frontend_url          = var.frontend_url
   placeholder_image_uri = var.placeholder_image_uri
 
   # Environment variables for Lambda
-  database_url     = module.rds.connection_string
+  database_url         = module.rds.connection_string
   cognito_user_pool_id = module.cognito.user_pool_id
   cognito_client_id    = module.cognito.client_id
   s3_bucket_name       = module.s3_cloudfront.bucket_name
   cloudfront_url       = module.s3_cloudfront.cloudfront_url
+
+  # Observability — log group managed centrally in observability.tf
+  api_gateway_log_group_arn = aws_cloudwatch_log_group.api_gateway.arn
 
   depends_on = [aws_ecr_repository_policy.api]
 }

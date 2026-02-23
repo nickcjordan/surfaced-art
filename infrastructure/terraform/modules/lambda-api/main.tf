@@ -68,16 +68,6 @@ resource "aws_lambda_function" "api" {
   }
 }
 
-# CloudWatch Log Group
-resource "aws_cloudwatch_log_group" "api" {
-  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
-  retention_in_days = 14
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-api-logs"
-  }
-}
-
 # API Gateway HTTP API
 resource "aws_apigatewayv2_api" "main" {
   name          = "${var.project_name}-${var.environment}-api"
@@ -104,31 +94,21 @@ resource "aws_apigatewayv2_stage" "main" {
   auto_deploy = true
 
   access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.api_gateway.arn
+    destination_arn = var.api_gateway_log_group_arn
     format = jsonencode({
-      requestId      = "$context.requestId"
-      ip             = "$context.identity.sourceIp"
-      requestTime    = "$context.requestTime"
-      httpMethod     = "$context.httpMethod"
-      routeKey       = "$context.routeKey"
-      status         = "$context.status"
-      responseLength = "$context.responseLength"
+      requestId          = "$context.requestId"
+      ip                 = "$context.identity.sourceIp"
+      requestTime        = "$context.requestTime"
+      httpMethod         = "$context.httpMethod"
+      routeKey           = "$context.routeKey"
+      status             = "$context.status"
+      responseLength     = "$context.responseLength"
       integrationLatency = "$context.integrationLatency"
     })
   }
 
   tags = {
     Name = "${var.project_name}-${var.environment}-api-stage"
-  }
-}
-
-# CloudWatch Log Group for API Gateway
-resource "aws_cloudwatch_log_group" "api_gateway" {
-  name              = "/aws/apigateway/${var.project_name}-${var.environment}-api"
-  retention_in_days = 14
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-api-gateway-logs"
   }
 }
 

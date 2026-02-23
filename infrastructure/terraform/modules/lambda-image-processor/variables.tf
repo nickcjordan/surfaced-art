@@ -40,8 +40,3 @@ variable "timeout" {
   default     = 60
 }
 
-variable "log_retention_days" {
-  description = "CloudWatch log group retention in days"
-  type        = number
-  default     = 14
-}
