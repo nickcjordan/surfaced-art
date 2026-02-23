@@ -56,10 +56,14 @@ import_if_needed() {
   fi
 
   echo "${label} — importing..."
-  if terraform import "${address}" "${log_group_name}"; then
+  # Use `|| rc=$?` instead of `if` to guarantee set -e cannot intercept
+  # the non-zero exit code before our handler runs.
+  local rc=0
+  terraform import "${address}" "${log_group_name}" || rc=$?
+  if [ "$rc" -eq 0 ]; then
     echo "${label} — imported successfully"
   else
-    echo "${label} — not found in AWS, terraform apply will create it"
+    echo "${label} — import exited ${rc}; resource likely absent in AWS, terraform apply will create it"
   fi
 }
 
