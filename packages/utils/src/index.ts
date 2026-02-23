@@ -22,3 +22,6 @@ export {
 
 // Slug utilities
 export { generateSlug, validateSlug } from './slug'
+
+// Logger utilities
+export { logger, type LogLevel, type LogEntry } from './logger'
