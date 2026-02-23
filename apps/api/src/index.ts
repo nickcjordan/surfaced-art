@@ -42,12 +42,11 @@ app.notFound((c) => {
   return c.json({ error: 'Not found' }, 404)
 })
 
-// Error handler
+// Error handler — normalize err since throw can produce non-Error values
 app.onError((err, c) => {
-  logger.error('Unhandled error', {
-    error: err.message,
-    stack: err.stack,
-  })
+  const error = err instanceof Error ? err.message : String(err)
+  const stack = err instanceof Error ? err.stack : undefined
+  logger.error('Unhandled error', { error, stack })
   return c.json({ error: 'Internal server error' }, 500)
 })
 
