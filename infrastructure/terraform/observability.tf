@@ -7,7 +7,6 @@
 # retention policies and naming are consistent across the platform.
 #
 # Future issues will add to this file:
-#   - CloudWatch alarms (#77)
 #   - CloudWatch dashboard (#78)
 
 # -----------------------------------------------------------------------------
@@ -126,5 +125,144 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
 
   tags = {
     Name = "${var.project_name}-${var.environment}-api-gateway-logs"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# CloudWatch Alarms
+# -----------------------------------------------------------------------------
+# Each alarm monitors a specific metric with thresholds tuned to avoid false
+# positives while catching real problems early. All alarms deliver to the
+# shared SNS topic and send recovery notifications on OK state.
+
+# 5.1 — API Lambda Error Rate
+# Catches unhandled exceptions, timeout errors, out-of-memory crashes.
+# Threshold of 5 errors in two consecutive 5-minute periods avoids false
+# alarms from single transient failures.
+resource "aws_cloudwatch_metric_alarm" "api_lambda_errors" {
+  alarm_name          = "surfaced-${var.environment}-api-lambda-errors"
+  alarm_description   = "API Lambda error count exceeded threshold"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 5
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.platform_alerts.arn]
+  ok_actions          = [aws_sns_topic.platform_alerts.arn]
+
+  dimensions = {
+    FunctionName = module.lambda_api.function_name
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-api-lambda-errors-alarm"
+  }
+}
+
+# 5.2 — API Lambda Duration (P95)
+# Catches gradual performance degradation before it causes timeouts.
+# Threshold is 80% of the configured Lambda timeout (30s × 0.8 = 24s).
+resource "aws_cloudwatch_metric_alarm" "api_lambda_duration" {
+  alarm_name          = "surfaced-${var.environment}-api-lambda-duration-p95"
+  alarm_description   = "API Lambda P95 duration approaching timeout"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 3
+  metric_name         = "Duration"
+  namespace           = "AWS/Lambda"
+  period              = 300
+  extended_statistic  = "p95"
+  threshold           = var.lambda_timeout * 1000 * 0.8
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.platform_alerts.arn]
+  ok_actions          = [aws_sns_topic.platform_alerts.arn]
+
+  dimensions = {
+    FunctionName = module.lambda_api.function_name
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-api-lambda-duration-alarm"
+  }
+}
+
+# 5.3 — RDS Database Connections
+# A db.t3.micro has max_connections around 87 (dependent on memory).
+# Threshold of 80 gives warning before hard failures. When this alarm fires,
+# add RDS Proxy via Terraform — no application code changes required.
+resource "aws_cloudwatch_metric_alarm" "rds_connections" {
+  alarm_name          = "surfaced-${var.environment}-rds-connection-count"
+  alarm_description   = "RDS connection count approaching limit — evaluate adding RDS Proxy"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 3
+  metric_name         = "DatabaseConnections"
+  namespace           = "AWS/RDS"
+  period              = 300
+  statistic           = "Maximum"
+  threshold           = 80
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.platform_alerts.arn]
+  ok_actions          = [aws_sns_topic.platform_alerts.arn]
+
+  dimensions = {
+    DBInstanceIdentifier = module.rds.identifier
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-rds-connections-alarm"
+  }
+}
+
+# 5.4 — RDS Free Storage Space
+# Threshold is 2GB. treat_missing_data = "breaching" because if we stop
+# getting storage metrics, something is wrong.
+resource "aws_cloudwatch_metric_alarm" "rds_free_storage" {
+  alarm_name          = "surfaced-${var.environment}-rds-low-storage"
+  alarm_description   = "RDS free storage below 2GB"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "FreeStorageSpace"
+  namespace           = "AWS/RDS"
+  period              = 300
+  statistic           = "Minimum"
+  threshold           = 2000000000
+  treat_missing_data  = "breaching"
+  alarm_actions       = [aws_sns_topic.platform_alerts.arn]
+  ok_actions          = [aws_sns_topic.platform_alerts.arn]
+
+  dimensions = {
+    DBInstanceIdentifier = module.rds.identifier
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-rds-storage-alarm"
+  }
+}
+
+# 5.5 — API Gateway 5xx Errors
+# Catches errors at the API Gateway level that may not surface as Lambda
+# errors — integration timeouts, Lambda invocation failures, throttling.
+resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx" {
+  alarm_name          = "surfaced-${var.environment}-api-gateway-5xx"
+  alarm_description   = "API Gateway returning 5xx errors"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "5xx"
+  namespace           = "AWS/ApiGateway"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 5
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.platform_alerts.arn]
+  ok_actions          = [aws_sns_topic.platform_alerts.arn]
+
+  dimensions = {
+    ApiId = module.lambda_api.api_gateway_id
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-api-gateway-5xx-alarm"
   }
 }

@@ -19,6 +19,11 @@ output "connection_string" {
   sensitive   = true
 }
 
+output "identifier" {
+  description = "RDS instance identifier (used for CloudWatch alarm dimensions)"
+  value       = aws_db_instance.main.identifier
+}
+
 output "security_group_id" {
   description = "RDS security group ID"
   value       = aws_security_group.rds.id
