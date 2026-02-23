@@ -18,7 +18,7 @@
 # the AWS email to activate the subscription. This is the only manual step.
 
 resource "aws_sns_topic" "platform_alerts" {
-  name = "${var.project_name}-platform-alerts"
+  name = "${var.project_name}-${var.environment}-platform-alerts"
 
   tags = {
     Name = "${var.project_name}-${var.environment}-platform-alerts"
@@ -102,7 +102,7 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
 # Threshold of 5 errors in two consecutive 5-minute periods avoids false
 # alarms from single transient failures.
 resource "aws_cloudwatch_metric_alarm" "api_lambda_errors" {
-  alarm_name          = "surfaced-api-lambda-errors"
+  alarm_name          = "surfaced-${var.environment}-api-lambda-errors"
   alarm_description   = "API Lambda error count exceeded threshold"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -128,7 +128,7 @@ resource "aws_cloudwatch_metric_alarm" "api_lambda_errors" {
 # Catches gradual performance degradation before it causes timeouts.
 # Threshold is 80% of the configured Lambda timeout (30s × 0.8 = 24s).
 resource "aws_cloudwatch_metric_alarm" "api_lambda_duration" {
-  alarm_name          = "surfaced-api-lambda-duration-p95"
+  alarm_name          = "surfaced-${var.environment}-api-lambda-duration-p95"
   alarm_description   = "API Lambda P95 duration approaching timeout"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 3
@@ -139,6 +139,7 @@ resource "aws_cloudwatch_metric_alarm" "api_lambda_duration" {
   threshold           = var.lambda_timeout * 1000 * 0.8
   treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.platform_alerts.arn]
+  ok_actions          = [aws_sns_topic.platform_alerts.arn]
 
   dimensions = {
     FunctionName = module.lambda_api.function_name
@@ -154,7 +155,7 @@ resource "aws_cloudwatch_metric_alarm" "api_lambda_duration" {
 # Threshold of 80 gives warning before hard failures. When this alarm fires,
 # add RDS Proxy via Terraform — no application code changes required.
 resource "aws_cloudwatch_metric_alarm" "rds_connections" {
-  alarm_name          = "surfaced-rds-connection-count"
+  alarm_name          = "surfaced-${var.environment}-rds-connection-count"
   alarm_description   = "RDS connection count approaching limit — evaluate adding RDS Proxy"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 3
@@ -165,6 +166,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
   threshold           = 80
   treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.platform_alerts.arn]
+  ok_actions          = [aws_sns_topic.platform_alerts.arn]
 
   dimensions = {
     DBInstanceIdentifier = module.rds.identifier
@@ -179,7 +181,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
 # Threshold is 2GB. treat_missing_data = "breaching" because if we stop
 # getting storage metrics, something is wrong.
 resource "aws_cloudwatch_metric_alarm" "rds_free_storage" {
-  alarm_name          = "surfaced-rds-low-storage"
+  alarm_name          = "surfaced-${var.environment}-rds-low-storage"
   alarm_description   = "RDS free storage below 2GB"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
@@ -190,6 +192,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_free_storage" {
   threshold           = 2000000000
   treat_missing_data  = "breaching"
   alarm_actions       = [aws_sns_topic.platform_alerts.arn]
+  ok_actions          = [aws_sns_topic.platform_alerts.arn]
 
   dimensions = {
     DBInstanceIdentifier = module.rds.identifier
@@ -204,7 +207,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_free_storage" {
 # Catches errors at the API Gateway level that may not surface as Lambda
 # errors — integration timeouts, Lambda invocation failures, throttling.
 resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx" {
-  alarm_name          = "surfaced-api-gateway-5xx"
+  alarm_name          = "surfaced-${var.environment}-api-gateway-5xx"
   alarm_description   = "API Gateway returning 5xx errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -215,6 +218,7 @@ resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx" {
   threshold           = 5
   treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.platform_alerts.arn]
+  ok_actions          = [aws_sns_topic.platform_alerts.arn]
 
   dimensions = {
     ApiId = module.lambda_api.api_gateway_id
@@ -234,7 +238,7 @@ resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx" {
 # the same pattern.
 
 resource "aws_cloudwatch_dashboard" "platform" {
-  dashboard_name = "surfaced-art-platform"
+  dashboard_name = "surfaced-art-${var.environment}-platform"
 
   dashboard_body = jsonencode({
     widgets = [
@@ -393,7 +397,8 @@ resource "aws_cloudwatch_dashboard" "platform" {
         properties = {
           title = "RDS — Free Storage (GB)"
           metrics = [
-            ["AWS/RDS", "FreeStorageSpace", "DBInstanceIdentifier", module.rds.identifier, { stat = "Minimum", color = "#17becf" }]
+            [{ expression = "m1 / 1073741824", label = "Free Storage (GB)", id = "e1", color = "#17becf" }],
+            ["AWS/RDS", "FreeStorageSpace", "DBInstanceIdentifier", module.rds.identifier, { stat = "Minimum", id = "m1", visible = false }]
           ]
           period = 300
           region = var.aws_region
