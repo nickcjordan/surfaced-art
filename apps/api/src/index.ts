@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { logger } from 'hono/logger'
+import { logger as honoLogger } from 'hono/logger'
 import { handle } from 'hono/aws-lambda'
 import { prisma } from '@surfaced-art/db'
+import { logger } from '@surfaced-art/utils'
 
 import { healthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
@@ -12,7 +13,7 @@ import { createListingRoutes } from './routes/listings'
 const app = new Hono()
 
 // Middleware
-app.use('*', logger())
+app.use('*', honoLogger())
 app.use(
   '*',
   cors({
@@ -41,9 +42,11 @@ app.notFound((c) => {
   return c.json({ error: 'Not found' }, 404)
 })
 
-// Error handler
+// Error handler — normalize err since throw can produce non-Error values
 app.onError((err, c) => {
-  console.error('Error:', err)
+  const error = err instanceof Error ? err.message : String(err)
+  const stack = err instanceof Error ? err.stack : undefined
+  logger.error('Unhandled error', { error, stack })
   return c.json({ error: 'Internal server error' }, 500)
 })
 
