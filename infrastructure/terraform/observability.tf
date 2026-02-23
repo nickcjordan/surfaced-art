@@ -14,6 +14,11 @@
 # -----------------------------------------------------------------------------
 # CloudWatch Log Groups
 # -----------------------------------------------------------------------------
+# These log groups depend on each Lambda module exporting a non-sensitive
+# `function_name` output (type: string). All three modules (lambda-api,
+# lambda-image-processor, lambda-migrate) follow this contract today.
+# If a module renames or marks that output as sensitive, these resources
+# will fail at plan time — update the reference here accordingly.
 
 # API Lambda — the Hono handler; all route-level application logs.
 # 30-day retention: these logs are the primary debugging source.
