@@ -8,6 +8,7 @@ import { logger } from '@surfaced-art/utils'
 import { healthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
 import { createListingRoutes } from './routes/listings'
+import { createCategoryRoutes } from './routes/categories'
 
 // Create Hono app
 const app = new Hono()
@@ -27,6 +28,7 @@ app.use(
 app.route('/health', healthRoutes)
 app.route('/artists', createArtistRoutes(prisma))
 app.route('/listings', createListingRoutes(prisma))
+app.route('/categories', createCategoryRoutes(prisma))
 
 // Root route
 app.get('/', (c) => {
