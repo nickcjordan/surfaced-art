@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Navigation } from './Navigation'
 import { MobileNav } from './MobileNav'
 import { ThemeToggle } from './ThemeToggle'
+import { Wordmark } from './Wordmark'
 import { Container } from './ui/container'
 
 /**
@@ -17,12 +18,12 @@ export function Header() {
       {/* Top bar */}
       <Container>
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Brand name */}
+          {/* Brand wordmark */}
           <Link
             href="/"
-            className="font-serif text-xl md:text-2xl tracking-tight text-foreground hover:opacity-80 transition-opacity"
+            className="hover:opacity-80 transition-opacity"
           >
-            Surfaced Art
+            <Wordmark size="nav" />
           </Link>
 
           {/* Right side: theme toggle + mobile nav */}
