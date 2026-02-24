@@ -283,6 +283,17 @@ export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 's
   listings: ListingWithImages[]
 }
 
+// ─── Categories API Response Types ─────────────────────────────────
+
+/**
+ * Category with listing count for GET /categories
+ * Always includes all enum values, even those with zero listings
+ */
+export interface CategoryWithCount {
+  category: CategoryType
+  count: number
+}
+
 // ─── Listings API Response Types ────────────────────────────────────
 
 /**
@@ -330,5 +341,19 @@ export interface PaginatedResponse<T> {
     limit: number
     total: number
     totalPages: number
+  }
+}
+
+// ─── API Error Types ──────────────────────────────────────────────────
+
+/**
+ * Standardized API error response shape.
+ * All error responses from the API follow this format.
+ */
+export interface ApiError {
+  error: {
+    code: string // Machine-readable: "NOT_FOUND", "VALIDATION_ERROR", etc.
+    message: string // Human-readable description
+    details?: unknown // Field-level validation errors when applicable
   }
 }

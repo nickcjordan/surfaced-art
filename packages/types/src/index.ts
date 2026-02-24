@@ -42,7 +42,9 @@ export type {
   ArtistProfileResponse,
   ArtistSummary,
   ArtistSummaryWithCategories,
+  CategoryWithCount,
   ListingListItem,
   ListingDetailResponse,
   PaginatedResponse,
+  ApiError,
 } from './interfaces'

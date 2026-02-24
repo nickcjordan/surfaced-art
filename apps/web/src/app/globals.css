@@ -1,82 +1,312 @@
 @import "tailwindcss";
 
 /*
- * Surfaced Art — Gallery-quality design tokens
+ * Surfaced Art — Design tokens (Brand Design System v2.0)
  *
- * Palette: warm neutrals inspired by Aesop / Soho House / high-end gallery aesthetics.
+ * Palette: warm neutrals — moderately muted, warm but identifiable hues.
+ * The artwork provides vibrancy; the platform is a quiet, warm frame.
  * Typography: serif headings (DM Serif Display), clean sans body (DM Sans).
- * No blue. No default Tailwind colors. No generic SaaS look.
+ * Variable names follow ShadCN/ui conventions for component compatibility.
+ *
+ * Source: docs/Surfaced_Art_Brand_Design_System_v2_0.md
  */
 
 :root {
-  /* Background & surface */
-  --gallery-bg: #FAFAF8;
-  --gallery-surface: #F2F0ED;
+  /* Brand palette — Light Mode */
+  --background: #FAFAF8;
+  --surface: #F2F0ED;
+  --foreground: #1A1A1A;
+  --muted: #6B6460;
+  --border: #E5E0DB;
+  --accent-primary: #B8956A;
+  --accent-primary-hover: #A6845C;
+  --accent-secondary: #C4775A;
+  --accent-secondary-hover: #B5694D;
+  --error: #C4534A;
+  --success: #6B8F6B;
+  --warning: #D4A054;
+  --overlay: rgba(26, 26, 26, 0.6);
 
-  /* Text */
-  --gallery-foreground: #1A1A1A;
-  --gallery-muted: #6B6460;
+  /* ShadCN alias tokens — Light Mode */
+  --card: #F2F0ED;
+  --card-foreground: #1A1A1A;
+  --popover: #FAFAF8;
+  --popover-foreground: #1A1A1A;
+  --primary: #B8956A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F2F0ED;
+  --secondary-foreground: #1A1A1A;
+  --muted-foreground: #6B6460;
+  --accent: #F2F0ED;
+  --accent-foreground: #1A1A1A;
+  --destructive: #C4534A;
+  --destructive-foreground: #FFFFFF;
+  --input: #E5E0DB;
+  --ring: #B8956A;
+  --radius: 5px;
 
-  /* Borders & dividers */
-  --gallery-border: #E5E0DB;
+  /* Sidebar — Light Mode */
+  --sidebar: #F2F0ED;
+  --sidebar-foreground: #1A1A1A;
+  --sidebar-primary: #B8956A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F2F0ED;
+  --sidebar-accent-foreground: #1A1A1A;
+  --sidebar-border: #E5E0DB;
+  --sidebar-ring: #B8956A;
 
-  /* Accents (muted gold & warm terracotta — used sparingly) */
-  --gallery-accent: #B8956A;
-  --gallery-accent-warm: #C4775A;
+  /* Font stacks — next/font injects --font-dm-serif and --font-dm-sans */
+  --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
+  --active-font-serif: var(--font-dm-serif, 'DM Serif Display', serif);
+}
+
+.dark {
+  /* Brand palette — Dark Mode */
+  --background: #1C1917;
+  --surface: #282420;
+  --foreground: #F5F2EE;
+  --muted: #9C9590;
+  --border: #3D3835;
+  --accent-primary: #C9A678;
+  --accent-primary-hover: #D4B48A;
+  --accent-secondary: #D08A6E;
+  --accent-secondary-hover: #DC9A7E;
+  --error: #D4645C;
+  --success: #7FA37F;
+  --warning: #E0B060;
+  --overlay: rgba(0, 0, 0, 0.7);
+
+  /* ShadCN alias tokens — Dark Mode */
+  --card: #282420;
+  --card-foreground: #F5F2EE;
+  --popover: #1C1917;
+  --popover-foreground: #F5F2EE;
+  --primary: #C9A678;
+  --primary-foreground: #1C1917;
+  --secondary: #282420;
+  --secondary-foreground: #F5F2EE;
+  --muted-foreground: #9C9590;
+  --accent: #282420;
+  --accent-foreground: #F5F2EE;
+  --destructive: #D4645C;
+  --destructive-foreground: #1C1917;
+  --input: #3D3835;
+  --ring: #C9A678;
+
+  /* Sidebar — Dark Mode */
+  --sidebar: #282420;
+  --sidebar-foreground: #F5F2EE;
+  --sidebar-primary: #C9A678;
+  --sidebar-primary-foreground: #1C1917;
+  --sidebar-accent: #282420;
+  --sidebar-accent-foreground: #F5F2EE;
+  --sidebar-border: #3D3835;
+  --sidebar-ring: #C9A678;
+
+  /* Font stacks (same as light mode) */
+  --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
+  --active-font-serif: var(--font-dm-serif, 'DM Serif Display', serif);
 }
 
 @theme inline {
-  /* Gallery color palette */
-  --color-gallery-bg: var(--gallery-bg);
-  --color-gallery-surface: var(--gallery-surface);
-  --color-gallery-foreground: var(--gallery-foreground);
-  --color-gallery-muted: var(--gallery-muted);
-  --color-gallery-border: var(--gallery-border);
-  --color-gallery-accent: var(--gallery-accent);
-  --color-gallery-accent-warm: var(--gallery-accent-warm);
+  /* ShadCN color tokens — registered for Tailwind v4 */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--surface);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand color tokens */
+  --color-surface: var(--surface);
+  --color-muted-text: var(--muted);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-primary-hover: var(--accent-primary-hover);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-secondary-hover: var(--accent-secondary-hover);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-overlay: var(--overlay);
+
+  /* Border radius scale */
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+
+  /* Sidebar tokens */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Font stacks — role-based with fallbacks */
+  --font-sans: var(--active-font-sans);
+  --font-serif: var(--active-font-serif);
+}
+
+@layer base {
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--active-font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Heading styles — DM Serif Display with type scale specs */
+  h1 {
+    font-family: var(--active-font-serif);
+    font-size: 3rem;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-family: var(--active-font-serif);
+    font-size: 2.25rem;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: var(--active-font-serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  h4 {
+    font-family: var(--active-font-serif);
+    font-size: 1.375rem;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  h5, h6 {
+    font-family: var(--active-font-serif);
+  }
 
   /*
-   * Font stacks: next/font injects --font-dm-serif-display and --font-dm-sans
-   * as CSS custom properties on <body>. We reference them here with fallbacks.
+   * Link styles: removed from global scope to avoid conflicts with ShadCN
+   * components (Button asChild, NavigationMenu, etc.). Components manage
+   * their own hover/focus states. Content areas (artist bios, listing
+   * descriptions) can use prose utility classes for rich text link styling.
    */
-  --font-serif: var(--font-dm-serif-display, Georgia), Georgia, 'Times New Roman', serif;
-  --font-sans: var(--font-dm-sans, 'Helvetica Neue'), 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  a:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Selection highlight in primary accent */
+  ::selection {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
 }
 
-/* Remove dark mode for now — the gallery aesthetic is light */
+/* Type scale utility classes — Brand Design System v2.0 Section 3 */
+@layer components {
+  .text-heading-1 {
+    font-family: var(--active-font-serif);
+    font-size: 3rem;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
 
-body {
-  background: var(--gallery-bg);
-  color: var(--gallery-foreground);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  .text-heading-2 {
+    font-family: var(--active-font-serif);
+    font-size: 2.25rem;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .text-heading-3 {
+    font-family: var(--active-font-serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .text-heading-4 {
+    font-family: var(--active-font-serif);
+    font-size: 1.375rem;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .text-body-large {
+    font-family: var(--active-font-sans);
+    font-size: 1.125rem;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: 0;
+  }
+
+  .text-body-default {
+    font-family: var(--active-font-sans);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.65;
+    letter-spacing: 0;
+  }
+
+  .text-body-small {
+    font-family: var(--active-font-sans);
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0;
+  }
+
+  .text-caption {
+    font-family: var(--active-font-sans);
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+  }
 }
 
-/* Gallery-quality typography defaults */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-serif);
+/* Skeleton pulse animation */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
-/* Links: clean by default, underline on hover/focus for discoverability */
-a {
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-thickness: 1px;
-}
-
-a:focus-visible {
-  outline: 2px solid var(--gallery-accent);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-
-/* Selection highlight in warm accent */
-::selection {
-  background-color: var(--gallery-accent);
-  color: var(--gallery-bg);
+.animate-skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
 }

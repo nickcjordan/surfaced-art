@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { Navigation } from './Navigation'
 import { MobileNav } from './MobileNav'
+import { ThemeToggle } from './ThemeToggle'
+import { Wordmark } from './Wordmark'
+import { Container } from './ui/container'
 
 /**
  * Global site header with brand name, category navigation, and mobile menu.
@@ -11,29 +14,25 @@ import { MobileNav } from './MobileNav'
  */
 export function Header() {
   return (
-    <header className="sticky top-0 z-30 bg-gallery-bg/95 backdrop-blur-sm">
+    <header data-testid="site-header" className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
       {/* Top bar */}
-      <div className="mx-auto max-w-7xl px-6">
+      <Container>
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Brand name */}
+          {/* Brand wordmark */}
           <Link
             href="/"
-            className="font-serif text-xl md:text-2xl tracking-tight text-gallery-foreground hover:opacity-80 transition-opacity"
+            className="hover:opacity-80 transition-opacity"
           >
-            Surfaced Art
+            <Wordmark size="nav" />
           </Link>
 
-          {/* Right side: future sign-in placeholder + mobile nav */}
-          <div className="flex items-center gap-4">
-            {/* Sign-in placeholder -- uncomment when auth is ready
-            <Link href="/sign-in" className="text-sm text-gallery-muted hover:text-gallery-foreground transition-colors">
-              Sign In
-            </Link>
-            */}
+          {/* Right side: theme toggle + mobile nav */}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
             <MobileNav />
           </div>
         </div>
-      </div>
+      </Container>
 
       {/* Desktop category navigation */}
       <Navigation />

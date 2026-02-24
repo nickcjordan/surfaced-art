@@ -8,6 +8,8 @@ import { logger } from '@surfaced-art/utils'
 import { healthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
 import { createListingRoutes } from './routes/listings'
+import { createCategoryRoutes } from './routes/categories'
+import { createWaitlistRoutes } from './routes/waitlist'
 
 // Create Hono app
 const app = new Hono()
@@ -27,6 +29,8 @@ app.use(
 app.route('/health', healthRoutes)
 app.route('/artists', createArtistRoutes(prisma))
 app.route('/listings', createListingRoutes(prisma))
+app.route('/categories', createCategoryRoutes(prisma))
+app.route('/waitlist', createWaitlistRoutes(prisma))
 
 // Root route
 app.get('/', (c) => {
@@ -39,7 +43,10 @@ app.get('/', (c) => {
 
 // 404 handler
 app.notFound((c) => {
-  return c.json({ error: 'Not found' }, 404)
+  return c.json(
+    { error: { code: 'NOT_FOUND', message: 'Not found' } },
+    404
+  )
 })
 
 // Error handler — normalize err since throw can produce non-Error values
@@ -53,7 +60,10 @@ app.onError((err, c) => {
     : { errorMessage: String(err) }
 
   logger.error('Unhandled error', errorData)
-  return c.json({ error: 'Internal server error' }, 500)
+  return c.json(
+    { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
+    500
+  )
 })
 
 export const handler = handle(app)

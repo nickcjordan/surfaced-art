@@ -91,6 +91,8 @@ Created when a user is accepted as an artist. This is a rich entity with its own
 | UNIQUE (slug) — slugs are globally unique across all artist profiles |
 | INDEX on status — frequent filter for approved artist queries |
 
+> *Planned addition: `custom_accent_color` (string, nullable) — a curated hex color value chosen by the artist to personalize their profile page. The design system supports per-artist theme scoping via CSS custom property inheritance (see Brand Design System v2.0). This field will be added to the schema when the artist profile editor is built in a future phase.*
+
 ### artist_categories
 
 An artist can work across multiple categories. Each row is one category assignment for one artist.
@@ -336,6 +338,20 @@ Buyers following artists to be notified when new work is listed or commissions o
 | UNIQUE (user_id, artist_id) — a buyer cannot follow the same artist twice |
 | INDEX on user_id |
 | INDEX on artist_id — for notifying all followers of an artist on new listing or commission event |
+
+### waitlist
+
+Pre-launch email capture. Visitors can submit their email to be notified when the platform launches or when new features become available. No user account is required.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | uuid | Primary key |
+| email | string | Unique. Stored lowercase |
+| created_at | timestamp |  |
+
+| Constraints & Indexes |
+| --- |
+| UNIQUE (email) — prevents duplicate signups |
 
 ## 3. Relationship Map
 

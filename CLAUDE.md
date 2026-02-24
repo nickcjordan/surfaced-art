@@ -18,6 +18,10 @@ Before making changes, read the relevant documentation in `docs/`:
 - `Surfaced_Art_Build_Order_v1.0.md` - Phased build plan
 - `Surfaced_Art_Claude_Code_Brief_Phase1_2.md` - Detailed specs for Phase 1 & 2
 
+## Architecture Decision Records
+
+Key architectural decisions are documented in `docs/decisions/`. Check there before re-evaluating past decisions. See `docs/decisions/README.md` for the full index and ADR template.
+
 ## Tech Stack (Do Not Change)
 
 | Layer | Technology |
@@ -36,6 +40,107 @@ Before making changes, read the relevant documentation in `docs/`:
 - Do NOT use Vercel KV, Postgres, Blob, or Analytics
 - Use Next.js Image with `unoptimized` prop
 - Use Sharp for image processing
+
+## Design System Architecture
+
+The frontend uses a layered CSS custom property system built on ShadCN/ui conventions with Tailwind CSS v4. Source of truth: `docs/Surfaced_Art_Brand_Design_System_v2_0.md`.
+
+### Token Layers
+
+```
+:root          → Light mode base tokens (--background, --primary, etc.)
+.dark          → Dark mode overrides (applied by next-themes via class)
+@theme inline  → Registers tokens for Tailwind v4 utilities (--color-*, --radius-*, --font-*)
+@layer base    → Global element styles (headings, selection, focus-visible)
+@layer components → Type scale utility classes (.text-heading-1, .text-body-default, etc.)
+```
+
+All color values live in `:root` and `.dark` as plain hex values. The `@theme inline` block maps them to Tailwind-compatible `--color-*` names so you can use classes like `bg-primary`, `text-muted-foreground`, etc.
+
+### How to Add a New Color Token
+
+1. Add the light mode value to `:root` in `globals.css`:
+   ```css
+   --my-token: #hex;
+   ```
+2. Add the dark mode value to `.dark`:
+   ```css
+   --my-token: #hex;
+   ```
+3. Register it in `@theme inline` for Tailwind:
+   ```css
+   --color-my-token: var(--my-token);
+   ```
+4. Use in components: `className="bg-my-token text-my-token"`
+
+### Font Architecture
+
+Two role-based font stacks with fallback chains:
+
+```css
+--active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);   /* Body text */
+--active-font-serif: var(--font-dm-serif, 'DM Serif Display', serif); /* Headings */
+```
+
+- `--font-dm-sans` and `--font-dm-serif` are injected by `next/font` in `layout.tsx`
+- If `next/font` variables are missing, the fallback fonts inside `var()` activate
+- Registered in `@theme inline` as `--font-sans` and `--font-serif`
+- Headings (`h1`–`h4`) use `var(--active-font-serif)` in `@layer base`
+- Body uses `var(--active-font-sans)` on the `body` element
+
+To swap fonts: change the `next/font` import in `layout.tsx` and update the fallback strings in `globals.css`.
+
+### Artist Theme Scoping (Future)
+
+The token architecture supports per-artist theme customization via CSS custom property inheritance. A wrapper element with inline `style` overrides will cascade to all child components:
+
+```tsx
+// Future pattern — ArtistThemeProvider
+<div style={{
+  '--primary': artist.accentColor,
+  '--accent-primary': artist.accentColor,
+  '--ring': artist.accentColor,
+} as React.CSSProperties}>
+  <ArtistProfile />
+</div>
+```
+
+**Customizable tokens** (artist can set): `--primary`, `--accent-primary`, `--accent-secondary`, `--ring`
+
+**Locked tokens** (platform-controlled): `--background`, `--foreground`, `--surface`, `--border`, `--error`, `--success`, `--warning`, `--destructive`, font stacks
+
+**Known challenge**: Per-artist heading fonts require dynamic font loading at runtime. The token architecture supports it (`--active-font-serif` can be overridden), but the font loading mechanism needs its own design in a future phase.
+
+### Global Style Scoping Rules
+
+- **No global link styles.** ShadCN components manage their own hover/focus states. Content areas (artist bios, listing descriptions) should use prose utility classes for rich text link styling.
+- **`a:focus-visible`** is the only global link style — uses `var(--ring)` for accessibility.
+- **`::selection`** uses `var(--primary)` / `var(--primary-foreground)`.
+- **Heading elements** (`h1`–`h4`) have global font-family and type scale styles. These use CSS custom properties, so they respond to scoped theme overrides.
+
+### Adding ShadCN Components
+
+```bash
+cd apps/web
+npx shadcn@latest add <component-name>
+```
+
+Components are installed to `apps/web/src/components/ui/`. They automatically use the design tokens from `globals.css`. No manual token wiring is needed — ShadCN reads `--primary`, `--border`, `--radius`, etc.
+
+### Container and Layout Patterns
+
+The `<Container>` component (`apps/web/src/components/ui/container.tsx`) provides consistent page-width constraints:
+
+```tsx
+import { Container } from '@/components/ui/container'
+
+<Container>              {/* max-w-7xl mx-auto px-6 */}
+<Container className="py-8">  {/* adds vertical padding */}
+```
+
+- `layout.tsx` wraps `<main>` content in `<Container className="py-8 md:py-12">`
+- Header and Footer use `<Container>` internally
+- Pass additional classes via `className` prop (merged with `cn()`)
 
 ## Issue-Driven Development Process
 
@@ -187,6 +292,60 @@ Examples:
 - **Component tests**: Vitest + React Testing Library
 - **E2E tests**: Playwright (future phases)
 
+## Visual QA Conventions
+
+The project has a visual QA suite separate from unit/component tests. Full specification is in `docs/Visual_QA_Automation.md`.
+
+### Two Test Layers
+
+| Layer | Executor | Purpose |
+|---|---|---|
+| **Automated (Playwright)** | CI runs on every PR | SEO, console errors, network failures, responsive screenshots, page structure |
+| **Interactive (Claude.ai)** | Human pastes prompt into Claude.ai with Chrome tools | Subjective design review, gallery feel assessment, UX walkthrough |
+
+### `data-testid` Convention
+
+Every major section of every page gets a `data-testid` attribute. These are the stable selectors for Playwright visual QA tests and Claude.ai interactive reviews.
+
+**Pattern:**
+```tsx
+<section data-testid="artist-hero">
+  <h1 data-testid="artist-name">{artist.displayName}</h1>
+</section>
+```
+
+**Required inventory by page:**
+
+| Page | Required `data-testid` values |
+|---|---|
+| Homepage | `hero`, `featured-artists`, `artist-card`, `featured-listings`, `listing-card`, `category-grid`, `waitlist`, `waitlist-email-input`, `waitlist-submit` |
+| Artist Profile | `artist-hero`, `artist-name`, `artist-bio`, `artist-location`, `artist-categories`, `artist-social-links`, `process-section`, `cv-section`, `available-work`, `archive-section`, `listing-card` |
+| Listing Detail | `listing-title`, `listing-price`, `listing-images`, `listing-description`, `listing-dimensions`, `listing-medium`, `artist-card`, `edition-info` |
+| Category Browse | `category-header`, `category-content`, `listing-card`, `category-nav` |
+| Global | `site-header`, `site-footer`, `site-nav`, `category-link` |
+
+**Coexistence with React Testing Library:** Component/unit tests continue to use semantic role queries (`getByRole`, `getByText`). `data-testid` is for E2E/visual QA selectors only. Both approaches are correct for their context.
+
+### Visual QA Test Rules
+
+- All test selectors use `data-testid` — never CSS class selectors, never fragile XPath
+- Seed data references (artist slugs, listing IDs) defined as constants at the top of each test file, never hardcoded inline
+- Screenshot naming convention: `{page}-{variant}-{device}.png`
+- No automated visual regression (pixel-diff) at v1 — screenshots are for human review only
+- Visual QA tests run against deployed URLs via `VISUAL_QA_BASE_URL` env var, not local dev servers
+
+### Interactive Visual Review (Claude.ai Prompt)
+
+A structured prompt for Claude.ai with Chrome tools is saved in `docs/Visual_QA_Automation.md` Section 3.1. Use it at these milestones:
+
+| Milestone | When |
+|---|---|
+| Phase 2 first deploy | First time real content renders on a Vercel preview URL |
+| Design iteration | After significant CSS/layout changes, before calling the phase done |
+| Phase 2 exit criteria | Final "is this sendable to artists?" gut check |
+| Brand guide implementation | After COO brand decisions are applied to the design system |
+| Major new features | After each Phase 3/4 feature that adds visual pages or flows |
+
 ## What NOT to Build (Phase 1 & 2)
 
 Do NOT build these features yet:
@@ -219,6 +378,19 @@ git show <commit-hash>
 # Find which commit introduced a change
 git blame path/to/file
 ```
+
+## Local Development Database
+
+```bash
+docker compose up -d                    # Start PostgreSQL
+# Create packages/db/.env with:
+# DATABASE_URL=postgresql://surfaced:surfaced_local@localhost:5432/surfaced
+cd packages/db && npm run db:migrate:deploy  # Apply migrations
+cd packages/db && npm run db:seed            # Load seed data
+npm run db:studio                            # Browse data in Prisma Studio (optional)
+```
+
+See `.env.example` at the repo root for the default local connection string.
 
 ## Environment Variables
 
