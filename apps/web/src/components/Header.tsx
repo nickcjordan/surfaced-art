@@ -11,14 +11,14 @@ import { MobileNav } from './MobileNav'
  */
 export function Header() {
   return (
-    <header className="sticky top-0 z-30 bg-gallery-bg/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
       {/* Top bar */}
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Brand name */}
           <Link
             href="/"
-            className="font-serif text-xl md:text-2xl tracking-tight text-gallery-foreground hover:opacity-80 transition-opacity"
+            className="font-serif text-xl md:text-2xl tracking-tight text-foreground hover:opacity-80 transition-opacity"
           >
             Surfaced Art
           </Link>
@@ -26,7 +26,7 @@ export function Header() {
           {/* Right side: future sign-in placeholder + mobile nav */}
           <div className="flex items-center gap-4">
             {/* Sign-in placeholder -- uncomment when auth is ready
-            <Link href="/sign-in" className="text-sm text-gallery-muted hover:text-gallery-foreground transition-colors">
+            <Link href="/sign-in" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Sign In
             </Link>
             */}
