@@ -6,7 +6,7 @@ import { Container } from '@/components/ui/container'
 import './globals.css'
 
 const dmSerifDisplay = DM_Serif_Display({
-  variable: '--font-dm-serif-display',
+  variable: '--font-dm-serif',
   weight: '400',
   subsets: ['latin'],
   display: 'swap',
@@ -14,6 +14,7 @@ const dmSerifDisplay = DM_Serif_Display({
 
 const dmSans = DM_Sans({
   variable: '--font-dm-sans',
+  weight: ['400', '500', '600'],
   subsets: ['latin'],
   display: 'swap',
 })
@@ -30,10 +31,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${dmSerifDisplay.variable} ${dmSans.variable} antialiased min-h-screen flex flex-col`}
-      >
+    <html lang="en" className={`${dmSerifDisplay.variable} ${dmSans.variable}`}>
+      <body className="antialiased min-h-screen flex flex-col">
         <Header />
         <main className="flex-1">
           <Container className="py-8 md:py-12">
