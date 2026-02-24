@@ -44,19 +44,63 @@ jobs:
           script: |
             const commits = process.env.COMMITS || '';
 
-            const fence = '```';
+            // Parse commits into { type -> [subject, ...] } groups.
+            // Conventional commit format: "sha type(scope): subject"
+            const TYPE_LABELS = {
+              feat:     'Features',
+              fix:      'Bug Fixes',
+              refactor: 'Refactoring',
+              test:     'Tests',
+              ci:       'CI / Automation',
+              chore:    'Chores',
+              docs:     'Documentation',
+              perf:     'Performance',
+              build:    'Build',
+            };
+
+            const groups = {};
+            const other = [];
+
+            for (const line of commits.split('\n').filter(Boolean)) {
+              // Strip leading SHA (first token)
+              const message = line.replace(/^[0-9a-f]+\s+/, '');
+              const match = message.match(/^(\w+)(?:\([^)]+\))?!?:\s+(.+)/);
+              if (match) {
+                const type = match[1];
+                const subject = match[2];
+                const label = TYPE_LABELS[type];
+                // Unknown conventional types go into other[] to avoid a
+                // duplicate "Other" section alongside the fallback array.
+                if (!label) {
+                  other.push(subject);
+                } else {
+                  groups[label] = groups[label] || [];
+                  groups[label].push(subject);
+                }
+              } else {
+                other.push(message);
+              }
+            }
+
+            const totalCommits = commits.split('\n').filter(Boolean).length;
+            const title = `release: dev to main (${totalCommits} change${totalCommits === 1 ? '' : 's'})`;
+
+            const sections = [];
+            for (const [label, subjects] of Object.entries(groups)) {
+              sections.push(`### ${label}\n${subjects.map(s => `- ${s}`).join('\n')}`);
+            }
+            if (other.length) {
+              sections.push(`### Other\n${other.map(s => `- ${s}`).join('\n')}`);
+            }
+
             const hr = '---';
             const body = [
-              '## Pending changes',
+              '## Summary',
               '',
-              'The following commits on `dev` are not yet on `main`:',
-              '',
-              fence,
-              commits,
-              fence,
+              ...sections,
               '',
               hr,
-              '_This PR is maintained automatically. Merge with **rebase** to keep a linear history on `main`. After merging, `dev` will be fast-forwarded automatically._',
+              '_Auto-generated. This PR is updated on every push to `dev` and reflects all changes not yet on `main`._',
             ].join('\n');
 
             const { data: pulls } = await github.rest.pulls.list({
@@ -73,16 +117,17 @@ jobs:
                 repo: context.repo.repo,
                 head: 'dev',
                 base: 'main',
-                title: 'chore: promote dev to main',
+                title,
                 body,
               });
-              console.log('Created new dev to main PR.');
+              console.log('Created new dev to main PR: ' + title);
             } else {
               await github.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pulls[0].number,
+                title,
                 body,
               });
-              console.log('Updated PR #' + pulls[0].number + '.');
+              console.log('Updated PR #' + pulls[0].number + ': ' + title);
             }
