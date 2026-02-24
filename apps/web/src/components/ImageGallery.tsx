@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, type KeyboardEvent } from 'react'
 import Image from 'next/image'
 import type { ListingImage } from '@surfaced-art/types'
 
@@ -15,7 +15,7 @@ export function ImageGallery({ images, alt }: ImageGalleryProps) {
   const activeImage = sorted[activeIndex]
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+    (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
         setActiveIndex((i) => (i > 0 ? i - 1 : sorted.length - 1))
       } else if (e.key === 'ArrowRight') {

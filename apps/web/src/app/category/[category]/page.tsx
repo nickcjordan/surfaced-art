@@ -4,22 +4,13 @@ import Link from 'next/link'
 import { getListings, getCategories, ApiError } from '@/lib/api'
 import { ListingCard } from '@/components/ListingCard'
 import { CATEGORIES } from '@/lib/categories'
+import { categoryLabels } from '@/lib/category-labels'
 import { Category } from '@surfaced-art/types'
 import type { CategoryType } from '@surfaced-art/types'
 
 export const revalidate = 60
 
 const validCategories = new Set(Object.values(Category))
-
-const categoryLabels = Object.fromEntries(
-  Object.values(Category).map((c) => [
-    c,
-    c
-      .split('_')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' '),
-  ])
-) as Record<CategoryType, string>
 
 export function generateStaticParams() {
   return Object.values(Category).map((category) => ({ category }))
@@ -68,6 +59,8 @@ export default async function CategoryBrowsePage({ params }: Props) {
   } catch (error) {
     if (error instanceof ApiError) {
       console.error(`API error fetching category data: ${error.status} ${error.message}`)
+    } else {
+      console.error('Unexpected error fetching category data:', error)
     }
     listings = []
   }

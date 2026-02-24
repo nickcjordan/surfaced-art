@@ -6,20 +6,10 @@ import { getArtistProfile, ApiError } from '@/lib/api'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ListingCard } from '@/components/ListingCard'
 import { Badge } from '@/components/ui/badge'
-import { Category } from '@surfaced-art/types'
-import type { CategoryType, ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types'
+import { categoryLabels } from '@/lib/category-labels'
+import type { ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types'
 
 export const revalidate = 60
-
-const categoryLabels = Object.fromEntries(
-  Object.values(Category).map((c) => [
-    c,
-    c
-      .split('_')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' '),
-  ])
-) as Record<CategoryType, string>
 
 const cvEntryTypeLabels: Record<CvEntryTypeType, string> = {
   exhibition: 'Exhibitions',

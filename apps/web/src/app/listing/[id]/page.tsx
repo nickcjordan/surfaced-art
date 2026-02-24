@@ -8,20 +8,10 @@ import { ImageGallery } from '@/components/ImageGallery'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { Badge } from '@/components/ui/badge'
 import { WaitlistForm } from '@/components/WaitlistForm'
-import { Category } from '@surfaced-art/types'
-import type { CategoryType, ListingDetailResponse } from '@surfaced-art/types'
+import { categoryLabels } from '@/lib/category-labels'
+import type { ListingDetailResponse } from '@surfaced-art/types'
 
 export const revalidate = 60
-
-const categoryLabels = Object.fromEntries(
-  Object.values(Category).map((c) => [
-    c,
-    c
-      .split('_')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' '),
-  ])
-) as Record<CategoryType, string>
 
 type Props = {
   params: Promise<{ id: string }>

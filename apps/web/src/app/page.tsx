@@ -30,6 +30,8 @@ async function fetchHomeData() {
   } catch (error) {
     if (error instanceof ApiError) {
       console.error(`API error fetching home data: ${error.status} ${error.message}`)
+    } else {
+      console.error('Unexpected error fetching home data:', error)
     }
     return { categories: [], listings: [] }
   }
