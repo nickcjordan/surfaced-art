@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Navigation } from './Navigation'
 import { MobileNav } from './MobileNav'
+import { Container } from './ui/container'
 
 /**
  * Global site header with brand name, category navigation, and mobile menu.
@@ -13,7 +14,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
       {/* Top bar */}
-      <div className="mx-auto max-w-7xl px-6">
+      <Container>
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Brand name */}
           <Link
@@ -33,7 +34,7 @@ export function Header() {
             <MobileNav />
           </div>
         </div>
-      </div>
+      </Container>
 
       {/* Desktop category navigation */}
       <Navigation />
