@@ -1,0 +1,57 @@
+meta {
+  name: Get Listing Detail
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/listings/{{listingId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{listingId}}
+}
+
+tests {
+  test("should return full listing detail", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id");
+    expect(body).to.have.property("title");
+    expect(body).to.have.property("description");
+    expect(body).to.have.property("medium");
+    expect(body).to.have.property("category");
+    expect(body).to.have.property("price");
+    expect(body).to.have.property("status");
+  });
+
+  test("should include all images sorted by sortOrder", function() {
+    const body = res.getBody();
+    expect(body.images).to.be.an("array");
+    for (let i = 1; i < body.images.length; i++) {
+      expect(body.images[i].sortOrder).to.be.at.least(body.images[i - 1].sortOrder);
+    }
+  });
+
+  test("should include artist summary with categories", function() {
+    const body = res.getBody();
+    expect(body.artist).to.have.property("displayName");
+    expect(body.artist).to.have.property("slug");
+    expect(body.artist).to.have.property("location");
+    expect(body.artist).to.have.property("categories");
+    expect(body.artist.categories).to.be.an("array");
+  });
+
+  test("dimensions should be numbers or null", function() {
+    const body = res.getBody();
+    ["artworkLength", "artworkWidth", "artworkHeight"].forEach(function(field) {
+      const val = body[field];
+      expect(val === null || typeof val === "number").to.be.true;
+    });
+    ["packedLength", "packedWidth", "packedHeight", "packedWeight"].forEach(function(field) {
+      expect(body[field]).to.be.a("number");
+    });
+  });
+}

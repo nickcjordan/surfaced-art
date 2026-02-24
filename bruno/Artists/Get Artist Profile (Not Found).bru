@@ -1,0 +1,24 @@
+meta {
+  name: Get Artist Profile (Not Found)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/artists/nonexistent-artist-slug
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 404
+  res.body.error.code: eq NOT_FOUND
+}
+
+tests {
+  test("should return 404 with error payload", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("NOT_FOUND");
+    expect(body.error.message).to.equal("Artist not found");
+  });
+}
