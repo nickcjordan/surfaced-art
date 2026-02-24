@@ -6,7 +6,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  testDir: './e2e/visual-qa',
+  testDir: './visual-qa',
   timeout: 30_000,
   retries: 1,
 
@@ -34,11 +34,11 @@ export default defineConfig({
   ],
 
   // Screenshot output directory for visual review
-  outputDir: './e2e/visual-qa/results',
+  outputDir: './visual-qa/results',
 
   // Reporter that generates an HTML report for visual review
   reporter: [
-    ['html', { outputFolder: './e2e/visual-qa/report', open: 'never' }],
+    ['html', { outputFolder: './visual-qa/report', open: 'never' }],
     ['list'],
   ],
 })
