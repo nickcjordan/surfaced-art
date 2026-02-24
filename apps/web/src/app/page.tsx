@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center">
+    <div data-testid="hero" className="flex min-h-[60vh] flex-col items-center justify-center">
       <div className="text-center">
         <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl lg:text-6xl">
           Surfaced Art

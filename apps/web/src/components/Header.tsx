@@ -14,7 +14,7 @@ import { Container } from './ui/container'
  */
 export function Header() {
   return (
-    <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
+    <header data-testid="site-header" className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
       {/* Top bar */}
       <Container>
         <div className="flex items-center justify-between h-16 md:h-20">
