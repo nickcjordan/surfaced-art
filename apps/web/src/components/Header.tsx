@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Navigation } from './Navigation'
 import { MobileNav } from './MobileNav'
+import { ThemeToggle } from './ThemeToggle'
 import { Container } from './ui/container'
 
 /**
@@ -24,13 +25,9 @@ export function Header() {
             Surfaced Art
           </Link>
 
-          {/* Right side: future sign-in placeholder + mobile nav */}
-          <div className="flex items-center gap-4">
-            {/* Sign-in placeholder -- uncomment when auth is ready
-            <Link href="/sign-in" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Sign In
-            </Link>
-            */}
+          {/* Right side: theme toggle + mobile nav */}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
             <MobileNav />
           </div>
         </div>
