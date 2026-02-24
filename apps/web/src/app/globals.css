@@ -136,6 +136,7 @@
   --color-error: var(--error);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-overlay: var(--overlay);
 
   /* Border radius scale */
   --radius-sm: calc(var(--radius) - 2px);
