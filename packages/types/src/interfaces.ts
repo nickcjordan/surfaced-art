@@ -343,3 +343,17 @@ export interface PaginatedResponse<T> {
     totalPages: number
   }
 }
+
+// ─── API Error Types ──────────────────────────────────────────────────
+
+/**
+ * Standardized API error response shape.
+ * All error responses from the API follow this format.
+ */
+export interface ApiError {
+  error: {
+    code: string // Machine-readable: "NOT_FOUND", "VALIDATION_ERROR", etc.
+    message: string // Human-readable description
+    details?: unknown // Field-level validation errors when applicable
+  }
+}

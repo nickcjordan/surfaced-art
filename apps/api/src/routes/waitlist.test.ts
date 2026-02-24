@@ -90,7 +90,12 @@ describe('POST /waitlist', () => {
       expect(res.status).toBe(400)
 
       const body = await res.json()
-      expect(body.error).toBe('Invalid email address')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
+      expect(body.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ field: 'email', message: 'Invalid email address' }),
+        ])
+      )
     })
 
     it('should return 400 for empty email', async () => {
@@ -102,7 +107,12 @@ describe('POST /waitlist', () => {
       expect(res.status).toBe(400)
 
       const body = await res.json()
-      expect(body.error).toBe('Email is required')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
+      expect(body.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ field: 'email', message: 'Email is required' }),
+        ])
+      )
     })
 
     it('should return 400 for missing email field', async () => {
@@ -114,7 +124,7 @@ describe('POST /waitlist', () => {
       expect(res.status).toBe(400)
 
       const body = await res.json()
-      expect(body.error).toBe('Email is required')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 
     it('should return 400 for non-string email', async () => {
@@ -126,7 +136,7 @@ describe('POST /waitlist', () => {
       expect(res.status).toBe(400)
 
       const body = await res.json()
-      expect(body.error).toBe('Email is required')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 
     it('should return 400 for malformed JSON', async () => {
@@ -138,7 +148,8 @@ describe('POST /waitlist', () => {
       expect(res.status).toBe(400)
 
       const body = await res.json()
-      expect(body.error).toBe('Invalid JSON payload')
+      expect(body.error.code).toBe('BAD_REQUEST')
+      expect(body.error.message).toBe('Invalid JSON payload')
     })
 
     it('should not call Prisma for invalid email', async () => {
@@ -195,7 +206,8 @@ describe('POST /waitlist', () => {
       expect(res.status).toBe(500)
 
       const body = await res.json()
-      expect(body.error).toBe('Internal server error')
+      expect(body.error.code).toBe('INTERNAL_ERROR')
+      expect(body.error.message).toBe('Internal server error')
     })
   })
 })

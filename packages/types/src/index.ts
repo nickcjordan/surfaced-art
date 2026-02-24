@@ -46,4 +46,5 @@ export type {
   ListingListItem,
   ListingDetailResponse,
   PaginatedResponse,
+  ApiError,
 } from './interfaces'
