@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CATEGORIES } from '@/lib/categories'
+import { Wordmark } from './Wordmark'
 import { Container } from './ui/container'
 
 /**
@@ -15,9 +16,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3 lg:grid-cols-4">
           {/* Platform statement */}
           <div className="md:col-span-1 lg:col-span-1">
-            <p className="font-serif text-xl tracking-tight text-foreground mb-4">
-              Surfaced Art
-            </p>
+            <Wordmark size="hero" className="mb-4 block" />
             <p className="text-sm leading-relaxed text-muted-foreground max-w-xs">
               A curated digital gallery for real makers. Every artist is
               vetted. Every piece is handmade. No dropshipping, no AI art,
