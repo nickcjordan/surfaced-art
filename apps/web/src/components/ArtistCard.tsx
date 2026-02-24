@@ -6,7 +6,7 @@ import { ProfilePhoto } from './ProfilePhoto'
 import { Category } from '@surfaced-art/types'
 import type { CategoryType } from '@surfaced-art/types'
 
-const categoryLabels: Record<string, string> = Object.fromEntries(
+const categoryLabels = Object.fromEntries(
   Object.values(Category).map((c) => [
     c,
     c
@@ -14,7 +14,7 @@ const categoryLabels: Record<string, string> = Object.fromEntries(
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' '),
   ])
-)
+) as Record<CategoryType, string>
 
 type ArtistCardProps = {
   artist: {

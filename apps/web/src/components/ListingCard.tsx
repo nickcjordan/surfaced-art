@@ -15,7 +15,6 @@ type ListingCardProps = {
     primaryImageUrl: string | null
   }
   artistName: string
-  artistSlug: string
   variant?: 'browse' | 'profile'
   className?: string
 }
@@ -23,7 +22,6 @@ type ListingCardProps = {
 export function ListingCard({
   listing,
   artistName,
-  artistSlug,
   variant = 'browse',
   className,
 }: ListingCardProps) {
