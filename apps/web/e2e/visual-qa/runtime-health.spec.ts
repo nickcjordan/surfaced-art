@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test'
+import {
+  isIgnorableAsset,
+  scrollPageIncrementally,
+  EXPECTED_CDN_HOSTNAME,
+} from './helpers'
 
 // Pages to test — update as new pages are deployed
 const PAGES = [
@@ -33,25 +38,16 @@ test.describe('Runtime Health — Console Errors', () => {
       await page.waitForLoadState('networkidle')
 
       // Scroll the full page to trigger lazy-loaded content errors
-      await page.evaluate(async () => {
-        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-        for (let i = 0; i < document.body.scrollHeight; i += 400) {
-          window.scrollTo(0, i)
-          await delay(100)
-        }
-      })
+      await scrollPageIncrementally(page, { step: 400, delayMs: 100 })
 
       // Wait for any deferred errors
       await page.waitForTimeout(1000)
 
       expect(pageErrors, `Uncaught exceptions on ${name}`).toEqual([])
 
-      const filteredErrors = consoleErrors.filter((err) => {
-        // Filter out known acceptable failures
-        if (err.includes('favicon')) return false
-        if (err.includes('.map')) return false
-        return true
-      })
+      const filteredErrors = consoleErrors.filter(
+        (err) => !isIgnorableAsset(err)
+      )
       expect(filteredErrors, `Console errors on ${name}`).toEqual([])
 
       if (consoleWarnings.length > 0) {
@@ -69,10 +65,7 @@ test.describe('Runtime Health — Network Failures', () => {
       page.on('response', (response) => {
         if (response.status() >= 400) {
           const requestUrl = response.url()
-          // Filter out known acceptable failures
-          const isExpected =
-            requestUrl.includes('favicon') || requestUrl.includes('.map')
-          if (!isExpected) {
+          if (!isIgnorableAsset(requestUrl)) {
             failedRequests.push(`${response.status()} ${requestUrl}`)
           }
         }
@@ -81,10 +74,7 @@ test.describe('Runtime Health — Network Failures', () => {
       const networkErrors: string[] = []
       page.on('requestfailed', (request) => {
         const requestUrl = request.url()
-        // Filter out known acceptable failures
-        const isExpected =
-          requestUrl.includes('favicon') || requestUrl.includes('.map')
-        if (!isExpected) {
+        if (!isIgnorableAsset(requestUrl)) {
           networkErrors.push(
             `FAILED: ${requestUrl} — ${request.failure()?.errorText}`
           )
@@ -112,7 +102,7 @@ test.describe('Runtime Health — Scroll-Triggered Errors', () => {
       page.on('console', (msg) => {
         if (msg.type() === 'error') {
           const text = msg.text()
-          if (!text.includes('favicon') && !text.includes('.map')) {
+          if (!isIgnorableAsset(text)) {
             errors.push(`console.error: ${text}`)
           }
         }
@@ -122,18 +112,7 @@ test.describe('Runtime Health — Scroll-Triggered Errors', () => {
       await page.waitForLoadState('networkidle')
 
       // Scroll incrementally through the entire page
-      await page.evaluate(async () => {
-        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-        const scrollHeight = document.body.scrollHeight
-        const step = 300
-        for (let i = 0; i < scrollHeight; i += step) {
-          window.scrollTo(0, i)
-          await delay(150)
-        }
-        // Scroll to very bottom
-        window.scrollTo(0, scrollHeight)
-        await delay(500)
-      })
+      await scrollPageIncrementally(page)
 
       expect(errors, `Errors after scrolling ${name}`).toEqual([])
     })
@@ -165,6 +144,12 @@ test.describe('Runtime Health — API & Infrastructure', () => {
         '.s3.amazonaws.com'
       )
       expect(src, `Image not HTTPS: ${src}`).toMatch(/^https:\/\//)
+
+      const hostname = new URL(src).hostname
+      expect(
+        hostname,
+        `Image not served from expected CDN (${EXPECTED_CDN_HOSTNAME}): ${src}`
+      ).toContain(EXPECTED_CDN_HOSTNAME)
     }
   })
 
