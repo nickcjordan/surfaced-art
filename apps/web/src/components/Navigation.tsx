@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CATEGORIES } from '@/lib/categories'
+import { Container } from './ui/container'
 
 /**
  * Desktop category navigation bar.
@@ -12,7 +13,7 @@ export function Navigation() {
       aria-label="Category navigation"
       className="hidden md:block border-b border-border"
     >
-      <div className="mx-auto max-w-7xl px-6">
+      <Container>
         <ul className="flex items-center gap-8 overflow-x-auto py-3">
           {CATEGORIES.map((category) => (
             <li key={category.slug}>
@@ -25,7 +26,7 @@ export function Navigation() {
             </li>
           ))}
         </ul>
-      </div>
+      </Container>
     </nav>
   )
 }

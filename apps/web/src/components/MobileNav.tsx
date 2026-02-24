@@ -73,7 +73,7 @@ export function MobileNav() {
       {/* Backdrop overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm"
           onClick={close}
           aria-hidden="true"
         />
@@ -81,7 +81,7 @@ export function MobileNav() {
 
       {/* Slide-out drawer */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-72 bg-background shadow-xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-50 h-full w-72 bg-background shadow-xl dark:shadow-none dark:border-l dark:border-border transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         role="dialog"

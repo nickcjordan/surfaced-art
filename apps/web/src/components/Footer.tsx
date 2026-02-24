@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CATEGORIES } from '@/lib/categories'
+import { Container } from './ui/container'
 
 /**
  * Global site footer with platform statement, category links,
@@ -10,7 +11,7 @@ export function Footer() {
 
   return (
     <footer className="border-t border-border bg-background mt-auto">
-      <div className="mx-auto max-w-7xl px-6 py-16">
+      <Container className="py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3 lg:grid-cols-4">
           {/* Platform statement */}
           <div className="md:col-span-1 lg:col-span-1">
@@ -99,7 +100,7 @@ export function Footer() {
             &copy; {currentYear} Surfaced Art. All rights reserved.
           </p>
         </div>
-      </div>
+      </Container>
     </footer>
   )
 }
