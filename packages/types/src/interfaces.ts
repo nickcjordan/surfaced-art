@@ -283,6 +283,17 @@ export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 's
   listings: ListingWithImages[]
 }
 
+// ─── Categories API Response Types ─────────────────────────────────
+
+/**
+ * Category with listing count for GET /categories
+ * Always includes all enum values, even those with zero listings
+ */
+export interface CategoryWithCount {
+  category: CategoryType
+  count: number
+}
+
 // ─── Listings API Response Types ────────────────────────────────────
 
 /**
