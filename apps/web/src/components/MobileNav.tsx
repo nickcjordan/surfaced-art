@@ -47,6 +47,7 @@ export function MobileNav() {
     <div className="md:hidden">
       {/* Hamburger button */}
       <button
+        data-testid="mobile-menu-button"
         type="button"
         onClick={open}
         aria-label="Menu"
@@ -116,7 +117,7 @@ export function MobileNav() {
         </div>
 
         {/* Category links */}
-        <nav aria-label="Mobile category navigation" className="px-6">
+        <nav data-testid="mobile-nav" aria-label="Mobile category navigation" className="px-6">
           <ul className="space-y-1">
             {CATEGORIES.map((category) => (
               <li key={category.slug}>

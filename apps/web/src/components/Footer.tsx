@@ -11,7 +11,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-border bg-background mt-auto">
+    <footer data-testid="site-footer" className="border-t border-border bg-background mt-auto">
       <Container className="py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3 lg:grid-cols-4">
           {/* Platform statement */}
