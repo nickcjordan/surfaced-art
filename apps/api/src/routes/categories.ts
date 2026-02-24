@@ -45,7 +45,7 @@ export function createCategoryRoutes(prisma: PrismaClient) {
     }))
 
     logger.info('Categories fetched', {
-      totalWithListings: counts.length,
+      categoriesWithListings: counts.length,
       durationMs: Date.now() - start,
     })
 
