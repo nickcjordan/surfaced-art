@@ -55,9 +55,9 @@
   --sidebar-border: #E5E0DB;
   --sidebar-ring: #B8956A;
 
-  /* Role-based font tokens */
-  --font-heading: var(--font-dm-serif-display);
-  --font-body: var(--font-dm-sans);
+  /* Font stacks — next/font injects --font-dm-serif and --font-dm-sans */
+  --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
+  --active-font-serif: var(--font-dm-serif, 'DM Serif Display', serif);
 }
 
 .dark {
@@ -102,6 +102,10 @@
   --sidebar-accent-foreground: #F5F2EE;
   --sidebar-border: #3D3835;
   --sidebar-ring: #C9A678;
+
+  /* Font stacks (same as light mode) */
+  --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
+  --active-font-serif: var(--font-dm-serif, 'DM Serif Display', serif);
 }
 
 @theme inline {
@@ -154,28 +158,55 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /*
-   * Font stacks: next/font injects --font-dm-serif-display and --font-dm-sans
-   * as CSS custom properties on <body>. We map them to role-based names with fallbacks.
-   */
-  --font-heading: var(--font-dm-serif-display, 'DM Serif Display'), serif;
-  --font-body: var(--font-dm-sans, 'DM Sans'), sans-serif;
-  --font-sans: var(--font-body);
-  --font-serif: var(--font-heading);
+  /* Font stacks — role-based with fallbacks */
+  --font-sans: var(--active-font-sans);
+  --font-serif: var(--active-font-serif);
 }
 
 @layer base {
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: var(--font-body);
+    font-family: var(--active-font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Gallery-quality typography defaults */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+  /* Heading styles — DM Serif Display with type scale specs */
+  h1 {
+    font-family: var(--active-font-serif);
+    font-size: 3rem;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-family: var(--active-font-serif);
+    font-size: 2.25rem;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: var(--active-font-serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  h4 {
+    font-family: var(--active-font-serif);
+    font-size: 1.375rem;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  h5, h6 {
+    font-family: var(--active-font-serif);
   }
 
   /* Links: clean by default, underline on hover/focus for discoverability */
@@ -199,6 +230,73 @@
   ::selection {
     background-color: var(--primary);
     color: var(--primary-foreground);
+  }
+}
+
+/* Type scale utility classes — Brand Design System v2.0 Section 3 */
+@layer components {
+  .text-heading-1 {
+    font-family: var(--active-font-serif);
+    font-size: 3rem;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .text-heading-2 {
+    font-family: var(--active-font-serif);
+    font-size: 2.25rem;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .text-heading-3 {
+    font-family: var(--active-font-serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .text-heading-4 {
+    font-family: var(--active-font-serif);
+    font-size: 1.375rem;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .text-body-large {
+    font-family: var(--active-font-sans);
+    font-size: 1.125rem;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: 0;
+  }
+
+  .text-body-default {
+    font-family: var(--active-font-sans);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.65;
+    letter-spacing: 0;
+  }
+
+  .text-body-small {
+    font-family: var(--active-font-sans);
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0;
+  }
+
+  .text-caption {
+    font-family: var(--active-font-sans);
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
   }
 }
 
