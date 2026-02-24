@@ -34,7 +34,7 @@ export function ImageGallery({ images, alt }: ImageGalleryProps) {
   }
 
   return (
-    <div data-testid="listing-images" className="space-y-3" onKeyDown={handleKeyDown} tabIndex={0}>
+    <div data-testid="listing-images" className="space-y-3" role="toolbar" aria-label="Image gallery" onKeyDown={handleKeyDown} tabIndex={0}>
       {/* Primary image */}
       <div className="relative aspect-square overflow-hidden rounded-md bg-surface">
         {activeImage && (

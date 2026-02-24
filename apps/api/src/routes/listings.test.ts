@@ -265,7 +265,7 @@ describe('GET /listings', () => {
       expect(res.status).toBe(400)
 
       const body = await res.json()
-      expect(body.error).toContain('Invalid category')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
     })
   })
 
@@ -302,7 +302,7 @@ describe('GET /listings', () => {
       expect(res.status).toBe(400)
 
       const body = await res.json()
-      expect(body.error).toContain('Invalid status')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
     })
   })
 
@@ -505,7 +505,8 @@ describe('GET /listings/:id', () => {
       expect(res.status).toBe(404)
 
       const data = await res.json()
-      expect(data.error).toBe('Listing not found')
+      expect(data.error.code).toBe('NOT_FOUND')
+      expect(data.error.message).toBe('Listing not found')
     })
   })
 
@@ -529,7 +530,8 @@ describe('GET /listings/:id', () => {
       expect(res.status).toBe(404)
 
       const data = await res.json()
-      expect(data.error).toBe('Listing not found')
+      expect(data.error.code).toBe('NOT_FOUND')
+      expect(data.error.message).toBe('Listing not found')
     })
   })
 
@@ -545,7 +547,8 @@ describe('GET /listings/:id', () => {
       expect(res.status).toBe(400)
 
       const data = await res.json()
-      expect(data.error).toBe('Invalid listing ID format')
+      expect(data.error.code).toBe('BAD_REQUEST')
+      expect(data.error.message).toBe('Invalid listing ID format')
     })
 
     it('should not call Prisma for invalid UUID', async () => {

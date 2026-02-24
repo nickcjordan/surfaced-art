@@ -291,7 +291,8 @@ describe('GET /artists/:slug', () => {
       expect(res.status).toBe(404)
 
       const data = await res.json()
-      expect(data.error).toBe('Artist not found')
+      expect(data.error.code).toBe('NOT_FOUND')
+      expect(data.error.message).toBe('Artist not found')
     })
   })
 
@@ -306,7 +307,8 @@ describe('GET /artists/:slug', () => {
       expect(res.status).toBe(404)
 
       const data = await res.json()
-      expect(data.error).toBe('Artist not found')
+      expect(data.error.code).toBe('NOT_FOUND')
+      expect(data.error.message).toBe('Artist not found')
     })
 
     it('should return 404 for suspended artist', async () => {
@@ -318,7 +320,8 @@ describe('GET /artists/:slug', () => {
       expect(res.status).toBe(404)
 
       const data = await res.json()
-      expect(data.error).toBe('Artist not found')
+      expect(data.error.code).toBe('NOT_FOUND')
+      expect(data.error.message).toBe('Artist not found')
     })
   })
 })

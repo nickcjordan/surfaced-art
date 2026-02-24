@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { ArtistProfileResponse } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
+import { notFound } from '../errors'
 
 export function createArtistRoutes(prisma: PrismaClient) {
   const artists = new Hono()
@@ -37,7 +38,7 @@ export function createArtistRoutes(prisma: PrismaClient) {
 
     if (!artist || artist.status !== 'approved') {
       logger.warn('Artist not found', { slug })
-      return c.json({ error: 'Artist not found' }, 404)
+      return notFound(c, 'Artist not found')
     }
 
     const response: ArtistProfileResponse = {

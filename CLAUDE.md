@@ -18,6 +18,10 @@ Before making changes, read the relevant documentation in `docs/`:
 - `Surfaced_Art_Build_Order_v1.0.md` - Phased build plan
 - `Surfaced_Art_Claude_Code_Brief_Phase1_2.md` - Detailed specs for Phase 1 & 2
 
+## Architecture Decision Records
+
+Key architectural decisions are documented in `docs/decisions/`. Check there before re-evaluating past decisions. See `docs/decisions/README.md` for the full index and ADR template.
+
 ## Tech Stack (Do Not Change)
 
 | Layer | Technology |
@@ -374,6 +378,19 @@ git show <commit-hash>
 # Find which commit introduced a change
 git blame path/to/file
 ```
+
+## Local Development Database
+
+```bash
+docker compose up -d                    # Start PostgreSQL
+# Create packages/db/.env with:
+# DATABASE_URL=postgresql://surfaced:surfaced_local@localhost:5432/surfaced
+cd packages/db && npm run db:migrate:deploy  # Apply migrations
+cd packages/db && npm run db:seed            # Load seed data
+npm run db:studio                            # Browse data in Prisma Studio (optional)
+```
+
+See `.env.example` at the repo root for the default local connection string.
 
 ## Environment Variables
 
