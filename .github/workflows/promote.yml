@@ -1,4 +1,4 @@
-name: Promote dev → main
+name: Promote dev to main
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   promote:
-    name: Ensure dev → main PR exists
+    name: Ensure dev to main PR exists
     runs-on: ubuntu-latest
 
     steps:
@@ -23,59 +23,66 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build PR body from pending commits
+      - name: Get pending commits
         id: commits
         run: |
           COMMITS=$(git log origin/main..origin/dev --oneline)
+          printf 'commits<<EOF\n%s\nEOF\n' "$COMMITS" >> "$GITHUB_OUTPUT"
           if [ -z "$COMMITS" ]; then
-            echo "body=No new commits ahead of main." >> "$GITHUB_OUTPUT"
+            echo "has_commits=false" >> "$GITHUB_OUTPUT"
           else
-            BODY=$(cat <<'BODYEOF'
-## Pending changes
-
-The following commits on `dev` are not yet on `main`:
-
-```
-BODYEOF
-            BODY="$BODY
-$COMMITS
-\`\`\`
-
----
-_This PR is maintained automatically. Merge with **rebase** to keep a linear history on \`main\`. After merging, \`dev\` will be fast-forwarded automatically._"
-            echo "body<<DELIMITER" >> "$GITHUB_OUTPUT"
-            echo "$BODY" >> "$GITHUB_OUTPUT"
-            echo "DELIMITER" >> "$GITHUB_OUTPUT"
+            echo "has_commits=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Check for existing open PR
-        id: existing
+      - name: Create or update dev to main PR
+        if: steps.commits.outputs.has_commits == 'true'
+        uses: actions/github-script@v8
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_NUMBER=$(gh pr list \
-            --head dev \
-            --base main \
-            --state open \
-            --json number \
-            --jq '.[0].number // empty')
-          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          COMMITS: ${{ steps.commits.outputs.commits }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commits = process.env.COMMITS || '';
 
-      - name: Create PR if none exists
-        if: steps.existing.outputs.number == ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr create \
-            --base main \
-            --head dev \
-            --title "chore: promote dev → main" \
-            --body "${{ steps.commits.outputs.body }}"
+            const fence = '```';
+            const hr = '---';
+            const body = [
+              '## Pending changes',
+              '',
+              'The following commits on `dev` are not yet on `main`:',
+              '',
+              fence,
+              commits,
+              fence,
+              '',
+              hr,
+              '_This PR is maintained automatically. Merge with **rebase** to keep a linear history on `main`. After merging, `dev` will be fast-forwarded automatically._',
+            ].join('\n');
 
-      - name: Update existing PR body
-        if: steps.existing.outputs.number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr edit "${{ steps.existing.outputs.number }}" \
-            --body "${{ steps.commits.outputs.body }}"
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:dev`,
+              base: 'main',
+              state: 'open',
+            });
+
+            if (pulls.length === 0) {
+              await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head: 'dev',
+                base: 'main',
+                title: 'chore: promote dev to main',
+                body,
+              });
+              console.log('Created new dev to main PR.');
+            } else {
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pulls[0].number,
+                body,
+              });
+              console.log('Updated PR #' + pulls[0].number + '.');
+            }
