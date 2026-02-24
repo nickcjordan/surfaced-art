@@ -5,20 +5,20 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/artists/{{artistSlug}}
+  url: {{sa_baseUrl}}/artists/{{sa_artistSlug}}
   body: none
   auth: none
 }
 
 assert {
   res.status: eq 200
-  res.body.slug: eq {{artistSlug}}
+  res.body.slug: eq {{sa_artistSlug}}
 }
 
 tests {
   test("should return full artist profile", function() {
     const body = res.getBody();
-    expect(body.slug).to.equal(bru.getEnvVar("artistSlug"));
+    expect(body.slug).to.equal(bru.getEnvVar("sa_artistSlug"));
     expect(body).to.have.property("displayName");
     expect(body).to.have.property("bio");
     expect(body).to.have.property("location");
@@ -46,7 +46,7 @@ tests {
 
       // Store a listing ID for subsequent requests
       if (listing.id) {
-        bru.setVar("listingId", listing.id);
+        bru.setVar("sa_listingId", listing.id);
       }
     }
   });

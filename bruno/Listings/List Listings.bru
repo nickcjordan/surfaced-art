@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/listings
+  url: {{sa_baseUrl}}/listings
   body: none
   auth: none
 }
@@ -41,7 +41,7 @@ tests {
       expect(listing).to.have.property("id");
       expect(listing).to.have.property("title");
       expect(listing).to.have.property("price");
-      expect(listing).to.have.property("category");
+      expect(listing).to.have.property("sa_category");
       expect(listing).to.have.property("status");
       expect(listing).to.have.property("artist");
       expect(listing.artist).to.have.property("displayName");
@@ -49,7 +49,7 @@ tests {
 
       // Store listing ID for detail requests
       if (listing.id) {
-        bru.setVar("listingId", listing.id);
+        bru.setVar("sa_listingId", listing.id);
       }
     }
   });

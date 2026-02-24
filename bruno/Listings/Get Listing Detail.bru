@@ -5,14 +5,14 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/listings/{{listingId}}
+  url: {{sa_baseUrl}}/listings/{{sa_listingId}}
   body: none
   auth: none
 }
 
 assert {
   res.status: eq 200
-  res.body.id: eq {{listingId}}
+  res.body.id: eq {{sa_listingId}}
 }
 
 tests {
@@ -22,7 +22,7 @@ tests {
     expect(body).to.have.property("title");
     expect(body).to.have.property("description");
     expect(body).to.have.property("medium");
-    expect(body).to.have.property("category");
+    expect(body).to.have.property("sa_category");
     expect(body).to.have.property("price");
     expect(body).to.have.property("status");
   });

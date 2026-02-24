@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/listings?category={{category}}&status=available
+  url: {{sa_baseUrl}}/listings?category={{sa_category}}&status=available
   body: none
   auth: none
 }
@@ -17,7 +17,7 @@ assert {
 tests {
   test("all listings should match the category filter", function() {
     const listings = res.getBody().data;
-    const category = bru.getEnvVar("category");
+    const category = bru.getEnvVar("sa_category");
     listings.forEach(function(listing) {
       expect(listing.category).to.equal(category);
     });
