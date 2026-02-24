@@ -1,0 +1,81 @@
+name: Promote dev → main
+
+on:
+  push:
+    branches: [dev]
+
+concurrency:
+  group: promote-dev-to-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  promote:
+    name: Ensure dev → main PR exists
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Build PR body from pending commits
+        id: commits
+        run: |
+          COMMITS=$(git log origin/main..origin/dev --oneline)
+          if [ -z "$COMMITS" ]; then
+            echo "body=No new commits ahead of main." >> "$GITHUB_OUTPUT"
+          else
+            BODY=$(cat <<'BODYEOF'
+## Pending changes
+
+The following commits on `dev` are not yet on `main`:
+
+```
+BODYEOF
+            BODY="$BODY
+$COMMITS
+\`\`\`
+
+---
+_This PR is maintained automatically. Merge with **rebase** to keep a linear history on \`main\`. After merging, \`dev\` will be fast-forwarded automatically._"
+            echo "body<<DELIMITER" >> "$GITHUB_OUTPUT"
+            echo "$BODY" >> "$GITHUB_OUTPUT"
+            echo "DELIMITER" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for existing open PR
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list \
+            --head dev \
+            --base main \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Create PR if none exists
+        if: steps.existing.outputs.number == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head dev \
+            --title "chore: promote dev → main" \
+            --body "${{ steps.commits.outputs.body }}"
+
+      - name: Update existing PR body
+        if: steps.existing.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr edit "${{ steps.existing.outputs.number }}" \
+            --body "${{ steps.commits.outputs.body }}"
