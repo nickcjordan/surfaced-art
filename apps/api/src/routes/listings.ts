@@ -1,16 +1,13 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma, Listing, ListingImage, ArtistProfile, ArtistCategory } from '@surfaced-art/db'
-import { validateUuid, logger } from '@surfaced-art/utils'
+import { logger } from '@surfaced-art/utils'
 import {
-  Category,
-  ListingStatus,
   type ListingListItem,
   type ListingDetailResponse,
   type PaginatedResponse,
 } from '@surfaced-art/types'
-
-const validCategories = Object.values(Category)
-const validStatuses = Object.values(ListingStatus)
+import { notFound, badRequest, validationError } from '../errors'
+import { listingsQuerySchema, listingIdSchema } from '../schemas'
 
 /**
  * Transform Prisma listing fields to API response shape.
@@ -63,27 +60,19 @@ export function createListingRoutes(prisma: PrismaClient) {
    */
   listings.get('/', async (c) => {
     const start = Date.now()
-    const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10) || 1)
-    const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') ?? '20', 10) || 20))
-    const category = c.req.query('category')
-    const status = c.req.query('status') ?? 'available'
 
-    // Validate category
-    if (category && !validCategories.includes(category as (typeof validCategories)[number])) {
-      return c.json(
-        { error: `Invalid category. Valid values: ${validCategories.join(', ')}` },
-        400
-      )
+    const parsed = listingsQuerySchema.safeParse({
+      category: c.req.query('category'),
+      status: c.req.query('status'),
+      page: c.req.query('page'),
+      limit: c.req.query('limit'),
+    })
+
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
     }
 
-    // Validate status
-    if (!validStatuses.includes(status as (typeof validStatuses)[number])) {
-      return c.json(
-        { error: `Invalid status. Valid values: ${validStatuses.join(', ')}` },
-        400
-      )
-    }
-
+    const { category, status, page, limit } = parsed.data
     const skip = (page - 1) * limit
     const now = new Date()
 
@@ -94,7 +83,7 @@ export function createListingRoutes(prisma: PrismaClient) {
     }
 
     if (category) {
-      where.category = category as (typeof validCategories)[number]
+      where.category = category as Prisma.ListingWhereInput['category']
     }
 
     // Expired system reservations should be treated as available (checked on read)
@@ -107,7 +96,7 @@ export function createListingRoutes(prisma: PrismaClient) {
         },
       ]
     } else {
-      where.status = status as (typeof validStatuses)[number]
+      where.status = status as Prisma.ListingWhereInput['status']
     }
 
     type ListingListPayload = Listing & {
@@ -192,9 +181,10 @@ export function createListingRoutes(prisma: PrismaClient) {
     const id = c.req.param('id')
     const start = Date.now()
 
-    if (!validateUuid(id)) {
+    const parsed = listingIdSchema.safeParse({ id })
+    if (!parsed.success) {
       logger.warn('Invalid listing ID format', { listingId: id })
-      return c.json({ error: 'Invalid listing ID format' }, 400)
+      return badRequest(c, 'Invalid listing ID format')
     }
 
     type ListingDetailPayload = Listing & {
@@ -225,7 +215,7 @@ export function createListingRoutes(prisma: PrismaClient) {
 
     if (!listing || listing.artist.status !== 'approved') {
       logger.warn('Listing not found', { listingId: id })
-      return c.json({ error: 'Listing not found' }, 404)
+      return notFound(c, 'Listing not found')
     }
 
     const now = new Date()

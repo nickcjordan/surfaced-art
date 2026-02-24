@@ -43,7 +43,10 @@ app.get('/', (c) => {
 
 // 404 handler
 app.notFound((c) => {
-  return c.json({ error: 'Not found' }, 404)
+  return c.json(
+    { error: { code: 'NOT_FOUND', message: 'Not found' } },
+    404
+  )
 })
 
 // Error handler — normalize err since throw can produce non-Error values
@@ -57,7 +60,10 @@ app.onError((err, c) => {
     : { errorMessage: String(err) }
 
   logger.error('Unhandled error', errorData)
-  return c.json({ error: 'Internal server error' }, 500)
+  return c.json(
+    { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
+    500
+  )
 })
 
 export const handler = handle(app)

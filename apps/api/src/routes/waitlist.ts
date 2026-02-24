@@ -1,7 +1,9 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import { Prisma } from '@surfaced-art/db'
-import { validateEmail, logger } from '@surfaced-art/utils'
+import { logger } from '@surfaced-art/utils'
+import { badRequest, validationError, internalError } from '../errors'
+import { waitlistBodySchema } from '../schemas'
 
 export function createWaitlistRoutes(prisma: PrismaClient) {
   const waitlist = new Hono()
@@ -17,20 +19,15 @@ export function createWaitlistRoutes(prisma: PrismaClient) {
 
     const body = await c.req.json().catch(() => null)
     if (body === null) {
-      return c.json({ error: 'Invalid JSON payload' }, 400)
+      return badRequest(c, 'Invalid JSON payload')
     }
 
-    const email = typeof body.email === 'string' ? body.email.trim() : ''
-
-    if (!email) {
-      return c.json({ error: 'Email is required' }, 400)
+    const parsed = waitlistBodySchema.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
     }
 
-    if (!validateEmail(email)) {
-      return c.json({ error: 'Invalid email address' }, 400)
-    }
-
-    const normalizedEmail = email.toLowerCase()
+    const normalizedEmail = parsed.data.email.trim().toLowerCase()
 
     try {
       await prisma.waitlist.create({
@@ -55,7 +52,7 @@ export function createWaitlistRoutes(prisma: PrismaClient) {
         errorMessage: err instanceof Error ? err.message : String(err),
         durationMs: Date.now() - start,
       })
-      return c.json({ error: 'Internal server error' }, 500)
+      return internalError(c)
     }
   })
 

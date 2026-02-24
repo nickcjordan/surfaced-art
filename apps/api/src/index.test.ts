@@ -45,7 +45,8 @@ describe('API', () => {
       expect(res.status).toBe(404)
 
       const data = await res.json()
-      expect(data).toHaveProperty('error', 'Not found')
+      expect(data.error.code).toBe('NOT_FOUND')
+      expect(data.error.message).toBe('Not found')
     })
   })
 })
