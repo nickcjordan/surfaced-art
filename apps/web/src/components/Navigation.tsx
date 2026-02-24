@@ -19,7 +19,7 @@ export function Navigation() {
           {CATEGORIES.map((category) => (
             <li key={category.slug}>
               <Link
-                data-testid="category-link"
+                data-testid={`category-link-${category.slug}`}
                 href={category.href}
                 className="whitespace-nowrap text-sm tracking-wide text-muted-foreground transition-colors hover:text-foreground"
               >
