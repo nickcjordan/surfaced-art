@@ -172,3 +172,9 @@ Thumbs.db
 
 # Security scan reports (generated locally)
 .security-reports/
+
+design_system
+
+# Playwright visual QA outputs
+apps/web/e2e/visual-qa/results/
+apps/web/e2e/visual-qa/report/
