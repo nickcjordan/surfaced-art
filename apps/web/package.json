@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test --config=e2e/playwright.config.ts",
     "test:visual-qa": "playwright test --config=e2e/visual-qa.config.ts",
     "test:visual-qa:desktop": "playwright test --config=e2e/visual-qa.config.ts --project=desktop",
     "test:visual-qa:tablet": "playwright test --config=e2e/visual-qa.config.ts --project=tablet",

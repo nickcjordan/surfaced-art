@@ -61,7 +61,7 @@ export default async function CategoryBrowsePage({ params }: Props) {
       </section>
 
       {/* Category Navigation */}
-      <nav aria-label="Category navigation" className="flex flex-wrap gap-2">
+      <nav data-testid="category-nav" aria-label="Category navigation" className="flex flex-wrap gap-2">
         {CATEGORIES.map((cat) => (
           <Link
             key={cat.slug}

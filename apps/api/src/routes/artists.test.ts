@@ -142,10 +142,11 @@ const mockPendingArtist = {
   status: 'pending' as const,
 }
 
-function createMockPrisma(findUniqueResult: unknown = null) {
+function createMockPrisma(findUniqueResult: unknown = null, findManyResult: unknown[] = []) {
   return {
     artistProfile: {
       findUnique: vi.fn().mockResolvedValue(findUniqueResult),
+      findMany: vi.fn().mockResolvedValue(findManyResult),
     },
   } as unknown as Parameters<typeof createArtistRoutes>[0]
 }
@@ -322,6 +323,124 @@ describe('GET /artists/:slug', () => {
       const data = await res.json()
       expect(data.error.code).toBe('NOT_FOUND')
       expect(data.error.message).toBe('Artist not found')
+    })
+  })
+})
+
+// Mock data for GET /artists list
+const mockArtistListData = [
+  {
+    slug: 'abbey-peters',
+    displayName: 'Abbey Peters',
+    location: 'Portland, OR',
+    profileImageUrl: 'https://cdn.example.com/profile1.jpg',
+    coverImageUrl: 'https://cdn.example.com/cover1.jpg',
+    categories: [
+      { id: 'cat-1', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'ceramics' },
+      { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media' },
+    ],
+  },
+  {
+    slug: 'david-morrison',
+    displayName: 'David Morrison',
+    location: 'Austin, TX',
+    profileImageUrl: 'https://cdn.example.com/profile2.jpg',
+    coverImageUrl: null,
+    categories: [
+      { id: 'cat-3', artistId: '550e8400-e29b-41d4-a716-446655440003', category: 'painting' },
+    ],
+  },
+]
+
+describe('GET /artists', () => {
+  let mockPrisma: ReturnType<typeof createMockPrisma>
+  let app: ReturnType<typeof createTestApp>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('happy path', () => {
+    beforeEach(() => {
+      mockPrisma = createMockPrisma(null, mockArtistListData)
+      app = createTestApp(mockPrisma)
+    })
+
+    it('should return 200 with a list of featured artists', async () => {
+      const res = await app.request('/artists')
+      expect(res.status).toBe(200)
+
+      const data = await res.json()
+      expect(data).toHaveLength(2)
+      expect(data[0].displayName).toBe('Abbey Peters')
+      expect(data[0].slug).toBe('abbey-peters')
+      expect(data[1].displayName).toBe('David Morrison')
+    })
+
+    it('should flatten categories to string arrays', async () => {
+      const res = await app.request('/artists')
+      const data = await res.json()
+
+      expect(data[0].categories).toEqual(['ceramics', 'mixed_media'])
+      expect(data[1].categories).toEqual(['painting'])
+    })
+
+    it('should include coverImageUrl and profileImageUrl', async () => {
+      const res = await app.request('/artists')
+      const data = await res.json()
+
+      expect(data[0].coverImageUrl).toBe('https://cdn.example.com/cover1.jpg')
+      expect(data[0].profileImageUrl).toBe('https://cdn.example.com/profile1.jpg')
+      expect(data[1].coverImageUrl).toBeNull()
+    })
+
+    it('should call Prisma with correct query for approved artists', async () => {
+      await app.request('/artists')
+
+      expect(mockPrisma.artistProfile.findMany).toHaveBeenCalledWith({
+        where: { status: 'approved' },
+        select: {
+          slug: true,
+          displayName: true,
+          location: true,
+          profileImageUrl: true,
+          coverImageUrl: true,
+          categories: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 4,
+      })
+    })
+
+    it('should respect the limit query parameter', async () => {
+      await app.request('/artists?limit=2')
+
+      expect(mockPrisma.artistProfile.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 2 })
+      )
+    })
+
+    it('should cap limit at 20', async () => {
+      await app.request('/artists?limit=100')
+
+      expect(mockPrisma.artistProfile.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 20 })
+      )
+    })
+  })
+
+  describe('empty results', () => {
+    beforeEach(() => {
+      mockPrisma = createMockPrisma(null, [])
+      app = createTestApp(mockPrisma)
+    })
+
+    it('should return 200 with empty array when no artists exist', async () => {
+      const res = await app.request('/artists')
+      expect(res.status).toBe(200)
+
+      const data = await res.json()
+      expect(data).toEqual([])
     })
   })
 })

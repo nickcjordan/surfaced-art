@@ -1,6 +1,7 @@
 import type {
   ArtistProfileResponse,
   CategoryWithCount,
+  FeaturedArtistItem,
   ListingDetailResponse,
   ListingListItem,
   PaginatedResponse,
@@ -48,6 +49,11 @@ export class ApiError extends Error {
 
 export async function getArtistProfile(slug: string): Promise<ArtistProfileResponse> {
   return apiFetch<ArtistProfileResponse>(`/artists/${encodeURIComponent(slug)}`)
+}
+
+export async function getFeaturedArtists(limit?: number): Promise<FeaturedArtistItem[]> {
+  const params = limit ? `?limit=${limit}` : ''
+  return apiFetch<FeaturedArtistItem[]>(`/artists${params}`)
 }
 
 export async function getCategories(): Promise<CategoryWithCount[]> {

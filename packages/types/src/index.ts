@@ -42,6 +42,7 @@ export type {
   ArtistProfileResponse,
   ArtistSummary,
   ArtistSummaryWithCategories,
+  FeaturedArtistItem,
   CategoryWithCount,
   ListingListItem,
   ListingDetailResponse,
