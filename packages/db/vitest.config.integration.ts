@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.integration.test.ts'],
+    include: ['src/**/*.integration.test.ts', 'prisma/**/*.integration.test.ts'],
     // Longer timeout for Testcontainers startup
     testTimeout: 60_000,
     hookTimeout: 120_000,
