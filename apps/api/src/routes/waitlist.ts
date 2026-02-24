@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
+import { Prisma } from '@surfaced-art/db'
 import { validateEmail, logger } from '@surfaced-art/utils'
 
 export function createWaitlistRoutes(prisma: PrismaClient) {
@@ -13,7 +14,12 @@ export function createWaitlistRoutes(prisma: PrismaClient) {
    */
   waitlist.post('/', async (c) => {
     const start = Date.now()
-    const body = await c.req.json().catch(() => ({}))
+
+    const body = await c.req.json().catch(() => null)
+    if (body === null) {
+      return c.json({ error: 'Invalid JSON payload' }, 400)
+    }
+
     const email = typeof body.email === 'string' ? body.email.trim() : ''
 
     if (!email) {
@@ -38,11 +44,7 @@ export function createWaitlistRoutes(prisma: PrismaClient) {
       return c.json({ message: 'Successfully joined the waitlist' }, 201)
     } catch (err: unknown) {
       // Handle duplicate email (Prisma unique constraint violation P2002)
-      if (
-        err instanceof Error &&
-        'code' in err &&
-        (err as Record<string, unknown>).code === 'P2002'
-      ) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
         logger.info('Waitlist duplicate signup attempt', {
           durationMs: Date.now() - start,
         })

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
+import { Prisma } from '@surfaced-art/db'
 import { createWaitlistRoutes } from './waitlist'
 
 function createMockPrisma(overrides?: {
@@ -73,7 +74,7 @@ describe('POST /waitlist', () => {
     })
   })
 
-  describe('invalid email', () => {
+  describe('invalid input', () => {
     beforeEach(() => {
       vi.clearAllMocks()
       mockPrisma = createMockPrisma()
@@ -128,6 +129,18 @@ describe('POST /waitlist', () => {
       expect(body.error).toBe('Email is required')
     })
 
+    it('should return 400 for malformed JSON', async () => {
+      const res = await app.request('/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'not valid json{',
+      })
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error).toBe('Invalid JSON payload')
+    })
+
     it('should not call Prisma for invalid email', async () => {
       await app.request('/waitlist', {
         method: 'POST',
@@ -142,9 +155,10 @@ describe('POST /waitlist', () => {
   describe('duplicate email', () => {
     beforeEach(() => {
       vi.clearAllMocks()
-      // Prisma throws P2002 for unique constraint violation
-      const uniqueError = new Error('Unique constraint failed on the fields: (`email`)')
-      ;(uniqueError as Record<string, unknown>).code = 'P2002'
+      const uniqueError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`email`)',
+        { code: 'P2002', clientVersion: '5.0.0' }
+      )
       mockPrisma = createMockPrisma({ createError: uniqueError })
       app = createTestApp(mockPrisma)
     })
