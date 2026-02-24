@@ -7,6 +7,16 @@ const PAGES = [
   { name: 'category-painting', path: '/category/painting' },
 ]
 
+/**
+ * Shared predicate for filtering known acceptable noise from console errors
+ * and network failures (favicon 404s, source map 404s, etc.).
+ */
+function isExpectedNoise(messageOrUrl: string): boolean {
+  if (messageOrUrl.includes('favicon')) return true
+  if (messageOrUrl.includes('.map')) return true
+  return false
+}
+
 test.describe('Runtime Health — Console Errors', () => {
   for (const { name, path } of PAGES) {
     test(`no console errors on ${name} (${path})`, async ({ page }) => {
@@ -46,12 +56,7 @@ test.describe('Runtime Health — Console Errors', () => {
 
       expect(pageErrors, `Uncaught exceptions on ${name}`).toEqual([])
 
-      const filteredErrors = consoleErrors.filter((err) => {
-        // Filter out known third-party noise
-        if (err.includes('favicon')) return false
-        if (err.includes('.map')) return false
-        return true
-      })
+      const filteredErrors = consoleErrors.filter((err) => !isExpectedNoise(err))
       expect(filteredErrors, `Console errors on ${name}`).toEqual([])
 
       if (consoleWarnings.length > 0) {
@@ -69,10 +74,7 @@ test.describe('Runtime Health — Network Failures', () => {
       page.on('response', (response) => {
         if (response.status() >= 400) {
           const requestUrl = response.url()
-          // Filter out known acceptable failures
-          const isExpected =
-            requestUrl.includes('favicon') || requestUrl.includes('.map')
-          if (!isExpected) {
+          if (!isExpectedNoise(requestUrl)) {
             failedRequests.push(`${response.status()} ${requestUrl}`)
           }
         }
@@ -81,10 +83,7 @@ test.describe('Runtime Health — Network Failures', () => {
       const networkErrors: string[] = []
       page.on('requestfailed', (request) => {
         const requestUrl = request.url()
-        // Filter out known acceptable failures
-        const isExpected =
-          requestUrl.includes('favicon') || requestUrl.includes('.map')
-        if (!isExpected) {
+        if (!isExpectedNoise(requestUrl)) {
           networkErrors.push(
             `FAILED: ${requestUrl} — ${request.failure()?.errorText}`
           )
@@ -110,11 +109,8 @@ test.describe('Runtime Health — Scroll-Triggered Errors', () => {
       })
 
       page.on('console', (msg) => {
-        if (msg.type() === 'error') {
-          const text = msg.text()
-          if (!text.includes('favicon') && !text.includes('.map')) {
-            errors.push(`console.error: ${text}`)
-          }
+        if (msg.type() === 'error' && !isExpectedNoise(msg.text())) {
+          errors.push(`console.error: ${msg.text()}`)
         }
       })
 
@@ -142,8 +138,8 @@ test.describe('Runtime Health — Scroll-Triggered Errors', () => {
 
 test.describe('Runtime Health — API & Infrastructure', () => {
   test('API health endpoint responds', async ({ request }) => {
-    const apiBaseUrl =
-      process.env.API_BASE_URL || 'https://api.surfaced.art'
+    const apiBaseUrl = process.env.API_BASE_URL
+    test.skip(!apiBaseUrl, 'API_BASE_URL not set — skipping to avoid hitting production')
     const response = await request.get(`${apiBaseUrl}/health`)
     expect(response.status()).toBe(200)
     const body = await response.json()
@@ -169,11 +165,36 @@ test.describe('Runtime Health — API & Infrastructure', () => {
   })
 
   test('no @vercel imports in client bundle', async ({ page }) => {
-    await page.goto('/')
+    const jsResponseChecks: Promise<void>[] = []
 
+    page.on('response', (response) => {
+      const url = response.url()
+      if (!url.endsWith('.js') && !url.includes('.js?')) return
+
+      jsResponseChecks.push(
+        response
+          .text()
+          .then((body) => {
+            expect(body).not.toContain('__VERCEL_')
+            expect(body).not.toContain('@vercel/analytics')
+            expect(body).not.toContain('@vercel/speed-insights')
+          })
+          .catch(() => {
+            // Ignore body read failures; network issues fail the test elsewhere
+          })
+      )
+    })
+
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    // Check initial HTML
     const pageSource = await page.content()
     expect(pageSource).not.toContain('__VERCEL_')
     expect(pageSource).not.toContain('@vercel/analytics')
     expect(pageSource).not.toContain('@vercel/speed-insights')
+
+    // Check all loaded JS chunks
+    await Promise.all(jsResponseChecks)
   })
 })
