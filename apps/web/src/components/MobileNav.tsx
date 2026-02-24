@@ -51,7 +51,7 @@ export function MobileNav() {
         onClick={open}
         aria-label="Menu"
         aria-expanded={isOpen}
-        className="inline-flex items-center justify-center p-2 text-gallery-foreground hover:text-gallery-muted transition-colors"
+        className="inline-flex items-center justify-center p-2 text-foreground hover:text-muted-foreground transition-colors"
       >
         <svg
           width="24"
@@ -81,7 +81,7 @@ export function MobileNav() {
 
       {/* Slide-out drawer */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-72 bg-gallery-bg shadow-xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-50 h-full w-72 bg-background shadow-xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         role="dialog"
@@ -96,7 +96,7 @@ export function MobileNav() {
             type="button"
             onClick={close}
             aria-label="Close menu"
-            className="p-2 text-gallery-foreground hover:text-gallery-muted transition-colors"
+            className="p-2 text-foreground hover:text-muted-foreground transition-colors"
           >
             <svg
               width="24"
@@ -123,7 +123,7 @@ export function MobileNav() {
                 <Link
                   href={category.href}
                   onClick={close}
-                  className="block py-3 text-base tracking-wide text-gallery-muted transition-colors hover:text-gallery-foreground border-b border-gallery-border/50"
+                  className="block py-3 text-base tracking-wide text-muted-foreground transition-colors hover:text-foreground border-b border-border/50"
                 >
                   {category.label}
                 </Link>
