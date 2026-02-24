@@ -30,7 +30,11 @@ jobs:
 
       - name: Fast-forward dev to main
         run: |
-          git checkout dev
+          if git show-ref --verify --quiet refs/remotes/origin/dev; then
+            git checkout dev
+          else
+            git checkout -B dev origin/main
+          fi
           if ! git merge --ff-only origin/main; then
             echo "::error::Fast-forward failed — dev has diverged from main."
             echo "::error::This should not happen in normal flow. Investigate before force-pushing."
