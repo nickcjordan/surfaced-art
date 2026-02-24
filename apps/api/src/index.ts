@@ -9,6 +9,7 @@ import { healthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
 import { createListingRoutes } from './routes/listings'
 import { createCategoryRoutes } from './routes/categories'
+import { createWaitlistRoutes } from './routes/waitlist'
 
 // Create Hono app
 const app = new Hono()
@@ -29,6 +30,7 @@ app.route('/health', healthRoutes)
 app.route('/artists', createArtistRoutes(prisma))
 app.route('/listings', createListingRoutes(prisma))
 app.route('/categories', createCategoryRoutes(prisma))
+app.route('/waitlist', createWaitlistRoutes(prisma))
 
 // Root route
 app.get('/', (c) => {
