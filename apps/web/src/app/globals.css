@@ -1,55 +1,59 @@
 @import "tailwindcss";
 
 /*
- * Surfaced Art — Design tokens (ShadCN standard)
+ * Surfaced Art — Design tokens (Brand Design System v2.0)
  *
- * Palette: warm neutrals inspired by Aesop / Soho House / high-end gallery aesthetics.
+ * Palette: warm neutrals — moderately muted, warm but identifiable hues.
+ * The artwork provides vibrancy; the platform is a quiet, warm frame.
  * Typography: serif headings (DM Serif Display), clean sans body (DM Sans).
  * Variable names follow ShadCN/ui conventions for component compatibility.
+ *
+ * Source: docs/Surfaced_Art_Brand_Design_System_v2_0.md
  */
 
 :root {
-  /* Backgrounds */
+  /* Brand palette — Light Mode */
   --background: #FAFAF8;
+  --surface: #F2F0ED;
   --foreground: #1A1A1A;
+  --muted: #6B6460;
+  --border: #E5E0DB;
+  --accent-primary: #B8956A;
+  --accent-primary-hover: #A6845C;
+  --accent-secondary: #C4775A;
+  --accent-secondary-hover: #B5694D;
+  --error: #C4534A;
+  --success: #6B8F6B;
+  --warning: #D4A054;
+  --overlay: rgba(26, 26, 26, 0.6);
 
-  /* Card / surface */
+  /* ShadCN alias tokens — Light Mode */
   --card: #F2F0ED;
   --card-foreground: #1A1A1A;
-
-  /* Popover */
   --popover: #FAFAF8;
   --popover-foreground: #1A1A1A;
-
-  /* Primary (muted gold accent) */
   --primary: #B8956A;
   --primary-foreground: #FFFFFF;
-
-  /* Secondary */
   --secondary: #F2F0ED;
   --secondary-foreground: #1A1A1A;
-
-  /* Muted */
-  --muted: #F2F0ED;
   --muted-foreground: #6B6460;
-
-  /* Accent */
   --accent: #F2F0ED;
   --accent-foreground: #1A1A1A;
-
-  /* Destructive */
   --destructive: #C4534A;
   --destructive-foreground: #FFFFFF;
-
-  /* Borders & inputs */
-  --border: #E5E0DB;
   --input: #E5E0DB;
-
-  /* Focus ring */
   --ring: #B8956A;
+  --radius: 5px;
 
-  /* Border radius */
-  --radius: 0.5rem;
+  /* Sidebar — Light Mode */
+  --sidebar: #F2F0ED;
+  --sidebar-foreground: #1A1A1A;
+  --sidebar-primary: #B8956A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F2F0ED;
+  --sidebar-accent-foreground: #1A1A1A;
+  --sidebar-border: #E5E0DB;
+  --sidebar-ring: #B8956A;
 
   /* Role-based font tokens */
   --font-heading: var(--font-dm-serif-display);
@@ -57,34 +61,47 @@
 }
 
 .dark {
+  /* Brand palette — Dark Mode */
   --background: #1C1917;
-  --foreground: #F5F3F0;
+  --surface: #282420;
+  --foreground: #F5F2EE;
+  --muted: #9C9590;
+  --border: #3D3835;
+  --accent-primary: #C9A678;
+  --accent-primary-hover: #D4B48A;
+  --accent-secondary: #D08A6E;
+  --accent-secondary-hover: #DC9A7E;
+  --error: #D4645C;
+  --success: #7FA37F;
+  --warning: #E0B060;
+  --overlay: rgba(0, 0, 0, 0.7);
 
-  --card: #292524;
-  --card-foreground: #F5F3F0;
-
+  /* ShadCN alias tokens — Dark Mode */
+  --card: #282420;
+  --card-foreground: #F5F2EE;
   --popover: #1C1917;
-  --popover-foreground: #F5F3F0;
-
+  --popover-foreground: #F5F2EE;
   --primary: #C9A678;
   --primary-foreground: #1C1917;
-
-  --secondary: #292524;
-  --secondary-foreground: #F5F3F0;
-
-  --muted: #292524;
-  --muted-foreground: #A8A29E;
-
-  --accent: #292524;
-  --accent-foreground: #F5F3F0;
-
-  --destructive: #DC2626;
-  --destructive-foreground: #F5F3F0;
-
-  --border: #3D3835;
+  --secondary: #282420;
+  --secondary-foreground: #F5F2EE;
+  --muted-foreground: #9C9590;
+  --accent: #282420;
+  --accent-foreground: #F5F2EE;
+  --destructive: #D4645C;
+  --destructive-foreground: #1C1917;
   --input: #3D3835;
-
   --ring: #C9A678;
+
+  /* Sidebar — Dark Mode */
+  --sidebar: #282420;
+  --sidebar-foreground: #F5F2EE;
+  --sidebar-primary: #C9A678;
+  --sidebar-primary-foreground: #1C1917;
+  --sidebar-accent: #282420;
+  --sidebar-accent-foreground: #F5F2EE;
+  --sidebar-border: #3D3835;
+  --sidebar-ring: #C9A678;
 }
 
 @theme inline {
@@ -99,7 +116,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
+  --color-muted: var(--surface);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
@@ -108,6 +125,33 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Brand color tokens */
+  --color-surface: var(--surface);
+  --color-muted-text: var(--muted);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-primary-hover: var(--accent-primary-hover);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-secondary-hover: var(--accent-secondary-hover);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  /* Border radius scale */
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+
+  /* Sidebar tokens */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   /*
    * Font stacks: next/font injects --font-dm-serif-display and --font-dm-sans
@@ -155,4 +199,14 @@
     background-color: var(--primary);
     color: var(--primary-foreground);
   }
+}
+
+/* Skeleton pulse animation */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
