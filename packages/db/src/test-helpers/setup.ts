@@ -6,7 +6,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const PRISMA_SCHEMA_PATH = path.resolve(__dirname, '../../prisma/schema.prisma')
+const DB_PACKAGE_ROOT = path.resolve(__dirname, '../../')
 
 let container: StartedPostgreSqlContainer | null = null
 let prismaClient: PrismaClient | null = null
@@ -26,8 +26,10 @@ export async function setupTestDatabase(): Promise<PrismaClient> {
 
   const connectionString = container.getConnectionUri()
 
-  // Run Prisma migrations against the test container
-  execSync(`npx prisma migrate deploy --schema="${PRISMA_SCHEMA_PATH}"`, {
+  // Run Prisma migrations against the test container.
+  // cwd must be packages/db so Prisma 7.x can locate prisma.config.ts.
+  execSync('npx prisma migrate deploy', {
+    cwd: DB_PACKAGE_ROOT,
     env: { ...process.env, DATABASE_URL: connectionString },
     stdio: 'pipe',
   })
