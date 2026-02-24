@@ -21,6 +21,9 @@
     },
     "typecheck": {
       "dependsOn": ["^build"]
+    },
+    "test:visual-qa": {
+      "cache": false
     }
   }
 }
