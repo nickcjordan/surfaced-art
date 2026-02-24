@@ -234,12 +234,22 @@ When starting work on an issue:
 - Create feature branches from `dev` for larger features
 - Merge to `main` triggers production deployment
 
+### Merge Strategy (CRITICAL)
+
+| PR direction | Strategy | Why |
+|---|---|---|
+| feature → `dev` | **Squash merge** | Collapses noisy WIP commits into one clean commit on `dev` |
+| `dev` → `main` | **Rebase merge** | Replays `dev` commits linearly onto `main` with no merge commit — keeps `dev` and `main` at the same SHA automatically |
+
+**Never use merge commits** — the repo is configured to disable them. A merge commit on `main` creates a new SHA that `dev` doesn't have, causing the two branches to diverge permanently.
+
 ### Pull Request Rules (CRITICAL)
 
 - **NEVER merge to `main`** — merging to main is always a human action
 - When work is ready to merge, open a PR from CLI with a full description and stop
 - Update PR descriptions with accurate summaries of what changed and why
 - Prepare commit messages for human review, but do not execute the merge
+- When merging a `dev` → `main` PR, always select **Rebase merge** in the GitHub UI
 
 ### Commit Message Format
 
