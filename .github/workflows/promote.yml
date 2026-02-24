@@ -27,19 +27,21 @@ jobs:
         id: commits
         run: |
           COMMITS=$(git log origin/main..origin/dev --oneline)
-          if [ -z "$COMMITS" ]; then
-            COMMITS="No commits ahead of main."
-          fi
           printf 'commits<<EOF\n%s\nEOF\n' "$COMMITS" >> "$GITHUB_OUTPUT"
+          if [ -z "$COMMITS" ]; then
+            echo "has_commits=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_commits=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create or update dev to main PR
+        if: steps.commits.outputs.has_commits == 'true'
         uses: actions/github-script@v8
         env:
           COMMITS: ${{ steps.commits.outputs.commits }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { execSync } = require('child_process');
             const commits = process.env.COMMITS || '';
 
             const fence = '```';
