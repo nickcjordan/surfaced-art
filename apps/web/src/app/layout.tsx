@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { DM_Serif_Display, DM_Sans } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Container } from '@/components/ui/container'
@@ -31,15 +32,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${dmSerifDisplay.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${dmSerifDisplay.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <body className="antialiased min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">
-          <Container className="py-8 md:py-12">
-            {children}
-          </Container>
-        </main>
-        <Footer />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <Header />
+          <main className="flex-1">
+            <Container className="py-8 md:py-12">
+              {children}
+            </Container>
+          </main>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   )
