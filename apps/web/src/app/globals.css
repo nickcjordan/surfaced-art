@@ -56,8 +56,8 @@
   --sidebar-ring: #B8956A;
 
   /* Font stacks — next/font injects --font-dm-serif and --font-dm-sans */
-  --active-font-sans: var(--font-dm-sans), 'DM Sans', sans-serif;
-  --active-font-serif: var(--font-dm-serif), 'DM Serif Display', serif;
+  --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
+  --active-font-serif: var(--font-dm-serif, 'DM Serif Display', serif);
 }
 
 .dark {
@@ -104,8 +104,8 @@
   --sidebar-ring: #C9A678;
 
   /* Font stacks (same as light mode) */
-  --active-font-sans: var(--font-dm-sans), 'DM Sans', sans-serif;
-  --active-font-serif: var(--font-dm-serif), 'DM Serif Display', serif;
+  --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
+  --active-font-serif: var(--font-dm-serif, 'DM Serif Display', serif);
 }
 
 @theme inline {
