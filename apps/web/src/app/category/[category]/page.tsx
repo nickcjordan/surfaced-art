@@ -1,20 +1,16 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getListings, getCategories, ApiError } from '@/lib/api'
+import { getListings, getCategories } from '@/lib/api'
 import { ListingCard } from '@/components/ListingCard'
 import { CATEGORIES } from '@/lib/categories'
 import { categoryLabels } from '@/lib/category-labels'
 import { Category } from '@surfaced-art/types'
 import type { CategoryType } from '@surfaced-art/types'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 const validCategories = new Set(Object.values(Category))
-
-export function generateStaticParams() {
-  return Object.values(Category).map((category) => ({ category }))
-}
 
 type Props = {
   params: Promise<{ category: string }>
@@ -47,23 +43,12 @@ export default async function CategoryBrowsePage({ params }: Props) {
   const categorySlug = category as CategoryType
   const label = categoryLabels[categorySlug]
 
-  let listings: Awaited<ReturnType<typeof getListings>>['data'] = []
-  let totalCount = 0
-  try {
-    const [listingsResponse, categories] = await Promise.all([
-      getListings({ category: categorySlug, status: 'available', limit: 100 }),
-      getCategories(),
-    ])
-    listings = listingsResponse.data
-    totalCount = categories.find((c) => c.category === categorySlug)?.count ?? listingsResponse.meta.total
-  } catch (error) {
-    if (error instanceof ApiError) {
-      console.error(`API error fetching category data: ${error.status} ${error.message}`)
-    } else {
-      console.error('Unexpected error fetching category data:', error)
-    }
-    listings = []
-  }
+  const [listingsResponse, categories] = await Promise.all([
+    getListings({ category: categorySlug, status: 'available', limit: 100 }),
+    getCategories(),
+  ])
+  const listings = listingsResponse.data
+  const totalCount = categories.find((c) => c.category === categorySlug)?.count ?? listingsResponse.meta.total
 
   return (
     <div className="space-y-8">

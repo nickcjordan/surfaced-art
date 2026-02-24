@@ -6,23 +6,34 @@ import type {
   PaginatedResponse,
 } from '@surfaced-art/types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'https://api.surfaced.art'
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.API_URL ||
+  'https://api.surfaced.art'
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...init?.headers,
-    },
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10_000)
 
-  if (!response.ok) {
-    throw new ApiError(response.status, `API request failed: ${response.statusText}`)
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...init?.headers,
+      },
+    })
+
+    if (!response.ok) {
+      throw new ApiError(response.status, `API request failed: ${response.statusText}`)
+    }
+
+    return response.json() as Promise<T>
+  } finally {
+    clearTimeout(timeout)
   }
-
-  return response.json() as Promise<T>
 }
 
 export class ApiError extends Error {

@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getCategories, getListings } from '@/lib/api'
+import { getCategories, getListings, ApiError } from '@/lib/api'
 import { ListingCard } from '@/components/ListingCard'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
-import { ApiError } from '@/lib/api'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',

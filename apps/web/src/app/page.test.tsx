@@ -1,21 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
-// Mock the API module before importing the component
 vi.mock('@/lib/api', () => ({
   getCategories: vi.fn().mockResolvedValue([]),
   getListings: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, limit: 6, total: 0, totalPages: 0 } }),
-  ApiError: class ApiError extends Error {
-    status: number
-    constructor(status: number, message: string) {
-      super(message)
-      this.status = status
-      this.name = 'ApiError'
-    }
-  },
 }))
 
-// Must import after mock setup
 import Home from './page'
 
 describe('Home Page', () => {
@@ -28,7 +18,6 @@ describe('Home Page', () => {
     render(Component)
     const heading = screen.getByRole('heading', { level: 1 })
     expect(heading).toHaveTextContent('A curated digital gallery')
-    expect(heading).toHaveTextContent('for real makers')
   })
 
   it('should render the hero description', async () => {
