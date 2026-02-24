@@ -209,17 +209,12 @@
     font-family: var(--active-font-serif);
   }
 
-  /* Links: clean by default, underline on hover/focus for discoverability */
-  a {
-    text-decoration: none;
-  }
-
-  a:hover {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    text-decoration-thickness: 1px;
-  }
-
+  /*
+   * Link styles: removed from global scope to avoid conflicts with ShadCN
+   * components (Button asChild, NavigationMenu, etc.). Components manage
+   * their own hover/focus states. Content areas (artist bios, listing
+   * descriptions) can use prose utility classes for rich text link styling.
+   */
   a:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
