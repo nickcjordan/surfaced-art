@@ -194,6 +194,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           max_timeout: 300
           check_interval: 15
+          vercel_password: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -213,6 +214,7 @@ jobs:
         working-directory: apps/web
         env:
           VISUAL_QA_BASE_URL: ${{ steps.vercel-preview.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Upload visual QA artifacts
         if: always()
