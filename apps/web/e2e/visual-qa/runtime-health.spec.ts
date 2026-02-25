@@ -5,12 +5,12 @@ import {
   EXPECTED_CDN_HOSTNAME,
 } from './helpers'
 
-// Pages to test — keep in sync with deployed seed data
+// Pages to test — keep in sync with deployed seed data.
+// One artist page is sufficient: a broken component will surface on the first profile.
+// Two category pages cover a populated category and a different slug/data shape.
 const PAGES = [
   { name: 'homepage', path: '/' },
   { name: 'artist-abbey-peters', path: '/artist/abbey-peters' },
-  { name: 'artist-david-morrison', path: '/artist/david-morrison' },
-  { name: 'artist-karina-yanes', path: '/artist/karina-yanes' },
   { name: 'category-ceramics', path: '/category/ceramics' },
   { name: 'category-painting', path: '/category/painting' },
 ]

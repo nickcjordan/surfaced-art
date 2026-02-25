@@ -9,6 +9,8 @@ export default defineConfig({
   testDir: './visual-qa',
   timeout: 30_000,
   retries: 1,
+  fullyParallel: true,
+  workers: process.env.CI ? 4 : 2,
 
   // Base URL comes from environment — Vercel preview URL or production URL
   use: {
@@ -46,9 +48,9 @@ export default defineConfig({
   // Screenshot output directory for visual review
   outputDir: './visual-qa/results',
 
-  // Reporter that generates an HTML report for visual review
-  reporter: [
-    ['html', { outputFolder: './visual-qa/report', open: 'never' }],
-    ['list'],
-  ],
+  // In CI: emit a blob report per shard so the merge step can combine them.
+  // Locally: HTML + list for interactive review.
+  reporter: process.env.CI
+    ? [['blob', { outputDir: './visual-qa/blob-report' }], ['list']]
+    : [['html', { outputFolder: './visual-qa/report', open: 'never' }], ['list']],
 })
