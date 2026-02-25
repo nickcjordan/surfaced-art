@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import type { PrismaClient } from '@surfaced-art/db'
 
-import { healthRoutes } from '../routes/health.js'
+import { createHealthRoutes } from '../routes/health.js'
 import { createArtistRoutes } from '../routes/artists.js'
 import { createListingRoutes } from '../routes/listings.js'
 import { createCategoryRoutes } from '../routes/categories.js'
@@ -27,7 +27,7 @@ export function createTestApp(prisma: PrismaClient) {
   )
 
   // Mount routes with injected PrismaClient
-  app.route('/health', healthRoutes)
+  app.route('/health', createHealthRoutes(prisma))
   app.route('/artists', createArtistRoutes(prisma))
   app.route('/listings', createListingRoutes(prisma))
   app.route('/categories', createCategoryRoutes(prisma))

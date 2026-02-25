@@ -15,7 +15,7 @@ const BASELINE_MIGRATION =
   process.env.BASELINE_MIGRATION ?? '20250101000000_baseline'
 
 interface MigrateEvent {
-  command: 'migrate' | 'reset-baseline'
+  command: 'migrate' | 'reset-baseline' | 'force-reapply-baseline'
 }
 
 interface MigrateResult {
@@ -24,7 +24,8 @@ interface MigrateResult {
 }
 
 export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
-  if (event.command !== 'migrate' && event.command !== 'reset-baseline') {
+  const validCommands = ['migrate', 'reset-baseline', 'force-reapply-baseline']
+  if (!validCommands.includes(event.command)) {
     return { success: false, error: `Unknown command: ${event.command}` }
   }
 
@@ -43,6 +44,33 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
   }
 
   const execOpts = { cwd: LAMBDA_ROOT, encoding: 'utf-8' as const }
+
+  // force-reapply-baseline: deletes the baseline record from
+  // _prisma_migrations then runs migrate deploy, which will see the
+  // baseline as pending and execute its SQL. Use when the migration is
+  // recorded as "applied" but the actual tables are missing (e.g. after
+  // a database recreate) and reset-baseline fails because Prisma only
+  // allows --rolled-back on migrations in a failed state.
+  if (event.command === 'force-reapply-baseline') {
+    try {
+      // Use prisma db execute to run raw SQL that removes the stale record
+      const deleteSql = `DELETE FROM _prisma_migrations WHERE migration_name = '${BASELINE_MIGRATION}';`
+      execSync(
+        `echo "${deleteSql}" | ${PRISMA_CMD} db execute --stdin`,
+        { ...execOpts, shell: '/bin/sh' }
+      )
+      console.log('Deleted baseline record from _prisma_migrations')
+
+      // Now run migrate deploy — it will see the baseline as pending
+      const output = execSync(`${PRISMA_CMD} migrate deploy`, execOpts)
+      console.log('Migration output:', output)
+      return { success: true }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('Force reapply baseline failed:', message)
+      return { success: false, error: message }
+    }
+  }
 
   // reset-baseline: marks the baseline as rolled back so migrate deploy
   // will re-run its SQL. Use when the _prisma_migrations table records
