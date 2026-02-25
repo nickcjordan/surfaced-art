@@ -84,11 +84,22 @@ export interface ArtistSeedConfig {
 // CDN helpers
 // ============================================================================
 
-// CloudFront domain placeholder — update with real domain from Terraform output
-export const CDN_BASE = 'https://d1example.cloudfront.net'
+// CloudFront domain — from Terraform output for prod environment.
+// For dev/staging, override with the appropriate CloudFront domain:
+//   dev:  https://d2agn4aoo0e7ji.cloudfront.net
+//   prod: https://dmfu4c7s6z2cc.cloudfront.net
+export const CDN_BASE = 'https://dmfu4c7s6z2cc.cloudfront.net'
 
+/**
+ * Builds a CloudFront URL for a seed image.
+ *
+ * S3 key structure: uploads/seed/artists/{slug}/...
+ * Pass the path relative to the artists/ prefix, e.g.:
+ *   cdnUrl('abbey-peters/profile.jpg')
+ *   cdnUrl('abbey-peters/listings/drippy-teal-box/front.jpg')
+ */
 export function cdnUrl(path: string): string {
-  return `${CDN_BASE}/seed/${path}`
+  return `${CDN_BASE}/uploads/seed/artists/${path}`
 }
 
 // ============================================================================
@@ -100,7 +111,7 @@ const abbeyConfig: ArtistSeedConfig = {
     cognitoId: 'seed-abbey-peters-cognito',
     email: 'abbey@abbey-peters.com',
     fullName: 'Abbey Peters',
-    avatarUrl: cdnUrl('abbey-peters/profile.webp'),
+    avatarUrl: cdnUrl('abbey-peters/profile.jpg'),
   },
   profile: {
     displayName: 'Abbey Peters',
@@ -112,8 +123,8 @@ const abbeyConfig: ArtistSeedConfig = {
     originZip: '80210',
     status: 'approved',
     commissionsOpen: false,
-    coverImageUrl: cdnUrl('abbey-peters/cover.webp'),
-    profileImageUrl: cdnUrl('abbey-peters/profile.webp'),
+    coverImageUrl: cdnUrl('abbey-peters/cover.jpg'),
+    profileImageUrl: cdnUrl('abbey-peters/profile.jpg'),
     applicationSource: 'advisor_network',
   },
   categories: ['ceramics', 'mixed_media'],
@@ -233,8 +244,8 @@ const abbeyConfig: ArtistSeedConfig = {
     },
   ],
   processMedia: [
-    { type: 'photo', url: cdnUrl('abbey-peters/process-studio.webp'), sortOrder: 0 },
-    { type: 'photo', url: cdnUrl('abbey-peters/process-kiln.webp'), sortOrder: 1 },
+    { type: 'photo', url: cdnUrl('abbey-peters/process/studio.jpg'), sortOrder: 0 },
+    { type: 'photo', url: cdnUrl('abbey-peters/process/kiln.jpg'), sortOrder: 1 },
   ],
 }
 
@@ -247,7 +258,7 @@ const davidConfig: ArtistSeedConfig = {
     cognitoId: 'seed-david-morrison-cognito',
     email: 'davidmorrison167@gmail.com',
     fullName: 'David Morrison',
-    avatarUrl: cdnUrl('david-morrison/profile.webp'),
+    avatarUrl: cdnUrl('david-morrison/profile.jpg'),
   },
   profile: {
     displayName: 'David Morrison',
@@ -259,8 +270,8 @@ const davidConfig: ArtistSeedConfig = {
     originZip: '05404',
     status: 'approved',
     commissionsOpen: false,
-    coverImageUrl: cdnUrl('david-morrison/cover.webp'),
-    profileImageUrl: cdnUrl('david-morrison/profile.webp'),
+    coverImageUrl: cdnUrl('david-morrison/cover.jpg'),
+    profileImageUrl: cdnUrl('david-morrison/profile.jpg'),
     applicationSource: 'advisor_network',
   },
   categories: ['ceramics', 'mixed_media'],
@@ -356,7 +367,7 @@ const davidConfig: ArtistSeedConfig = {
     },
   ],
   processMedia: [
-    { type: 'photo', url: cdnUrl('david-morrison/process-studio.webp'), sortOrder: 0 },
+    { type: 'photo', url: cdnUrl('david-morrison/process/studio.jpg'), sortOrder: 0 },
   ],
 }
 
@@ -369,7 +380,7 @@ const karinaConfig: ArtistSeedConfig = {
     cognitoId: 'seed-karina-yanes-cognito',
     email: 'karina@karinayanesceramics.com',
     fullName: 'Karina Yanes',
-    avatarUrl: cdnUrl('karina-yanes/profile.webp'),
+    avatarUrl: cdnUrl('karina-yanes/profile.jpg'),
   },
   profile: {
     displayName: 'Karina Yanes',
@@ -381,8 +392,8 @@ const karinaConfig: ArtistSeedConfig = {
     originZip: '32601',
     status: 'approved',
     commissionsOpen: false,
-    coverImageUrl: cdnUrl('karina-yanes/cover.webp'),
-    profileImageUrl: cdnUrl('karina-yanes/profile.webp'),
+    coverImageUrl: cdnUrl('karina-yanes/cover.jpg'),
+    profileImageUrl: cdnUrl('karina-yanes/profile.jpg'),
     applicationSource: 'advisor_network',
   },
   categories: ['ceramics', 'mixed_media'],
@@ -472,7 +483,7 @@ const karinaConfig: ArtistSeedConfig = {
     },
   ],
   processMedia: [
-    { type: 'photo', url: cdnUrl('karina-yanes/process-studio.webp'), sortOrder: 0 },
+    { type: 'photo', url: cdnUrl('karina-yanes/process/studio.jpg'), sortOrder: 0 },
   ],
 }
 
@@ -480,12 +491,15 @@ const karinaConfig: ArtistSeedConfig = {
 // Artist 4: Mako Sandusky
 // ============================================================================
 
+// NOTE: Mako's images are not extractable from their Cargo-based site (makomud.com).
+// Images must be provided directly by the artist. Profile/cover are null until then.
+// Listing images will 404 via CloudFront — replace when artist provides images.
 const makoConfig: ArtistSeedConfig = {
   user: {
     cognitoId: 'seed-mako-sandusky-cognito',
     email: 'macaylasandusky@gmail.com',
     fullName: 'Macayla Sandusky',
-    avatarUrl: cdnUrl('mako-sandusky/profile.webp'),
+    avatarUrl: cdnUrl('mako-sandusky/profile.jpg'),
   },
   profile: {
     displayName: 'Mako Sandusky',
@@ -497,8 +511,8 @@ const makoConfig: ArtistSeedConfig = {
     originZip: '52240',
     status: 'approved',
     commissionsOpen: false,
-    coverImageUrl: cdnUrl('mako-sandusky/cover.webp'),
-    profileImageUrl: cdnUrl('mako-sandusky/profile.webp'),
+    coverImageUrl: null,
+    profileImageUrl: null,
     applicationSource: 'advisor_network',
   },
   categories: ['ceramics', 'mixed_media'],
@@ -579,7 +593,7 @@ const makoConfig: ArtistSeedConfig = {
     },
   ],
   processMedia: [
-    { type: 'photo', url: cdnUrl('mako-sandusky/process-studio.webp'), sortOrder: 0 },
+    { type: 'photo', url: cdnUrl('mako-sandusky/process/studio.jpg'), sortOrder: 0 },
   ],
 }
 

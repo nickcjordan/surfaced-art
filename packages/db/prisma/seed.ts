@@ -131,10 +131,11 @@ async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) {
 
     // Create 2 images per listing: primary + one additional angle
     // For documented listings, second image is a process photo
+    // S3 key: uploads/seed/artists/{slug}/listings/{listing-slug}/front.jpg
     await tx.listingImage.create({
       data: {
         listingId: listing.id,
-        url: cdnUrl(`${data.profile.slug}/${listingSlug}-front.webp`),
+        url: cdnUrl(`${data.profile.slug}/listings/${listingSlug}/front.jpg`),
         isProcessPhoto: false,
         sortOrder: 0,
       },
@@ -142,7 +143,7 @@ async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) {
     await tx.listingImage.create({
       data: {
         listingId: listing.id,
-        url: cdnUrl(`${data.profile.slug}/${listingSlug}-angle.webp`),
+        url: cdnUrl(`${data.profile.slug}/listings/${listingSlug}/angle.jpg`),
         isProcessPhoto: listingData.isDocumented,
         sortOrder: 1,
       },
