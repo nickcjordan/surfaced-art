@@ -9,7 +9,7 @@ export function createArtistRoutes(prisma: PrismaClient) {
 
   /**
    * GET /artists
-   * Returns a list of featured (approved) artists for the homepage.
+   * Returns a list of approved artists for the homepage.
    * Query params:
    *   - limit: max number of artists to return (default 4, max 20)
    */

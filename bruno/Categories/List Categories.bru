@@ -24,7 +24,7 @@ tests {
   test("each category should have category name and count", function() {
     const categories = res.getBody();
     categories.forEach(function(cat) {
-      expect(cat).to.have.property("sa_category");
+      expect(cat).to.have.property("category");
       expect(cat).to.have.property("count");
       expect(cat.count).to.be.a("number");
       expect(cat.count).to.be.at.least(0);

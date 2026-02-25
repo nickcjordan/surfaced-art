@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Seed data references — update if seed data changes
+// Seed data references — keep in sync with packages/db/prisma/seed-data.ts
 const SEED_ARTIST_SLUG = 'abbey-peters'
 const SEED_ARTIST_NAME = 'Abbey Peters'
 

@@ -284,8 +284,8 @@ export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 's
 }
 
 /**
- * Lightweight artist item for featured artists list on homepage.
- * Returned by GET /artists?featured=true
+ * Lightweight artist item for the artists list on the homepage.
+ * Returned by GET /artists (approved artists, optional `?limit=N`).
  */
 export interface FeaturedArtistItem {
   slug: string
