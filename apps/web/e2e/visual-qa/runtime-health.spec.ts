@@ -5,9 +5,12 @@ import {
   EXPECTED_CDN_HOSTNAME,
 } from './helpers'
 
-// Pages to test — update as new pages are deployed
+// Pages to test — keep in sync with deployed seed data
 const PAGES = [
   { name: 'homepage', path: '/' },
+  { name: 'artist-abbey-peters', path: '/artist/abbey-peters' },
+  { name: 'artist-david-morrison', path: '/artist/david-morrison' },
+  { name: 'artist-karina-yanes', path: '/artist/karina-yanes' },
   { name: 'category-ceramics', path: '/category/ceramics' },
   { name: 'category-painting', path: '/category/painting' },
 ]
