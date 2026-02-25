@@ -85,3 +85,9 @@ variable "api_gateway_log_group_arn" {
   description = "ARN of the CloudWatch log group for API Gateway access logs"
   type        = string
 }
+
+variable "log_retention_days" {
+  description = "CloudWatch log group retention in days"
+  type        = number
+  default     = 30
+}
