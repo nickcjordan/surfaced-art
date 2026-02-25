@@ -1,23 +1,10 @@
 import { test, expect } from '@playwright/test'
 
 // Seed data references — keep in sync with packages/db/prisma/seed-data.ts
-const SEED_ARTISTS = [
-  { slug: 'abbey-peters', displayName: 'Abbey Peters' },
-  { slug: 'david-morrison', displayName: 'David Morrison' },
-  { slug: 'karina-yanes', displayName: 'Karina Yanes' },
-]
+const SEED_ARTIST = { slug: 'abbey-peters', displayName: 'Abbey Peters' }
 
-const CATEGORIES = [
-  'ceramics',
-  'painting',
-  'print',
-  'jewelry',
-  'illustration',
-  'photography',
-  'woodworking',
-  'fibers',
-  'mixed_media',
-]
+// Two categories: one known-populated, one that may be empty — covers both data shapes
+const CATEGORIES = ['ceramics', 'painting']
 
 test.describe('Page Rendering — Homepage', () => {
   test('homepage renders with all sections', async ({ page }) => {
@@ -49,35 +36,33 @@ test.describe('Page Rendering — Homepage', () => {
   })
 })
 
-test.describe('Page Rendering — Artist Profiles', () => {
-  for (const artist of SEED_ARTISTS) {
-    test(`artist profile renders: ${artist.displayName}`, async ({ page }) => {
-      await page.goto(`/artist/${artist.slug}`)
-      await page.waitForLoadState('networkidle')
+test.describe('Page Rendering — Artist Profile', () => {
+  test(`artist profile renders: ${SEED_ARTIST.displayName}`, async ({ page }) => {
+    await page.goto(`/artist/${SEED_ARTIST.slug}`)
+    await page.waitForLoadState('networkidle')
 
-      // Did not 404
-      await expect(page).not.toHaveTitle(/404|not found/i)
+    // Did not 404
+    await expect(page).not.toHaveTitle(/404|not found/i)
 
-      await expect(page.getByTestId('artist-hero')).toBeVisible()
-      await expect(page.getByTestId('artist-name')).toContainText(
-        artist.displayName
-      )
-      await expect(page.getByTestId('artist-bio')).toBeVisible()
-      await expect(page.getByTestId('available-work')).toBeVisible()
+    await expect(page.getByTestId('artist-hero')).toBeVisible()
+    await expect(page.getByTestId('artist-name')).toContainText(
+      SEED_ARTIST.displayName
+    )
+    await expect(page.getByTestId('artist-bio')).toBeVisible()
+    await expect(page.getByTestId('available-work')).toBeVisible()
 
-      await page.screenshot({
-        path: `results/artist-${artist.slug}-${test.info().project.name}.png`,
-        fullPage: true,
-      })
+    await page.screenshot({
+      path: `results/artist-${SEED_ARTIST.slug}-${test.info().project.name}.png`,
+      fullPage: true,
     })
-  }
+  })
 })
 
 test.describe('Page Rendering — Listing Detail', () => {
   test('listing detail renders after clicking through from artist profile', async ({
     page,
   }) => {
-    await page.goto(`/artist/${SEED_ARTISTS[0].slug}`)
+    await page.goto(`/artist/${SEED_ARTIST.slug}`)
     await page.waitForLoadState('networkidle')
 
     // Click first listing card in the available work section

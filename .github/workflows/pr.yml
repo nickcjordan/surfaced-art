@@ -178,15 +178,14 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-  visual-qa:
-    name: Visual QA
+  visual-qa-setup:
+    name: Visual QA — Wait for Vercel
     runs-on: ubuntu-latest
     needs: [build-and-test]
+    outputs:
+      preview-url: ${{ steps.vercel-preview.outputs.url }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
       - name: Wait for Vercel preview deployment
         id: vercel-preview
         uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
@@ -194,6 +193,19 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           max_timeout: 300
           check_interval: 15
+
+  visual-qa:
+    name: Visual QA (shard ${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    needs: [visual-qa-setup]
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/3', '2/3', '3/3']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -208,27 +220,64 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: apps/web
 
-      - name: Run visual QA tests
-        run: npx playwright test --config=e2e/visual-qa.config.ts
+      - name: Run visual QA tests (shard ${{ matrix.shard }})
+        run: npx playwright test --config=e2e/visual-qa.config.ts --shard=${{ matrix.shard }}
         working-directory: apps/web
         env:
-          VISUAL_QA_BASE_URL: ${{ steps.vercel-preview.outputs.url }}
+          VISUAL_QA_BASE_URL: ${{ needs.visual-qa-setup.outputs.preview-url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
-      - name: Upload visual QA artifacts
+      - name: Upload blob report
         if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-qa-blob-${{ strategy.job-index }}-${{ github.sha }}
+          path: apps/web/e2e/visual-qa/blob-report/
+          retention-days: 1
+
+  visual-qa-report:
+    name: Visual QA — Merge Reports
+    runs-on: ubuntu-latest
+    needs: [visual-qa]
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download all blob reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: visual-qa-blob-*-${{ github.sha }}
+          path: apps/web/e2e/visual-qa/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge reports
+        run: npx playwright merge-reports --reporter html ./e2e/visual-qa/all-blob-reports
+        working-directory: apps/web
+
+      - name: Upload merged HTML report
         uses: actions/upload-artifact@v4
         with:
           name: visual-qa-${{ github.sha }}
           path: |
+            apps/web/playwright-report/
             apps/web/e2e/visual-qa/results/
-            apps/web/e2e/visual-qa/report/
           retention-days: 14
 
   notify-actions-pr:
     name: Notify Actions (PR)
     runs-on: ubuntu-latest
-    needs: [build-and-test, security-scan, terraform-plan, visual-qa]
+    needs: [build-and-test, security-scan, terraform-plan, visual-qa, visual-qa-report]
     if: always()
     continue-on-error: true
     timeout-minutes: 2
@@ -242,8 +291,9 @@ jobs:
           SECURITY_RESULT="${{ needs.security-scan.result }}"
           TF_RESULT="${{ needs.terraform-plan.result }}"
           VISUAL_QA_RESULT="${{ needs.visual-qa.result }}"
+          VISUAL_QA_REPORT_RESULT="${{ needs.visual-qa-report.result }}"
 
-          if [ "$BUILD_RESULT" = "failure" ] || [ "$SECURITY_RESULT" = "failure" ] || [ "$TF_RESULT" = "failure" ] || [ "$VISUAL_QA_RESULT" = "failure" ]; then
+          if [ "$BUILD_RESULT" = "failure" ] || [ "$SECURITY_RESULT" = "failure" ] || [ "$TF_RESULT" = "failure" ] || [ "$VISUAL_QA_RESULT" = "failure" ] || [ "$VISUAL_QA_REPORT_RESULT" = "failure" ]; then
             echo "result=failure" >> "$GITHUB_OUTPUT"
             echo "emoji=❌" >> "$GITHUB_OUTPUT"
           else
