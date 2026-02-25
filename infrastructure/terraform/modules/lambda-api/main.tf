@@ -55,6 +55,12 @@ resource "aws_lambda_function" "api" {
       S3_BUCKET_NAME       = var.s3_bucket_name
       CLOUDFRONT_URL       = var.cloudfront_url
       FRONTEND_URL         = var.frontend_url
+
+      # Add Amazon RDS CA certificates to Node.js trust store so the pg driver
+      # can verify RDS server certificates. The Lambda base image ships this
+      # bundle at /var/runtime/ca-cert.pem; Node 20+ no longer loads it
+      # automatically, so it must be set explicitly.
+      NODE_EXTRA_CA_CERTS = "/var/runtime/ca-cert.pem"
     }
   }
 
