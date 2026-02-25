@@ -170,6 +170,46 @@ describe('migrate handler', () => {
     })
   })
 
+  it('should run seed command via tsx when seed script exists', async () => {
+    mockedExecSync.mockReturnValue('')
+
+    const result = await handler({ command: 'seed' })
+
+    expect(result).toEqual({ success: true })
+    expect(mockedExecSync).toHaveBeenCalledTimes(1)
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('seed-safe.ts'),
+      expect.objectContaining({ encoding: 'utf-8' })
+    )
+  })
+
+  it('should return error when seed script is missing', async () => {
+    // LAMBDA_ROOT exists (true), Prisma CLI exists (true), seed script missing (false)
+    mockedExistsSync
+      .mockReturnValueOnce(true)   // LAMBDA_ROOT
+      .mockReturnValueOnce(true)   // PRISMA_CLI
+      .mockReturnValueOnce(false)  // seed-safe.ts
+
+    const result = await handler({ command: 'seed' })
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('Seed script not found')
+    expect(mockedExecSync).not.toHaveBeenCalled()
+  })
+
+  it('should return error when seed script fails', async () => {
+    mockedExecSync.mockImplementationOnce(() => {
+      throw new Error('SEED BLOCKED: Found 3 non-seed user(s)')
+    })
+
+    const result = await handler({ command: 'seed' })
+
+    expect(result).toEqual({
+      success: false,
+      error: 'SEED BLOCKED: Found 3 non-seed user(s)',
+    })
+  })
+
   it('should return ENOENT-specific error when prisma binary missing at runtime', async () => {
     mockedExecSync
       .mockReturnValueOnce('')

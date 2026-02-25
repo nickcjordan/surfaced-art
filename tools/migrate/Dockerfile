@@ -28,11 +28,18 @@ RUN npm ci
 # Root package.json "type": "module" (copied above) ensures ESM loading.
 COPY tools/migrate/dist/index.js ./index.js
 
-# Copy Prisma files needed by `prisma migrate deploy`:
-#   prisma/schema.prisma   - schema definition
-#   prisma/migrations/     - SQL migration files to apply
-#   prisma.config.ts       - Prisma 7 datasource config (reads DATABASE_URL)
+# Copy Prisma files needed by `prisma migrate deploy` and `seed`:
+#   prisma/schema.prisma     - schema definition
+#   prisma/migrations/       - SQL migration files to apply
+#   prisma/seed-safe.ts      - safe seed script (with production guard)
+#   prisma/seed-logic.ts     - shared seed functions
+#   prisma/seed-data.ts      - seed data configuration
+#   prisma.config.ts         - Prisma 7 datasource config (reads DATABASE_URL)
 COPY packages/db/prisma/ ./prisma/
 COPY packages/db/prisma.config.ts ./
+
+# Copy the generated Prisma client so seed-safe.ts (which runs via tsx
+# at runtime) can resolve its `../src/generated/prisma/client` import.
+COPY packages/db/src/generated/ ./src/generated/
 
 CMD ["index.handler"]

@@ -132,6 +132,12 @@ describe('Seed Data Validation', () => {
       const ids = artistConfigs.map((c) => c.user.cognitoId)
       expect(new Set(ids).size).toBe(ids.length)
     })
+
+    it('should have cognitoIds prefixed with "seed-" (required by seed-safe.ts safety guard)', () => {
+      for (const config of artistConfigs) {
+        expect(config.user.cognitoId).toMatch(/^seed-/)
+      }
+    })
   })
 
   describe('CDN URLs', () => {

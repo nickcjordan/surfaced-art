@@ -15,7 +15,7 @@ const BASELINE_MIGRATION =
   process.env.BASELINE_MIGRATION ?? '20250101000000_baseline'
 
 interface MigrateEvent {
-  command: 'migrate' | 'reset-baseline' | 'force-reapply-baseline'
+  command: 'migrate' | 'reset-baseline' | 'force-reapply-baseline' | 'seed'
 }
 
 interface MigrateResult {
@@ -24,7 +24,7 @@ interface MigrateResult {
 }
 
 export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
-  const validCommands = ['migrate', 'reset-baseline', 'force-reapply-baseline']
+  const validCommands = ['migrate', 'reset-baseline', 'force-reapply-baseline', 'seed']
   if (!validCommands.includes(event.command)) {
     return { success: false, error: `Unknown command: ${event.command}` }
   }
@@ -44,6 +44,37 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
   }
 
   const execOpts = { cwd: LAMBDA_ROOT, encoding: 'utf-8' as const }
+
+  // seed: populates the database with initial artist/listing data.
+  // Delegates to seed-safe.ts which enforces a production safety check:
+  // it queries the users table and refuses to run if any non-seed users
+  // exist (cognito_id NOT LIKE 'seed-%'). Once real users sign up via
+  // Cognito, seeding becomes impossible without manual DB intervention —
+  // this is intentional to prevent accidental data overwrites.
+  if (event.command === 'seed') {
+    try {
+      const tsxPath = `${LAMBDA_ROOT}/node_modules/.bin/tsx`
+      const seedScript = `${LAMBDA_ROOT}/prisma/seed-safe.ts`
+
+      if (!fs.existsSync(seedScript)) {
+        return {
+          success: false,
+          error: `Seed script not found at ${seedScript}. Ensure the Dockerfile copies prisma/seed-safe.ts.`,
+        }
+      }
+
+      const output = execSync(
+        `node ${tsxPath} ${seedScript}`,
+        execOpts
+      )
+      console.log('Seed output:', output)
+      return { success: true }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('Seed failed:', message)
+      return { success: false, error: message }
+    }
+  }
 
   // force-reapply-baseline: deletes the baseline record from
   // _prisma_migrations then runs migrate deploy, which will see the
