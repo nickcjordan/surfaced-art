@@ -12,6 +12,9 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.4.1",
+    "@prisma/client": "^7.4.1",
+    "pg": "^8.18.0",
     "prisma": "^7.4.1"
   },
   "devDependencies": {
