@@ -29,10 +29,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
+      alternates: {
+        canonical: `/listing/${id}`,
+      },
       openGraph: {
         title,
         description,
         type: 'article',
+        url: `https://surfaced.art/listing/${id}`,
         images: listing.images.length > 0 ? [{ url: listing.images[0].url }] : [],
       },
     }

@@ -11,9 +11,19 @@ export const EXPECTED_CDN_HOSTNAME =
 /**
  * Returns true if the URL or console message refers to a known-acceptable
  * asset that should not cause test failures (e.g. missing favicon, source maps).
+ *
+ * Also ignores 400 responses for the app root — Next.js App Router issues
+ * internal RSC prefetch/revalidation requests to the origin root that return 400
+ * on Vercel preview deployments. These are normal framework behaviour and do not
+ * indicate application errors.
  */
 export function isIgnorableAsset(urlOrMessage: string): boolean {
-  return urlOrMessage.includes('favicon') || urlOrMessage.includes('.map')
+  if (urlOrMessage.includes('favicon')) return true
+  if (urlOrMessage.includes('.map')) return true
+  // Next.js RSC prefetch requests to the deployment origin root return 400 on
+  // Vercel previews — matches "400 https://example.vercel.app" or "400 https://example.vercel.app/"
+  if (/^400 https?:\/\/[^/]+(\/)?$/.test(urlOrMessage)) return true
+  return false
 }
 
 /**

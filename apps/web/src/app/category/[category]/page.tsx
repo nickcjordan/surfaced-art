@@ -25,10 +25,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${label} — Surfaced Art`,
     description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
+    alternates: {
+      canonical: `/category/${category}`,
+    },
     openGraph: {
       title: `${label} — Surfaced Art`,
       description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
       type: 'website',
+      url: `https://surfaced.art/category/${category}`,
     },
   }
 }
