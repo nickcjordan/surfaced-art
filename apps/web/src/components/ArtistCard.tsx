@@ -26,12 +26,14 @@ type ArtistCardProps = {
     categories: CategoryType[]
   }
   className?: string
+  'data-testid'?: string
 }
 
-export function ArtistCard({ artist, className }: ArtistCardProps) {
+export function ArtistCard({ artist, className, 'data-testid': testId }: ArtistCardProps) {
   return (
     <Link
       href={`/artist/${artist.slug}`}
+      data-testid={testId}
       className={cn(
         'group block rounded-md bg-surface overflow-hidden transition-[box-shadow,transform] duration-250 ease-in-out hover:shadow-md hover:-translate-y-0.5',
         className

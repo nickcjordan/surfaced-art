@@ -283,6 +283,19 @@ export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 's
   listings: ListingWithImages[]
 }
 
+/**
+ * Lightweight artist item for featured artists list on homepage.
+ * Returned by GET /artists?featured=true
+ */
+export interface FeaturedArtistItem {
+  slug: string
+  displayName: string
+  location: string
+  profileImageUrl: string | null
+  coverImageUrl: string | null
+  categories: CategoryType[]
+}
+
 // ─── Categories API Response Types ─────────────────────────────────
 
 /**

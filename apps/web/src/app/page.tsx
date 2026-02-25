@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getCategories, getListings, ApiError } from '@/lib/api'
+import { getCategories, getListings, getFeaturedArtists, ApiError } from '@/lib/api'
+import { ArtistCard } from '@/components/ArtistCard'
 import { ListingCard } from '@/components/ListingCard'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
@@ -21,23 +22,24 @@ export const metadata: Metadata = {
 
 async function fetchHomeData() {
   try {
-    const [categories, listingsResponse] = await Promise.all([
+    const [categories, listingsResponse, featuredArtists] = await Promise.all([
       getCategories(),
       getListings({ status: 'available', limit: 6 }),
+      getFeaturedArtists(4),
     ])
-    return { categories, listings: listingsResponse.data }
+    return { categories, listings: listingsResponse.data, artists: featuredArtists }
   } catch (error) {
     if (error instanceof ApiError) {
       console.error(`API error fetching home data: ${error.status} ${error.message}`)
     } else {
       console.error('Unexpected error fetching home data:', error)
     }
-    return { categories: [], listings: [] }
+    return { categories: [], listings: [], artists: [] }
   }
 }
 
 export default async function Home() {
-  const { categories, listings } = await fetchHomeData()
+  const { categories, listings, artists } = await fetchHomeData()
 
   return (
     <div className="space-y-16 md:space-y-24">
@@ -53,6 +55,24 @@ export default async function Home() {
           woodworking — discover work that matters.
         </p>
       </section>
+
+      {/* Featured Artists */}
+      {artists.length > 0 && (
+        <section data-testid="featured-artists">
+          <div className="mb-8 flex items-baseline justify-between">
+            <h2 className="font-serif text-2xl text-foreground">Featured Artists</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {artists.map((artist) => (
+              <ArtistCard
+                key={artist.slug}
+                artist={artist}
+                data-testid="artist-card"
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured Listings */}
       {listings.length > 0 && (
@@ -87,7 +107,7 @@ export default async function Home() {
       )}
 
       {/* Category Grid */}
-      <section>
+      <section data-testid="category-grid-section">
         <h2 className="mb-8 font-serif text-2xl text-foreground text-center">
           Browse by Category
         </h2>
