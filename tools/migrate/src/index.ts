@@ -15,7 +15,7 @@ const BASELINE_MIGRATION =
   process.env.BASELINE_MIGRATION ?? '20250101000000_baseline'
 
 interface MigrateEvent {
-  command: 'migrate'
+  command: 'migrate' | 'reset-baseline'
 }
 
 interface MigrateResult {
@@ -24,7 +24,7 @@ interface MigrateResult {
 }
 
 export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
-  if (event.command !== 'migrate') {
+  if (event.command !== 'migrate' && event.command !== 'reset-baseline') {
     return { success: false, error: `Unknown command: ${event.command}` }
   }
 
@@ -43,6 +43,25 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
   }
 
   const execOpts = { cwd: LAMBDA_ROOT, encoding: 'utf-8' as const }
+
+  // reset-baseline: marks the baseline as rolled back so migrate deploy
+  // will re-run its SQL. Use when the _prisma_migrations table records
+  // the baseline as applied but the actual tables are missing (e.g. after
+  // a database recreate).
+  if (event.command === 'reset-baseline') {
+    try {
+      const output = execSync(
+        `${PRISMA_CMD} migrate resolve --rolled-back ${BASELINE_MIGRATION}`,
+        execOpts
+      )
+      console.log('Baseline marked as rolled back:', output)
+      return { success: true }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('Reset baseline failed:', message)
+      return { success: false, error: message }
+    }
+  }
 
   try {
     // Mark the baseline migration as already applied (DB was created

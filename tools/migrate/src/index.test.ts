@@ -112,6 +112,34 @@ describe('migrate handler', () => {
     })
   })
 
+  it('should run reset-baseline command', async () => {
+    mockedExecSync.mockReturnValue('')
+
+    const result = await handler({ command: 'reset-baseline' })
+
+    expect(result).toEqual({ success: true })
+    expect(mockedExecSync).toHaveBeenCalledTimes(1)
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'migrate resolve --rolled-back 20250101000000_baseline'
+      ),
+      expect.objectContaining({ encoding: 'utf-8' })
+    )
+  })
+
+  it('should return error when reset-baseline fails', async () => {
+    mockedExecSync.mockImplementationOnce(() => {
+      throw new Error('resolve --rolled-back failed')
+    })
+
+    const result = await handler({ command: 'reset-baseline' })
+
+    expect(result).toEqual({
+      success: false,
+      error: 'resolve --rolled-back failed',
+    })
+  })
+
   it('should return ENOENT-specific error when prisma binary missing at runtime', async () => {
     mockedExecSync
       .mockReturnValueOnce('')
