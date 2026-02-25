@@ -68,6 +68,13 @@ jobs:
           path: tools/migrate/dist/
           retention-days: 1
 
+      - name: Upload image-processor artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: image-processor-dist
+          path: apps/image-processor/dist/
+          retention-days: 1
+
   terraform:
     name: Terraform Apply (prod)
     runs-on: ubuntu-latest
@@ -77,9 +84,11 @@ jobs:
     outputs:
       lambda_function_name: ${{ steps.output.outputs.lambda_function_name }}
       migrate_function_name: ${{ steps.output.outputs.migrate_function_name }}
+      image_processor_function_name: ${{ steps.output.outputs.image_processor_function_name }}
       api_gateway_url: ${{ steps.output.outputs.api_gateway_url }}
       ecr_repository_url: ${{ steps.output.outputs.ecr_repository_url }}
       migrate_ecr_repository_url: ${{ steps.output.outputs.migrate_ecr_repository_url }}
+      image_processor_ecr_repository_url: ${{ steps.output.outputs.image_processor_ecr_repository_url }}
 
     steps:
       - name: Checkout
@@ -116,6 +125,9 @@ jobs:
             -target=aws_ecr_repository.migrate \
             -target=aws_ecr_lifecycle_policy.migrate \
             -target=aws_ecr_repository_policy.migrate \
+            -target=aws_ecr_repository.image_processor \
+            -target=aws_ecr_lifecycle_policy.image_processor \
+            -target=aws_ecr_repository_policy.image_processor \
             -var-file="environments/prod.tfvars" \
             -var="db_password=${{ secrets.TF_VAR_db_password }}" \
             -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
@@ -134,6 +146,7 @@ jobs:
         run: |
           API_ECR_URL=$(terraform output -raw ecr_repository_url)
           MIGRATE_ECR_URL=$(terraform output -raw migrate_ecr_repository_url)
+          IMAGE_PROCESSOR_ECR_URL=$(terraform output -raw image_processor_ecr_repository_url)
 
           push_bootstrap_if_empty() {
             local ecr_url="$1"
@@ -157,6 +170,7 @@ jobs:
           docker pull "$LAMBDA_BOOTSTRAP_IMAGE"
           push_bootstrap_if_empty "$API_ECR_URL" "API"
           push_bootstrap_if_empty "$MIGRATE_ECR_URL" "Migrate"
+          push_bootstrap_if_empty "$IMAGE_PROCESSOR_ECR_URL" "Image Processor"
 
           # Determine placeholder URI for Terraform (API ECR as source of truth).
           # Both Lambda modules share this same placeholder_image_uri on initial
@@ -199,9 +213,11 @@ jobs:
         run: |
           echo "lambda_function_name=$(terraform output -raw lambda_function_name)" >> $GITHUB_OUTPUT
           echo "migrate_function_name=$(terraform output -raw migrate_function_name)" >> $GITHUB_OUTPUT
+          echo "image_processor_function_name=$(terraform output -raw image_processor_function_name)" >> $GITHUB_OUTPUT
           echo "api_gateway_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
           echo "ecr_repository_url=$(terraform output -raw ecr_repository_url)" >> $GITHUB_OUTPUT
           echo "migrate_ecr_repository_url=$(terraform output -raw migrate_ecr_repository_url)" >> $GITHUB_OUTPUT
+          echo "image_processor_ecr_repository_url=$(terraform output -raw image_processor_ecr_repository_url)" >> $GITHUB_OUTPUT
 
   deploy-lambdas:
     name: Deploy Lambdas
@@ -353,7 +369,67 @@ jobs:
             --function-name ${{ needs.terraform.outputs.migrate_function_name }} \
             --image-uri $ECR_REPOSITORY_URL:$IMAGE_TAG
 
-      # --- Wait for both updates ---
+      # --- Image Processor Lambda ---
+
+      - name: Download image-processor artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: image-processor-dist
+          path: apps/image-processor/dist/
+
+      - name: Build image-processor Docker image
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.image_processor_ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f apps/image-processor/Dockerfile \
+            -t $ECR_REPOSITORY_URL:$IMAGE_TAG \
+            -t $ECR_REPOSITORY_URL:latest \
+            .
+
+      - name: Validate image-processor container
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.image_processor_ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "Checking image-processor container has required files..."
+          docker run --rm --entrypoint="" \
+            $ECR_REPOSITORY_URL:$IMAGE_TAG \
+            sh -c '
+              ok=true
+              for f in /var/task/index.js; do
+                if test -f "$f"; then
+                  echo "OK   $f"
+                else
+                  echo "MISSING $f" >&2; ok=false
+                fi
+              done
+              if test -d /var/task/node_modules/sharp; then
+                echo "OK   Sharp native binaries"
+              else
+                echo "MISSING Sharp native binaries" >&2; ok=false
+              fi
+              $ok && echo "All required files present." || { echo "Validation failed" >&2; exit 1; }
+            '
+
+      - name: Push image-processor Docker image
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.image_processor_ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
+          docker push $ECR_REPOSITORY_URL:latest
+
+      - name: Deploy image-processor Lambda
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.image_processor_ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ needs.terraform.outputs.image_processor_function_name }} \
+            --image-uri $ECR_REPOSITORY_URL:$IMAGE_TAG
+
+      # --- Wait for all updates ---
 
       - name: Wait for Lambda updates
         run: |
@@ -361,6 +437,8 @@ jobs:
             --function-name ${{ needs.terraform.outputs.lambda_function_name }}
           aws lambda wait function-updated \
             --function-name ${{ needs.terraform.outputs.migrate_function_name }}
+          aws lambda wait function-updated \
+            --function-name ${{ needs.terraform.outputs.image_processor_function_name }}
 
   migrate-database:
     name: Run Migrations
