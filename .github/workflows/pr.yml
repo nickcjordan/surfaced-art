@@ -51,6 +51,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Integration Tests
+        run: npm run test:integration
+
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
