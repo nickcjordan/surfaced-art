@@ -24,7 +24,11 @@
       "Bash(npm info:*)",
       "Bash(npm audit:*)",
       "Bash(npm run security:trivy:*)",
-      "Bash(npm run test:*)"
+      "Bash(npm run test:*)",
+      "WebFetch(domain:abbey-peters.com)",
+      "WebFetch(domain:morrison-david.com)",
+      "WebFetch(domain:karinayanesceramics.squarespace.com)",
+      "Bash(MSYS_NO_PATHCONV=1 aws logs:*)"
     ]
   }
 }
