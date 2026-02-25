@@ -21,9 +21,28 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://surfaced.art'),
   title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
   description:
     'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
+    description:
+      'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+    type: 'website',
+    url: 'https://surfaced.art',
+    images: [
+      {
+        url: 'https://surfaced.art/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
+      },
+    ],
+  },
 }
 
 export default function RootLayout({

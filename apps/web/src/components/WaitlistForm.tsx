@@ -22,6 +22,15 @@ export function WaitlistForm() {
       return
     }
 
+    // Basic client-side format check so invalid submissions show our custom
+    // error state instead of relying on native browser validation (which would
+    // not trigger waitlist-error).
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setState('error')
+      setErrorMessage('Please enter a valid email address.')
+      return
+    }
+
     setState('submitting')
     setErrorMessage('')
 
@@ -50,7 +59,8 @@ export function WaitlistForm() {
     <form onSubmit={handleSubmit} className="flex flex-col items-center gap-3 sm:flex-row sm:gap-2">
       <Input
         data-testid="waitlist-email-input"
-        type="email"
+        type="text"
+        inputMode="email"
         placeholder="you@example.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
