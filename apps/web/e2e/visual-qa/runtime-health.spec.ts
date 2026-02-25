@@ -124,8 +124,11 @@ test.describe('Runtime Health — Scroll-Triggered Errors', () => {
 
 test.describe('Runtime Health — API & Infrastructure', () => {
   test('API health endpoint responds', async ({ request }) => {
-    const apiBaseUrl =
-      process.env.API_BASE_URL || 'https://api.surfaced.art'
+    const apiBaseUrl = process.env.API_BASE_URL
+    if (!apiBaseUrl) {
+      test.skip(true, 'API_BASE_URL not set — skipping API health check')
+      return
+    }
     const response = await request.get(`${apiBaseUrl}/health`)
     expect(response.status()).toBe(200)
     const body = await response.json()
