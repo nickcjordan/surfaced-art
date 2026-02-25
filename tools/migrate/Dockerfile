@@ -40,8 +40,8 @@ COPY packages/db/prisma.config.ts ./
 
 # Generate the Prisma client inside the container so seed-safe.ts (which
 # runs via tsx at runtime) can resolve its `../src/generated/prisma/client`
-# import.  The generated directory is gitignored, so it can't be COPYed
+# import. The generated directory is gitignored, so it can't be COPYed
 # from the build context — we must generate it here.
-RUN npx prisma generate --schema=prisma/schema.prisma
+RUN node node_modules/.bin/prisma generate --schema=prisma/schema.prisma
 
 CMD ["index.handler"]
