@@ -140,6 +140,36 @@ describe('migrate handler', () => {
     })
   })
 
+  it('should run force-reapply-baseline: delete record then migrate deploy', async () => {
+    mockedExecSync.mockReturnValue('')
+
+    const result = await handler({ command: 'force-reapply-baseline' })
+
+    expect(result).toEqual({ success: true })
+    expect(mockedExecSync).toHaveBeenCalledTimes(2)
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('db execute --stdin'),
+      expect.objectContaining({ encoding: 'utf-8', shell: '/bin/sh' })
+    )
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('migrate deploy'),
+      expect.objectContaining({ encoding: 'utf-8' })
+    )
+  })
+
+  it('should return error when force-reapply-baseline fails', async () => {
+    mockedExecSync.mockImplementationOnce(() => {
+      throw new Error('db execute failed: permission denied')
+    })
+
+    const result = await handler({ command: 'force-reapply-baseline' })
+
+    expect(result).toEqual({
+      success: false,
+      error: 'db execute failed: permission denied',
+    })
+  })
+
   it('should return ENOENT-specific error when prisma binary missing at runtime', async () => {
     mockedExecSync
       .mockReturnValueOnce('')

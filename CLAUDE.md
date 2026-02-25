@@ -224,6 +224,10 @@ When starting work on an issue:
 5. Run all quality gates
 6. Open a PR with "Closes #N" in the body
 7. Remove `in-progress` label: `gh issue edit <number> --remove-label "in-progress"`
+8. After the PR is merged, clean up the branch:
+   - Delete the remote branch: `git push origin --delete feat/<short-description>`
+   - Switch to dev: `git checkout dev && git pull`
+   - Delete the local branch: `git branch -d feat/<short-description>`
 
 ### For Every Task (implementation)
 
