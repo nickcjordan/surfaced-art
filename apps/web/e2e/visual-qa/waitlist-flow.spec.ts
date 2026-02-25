@@ -13,8 +13,9 @@ test.describe('Waitlist Flow — Email Capture', () => {
     await page.getByTestId('waitlist-email-input').fill(testEmail)
     await page.getByTestId('waitlist-submit').click()
 
+    // Allow up to 15s for the API response — Lambda cold starts can take 3-8s
     await expect(page.getByTestId('waitlist-success')).toBeVisible({
-      timeout: 5000,
+      timeout: 15000,
     })
   })
 
@@ -50,7 +51,7 @@ test.describe('Waitlist Flow — Email Capture', () => {
     await page.getByTestId('waitlist-email-input').fill(testEmail)
     await page.getByTestId('waitlist-submit').click()
     await expect(page.getByTestId('waitlist-success')).toBeVisible({
-      timeout: 5000,
+      timeout: 15000,
     })
 
     // Second submission with the same email
@@ -59,8 +60,9 @@ test.describe('Waitlist Flow — Email Capture', () => {
     await page.getByTestId('waitlist-email-input').fill(testEmail)
     await page.getByTestId('waitlist-submit').click()
 
-    // Must not show an error — the API handles duplicates gracefully
-    await page.waitForTimeout(3000)
+    // Must not show an error — the API handles duplicates gracefully.
+    // Wait up to 15s for the response (Lambda cold start), then verify no error.
+    await page.waitForTimeout(15000)
     await expect(page.getByTestId('waitlist-error')).not.toBeVisible()
   })
 })

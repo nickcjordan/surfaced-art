@@ -26,7 +26,8 @@ export default defineConfig({
       : {},
   },
 
-  // Test across three device profiles
+  // Test across three device profiles — all use Chromium so only one browser binary
+  // is needed in CI (installed with --with-deps chromium).
   projects: [
     {
       name: 'desktop',
@@ -34,11 +35,11 @@ export default defineConfig({
     },
     {
       name: 'tablet',
-      use: { ...devices['iPad Pro 11'] },
+      use: { ...devices['Galaxy Tab S4'] }, // 712x1138, Chromium
     },
     {
       name: 'mobile',
-      use: { ...devices['iPhone 14'] },
+      use: { ...devices['Pixel 5'] }, // 393x727, Chromium
     },
   ],
 
