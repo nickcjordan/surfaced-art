@@ -5,7 +5,7 @@ import { handle } from 'hono/aws-lambda'
 import { prisma } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
 
-import { healthRoutes } from './routes/health'
+import { createHealthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
 import { createListingRoutes } from './routes/listings'
 import { createCategoryRoutes } from './routes/categories'
@@ -26,7 +26,7 @@ app.use(
 )
 
 // Mount routes
-app.route('/health', healthRoutes)
+app.route('/health', createHealthRoutes(prisma))
 app.route('/artists', createArtistRoutes(prisma))
 app.route('/listings', createListingRoutes(prisma))
 app.route('/categories', createCategoryRoutes(prisma))

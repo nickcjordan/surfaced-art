@@ -2,8 +2,10 @@ import { describe, it, expect, vi } from 'vitest'
 
 vi.mock('@surfaced-art/db', () => ({
   prisma: {
+    $queryRawUnsafe: vi.fn().mockResolvedValue([{ now: new Date() }]),
     artistProfile: {
       findUnique: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue({ id: 'test-id' }),
     },
     listing: {
       findMany: vi.fn().mockResolvedValue([]),
@@ -36,6 +38,20 @@ describe('API', () => {
       const data = await res.json()
       expect(data).toHaveProperty('status', 'ok')
       expect(data).toHaveProperty('timestamp')
+    })
+  })
+
+  describe('GET /health/db', () => {
+    it('should return database health status', async () => {
+      const res = await app.request('/health/db')
+      expect(res.status).toBe(200)
+
+      const data = await res.json()
+      expect(data).toHaveProperty('status', 'ok')
+      expect(data).toHaveProperty('timestamp')
+      expect(data).toHaveProperty('durationMs')
+      expect(data.checks.connection.status).toBe('ok')
+      expect(data.checks.schema.status).toBe('ok')
     })
   })
 
