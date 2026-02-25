@@ -254,9 +254,9 @@ When starting work on an issue:
 | PR direction | Strategy | Why |
 |---|---|---|
 | feature → `dev` | **Squash merge** | Collapses noisy WIP commits into one clean commit on `dev` |
-| `dev` → `main` | **Squash merge** | Collapses all promoted commits into one clean release commit on `main` |
+| `dev` → `main` | **Regular merge commit** | Preserves commit parentage so git never sees dev as diverged from main |
 
-**Never use merge commits** — the repo is configured to disable them.
+**Never squash dev → main.** Squash rewriting history on that direction causes permanent divergence: every subsequent dev→main PR conflicts on any file touched by the squash. Since features are already squashed before hitting dev, dev's log is already clean — a regular merge gives main the same readable history without rewriting it.
 
 ### Pull Request Rules (CRITICAL)
 
