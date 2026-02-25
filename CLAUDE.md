@@ -250,9 +250,9 @@ When starting work on an issue:
 | PR direction | Strategy | Why |
 |---|---|---|
 | feature → `dev` | **Squash merge** | Collapses noisy WIP commits into one clean commit on `dev` |
-| `dev` → `main` | **Rebase merge** | Replays `dev` commits linearly onto `main` with no merge commit — keeps `dev` and `main` at the same SHA automatically |
+| `dev` → `main` | **Squash merge** | Collapses all promoted commits into one clean release commit on `main` |
 
-**Never use merge commits** — the repo is configured to disable them. A merge commit on `main` creates a new SHA that `dev` doesn't have, causing the two branches to diverge permanently.
+**Never use merge commits** — the repo is configured to disable them.
 
 ### Pull Request Rules (CRITICAL)
 
@@ -260,7 +260,8 @@ When starting work on an issue:
 - When work is ready to merge, open a PR from CLI with a full description and stop
 - Update PR descriptions with accurate summaries of what changed and why
 - Prepare commit messages for human review, but do not execute the merge
-- When merging a `dev` → `main` PR, always select **Rebase merge** in the GitHub UI
+- `dev` → `main` merges require **explicit user permission** — never merge to main autonomously
+- All CI checks must be green before merging `dev` → `main`
 
 ### Commit Message Format
 
