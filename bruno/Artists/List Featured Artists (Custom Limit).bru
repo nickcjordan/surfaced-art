@@ -1,0 +1,22 @@
+meta {
+  name: List Featured Artists (Custom Limit)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{sa_baseUrl}}/artists?limit=2
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("should return at most 2 artists", function() {
+    expect(res.getBody()).to.be.an("array");
+    expect(res.getBody().length).to.be.at.most(2);
+  });
+}

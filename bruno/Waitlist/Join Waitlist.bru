@@ -1,0 +1,33 @@
+meta {
+  name: Join Waitlist
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{sa_baseUrl}}/waitlist
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "test-{{$timestamp}}@example.com"
+  }
+}
+
+assert {
+  res.status: in [200, 201]
+  res.body.message: eq Successfully joined the waitlist
+}
+
+tests {
+  test("should return success message", function() {
+    const body = res.getBody();
+    expect(body.message).to.equal("Successfully joined the waitlist");
+  });
+
+  test("should return 200 or 201", function() {
+    expect([200, 201]).to.include(res.getStatus());
+  });
+}

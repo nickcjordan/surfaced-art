@@ -1,0 +1,24 @@
+meta {
+  name: Get Listing Detail (Invalid ID)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{sa_baseUrl}}/listings/not-a-valid-uuid
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 400
+  res.body.error.code: eq BAD_REQUEST
+}
+
+tests {
+  test("should return 400 for invalid UUID format", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("BAD_REQUEST");
+    expect(body.error.message).to.equal("Invalid listing ID format");
+  });
+}

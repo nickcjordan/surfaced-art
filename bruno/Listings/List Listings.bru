@@ -1,0 +1,64 @@
+meta {
+  name: List Listings
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{sa_baseUrl}}/listings
+  body: none
+  auth: none
+}
+
+params:query {
+  ~status: available
+  ~page: 1
+  ~limit: 20
+}
+
+assert {
+  res.status: eq 200
+  res.body.meta.page: isNumber
+  res.body.meta.total: isNumber
+}
+
+tests {
+  test("should return paginated response", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("data");
+    expect(body).to.have.property("meta");
+    expect(body.data).to.be.an("array");
+    expect(body.meta).to.have.property("page");
+    expect(body.meta).to.have.property("limit");
+    expect(body.meta).to.have.property("total");
+    expect(body.meta).to.have.property("totalPages");
+  });
+
+  test("each listing should have required fields", function() {
+    const listings = res.getBody().data;
+    if (listings.length > 0) {
+      const listing = listings[0];
+      expect(listing).to.have.property("id");
+      expect(listing).to.have.property("title");
+      expect(listing).to.have.property("price");
+      expect(listing).to.have.property("sa_category");
+      expect(listing).to.have.property("status");
+      expect(listing).to.have.property("artist");
+      expect(listing.artist).to.have.property("displayName");
+      expect(listing.artist).to.have.property("slug");
+
+      // Store listing ID for detail requests
+      if (listing.id) {
+        bru.setVar("sa_listingId", listing.id);
+      }
+    }
+  });
+
+  test("price should be in cents (integer)", function() {
+    const listings = res.getBody().data;
+    if (listings.length > 0) {
+      expect(listings[0].price).to.be.a("number");
+      expect(Number.isInteger(listings[0].price)).to.be.true;
+    }
+  });
+}
