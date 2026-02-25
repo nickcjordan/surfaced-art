@@ -178,10 +178,57 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
+  visual-qa:
+    name: Visual QA
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Wait for Vercel preview deployment
+        id: vercel-preview
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          max_timeout: 300
+          check_interval: 15
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Run visual QA tests
+        run: npx playwright test --config=e2e/visual-qa.config.ts
+        working-directory: apps/web
+        env:
+          VISUAL_QA_BASE_URL: ${{ steps.vercel-preview.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - name: Upload visual QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-qa-${{ github.sha }}
+          path: |
+            apps/web/e2e/visual-qa/results/
+            apps/web/e2e/visual-qa/report/
+          retention-days: 14
+
   notify-actions-pr:
     name: Notify Actions (PR)
     runs-on: ubuntu-latest
-    needs: [build-and-test, security-scan, terraform-plan]
+    needs: [build-and-test, security-scan, terraform-plan, visual-qa]
     if: always()
     continue-on-error: true
     timeout-minutes: 2
@@ -194,8 +241,9 @@ jobs:
           BUILD_RESULT="${{ needs.build-and-test.result }}"
           SECURITY_RESULT="${{ needs.security-scan.result }}"
           TF_RESULT="${{ needs.terraform-plan.result }}"
+          VISUAL_QA_RESULT="${{ needs.visual-qa.result }}"
 
-          if [ "$BUILD_RESULT" = "failure" ] || [ "$SECURITY_RESULT" = "failure" ] || [ "$TF_RESULT" = "failure" ]; then
+          if [ "$BUILD_RESULT" = "failure" ] || [ "$SECURITY_RESULT" = "failure" ] || [ "$TF_RESULT" = "failure" ] || [ "$VISUAL_QA_RESULT" = "failure" ]; then
             echo "result=failure" >> "$GITHUB_OUTPUT"
             echo "emoji=❌" >> "$GITHUB_OUTPUT"
           else

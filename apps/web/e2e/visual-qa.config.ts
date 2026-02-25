@@ -15,6 +15,15 @@ export default defineConfig({
     baseURL: process.env.VISUAL_QA_BASE_URL || 'https://surfaced.art',
     screenshot: 'on',
     trace: 'on-first-retry',
+    // When running against a Vercel preview deployment, bypass deployment
+    // protection by sending the secret token as a header. The token is set
+    // in Vercel project settings (Protection Bypass for Automation) and stored
+    // as VERCEL_AUTOMATION_BYPASS_SECRET in GitHub Actions secrets. When
+    // targeting production or a local dev server the env var is unset and
+    // no extra header is sent.
+    extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+      ? { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET }
+      : {},
   },
 
   // Test across three device profiles
