@@ -32,6 +32,17 @@ Key architectural decisions are documented in `docs/decisions/`. Check there bef
 | Infrastructure | Terraform, GitHub Actions |
 | Hosting | Vercel (frontend), AWS (backend/infra) |
 
+### Bruno API Collection
+
+The `bruno/` directory contains a [Bruno](https://www.usebruno.com/) API collection that mirrors every endpoint in `apps/api/`. **When you add, remove, or change an API endpoint, update the corresponding Bruno `.bru` file(s) to match.** This includes:
+
+- Adding new request files for new endpoints
+- Updating URLs, query params, request bodies, and assertions when endpoints change
+- Adding error-case requests (404, 400) for new endpoints
+- Keeping environment variables (`bruno/environments/`) in sync with any new base URLs
+
+Structure: `bruno/{FolderPerResource}/{RequestName}.bru` with `environments/Local.bru` and `environments/Production.bru`.
+
 ### Critical Vercel Discipline
 
 **NEVER** import from `@vercel/*` packages. The platform must remain portable to OpenNext on AWS.

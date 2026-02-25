@@ -1,0 +1,25 @@
+meta {
+  name: Join Waitlist (No Body)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{sa_baseUrl}}/waitlist
+  body: json
+  auth: none
+}
+
+body:json {
+
+}
+
+assert {
+  res.status: eq 400
+}
+
+tests {
+  test("should return 400 for empty/invalid body", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

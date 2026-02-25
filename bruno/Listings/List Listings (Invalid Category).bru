@@ -1,0 +1,25 @@
+meta {
+  name: List Listings (Invalid Category)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{sa_baseUrl}}/listings?category=not-a-real-category
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 400
+  res.body.error.code: eq VALIDATION_ERROR
+}
+
+tests {
+  test("should return validation error", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("VALIDATION_ERROR");
+    expect(body.error.message).to.equal("Validation failed");
+    expect(body.error.details).to.be.an("array");
+  });
+}

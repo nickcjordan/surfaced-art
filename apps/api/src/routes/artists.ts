@@ -1,11 +1,54 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
-import type { ArtistProfileResponse } from '@surfaced-art/types'
+import type { ArtistProfileResponse, FeaturedArtistItem } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { notFound } from '../errors'
 
 export function createArtistRoutes(prisma: PrismaClient) {
   const artists = new Hono()
+
+  /**
+   * GET /artists
+   * Returns a list of featured (approved) artists for the homepage.
+   * Query params:
+   *   - limit: max number of artists to return (default 4, max 20)
+   */
+  artists.get('/', async (c) => {
+    const start = Date.now()
+    const limitParam = c.req.query('limit')
+    const limit = Math.min(Math.max(parseInt(limitParam || '4', 10) || 4, 1), 20)
+
+    const artistsData = await prisma.artistProfile.findMany({
+      where: { status: 'approved' },
+      select: {
+        slug: true,
+        displayName: true,
+        location: true,
+        profileImageUrl: true,
+        coverImageUrl: true,
+        categories: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    })
+
+    const data: FeaturedArtistItem[] = artistsData.map((artist) => ({
+      slug: artist.slug,
+      displayName: artist.displayName,
+      location: artist.location,
+      profileImageUrl: artist.profileImageUrl,
+      coverImageUrl: artist.coverImageUrl,
+      categories: artist.categories.map((c) => c.category),
+    }))
+
+    logger.info('Featured artists fetched', {
+      count: data.length,
+      limit,
+      durationMs: Date.now() - start,
+    })
+
+    return c.json(data)
+  })
 
   /**
    * GET /artists/:slug

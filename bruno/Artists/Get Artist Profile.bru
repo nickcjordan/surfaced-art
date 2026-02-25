@@ -1,0 +1,69 @@
+meta {
+  name: Get Artist Profile
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{sa_baseUrl}}/artists/{{sa_artistSlug}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.slug: eq {{sa_artistSlug}}
+}
+
+tests {
+  test("should return full artist profile", function() {
+    const body = res.getBody();
+    expect(body.slug).to.equal(bru.getEnvVar("sa_artistSlug"));
+    expect(body).to.have.property("displayName");
+    expect(body).to.have.property("bio");
+    expect(body).to.have.property("location");
+    expect(body).to.have.property("status");
+    expect(body.status).to.equal("approved");
+  });
+
+  test("should include categories as string array", function() {
+    const body = res.getBody();
+    expect(body.categories).to.be.an("array");
+    if (body.categories.length > 0) {
+      expect(body.categories[0]).to.be.a("string");
+    }
+  });
+
+  test("should include listings with images", function() {
+    const body = res.getBody();
+    expect(body.listings).to.be.an("array");
+    if (body.listings.length > 0) {
+      const listing = body.listings[0];
+      expect(listing).to.have.property("id");
+      expect(listing).to.have.property("title");
+      expect(listing).to.have.property("price");
+      expect(listing.images).to.be.an("array");
+
+      // Store a listing ID for subsequent requests
+      if (listing.id) {
+        bru.setVar("sa_listingId", listing.id);
+      }
+    }
+  });
+
+  test("should include CV entries", function() {
+    expect(res.getBody().cvEntries).to.be.an("array");
+  });
+
+  test("should include process media", function() {
+    expect(res.getBody().processMedia).to.be.an("array");
+  });
+
+  test("should omit private fields", function() {
+    const body = res.getBody();
+    expect(body).to.not.have.property("userId");
+    expect(body).to.not.have.property("stripeAccountId");
+    expect(body).to.not.have.property("originZip");
+    expect(body).to.not.have.property("applicationSource");
+  });
+}

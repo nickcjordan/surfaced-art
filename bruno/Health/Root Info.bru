@@ -1,0 +1,26 @@
+meta {
+  name: Root Info
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{sa_baseUrl}}/
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.name: eq Surfaced Art API
+  res.body.status: eq running
+}
+
+tests {
+  test("should return API info", function() {
+    const body = res.getBody();
+    expect(body.name).to.equal("Surfaced Art API");
+    expect(body.version).to.equal("0.0.1");
+    expect(body.status).to.equal("running");
+  });
+}

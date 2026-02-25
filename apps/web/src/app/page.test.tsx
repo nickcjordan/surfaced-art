@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react'
 vi.mock('@/lib/api', () => ({
   getCategories: vi.fn().mockResolvedValue([]),
   getListings: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, limit: 6, total: 0, totalPages: 0 } }),
+  getFeaturedArtists: vi.fn().mockResolvedValue([]),
 }))
 
 import Home from './page'

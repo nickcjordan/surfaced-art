@@ -1,0 +1,37 @@
+meta {
+  name: List Featured Artists
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{sa_baseUrl}}/artists
+  body: none
+  auth: none
+}
+
+params:query {
+  ~limit: 4
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("should return an array", function() {
+    expect(res.getBody()).to.be.an("array");
+  });
+
+  test("each artist should have required fields", function() {
+    const artists = res.getBody();
+    if (artists.length > 0) {
+      const artist = artists[0];
+      expect(artist).to.have.property("slug");
+      expect(artist).to.have.property("displayName");
+      expect(artist).to.have.property("location");
+      expect(artist).to.have.property("categories");
+      expect(artist.categories).to.be.an("array");
+    }
+  });
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Join Waitlist (Missing Email)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{sa_baseUrl}}/waitlist
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": ""
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.error.code: eq VALIDATION_ERROR
+}
+
+tests {
+  test("should return validation error for empty email", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("VALIDATION_ERROR");
+    expect(body.error.details).to.be.an("array");
+  });
+}
