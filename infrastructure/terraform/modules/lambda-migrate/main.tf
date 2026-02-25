@@ -50,8 +50,9 @@ resource "aws_lambda_function" "migrate" {
 
   environment {
     variables = {
-      NODE_ENV     = var.environment
-      DATABASE_URL = var.database_url
+      NODE_ENV            = var.environment
+      DATABASE_URL        = var.database_url
+      NODE_EXTRA_CA_CERTS = "/var/runtime/ca-cert.pem"
     }
   }
 
