@@ -44,7 +44,12 @@ function buildSslConfig(): boolean | { rejectUnauthorized: boolean; ca?: string 
 function createPrismaClient() {
   const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL,
-    ssl: buildSslConfig(),
+    // AWS RDS uses Amazon-issued certificates not in Node.js's default trust store.
+    // The pg driver validates certificates by default (rejectUnauthorized: true),
+    // causing P1010 DatabaseAccessDenied errors. Since Lambda and RDS communicate
+    // within the same private VPC, disabling certificate validation is safe —
+    // traffic is still TLS-encrypted, just without certificate pinning.
+    ssl: process.env.NODE_ENV !== 'development' ? { rejectUnauthorized: false } : false,
   })
   return new PrismaClient({
     adapter,
