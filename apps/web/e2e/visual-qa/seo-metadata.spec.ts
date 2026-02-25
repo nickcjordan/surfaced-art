@@ -83,7 +83,12 @@ test.describe('SEO Metadata — Listing Detail', () => {
       .getByTestId('listing-card')
       .first()
     await expect(firstListing).toBeVisible()
-    await firstListing.click()
+
+    // Wait for navigation to complete after click
+    await Promise.all([
+      page.waitForURL(/\/listing\//, { timeout: 10000 }),
+      firstListing.click(),
+    ])
     await page.waitForLoadState('networkidle')
 
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(

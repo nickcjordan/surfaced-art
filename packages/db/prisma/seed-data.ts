@@ -84,8 +84,8 @@ export interface ArtistSeedConfig {
 // CDN helpers
 // ============================================================================
 
-// CloudFront domain placeholder — update with real domain from Terraform output
-export const CDN_BASE = 'https://d1example.cloudfront.net'
+// Production CloudFront CDN for seed images (surfaced-art-prod-media bucket)
+export const CDN_BASE = 'https://dmfu4c7s6z2cc.cloudfront.net'
 
 export function cdnUrl(path: string): string {
   return `${CDN_BASE}/seed/${path}`

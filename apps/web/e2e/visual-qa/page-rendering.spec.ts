@@ -16,7 +16,7 @@ const CATEGORIES = [
   'photography',
   'woodworking',
   'fibers',
-  'mixed-media',
+  'mixed_media',
 ]
 
 test.describe('Page Rendering — Homepage', () => {
@@ -86,10 +86,13 @@ test.describe('Page Rendering — Listing Detail', () => {
       .getByTestId('listing-card')
       .first()
     await expect(firstListing).toBeVisible()
-    await firstListing.click()
-    await page.waitForLoadState('networkidle')
 
-    expect(page.url()).toContain('/listing/')
+    // Wait for navigation to complete after click
+    await Promise.all([
+      page.waitForURL(/\/listing\//, { timeout: 10000 }),
+      firstListing.click(),
+    ])
+    await page.waitForLoadState('networkidle')
 
     await expect(page.getByTestId('listing-title')).toBeVisible()
     await expect(page.getByTestId('listing-price')).toBeVisible()
