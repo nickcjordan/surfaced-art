@@ -216,6 +216,92 @@ describe('CategoryBrowseView', () => {
     expect(screen.getAllByText('Sold Vase').length).toBeGreaterThanOrEqual(1)
   })
 
+  it('should render active content with role="tabpanel"', () => {
+    render(
+      <CategoryBrowseView
+        categoryLabel="Ceramics"
+        listings={mockListings}
+        artists={mockArtists}
+        totalListingCount={2}
+        totalArtistCount={1}
+      />
+    )
+
+    const panel = screen.getByRole('tabpanel')
+    expect(panel).toBeInTheDocument()
+    expect(panel).toHaveAttribute('aria-labelledby')
+  })
+
+  it('should wire tab aria-controls to tabpanel id', () => {
+    render(
+      <CategoryBrowseView
+        categoryLabel="Ceramics"
+        listings={mockListings}
+        artists={mockArtists}
+        totalListingCount={2}
+        totalArtistCount={1}
+      />
+    )
+
+    const piecesTab = screen.getByRole('tab', { name: 'Pieces' })
+    const panel = screen.getByRole('tabpanel')
+    expect(piecesTab.getAttribute('aria-controls')).toBe(panel.getAttribute('id'))
+    expect(panel.getAttribute('aria-labelledby')).toBe(piecesTab.getAttribute('id'))
+  })
+
+  it('should wire artists tabpanel correctly when switching', async () => {
+    render(
+      <CategoryBrowseView
+        categoryLabel="Ceramics"
+        listings={mockListings}
+        artists={mockArtists}
+        totalListingCount={2}
+        totalArtistCount={1}
+      />
+    )
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Artists' }))
+
+    const artistsTab = screen.getByRole('tab', { name: 'Artists' })
+    const panel = screen.getByRole('tabpanel')
+    expect(artistsTab.getAttribute('aria-controls')).toBe(panel.getAttribute('id'))
+    expect(panel.getAttribute('aria-labelledby')).toBe(artistsTab.getAttribute('id'))
+  })
+
+  it('should show error state instead of empty state when hasError is true', () => {
+    render(
+      <CategoryBrowseView
+        categoryLabel="Ceramics"
+        listings={[]}
+        artists={[]}
+        totalListingCount={0}
+        totalArtistCount={0}
+        hasError
+      />
+    )
+
+    expect(screen.getByText(/unable to load/i)).toBeInTheDocument()
+    expect(screen.queryByText('No pieces in this category yet')).not.toBeInTheDocument()
+  })
+
+  it('should show error state on artists tab when hasError is true', async () => {
+    render(
+      <CategoryBrowseView
+        categoryLabel="Ceramics"
+        listings={[]}
+        artists={[]}
+        totalListingCount={0}
+        totalArtistCount={0}
+        hasError
+      />
+    )
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Artists' }))
+
+    expect(screen.getByText(/unable to load/i)).toBeInTheDocument()
+    expect(screen.queryByText('No artists in this category yet')).not.toBeInTheDocument()
+  })
+
   it('should preserve category-header data-testid', () => {
     render(
       <CategoryBrowseView

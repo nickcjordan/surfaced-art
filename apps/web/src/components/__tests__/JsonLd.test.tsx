@@ -47,6 +47,34 @@ describe('JsonLd', () => {
     expect(parsed.sameAs).toEqual(['https://instagram.com/test', 'https://example.com'])
   })
 
+  it('escapes </script sequences to prevent XSS', () => {
+    const data = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      description: 'Test </script><script>alert("xss")</script> value',
+    }
+    const { container } = render(<JsonLd data={data} />)
+    const script = container.querySelector('script[type="application/ld+json"]')
+    const raw = script!.innerHTML
+    expect(raw).not.toContain('</script>')
+    expect(raw).toContain('<\\/')
+    // Verify the data is still parseable back to the original
+    const parsed = JSON.parse(raw.replace(/<\\\//g, '</'))
+    expect(parsed.description).toBe('Test </script><script>alert("xss")</script> value')
+  })
+
+  it('escapes HTML comment sequences', () => {
+    const data = {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Test <!-- comment --> value',
+    }
+    const { container } = render(<JsonLd data={data} />)
+    const script = container.querySelector('script[type="application/ld+json"]')
+    const raw = script!.innerHTML
+    expect(raw).not.toContain('<!--')
+  })
+
   it('handles nested objects', () => {
     const data = {
       '@context': 'https://schema.org',

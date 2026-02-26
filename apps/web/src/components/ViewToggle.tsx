@@ -8,14 +8,27 @@ type ViewToggleProps<T extends string> = {
   options: ViewToggleOption<T>[]
   value: T
   onChange: (value: T) => void
+  /** Prefix for generating tab and panel IDs (e.g. "category" → "category-tab-pieces", "category-panel-pieces"). */
+  id: string
   'data-testid'?: string
   className?: string
+}
+
+/** Returns the tab element ID for a given toggle value. */
+export function getTabId(prefix: string, value: string) {
+  return `${prefix}-tab-${value}`
+}
+
+/** Returns the tabpanel element ID for a given toggle value. */
+export function getPanelId(prefix: string, value: string) {
+  return `${prefix}-panel-${value}`
 }
 
 export function ViewToggle<T extends string>({
   options,
   value,
   onChange,
+  id,
   'data-testid': testId = 'view-toggle',
   className,
 }: ViewToggleProps<T>) {
@@ -30,8 +43,10 @@ export function ViewToggle<T extends string>({
         return (
           <button
             key={option.value}
+            id={getTabId(id, option.value)}
             role="tab"
             aria-selected={isActive}
+            aria-controls={getPanelId(id, option.value)}
             onClick={() => {
               if (!isActive) onChange(option.value)
             }}

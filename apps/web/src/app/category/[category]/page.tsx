@@ -62,6 +62,7 @@ export default async function CategoryBrowsePage({ params }: Props) {
   let artists: Awaited<ReturnType<typeof getFeaturedArtists>> = []
   let totalListingCount = 0
   let totalArtistCount = 0
+  let hasError = false
 
   try {
     const [listingsResponse, artistsData, categories] = await Promise.all([
@@ -86,6 +87,7 @@ export default async function CategoryBrowsePage({ params }: Props) {
       artistName: listing.artist.displayName,
     }))
   } catch (error) {
+    hasError = true
     if (error instanceof ApiError) {
       console.error(`API error fetching category data: ${error.status} ${error.message}`)
     } else {
@@ -116,6 +118,7 @@ export default async function CategoryBrowsePage({ params }: Props) {
         artists={artists}
         totalListingCount={totalListingCount}
         totalArtistCount={totalArtistCount}
+        hasError={hasError}
       />
     </div>
   )
