@@ -13,4 +13,8 @@ export default defineConfig({
   noExternal: [/.*/],
   external: ['sharp'],
   minify: true,
+  // Emit a single index.js — the Dockerfile copies only this file into
+  // the Lambda container. Splitting would create chunk-*.js files that
+  // wouldn't be included.
+  splitting: false,
 })
