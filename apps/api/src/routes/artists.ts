@@ -1,9 +1,8 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma, CategoryType } from '@surfaced-art/db'
-import type { ArtistProfileResponse, FeaturedArtistItem } from '@surfaced-art/types'
+import { artistsQuery, artistSlugParam, type ArtistProfileResponse, type FeaturedArtistItem } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { notFound, validationError } from '../errors'
-import { artistsQuerySchema } from '../schemas'
 
 export function createArtistRoutes(prisma: PrismaClient) {
   const artists = new Hono()
@@ -18,7 +17,7 @@ export function createArtistRoutes(prisma: PrismaClient) {
   artists.get('/', async (c) => {
     const start = Date.now()
 
-    const parsed = artistsQuerySchema.safeParse({
+    const parsed = artistsQuery.safeParse({
       category: c.req.query('category'),
       limit: c.req.query('limit'),
     })
@@ -75,8 +74,13 @@ export function createArtistRoutes(prisma: PrismaClient) {
    * Returns a full artist profile with categories, CV entries, process media, and listings
    */
   artists.get('/:slug', async (c) => {
-    const slug = c.req.param('slug')
     const start = Date.now()
+
+    const parsed = artistSlugParam.safeParse({ slug: c.req.param('slug') })
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+    const { slug } = parsed.data
 
     const artist = await prisma.artistProfile.findUnique({
       where: { slug },

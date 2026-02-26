@@ -49,3 +49,19 @@ export type {
   PaginatedResponse,
   ApiError,
 } from './interfaces'
+
+// Validation schemas
+export {
+  slugParam,
+  uuidParam,
+  paginationQuery,
+  artistsQuery,
+  listingsQuery,
+  waitlistBody,
+  artistSlugParam,
+  listingIdParam,
+  sanitizeText,
+  type ArtistsQuery,
+  type ListingsQuery,
+  type WaitlistBody,
+} from './schemas'
