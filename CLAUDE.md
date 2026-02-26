@@ -372,6 +372,61 @@ A structured prompt for Claude.ai with Chrome tools is saved in `docs/Visual_QA_
 | Brand guide implementation | After COO brand decisions are applied to the design system |
 | Major new features | After each Phase 3/4 feature that adds visual pages or flows |
 
+## SEO Maintenance Rules
+
+SEO artifacts are spread across multiple files and must stay in sync with code changes. **When making any of the changes listed below, update all affected SEO files.**
+
+### When Adding a New Page Route
+
+1. **Sitemap** (`apps/web/src/app/sitemap.ts`) — add the new route to the sitemap entries
+2. **Metadata** — export `generateMetadata` (or static `metadata`) with title, description, canonical URL, and Open Graph fields
+3. **JSON-LD** — add appropriate schema.org structured data via the `<JsonLd>` component (use `WebPage`, `CollectionPage`, `Product`, `Person`, etc. as appropriate)
+4. **Breadcrumbs** — add `<Breadcrumbs>` with correct hierarchy if the page has a parent
+5. **robots.ts** — if the route should NOT be crawled (e.g., `/admin/`), add it to the `disallow` array
+6. **Visual QA tests** (`apps/web/e2e/visual-qa/seo-metadata.spec.ts`) — add test cases for the new page's meta tags
+
+### When Adding or Removing a Category
+
+1. Add/remove from `CATEGORIES` in `apps/web/src/lib/categories.ts`
+2. Add/remove the label mapping in `apps/web/src/lib/category-labels.ts`
+3. Sitemap, `generateStaticParams`, and category page metadata update automatically via `CATEGORIES`
+4. **Navigation** (Header/Footer) must be updated manually
+
+### When Changing URL Patterns
+
+If a route path changes (e.g., `/artist/` to `/creators/`):
+
+1. Move the Next.js route directory
+2. Update sitemap URL construction in `sitemap.ts`
+3. Update breadcrumb `href` values on all pages that link to the changed route
+4. Update JSON-LD `url` fields on affected pages
+5. Update `generateMetadata` canonical URLs
+6. Update visual QA test selectors and URLs
+7. Add redirects from old URLs to prevent 404s on indexed pages
+
+### When Changing Brand Identity
+
+If the brand name, tagline, domain, or accent color changes:
+
+1. **`SITE_URL`** in `apps/web/src/lib/site-config.ts` — single source of truth for the domain
+2. **Root layout** (`layout.tsx`) — `metadataBase`, default title/description, Twitter handle
+3. **Homepage** (`page.tsx`) — title, description, JSON-LD `WebSite` and `Organization` schemas
+4. **OG image** (`opengraph-image.tsx`) — brand name text, accent color, tagline
+
+### SEO File Inventory
+
+| File | Contains | Depends On |
+|---|---|---|
+| `apps/web/src/lib/site-config.ts` | `SITE_URL` constant | Nothing (single source of truth) |
+| `apps/web/src/app/sitemap.ts` | Dynamic sitemap | `SITE_URL`, `CATEGORIES`, API (`getFeaturedArtists`, `getListings`) |
+| `apps/web/src/app/robots.ts` | Crawl rules | `SITE_URL` |
+| `apps/web/src/app/opengraph-image.tsx` | Default OG image | Brand name, accent color |
+| `apps/web/src/components/JsonLd.tsx` | JSON-LD renderer | Nothing (generic component) |
+| `apps/web/src/components/Breadcrumbs.tsx` | Breadcrumb nav + schema | `SITE_URL` |
+| `apps/web/e2e/visual-qa/seo-metadata.spec.ts` | SEO regression tests | Seed data constants, route paths |
+| Each page's `generateMetadata` | Per-page OG/canonical/description | `SITE_URL`, page-specific API data |
+| Each page's `<JsonLd>` usage | Per-page structured data | `SITE_URL`, page-specific API data |
+
 ## What NOT to Build (Phase 1 & 2)
 
 Do NOT build these features yet:
@@ -461,6 +516,9 @@ If any of these arise, pause and present the user with:
 - [ ] No `@vercel/*` imports added
 - [ ] Monetary values stored as cents
 - [ ] UUIDs used for primary keys
+- [ ] New pages have `generateMetadata` with canonical URL, OG fields, and `<JsonLd>` structured data
+- [ ] New pages added to sitemap (`sitemap.ts`) and have `<Breadcrumbs>` if applicable
+- [ ] Route changes reflected in sitemap, breadcrumbs, JSON-LD URLs, and canonical URLs
 
 ## Security Scanning (For Claude Code)
 
