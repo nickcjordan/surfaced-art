@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { CategoryType, FeaturedArtistItem, ListingStatusType } from '@surfaced-art/types'
-import { ViewToggle } from '@/components/ViewToggle'
+import { ViewToggle, getTabId, getPanelId } from '@/components/ViewToggle'
 import { CardGrid } from '@/components/CardGrid'
 import { EmptyState } from '@/components/EmptyState'
 import { ListingCard } from '@/components/ListingCard'
@@ -33,6 +33,8 @@ type CategoryBrowseViewProps = {
   artists: FeaturedArtistItem[]
   totalListingCount: number
   totalArtistCount: number
+  /** When true, shows an error state instead of the normal empty state. */
+  hasError?: boolean
 }
 
 export function CategoryBrowseView({
@@ -41,9 +43,11 @@ export function CategoryBrowseView({
   artists,
   totalListingCount,
   totalArtistCount,
+  hasError = false,
 }: CategoryBrowseViewProps) {
   const [view, setView] = useState<BrowseView>('pieces')
 
+  const toggleId = 'category-browse'
   const count = view === 'pieces' ? totalListingCount : totalArtistCount
   const countLabel = view === 'pieces'
     ? `${count} ${count === 1 ? 'piece' : 'pieces'} available`
@@ -60,14 +64,25 @@ export function CategoryBrowseView({
             </h1>
             <p className="mt-2 text-sm text-muted-text">{countLabel}</p>
           </div>
-          <ViewToggle options={viewOptions} value={view} onChange={setView} />
+          <ViewToggle id={toggleId} options={viewOptions} value={view} onChange={setView} />
         </div>
       </section>
 
       {/* Pieces View */}
       {view === 'pieces' && (
-        <section data-testid="category-content">
-          {listings.length > 0 ? (
+        <section
+          role="tabpanel"
+          id={getPanelId(toggleId, 'pieces')}
+          aria-labelledby={getTabId(toggleId, 'pieces')}
+          data-testid="category-content"
+        >
+          {hasError ? (
+            <EmptyState
+              title="Unable to load pieces"
+              description="Something went wrong loading this category. Please try again later."
+              action={{ label: '← Back to gallery', href: '/' }}
+            />
+          ) : listings.length > 0 ? (
             <CardGrid variant="listings">
               {listings.map((listing) => (
                 <ListingCard
@@ -97,8 +112,19 @@ export function CategoryBrowseView({
 
       {/* Artists View */}
       {view === 'artists' && (
-        <section data-testid="category-artists-content">
-          {artists.length > 0 ? (
+        <section
+          role="tabpanel"
+          id={getPanelId(toggleId, 'artists')}
+          aria-labelledby={getTabId(toggleId, 'artists')}
+          data-testid="category-artists-content"
+        >
+          {hasError ? (
+            <EmptyState
+              title="Unable to load artists"
+              description="Something went wrong loading this category. Please try again later."
+              action={{ label: '← Back to gallery', href: '/' }}
+            />
+          ) : artists.length > 0 ? (
             <CardGrid variant="artists">
               {artists.map((artist) => (
                 <ArtistCard
