@@ -9,6 +9,7 @@ import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { Badge } from '@/components/ui/badge'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { JsonLd } from '@/components/JsonLd'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { categoryLabels } from '@/lib/category-labels'
 import type { ListingDetailResponse } from '@surfaced-art/types'
 
@@ -97,6 +98,11 @@ export default async function ListingDetailPage({ params }: Props) {
           },
         },
       }} />
+      <Breadcrumbs items={[
+        { label: 'Home', href: '/' },
+        { label: listing.artist.displayName, href: `/artist/${listing.artist.slug}` },
+        { label: listing.title },
+      ]} />
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         {/* Image Gallery */}
         <div>

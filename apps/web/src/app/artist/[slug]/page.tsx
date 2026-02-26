@@ -8,6 +8,7 @@ import { ListingCard } from '@/components/ListingCard'
 import { Badge } from '@/components/ui/badge'
 import { categoryLabels } from '@/lib/category-labels'
 import { JsonLd } from '@/components/JsonLd'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import type { ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types'
 
 export const revalidate = 60
@@ -108,6 +109,10 @@ export default async function ArtistProfilePage({ params }: Props) {
         ...(artist.profileImageUrl && { image: artist.profileImageUrl }),
         ...(sameAs.length > 0 && { sameAs }),
       }} />
+      <Breadcrumbs items={[
+        { label: 'Home', href: '/' },
+        { label: artist.displayName },
+      ]} />
 
       {/* Hero */}
       <section data-testid="artist-hero">

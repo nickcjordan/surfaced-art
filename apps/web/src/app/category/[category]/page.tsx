@@ -5,6 +5,7 @@ import { categoryLabels } from '@/lib/category-labels'
 import { CategoryFilterBar } from '@/components/CategoryFilterBar'
 import { CategoryBrowseView, type CategoryListingItem } from '@/components/CategoryBrowseView'
 import { JsonLd } from '@/components/JsonLd'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { CATEGORIES } from '@/lib/categories'
 import { Category } from '@surfaced-art/types'
 import type { CategoryType } from '@surfaced-art/types'
@@ -100,6 +101,10 @@ export default async function CategoryBrowsePage({ params }: Props) {
         description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
         url: `https://surfaced.art/category/${categorySlug}`,
       }} />
+      <Breadcrumbs items={[
+        { label: 'Home', href: '/' },
+        { label },
+      ]} />
       <CategoryFilterBar
         activeCategory={categorySlug}
         basePath="/category"
