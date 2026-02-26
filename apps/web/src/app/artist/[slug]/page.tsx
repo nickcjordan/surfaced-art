@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getArtistProfile, ApiError } from '@/lib/api'
+import { getArtistProfile, getFeaturedArtists, ApiError } from '@/lib/api'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ListingCard } from '@/components/ListingCard'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +10,15 @@ import { categoryLabels } from '@/lib/category-labels'
 import type { ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types'
 
 export const revalidate = 60
+
+export async function generateStaticParams() {
+  try {
+    const artists = await getFeaturedArtists({ limit: 50 })
+    return artists.map((artist) => ({ slug: artist.slug }))
+  } catch {
+    return []
+  }
+}
 
 const cvEntryTypeLabels: Record<CvEntryTypeType, string> = {
   exhibition: 'Exhibitions',

@@ -6,7 +6,7 @@ import { ListingCard } from '@/components/ListingCard'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
