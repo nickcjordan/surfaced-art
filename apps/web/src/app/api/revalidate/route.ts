@@ -10,10 +10,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
+  let body: Record<string, unknown>
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+
   const revalidated: string[] = []
 
   if (body.paths && Array.isArray(body.paths)) {
+    if (!body.paths.every((p: unknown) => typeof p === 'string' && p.length > 0)) {
+      return NextResponse.json(
+        { error: 'All paths must be non-empty strings' },
+        { status: 400 }
+      )
+    }
     for (const path of body.paths) {
       revalidatePath(path)
       revalidated.push(path)

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { revalidatePath } from 'next/cache'
+import { CATEGORIES } from '@/lib/categories'
 import { POST } from '../route'
 
 function makeRequest(body: unknown, authHeader?: string) {
@@ -9,6 +10,16 @@ function makeRequest(body: unknown, authHeader?: string) {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
+  })
+}
+
+function makeRawRequest(rawBody: string, authHeader?: string) {
+  const headers = new Headers({ 'Content-Type': 'application/json' })
+  if (authHeader) headers.set('Authorization', authHeader)
+  return new Request('http://localhost/api/revalidate', {
+    method: 'POST',
+    headers,
+    body: rawBody,
   })
 }
 
@@ -38,6 +49,15 @@ describe('POST /api/revalidate', () => {
     })
   })
 
+  describe('malformed requests', () => {
+    it('should return 400 for malformed JSON body', async () => {
+      const response = await POST(makeRawRequest('not valid json', 'Bearer test-secret'))
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toBe('Invalid JSON body')
+    })
+  })
+
   describe('path-based revalidation', () => {
     it('should revalidate specific paths', async () => {
       const paths = ['/artist/abbey-peters', '/listing/abc123']
@@ -55,6 +75,18 @@ describe('POST /api/revalidate', () => {
       const response = await POST(makeRequest({ paths: '/artist/abbey-peters' }, 'Bearer test-secret'))
       expect(response.status).toBe(400)
     })
+
+    it('should reject paths array containing non-string entries', async () => {
+      const response = await POST(makeRequest({ paths: ['/valid', 123, null] }, 'Bearer test-secret'))
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toMatch(/non-empty string/)
+    })
+
+    it('should reject paths array containing empty strings', async () => {
+      const response = await POST(makeRequest({ paths: ['/valid', ''] }, 'Bearer test-secret'))
+      expect(response.status).toBe(400)
+    })
   })
 
   describe('artist revalidation', () => {
@@ -67,10 +99,12 @@ describe('POST /api/revalidate', () => {
       expect(body.success).toBe(true)
       expect(body.revalidated).toContain('/artist/abbey-peters')
       expect(body.revalidated).toContain('/')
-      // Should include all 9 category pages
-      expect(body.revalidated).toContain('/category/ceramics')
-      expect(body.revalidated).toContain('/category/painting')
-      expect(body.revalidated).toContain('/category/mixed_media')
+      // Should include all category pages
+      for (const cat of CATEGORIES) {
+        expect(body.revalidated).toContain(`/category/${cat.slug}`)
+      }
+      const categoryPaths = body.revalidated.filter((p: string) => p.startsWith('/category/'))
+      expect(categoryPaths).toHaveLength(CATEGORIES.length)
     })
 
     it('should return 400 when slug is missing', async () => {
@@ -100,9 +134,11 @@ describe('POST /api/revalidate', () => {
       )
       expect(response.status).toBe(200)
       const body = await response.json()
-      expect(body.revalidated).toContain('/category/ceramics')
-      expect(body.revalidated).toContain('/category/painting')
-      expect(body.revalidated).toContain('/category/mixed_media')
+      const categoryPaths = body.revalidated.filter((p: string) => p.startsWith('/category/'))
+      expect(categoryPaths).toEqual(
+        expect.arrayContaining(CATEGORIES.map((cat) => `/category/${cat.slug}`))
+      )
+      expect(categoryPaths).toHaveLength(CATEGORIES.length)
     })
 
     it('should return 400 when id is missing', async () => {
@@ -117,6 +153,7 @@ describe('POST /api/revalidate', () => {
       expect(response.status).toBe(200)
       const body = await response.json()
       expect(body.success).toBe(true)
+      expect(body.revalidated).toEqual(['/ (all pages via layout)'])
       expect(revalidatePath).toHaveBeenCalledWith('/', 'layout')
     })
   })
