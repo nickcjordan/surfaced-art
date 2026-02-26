@@ -16,8 +16,8 @@ describe('Seed Data Validation', () => {
       expect(artistConfigs.length).toBeGreaterThanOrEqual(2)
     })
 
-    it('should have exactly 4 artists', () => {
-      expect(artistConfigs.length).toBe(4)
+    it('should have exactly 3 artists', () => {
+      expect(artistConfigs.length).toBe(3)
     })
   })
 
