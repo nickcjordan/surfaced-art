@@ -17,35 +17,51 @@ export function createCategoryRoutes(prisma: PrismaClient) {
     const start = Date.now()
     const now = new Date()
 
-    const counts = await prisma.listing.groupBy({
-      by: ['category'],
-      _count: { id: true },
-      where: {
-        artist: { status: 'approved' },
-        OR: [
-          { status: 'available' },
-          {
-            status: 'reserved_system',
-            reservedUntil: { lt: now },
-          },
-        ],
-      },
-    })
+    const [listingCounts, artistCounts] = await Promise.all([
+      prisma.listing.groupBy({
+        by: ['category'],
+        _count: { id: true },
+        where: {
+          artist: { status: 'approved' },
+          OR: [
+            { status: 'available' },
+            {
+              status: 'reserved_system',
+              reservedUntil: { lt: now },
+            },
+          ],
+        },
+      }),
+      prisma.artistCategory.groupBy({
+        by: ['category'],
+        _count: { id: true },
+        where: {
+          artist: { status: 'approved' },
+        },
+      }),
+    ])
 
-    // Build a lookup map from the groupBy results
-    const countMap = new Map<string, number>()
-    for (const row of counts) {
-      countMap.set(row.category, row._count.id)
+    // Build lookup maps from the groupBy results
+    const listingCountMap = new Map<string, number>()
+    for (const row of listingCounts) {
+      listingCountMap.set(row.category, row._count.id)
+    }
+
+    const artistCountMap = new Map<string, number>()
+    for (const row of artistCounts) {
+      artistCountMap.set(row.category, row._count.id)
     }
 
     // Return all categories in enum definition order, defaulting to 0
     const response: CategoryWithCount[] = allCategories.map((category) => ({
       category,
-      count: countMap.get(category) ?? 0,
+      count: listingCountMap.get(category) ?? 0,
+      artistCount: artistCountMap.get(category) ?? 0,
     }))
 
     logger.info('Categories fetched', {
-      categoriesWithListings: counts.length,
+      categoriesWithListings: listingCounts.length,
+      categoriesWithArtists: artistCounts.length,
       durationMs: Date.now() - start,
     })
 

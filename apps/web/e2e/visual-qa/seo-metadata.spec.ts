@@ -41,6 +41,11 @@ test.describe('SEO Metadata — Homepage', () => {
       'href',
       /^https?:\/\//
     )
+
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    )
   })
 })
 
@@ -69,6 +74,11 @@ test.describe('SEO Metadata — Artist Profile', () => {
       .getAttribute('content')
     expect(ogImage).toMatch(/^https?:\/\//)
     expect(ogImage).not.toContain('placeholder')
+
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    )
   })
 })
 
@@ -100,18 +110,20 @@ test.describe('SEO Metadata — Listing Detail', () => {
       /^https?:\/\//
     )
 
-    // If JSON-LD Product schema is present, verify it has a price
+    // Verify JSON-LD Product schema has valid price
     const jsonLdEl = page.locator('script[type="application/ld+json"]')
-    if ((await jsonLdEl.count()) > 0) {
-      const jsonLd = await jsonLdEl.first().textContent()
-      if (jsonLd) {
-        const structured = JSON.parse(jsonLd)
-        if (structured['@type'] === 'Product') {
-          expect(structured.offers).toBeTruthy()
-          expect(structured.offers.price).toBeTruthy()
-        }
-      }
-    }
+    await expect(jsonLdEl.first()).toBeAttached()
+    const jsonLd = await jsonLdEl.first().textContent()
+    expect(jsonLd).toBeTruthy()
+    const structured = JSON.parse(jsonLd!)
+    expect(structured['@type']).toBe('Product')
+    expect(structured.offers).toBeTruthy()
+    expect(structured.offers.price).toBeTruthy()
+
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    )
   })
 })
 
@@ -127,6 +139,11 @@ test.describe('SEO Metadata — Category Page', () => {
       .locator('meta[name="description"]')
       .getAttribute('content')
     expect(description).toBeTruthy()
+
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    )
   })
 })
 

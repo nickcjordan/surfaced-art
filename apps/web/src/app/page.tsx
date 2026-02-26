@@ -5,8 +5,10 @@ import { ArtistCard } from '@/components/ArtistCard'
 import { ListingCard } from '@/components/ListingCard'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
+import { JsonLd } from '@/components/JsonLd'
+import { SITE_URL } from '@/lib/site-config'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
@@ -17,15 +19,7 @@ export const metadata: Metadata = {
     description:
       'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
     type: 'website',
-    url: 'https://surfaced.art',
-    images: [
-      {
-        url: 'https://surfaced.art/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
-      },
-    ],
+    url: SITE_URL,
   },
 }
 
@@ -34,7 +28,7 @@ async function fetchHomeData() {
     const [categories, listingsResponse, featuredArtists] = await Promise.all([
       getCategories(),
       getListings({ status: 'available', limit: 6 }),
-      getFeaturedArtists(4),
+      getFeaturedArtists({ limit: 4 }),
     ])
     return { categories, listings: listingsResponse.data, artists: featuredArtists }
   } catch (error) {
@@ -52,6 +46,21 @@ export default async function Home() {
 
   return (
     <div className="space-y-16 md:space-y-24">
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Surfaced Art',
+        url: SITE_URL,
+        description: 'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+      }} />
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Surfaced Art',
+        url: SITE_URL,
+        logo: `${SITE_URL}/opengraph-image`,
+      }} />
+
       {/* Hero */}
       <section data-testid="hero" className="flex min-h-[40vh] flex-col items-center justify-center text-center">
         <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl lg:text-6xl">

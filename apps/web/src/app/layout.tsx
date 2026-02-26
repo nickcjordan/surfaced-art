@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Container } from '@/components/ui/container'
+import { SITE_URL } from '@/lib/site-config'
 import './globals.css'
 
 const dmSerifDisplay = DM_Serif_Display({
@@ -21,7 +22,7 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://surfaced.art'),
+  metadataBase: new URL(SITE_URL),
   title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
   description:
     'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
@@ -33,15 +34,11 @@ export const metadata: Metadata = {
     description:
       'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
     type: 'website',
-    url: 'https://surfaced.art',
-    images: [
-      {
-        url: 'https://surfaced.art/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
-      },
-    ],
+    url: SITE_URL,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@surfacedart',
   },
 }
 

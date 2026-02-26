@@ -1,0 +1,28 @@
+meta {
+  name: List Artists by Category (Invalid)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{sa_baseUrl}}/artists?category=invalid_value
+  body: none
+  auth: none
+}
+
+params:query {
+  category: invalid_value
+}
+
+assert {
+  res.status: eq 400
+}
+
+tests {
+  test("should return VALIDATION_ERROR", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("VALIDATION_ERROR");
+    expect(body.error.message).to.equal("Validation failed");
+    expect(body.error.details).to.be.an("array");
+  });
+}

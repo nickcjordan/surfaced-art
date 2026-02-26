@@ -1,16 +1,23 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { getListings, getCategories } from '@/lib/api'
-import { ListingCard } from '@/components/ListingCard'
-import { CATEGORIES } from '@/lib/categories'
+import { getListings, getCategories, getFeaturedArtists, ApiError } from '@/lib/api'
 import { categoryLabels } from '@/lib/category-labels'
+import { CategoryFilterBar } from '@/components/CategoryFilterBar'
+import { CategoryBrowseView, type CategoryListingItem } from '@/components/CategoryBrowseView'
+import { JsonLd } from '@/components/JsonLd'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { SITE_URL } from '@/lib/site-config'
+import { CATEGORIES } from '@/lib/categories'
 import { Category } from '@surfaced-art/types'
 import type { CategoryType } from '@surfaced-art/types'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 const validCategories = new Set(Object.values(Category))
+
+export function generateStaticParams() {
+  return CATEGORIES.map((cat) => ({ category: cat.slug }))
+}
 
 type Props = {
   params: Promise<{ category: string }>
@@ -32,7 +39,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${label} — Surfaced Art`,
       description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
       type: 'website',
-      url: `https://surfaced.art/category/${category}`,
+      url: `${SITE_URL}/category/${category}`,
+      images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    },
+    twitter: {
+      images: ['/opengraph-image'],
     },
   }
 }
@@ -47,77 +58,65 @@ export default async function CategoryBrowsePage({ params }: Props) {
   const categorySlug = category as CategoryType
   const label = categoryLabels[categorySlug]
 
-  const [listingsResponse, categories] = await Promise.all([
-    getListings({ category: categorySlug, status: 'available', limit: 100 }),
-    getCategories(),
-  ])
-  const listings = listingsResponse.data
-  const totalCount = categories.find((c) => c.category === categorySlug)?.count ?? listingsResponse.meta.total
+  let listings: CategoryListingItem[] = []
+  let artists: Awaited<ReturnType<typeof getFeaturedArtists>> = []
+  let totalListingCount = 0
+  let totalArtistCount = 0
+
+  try {
+    const [listingsResponse, artistsData, categories] = await Promise.all([
+      getListings({ category: categorySlug, status: 'available', limit: 100 }),
+      getFeaturedArtists({ category: categorySlug, limit: 50 }),
+      getCategories(),
+    ])
+
+    const catData = categories.find((c) => c.category === categorySlug)
+    artists = artistsData
+    totalListingCount = catData?.count ?? listingsResponse.meta.total
+    totalArtistCount = catData?.artistCount ?? artists.length
+
+    listings = listingsResponse.data.map((listing) => ({
+      id: listing.id,
+      title: listing.title,
+      medium: listing.medium,
+      category: listing.category,
+      price: listing.price,
+      status: listing.status,
+      primaryImageUrl: listing.primaryImage?.url ?? null,
+      artistName: listing.artist.displayName,
+    }))
+  } catch (error) {
+    if (error instanceof ApiError) {
+      console.error(`API error fetching category data: ${error.status} ${error.message}`)
+    } else {
+      console.error('Unexpected error fetching category data:', error)
+    }
+  }
 
   return (
     <div className="space-y-8">
-      {/* Category Header */}
-      <section data-testid="category-header">
-        <h1 className="font-serif text-3xl text-foreground sm:text-4xl">{label}</h1>
-        <p className="mt-2 text-sm text-muted-text">
-          {totalCount} {totalCount === 1 ? 'piece' : 'pieces'} available
-        </p>
-      </section>
-
-      {/* Category Navigation */}
-      <nav data-testid="category-nav" aria-label="Category navigation" className="flex flex-wrap gap-2">
-        {CATEGORIES.map((cat) => (
-          <Link
-            key={cat.slug}
-            href={cat.href}
-            className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-              cat.slug === categorySlug
-                ? 'bg-accent-primary text-white'
-                : 'border border-border text-muted-text hover:border-accent-primary hover:text-foreground'
-            }`}
-          >
-            {cat.label}
-          </Link>
-        ))}
-      </nav>
-
-      {/* Listings Grid */}
-      <section data-testid="category-content">
-        {listings.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
-            {listings.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                listing={{
-                  id: listing.id,
-                  title: listing.title,
-                  medium: listing.medium,
-                  category: listing.category,
-                  price: listing.price,
-                  status: listing.status,
-                  primaryImageUrl: listing.primaryImage?.url ?? null,
-                }}
-                artistName={listing.artist.displayName}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex min-h-[30vh] flex-col items-center justify-center text-center">
-            <p className="font-serif text-lg text-foreground">
-              No pieces in this category yet
-            </p>
-            <p className="mt-2 text-sm text-muted-text">
-              Check back soon — new work is added regularly.
-            </p>
-            <Link
-              href="/"
-              className="mt-4 text-sm text-muted-text transition-colors hover:text-foreground"
-            >
-              ← Back to gallery
-            </Link>
-          </div>
-        )}
-      </section>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: `${label} — Surfaced Art`,
+        description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
+        url: `${SITE_URL}/category/${categorySlug}`,
+      }} />
+      <Breadcrumbs items={[
+        { label: 'Home', href: '/' },
+        { label },
+      ]} />
+      <CategoryFilterBar
+        activeCategory={categorySlug}
+        basePath="/category"
+      />
+      <CategoryBrowseView
+        categoryLabel={label}
+        listings={listings}
+        artists={artists}
+        totalListingCount={totalListingCount}
+        totalArtistCount={totalArtistCount}
+      />
     </div>
   )
 }
