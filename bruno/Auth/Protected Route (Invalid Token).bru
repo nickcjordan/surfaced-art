@@ -1,0 +1,28 @@
+meta {
+  name: Protected Route (Invalid Token)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{sa_baseUrl}}/me/dashboard
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer invalid-jwt-token
+}
+
+assert {
+  res.status: eq 401
+  res.body.error.code: eq UNAUTHORIZED
+}
+
+tests {
+  test("should return 401 when auth token is invalid", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("UNAUTHORIZED");
+    expect(body.error.message).to.equal("Invalid or expired token");
+  });
+}
