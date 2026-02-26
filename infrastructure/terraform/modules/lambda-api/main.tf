@@ -36,6 +36,12 @@ resource "aws_lambda_function" "api" {
   memory_size   = var.memory_size
   timeout       = var.timeout
 
+  # Cap concurrent instances to prevent DB connection exhaustion.
+  # Each instance holds 1 DB connection (max: 1 in pg pool config).
+  # db.t3.micro supports ~87 connections; 40 leaves headroom for
+  # the migrate Lambda, image processor, and admin queries.
+  reserved_concurrent_executions = var.reserved_concurrent_executions
+
   # Public placeholder for initial Terraform apply before the ECR image exists.
   # CI/CD pipeline manages actual image deployments via aws lambda update-function-code.
   image_uri = var.placeholder_image_uri

@@ -268,6 +268,40 @@ describe('CategoryBrowseView', () => {
     expect(panel.getAttribute('aria-labelledby')).toBe(artistsTab.getAttribute('id'))
   })
 
+  it('should prioritize error state over non-empty listings and artists when hasError is true', () => {
+    render(
+      <CategoryBrowseView
+        categoryLabel="Ceramics"
+        listings={mockListings}
+        artists={mockArtists}
+        totalListingCount={mockListings.length}
+        totalArtistCount={mockArtists.length}
+        hasError
+      />
+    )
+
+    expect(screen.getByText(/unable to load/i)).toBeInTheDocument()
+    expect(screen.queryByText(mockListings[0].title)).not.toBeInTheDocument()
+  })
+
+  it('should prioritize error state over non-empty artists when hasError is true', async () => {
+    render(
+      <CategoryBrowseView
+        categoryLabel="Ceramics"
+        listings={mockListings}
+        artists={mockArtists}
+        totalListingCount={mockListings.length}
+        totalArtistCount={mockArtists.length}
+        hasError
+      />
+    )
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Artists' }))
+
+    expect(screen.getByText(/unable to load/i)).toBeInTheDocument()
+    expect(screen.queryByText(mockArtists[0].displayName)).not.toBeInTheDocument()
+  })
+
   it('should show error state instead of empty state when hasError is true', () => {
     render(
       <CategoryBrowseView
