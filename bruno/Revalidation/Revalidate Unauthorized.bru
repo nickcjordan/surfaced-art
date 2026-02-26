@@ -1,0 +1,29 @@
+meta {
+  name: Revalidate Unauthorized
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{sa_frontendUrl}}/api/revalidate
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "type": "all"
+  }
+}
+
+assert {
+  res.status: eq 401
+  res.body.error: eq Unauthorized
+}
+
+tests {
+  test("should reject unauthenticated request", function() {
+    expect(res.getStatus()).to.equal(401);
+    expect(res.getBody().error).to.equal("Unauthorized");
+  });
+}

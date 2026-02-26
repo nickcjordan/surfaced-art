@@ -1,0 +1,37 @@
+meta {
+  name: Revalidate Listing
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{sa_frontendUrl}}/api/revalidate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_revalidationSecret}}
+}
+
+body:json {
+  {
+    "type": "listing",
+    "id": "{{sa_listingId}}",
+    "category": "{{sa_category}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}
+
+tests {
+  test("should revalidate listing and related pages", function() {
+    const body = res.getBody();
+    expect(body.success).to.be.true;
+    expect(body.revalidated).to.include("/listing/" + bru.getEnvVar("sa_listingId"));
+    expect(body.revalidated).to.include("/");
+  });
+}

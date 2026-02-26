@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getArtistProfile, getFeaturedArtists, ApiError } from '@/lib/api'
+import { getArtistProfile, ApiError } from '@/lib/api'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ListingCard } from '@/components/ListingCard'
 import { Badge } from '@/components/ui/badge'
@@ -14,13 +14,11 @@ import type { ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types
 
 export const revalidate = 60
 
+// Return empty array so no artist pages are pre-rendered at build time.
+// Pages render on first visitor request and are cached via ISR (revalidate = 60).
+// Use POST /api/revalidate to bust the cache on demand after content changes.
 export async function generateStaticParams() {
-  try {
-    const artists = await getFeaturedArtists({ limit: 50 })
-    return artists.map((artist) => ({ slug: artist.slug }))
-  } catch {
-    return []
-  }
+  return []
 }
 
 const cvEntryTypeLabels: Record<CvEntryTypeType, string> = {

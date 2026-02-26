@@ -91,3 +91,9 @@ variable "log_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "reserved_concurrent_executions" {
+  description = "Maximum concurrent Lambda instances. Limits DB connections: db.t3.micro supports ~87, so cap this below that to leave headroom for migrations and admin. Set to -1 to disable (unreserved)."
+  type        = number
+  default     = 40
+}

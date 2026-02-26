@@ -480,6 +480,7 @@ Required in `.env` files (never commit these):
 ```
 DATABASE_URL=postgresql://[user]:[password]@[host]:5432/[dbname]
 AWS_REGION=us-east-1
+REVALIDATION_SECRET=[random-secret]  # Vercel env var — protects POST /api/revalidate
 ```
 
 ## No Shortcuts Policy
