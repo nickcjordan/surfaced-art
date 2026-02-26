@@ -27,6 +27,29 @@ const mockListings: CategoryListingItem[] = [
   },
 ]
 
+const mockListingsWithSold: CategoryListingItem[] = [
+  {
+    id: 'listing-1',
+    title: 'Ceramic Vessel',
+    medium: 'Stoneware',
+    category: 'ceramics',
+    price: 12500,
+    status: 'available',
+    primaryImageUrl: null,
+    artistName: 'Abbey Peters',
+  },
+  {
+    id: 'listing-3',
+    title: 'Sold Vase',
+    medium: 'Stoneware',
+    category: 'ceramics',
+    price: 9500,
+    status: 'sold',
+    primaryImageUrl: null,
+    artistName: 'Abbey Peters',
+  },
+]
+
 const mockArtists: FeaturedArtistItem[] = [
   {
     slug: 'abbey-peters',
@@ -175,6 +198,22 @@ describe('CategoryBrowseView', () => {
     expect(screen.getByTestId('view-toggle')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Pieces' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Artists' })).toBeInTheDocument()
+  })
+
+  it('should accept both available and sold statuses in listings', () => {
+    render(
+      <CategoryBrowseView
+        categoryLabel="Ceramics"
+        listings={mockListingsWithSold}
+        artists={mockArtists}
+        totalListingCount={2}
+        totalArtistCount={1}
+      />
+    )
+
+    // Each listing title appears twice per card (hover overlay + card info)
+    expect(screen.getAllByText('Ceramic Vessel').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Sold Vase').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should preserve category-header data-testid', () => {

@@ -22,7 +22,7 @@ export type CategoryListingItem = {
   medium: string
   category: CategoryType
   price: number
-  status: string
+  status: ListingStatusType
   primaryImageUrl: string | null
   artistName: string
 }
@@ -78,7 +78,7 @@ export function CategoryBrowseView({
                     medium: listing.medium,
                     category: listing.category,
                     price: listing.price,
-                    status: listing.status as ListingStatusType,
+                    status: listing.status,
                     primaryImageUrl: listing.primaryImageUrl,
                   }}
                   artistName={listing.artistName}

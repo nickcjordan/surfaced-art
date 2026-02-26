@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { SITE_URL } from '@/lib/site-config'
 import { categoryLabels } from '@/lib/category-labels'
 import type { ListingDetailResponse } from '@surfaced-art/types'
 
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         type: 'article',
-        url: `https://surfaced.art/listing/${id}`,
+        url: `${SITE_URL}/listing/${id}`,
         images: listing.images.length > 0 ? [{ url: listing.images[0].url, width: 800, height: 800 }] : [],
       },
       twitter: {
@@ -78,7 +79,7 @@ export default async function ListingDetailPage({ params }: Props) {
         '@type': 'Product',
         name: listing.title,
         description: listing.description,
-        url: `https://surfaced.art/listing/${listing.id}`,
+        url: `${SITE_URL}/listing/${listing.id}`,
         image: listing.images.map((img) => img.url),
         category: categoryLabels[listing.category] ?? listing.category,
         brand: {

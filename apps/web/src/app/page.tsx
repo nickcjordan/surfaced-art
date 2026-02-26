@@ -6,6 +6,7 @@ import { ListingCard } from '@/components/ListingCard'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { JsonLd } from '@/components/JsonLd'
+import { SITE_URL } from '@/lib/site-config'
 
 export const revalidate = 60
 
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
     description:
       'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
     type: 'website',
-    url: 'https://surfaced.art',
+    url: SITE_URL,
   },
 }
 
@@ -49,15 +50,15 @@ export default async function Home() {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         name: 'Surfaced Art',
-        url: 'https://surfaced.art',
+        url: SITE_URL,
         description: 'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
       }} />
       <JsonLd data={{
         '@context': 'https://schema.org',
         '@type': 'Organization',
         name: 'Surfaced Art',
-        url: 'https://surfaced.art',
-        logo: 'https://surfaced.art/opengraph-image',
+        url: SITE_URL,
+        logo: `${SITE_URL}/opengraph-image`,
       }} />
 
       {/* Hero */}

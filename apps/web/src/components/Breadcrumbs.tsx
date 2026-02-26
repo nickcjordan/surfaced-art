@@ -1,12 +1,11 @@
 import Link from 'next/link'
 import { JsonLd } from '@/components/JsonLd'
+import { SITE_URL } from '@/lib/site-config'
 
 export type BreadcrumbItem = {
   label: string
   href?: string
 }
-
-const BASE_URL = 'https://surfaced.art'
 
 export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
   return (
@@ -18,7 +17,7 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
           '@type': 'ListItem',
           position: index + 1,
           name: item.label,
-          ...(item.href && { item: `${BASE_URL}${item.href}` }),
+          ...(item.href && { item: `${SITE_URL}${item.href}` }),
         })),
       }} />
       <nav aria-label="Breadcrumb" data-testid="breadcrumbs">

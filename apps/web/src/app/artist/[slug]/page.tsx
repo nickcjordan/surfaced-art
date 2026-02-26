@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { categoryLabels } from '@/lib/category-labels'
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { SITE_URL } from '@/lib/site-config'
 import type { ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types'
 
 export const revalidate = 60
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: `${artist.displayName} — Surfaced Art`,
         description,
         type: 'profile',
-        url: `https://surfaced.art/artist/${slug}`,
+        url: `${SITE_URL}/artist/${slug}`,
         images: artist.profileImageUrl ? [{ url: artist.profileImageUrl, width: 400, height: 400 }] : [],
       },
       twitter: {
@@ -105,7 +106,7 @@ export default async function ArtistProfilePage({ params }: Props) {
         name: artist.displayName,
         jobTitle: 'Artist',
         description: artist.bio.length > 155 ? artist.bio.slice(0, 155) + '…' : artist.bio,
-        url: `https://surfaced.art/artist/${slug}`,
+        url: `${SITE_URL}/artist/${slug}`,
         ...(artist.profileImageUrl && { image: artist.profileImageUrl }),
         ...(sameAs.length > 0 && { sameAs }),
       }} />

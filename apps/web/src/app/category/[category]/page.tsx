@@ -6,6 +6,7 @@ import { CategoryFilterBar } from '@/components/CategoryFilterBar'
 import { CategoryBrowseView, type CategoryListingItem } from '@/components/CategoryBrowseView'
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { SITE_URL } from '@/lib/site-config'
 import { CATEGORIES } from '@/lib/categories'
 import { Category } from '@surfaced-art/types'
 import type { CategoryType } from '@surfaced-art/types'
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${label} — Surfaced Art`,
       description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
       type: 'website',
-      url: `https://surfaced.art/category/${category}`,
+      url: `${SITE_URL}/category/${category}`,
       images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     },
     twitter: {
@@ -99,7 +100,7 @@ export default async function CategoryBrowsePage({ params }: Props) {
         '@type': 'CollectionPage',
         name: `${label} — Surfaced Art`,
         description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
-        url: `https://surfaced.art/category/${categorySlug}`,
+        url: `${SITE_URL}/category/${categorySlug}`,
       }} />
       <Breadcrumbs items={[
         { label: 'Home', href: '/' },

@@ -1,19 +1,18 @@
 import type { MetadataRoute } from 'next'
 import { getListings, getFeaturedArtists } from '@/lib/api'
 import { CATEGORIES } from '@/lib/categories'
-
-const BASE_URL = 'https://surfaced.art'
+import { SITE_URL } from '@/lib/site-config'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: BASE_URL,
+      url: SITE_URL,
       changeFrequency: 'daily',
       priority: 1.0,
     },
     ...CATEGORIES.map((cat) => ({
-      url: `${BASE_URL}/category/${cat.slug}`,
+      url: `${SITE_URL}/category/${cat.slug}`,
       changeFrequency: 'daily' as const,
       priority: 0.8,
     })),
@@ -30,13 +29,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ])
 
     artistPages = artists.map((artist) => ({
-      url: `${BASE_URL}/artist/${artist.slug}`,
+      url: `${SITE_URL}/artist/${artist.slug}`,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }))
 
     listingPages = listingsResponse.data.map((listing) => ({
-      url: `${BASE_URL}/listing/${listing.id}`,
+      url: `${SITE_URL}/listing/${listing.id}`,
       changeFrequency: 'weekly' as const,
       priority: 0.6,
     }))
