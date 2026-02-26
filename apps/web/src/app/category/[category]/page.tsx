@@ -7,7 +7,6 @@ import { CategoryBrowseView, type CategoryListingItem } from '@/components/Categ
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SITE_URL } from '@/lib/site-config'
-import { CATEGORIES } from '@/lib/categories'
 import { Category } from '@surfaced-art/types'
 import type { CategoryType } from '@surfaced-art/types'
 
@@ -15,8 +14,11 @@ export const revalidate = 60
 
 const validCategories = new Set(Object.values(Category))
 
+// Return empty array so no category pages are pre-rendered at build time.
+// Pages render on first visitor request and are cached via ISR (revalidate = 60).
+// Use POST /api/revalidate to bust the cache on demand after content changes.
 export function generateStaticParams() {
-  return CATEGORIES.map((cat) => ({ category: cat.slug }))
+  return []
 }
 
 type Props = {

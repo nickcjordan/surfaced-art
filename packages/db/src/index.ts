@@ -45,6 +45,13 @@ function createPrismaClient() {
   const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL,
     ssl: buildSslConfig(),
+    // Limit each Lambda instance to a single DB connection.
+    // db.t3.micro supports ~87 connections; without this cap, a Vercel build
+    // can spawn hundreds of concurrent Lambda invocations, each opening a
+    // connection and exhausting the pool.
+    max: 1,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000,
   })
   return new PrismaClient({
     adapter,

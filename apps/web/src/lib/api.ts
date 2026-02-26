@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import type {
   ArtistProfileResponse,
   CategoryType,
@@ -48,9 +49,12 @@ export class ApiError extends Error {
   }
 }
 
-export async function getArtistProfile(slug: string): Promise<ArtistProfileResponse> {
+// Wrapped with React.cache() to deduplicate calls within a single request.
+// Both generateMetadata and the page component call getArtistProfile with the
+// same slug — cache() ensures only one API call is made per render.
+export const getArtistProfile = cache(async (slug: string): Promise<ArtistProfileResponse> => {
   return apiFetch<ArtistProfileResponse>(`/artists/${encodeURIComponent(slug)}`)
-}
+})
 
 export async function getFeaturedArtists(params?: {
   limit?: number
@@ -83,9 +87,12 @@ export async function getListings(params?: {
   return apiFetch<PaginatedResponse<ListingListItem>>(`/listings${query ? `?${query}` : ''}`)
 }
 
-export async function getListingDetail(id: string): Promise<ListingDetailResponse> {
+// Wrapped with React.cache() to deduplicate calls within a single request.
+// Both generateMetadata and the page component call getListingDetail with the
+// same id — cache() ensures only one API call is made per render.
+export const getListingDetail = cache(async (id: string): Promise<ListingDetailResponse> => {
   return apiFetch<ListingDetailResponse>(`/listings/${encodeURIComponent(id)}`)
-}
+})
 
 export async function joinWaitlist(email: string): Promise<{ message: string }> {
   return apiFetch<{ message: string }>('/waitlist', {

@@ -34,3 +34,4 @@ This directory contains Architecture Decision Records (ADRs) for the Surfaced Ar
 | [003](./003-hono-over-express.md) | Hono over Express for Lambda backend | Accepted | 2026-02-24 |
 | [004](./004-postgresql-fulltext-search.md) | PostgreSQL full-text search over dedicated search service | Accepted | 2026-02-24 |
 | [005](./005-prisma-driver-adapter-pattern.md) | Prisma driver adapter pattern (@prisma/adapter-pg) | Accepted | 2026-02-24 |
+| [006](./006-on-demand-isr.md) | On-demand ISR over build-time SSG | Accepted | 2026-02-26 |
