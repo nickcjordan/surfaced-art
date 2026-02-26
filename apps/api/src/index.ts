@@ -6,6 +6,7 @@ import { prisma } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
 
 import { securityHeaders } from './middleware/security-headers'
+import { rateLimiter } from './middleware/rate-limiter'
 import { createHealthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
 import { createListingRoutes } from './routes/listings'
@@ -18,14 +19,32 @@ const app = new Hono()
 // Middleware
 app.use('*', securityHeaders())
 app.use('*', honoLogger())
+// CORS — allow production frontend, localhost for dev, and Vercel preview deploys
+const allowedOrigins = [
+  'https://surfaced.art',
+  'https://www.surfaced.art',
+  'http://localhost:3000',
+]
+
 app.use(
   '*',
   cors({
-    origin: '*', // Will be restricted in production
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    origin: (origin) => {
+      if (!origin) return 'https://surfaced.art'
+      if (allowedOrigins.includes(origin)) return origin
+      // Allow Vercel preview deploys (*.vercel.app)
+      if (origin.endsWith('.vercel.app')) return origin
+      return null
+    },
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    maxAge: 300,
   })
 )
+
+// Rate limiting for sensitive endpoints
+app.use('/waitlist', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
 
 // Mount routes
 app.route('/health', createHealthRoutes(prisma))
