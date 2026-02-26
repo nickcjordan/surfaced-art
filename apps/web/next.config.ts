@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { SECURITY_HEADERS } from "./src/lib/security-headers";
 
 const nextConfig: NextConfig = {
   images: {
@@ -12,6 +13,14 @@ const nextConfig: NextConfig = {
         hostname: "d2agn4aoo0e7ji.cloudfront.net", // dev CDN
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: SECURITY_HEADERS,
+      },
+    ];
   },
 };
 

@@ -5,6 +5,7 @@ import { handle } from 'hono/aws-lambda'
 import { prisma } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
 
+import { securityHeaders } from './middleware/security-headers'
 import { createHealthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
 import { createListingRoutes } from './routes/listings'
@@ -15,6 +16,7 @@ import { createWaitlistRoutes } from './routes/waitlist'
 const app = new Hono()
 
 // Middleware
+app.use('*', securityHeaders())
 app.use('*', honoLogger())
 app.use(
   '*',
