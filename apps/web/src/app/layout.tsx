@@ -35,6 +35,10 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://surfaced.art',
   },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@surfacedart',
+  },
 }
 
 export default function RootLayout({

@@ -38,6 +38,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
       type: 'website',
       url: `https://surfaced.art/category/${category}`,
+      images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    },
+    twitter: {
+      images: ['/opengraph-image'],
     },
   }
 }

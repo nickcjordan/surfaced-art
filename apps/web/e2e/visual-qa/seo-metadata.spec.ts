@@ -41,6 +41,11 @@ test.describe('SEO Metadata — Homepage', () => {
       'href',
       /^https?:\/\//
     )
+
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    )
   })
 })
 
@@ -69,6 +74,11 @@ test.describe('SEO Metadata — Artist Profile', () => {
       .getAttribute('content')
     expect(ogImage).toMatch(/^https?:\/\//)
     expect(ogImage).not.toContain('placeholder')
+
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    )
   })
 })
 
@@ -109,6 +119,11 @@ test.describe('SEO Metadata — Listing Detail', () => {
     expect(structured['@type']).toBe('Product')
     expect(structured.offers).toBeTruthy()
     expect(structured.offers.price).toBeTruthy()
+
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    )
   })
 })
 
@@ -124,6 +139,11 @@ test.describe('SEO Metadata — Category Page', () => {
       .locator('meta[name="description"]')
       .getAttribute('content')
     expect(description).toBeTruthy()
+
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    )
   })
 })
 

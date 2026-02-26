@@ -38,7 +38,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         type: 'article',
         url: `https://surfaced.art/listing/${id}`,
-        images: listing.images.length > 0 ? [{ url: listing.images[0].url }] : [],
+        images: listing.images.length > 0 ? [{ url: listing.images[0].url, width: 800, height: 800 }] : [],
+      },
+      twitter: {
+        images: listing.images.length > 0 ? [listing.images[0].url] : [],
       },
     }
   } catch {

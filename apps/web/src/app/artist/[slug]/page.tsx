@@ -53,7 +53,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         type: 'profile',
         url: `https://surfaced.art/artist/${slug}`,
-        images: artist.profileImageUrl ? [{ url: artist.profileImageUrl }] : [],
+        images: artist.profileImageUrl ? [{ url: artist.profileImageUrl, width: 400, height: 400 }] : [],
+      },
+      twitter: {
+        images: artist.profileImageUrl ? [artist.profileImageUrl] : [],
       },
     }
   } catch {
