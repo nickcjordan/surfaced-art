@@ -9,7 +9,7 @@ const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: https://dmfu4c7s6z2cc.cloudfront.net https://d2agn4aoo0e7ji.cloudfront.net",
-  "connect-src 'self' https://api.surfaced.art",
+  "connect-src 'self' https://api.surfaced.art https://cognito-idp.us-east-1.amazonaws.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

@@ -43,6 +43,11 @@ describe('security headers config', () => {
     expect(csp.value).toContain('api.surfaced.art')
   })
 
+  it('CSP should allow Cognito IDP for authentication', () => {
+    const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).toContain('cognito-idp.us-east-1.amazonaws.com')
+  })
+
   it('CSP should disallow framing (clickjacking protection)', () => {
     const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
     expect(csp.value).toContain("frame-ancestors 'none'")
