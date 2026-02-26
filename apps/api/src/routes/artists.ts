@@ -1,25 +1,44 @@
 import { Hono } from 'hono'
-import type { PrismaClient } from '@surfaced-art/db'
+import type { PrismaClient, Prisma, CategoryType } from '@surfaced-art/db'
 import type { ArtistProfileResponse, FeaturedArtistItem } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
-import { notFound } from '../errors'
+import { notFound, validationError } from '../errors'
+import { artistsQuerySchema } from '../schemas'
 
 export function createArtistRoutes(prisma: PrismaClient) {
   const artists = new Hono()
 
   /**
    * GET /artists
-   * Returns a list of approved artists for the homepage.
+   * Returns a list of approved artists.
    * Query params:
-   *   - limit: max number of artists to return (default 4, max 20)
+   *   - limit: max number of artists to return (default 4, max 50)
+   *   - category: filter by category (optional)
    */
   artists.get('/', async (c) => {
     const start = Date.now()
-    const limitParam = c.req.query('limit')
-    const limit = Math.min(Math.max(parseInt(limitParam || '4', 10) || 4, 1), 20)
+
+    const parsed = artistsQuerySchema.safeParse({
+      category: c.req.query('category'),
+      limit: c.req.query('limit'),
+    })
+
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    const { category, limit } = parsed.data
+
+    const where: Prisma.ArtistProfileWhereInput = {
+      status: 'approved',
+    }
+
+    if (category) {
+      where.categories = { some: { category: category as CategoryType } }
+    }
 
     const artistsData = await prisma.artistProfile.findMany({
-      where: { status: 'approved' },
+      where,
       select: {
         slug: true,
         displayName: true,
@@ -41,9 +60,10 @@ export function createArtistRoutes(prisma: PrismaClient) {
       categories: artist.categories.map((c) => c.category),
     }))
 
-    logger.info('Featured artists fetched', {
+    logger.info('Artists fetched', {
       count: data.length,
       limit,
+      category: category ?? null,
       durationMs: Date.now() - start,
     })
 

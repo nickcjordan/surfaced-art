@@ -1,5 +1,6 @@
 import type {
   ArtistProfileResponse,
+  CategoryType,
   CategoryWithCount,
   FeaturedArtistItem,
   ListingDetailResponse,
@@ -51,9 +52,15 @@ export async function getArtistProfile(slug: string): Promise<ArtistProfileRespo
   return apiFetch<ArtistProfileResponse>(`/artists/${encodeURIComponent(slug)}`)
 }
 
-export async function getFeaturedArtists(limit?: number): Promise<FeaturedArtistItem[]> {
-  const params = limit ? `?limit=${limit}` : ''
-  return apiFetch<FeaturedArtistItem[]>(`/artists${params}`)
+export async function getFeaturedArtists(params?: {
+  limit?: number
+  category?: CategoryType
+}): Promise<FeaturedArtistItem[]> {
+  const searchParams = new URLSearchParams()
+  if (params?.limit) searchParams.set('limit', params.limit.toString())
+  if (params?.category) searchParams.set('category', params.category)
+  const query = searchParams.toString()
+  return apiFetch<FeaturedArtistItem[]>(`/artists${query ? `?${query}` : ''}`)
 }
 
 export async function getCategories(): Promise<CategoryWithCount[]> {

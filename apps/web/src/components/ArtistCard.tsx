@@ -44,7 +44,7 @@ export function ArtistCard({ artist, className, 'data-testid': testId }: ArtistC
         {artist.coverImageUrl ? (
           <Image
             src={artist.coverImageUrl}
-            alt=""
+            alt={`${artist.displayName} cover image`}
             fill
             unoptimized
             className="object-cover"

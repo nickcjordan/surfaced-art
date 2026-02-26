@@ -305,6 +305,7 @@ export interface FeaturedArtistItem {
 export interface CategoryWithCount {
   category: CategoryType
   count: number
+  artistCount: number
 }
 
 // ─── Listings API Response Types ────────────────────────────────────

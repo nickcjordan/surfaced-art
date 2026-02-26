@@ -420,12 +420,74 @@ describe('GET /artists', () => {
       )
     })
 
-    it('should cap limit at 20', async () => {
+    it('should cap limit at 50', async () => {
       await app.request('/artists?limit=100')
 
       expect(mockPrisma.artistProfile.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 20 })
+        expect.objectContaining({ take: 50 })
       )
+    })
+  })
+
+  describe('category filter', () => {
+    beforeEach(() => {
+      mockPrisma = createMockPrisma(null, [mockArtistListData[0]])
+      app = createTestApp(mockPrisma)
+    })
+
+    it('should filter by category when provided', async () => {
+      const res = await app.request('/artists?category=ceramics')
+      expect(res.status).toBe(200)
+
+      expect(mockPrisma.artistProfile.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            status: 'approved',
+            categories: { some: { category: 'ceramics' } },
+          },
+        })
+      )
+    })
+
+    it('should support both category and limit params', async () => {
+      await app.request('/artists?category=ceramics&limit=2')
+
+      expect(mockPrisma.artistProfile.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            status: 'approved',
+            categories: { some: { category: 'ceramics' } },
+          },
+          take: 2,
+        })
+      )
+    })
+
+    it('should not include category filter when no category param', async () => {
+      await app.request('/artists')
+
+      expect(mockPrisma.artistProfile.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: 'approved' },
+        })
+      )
+    })
+  })
+
+  describe('validation errors', () => {
+    beforeEach(() => {
+      mockPrisma = createMockPrisma(null, [])
+      app = createTestApp(mockPrisma)
+    })
+
+    it('should return 400 for invalid category value', async () => {
+      const res = await app.request('/artists?category=invalid_value')
+      expect(res.status).toBe(400)
+
+      const data = await res.json()
+      expect(data.error.code).toBe('VALIDATION_ERROR')
+      expect(data.error.message).toBe('Validation failed')
+      expect(data.error.details).toBeDefined()
     })
   })
 

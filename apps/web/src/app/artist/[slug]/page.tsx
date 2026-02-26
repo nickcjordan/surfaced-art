@@ -2,14 +2,26 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getArtistProfile, ApiError } from '@/lib/api'
+import { getArtistProfile, getFeaturedArtists, ApiError } from '@/lib/api'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ListingCard } from '@/components/ListingCard'
 import { Badge } from '@/components/ui/badge'
 import { categoryLabels } from '@/lib/category-labels'
+import { JsonLd } from '@/components/JsonLd'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { SITE_URL } from '@/lib/site-config'
 import type { ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types'
 
 export const revalidate = 60
+
+export async function generateStaticParams() {
+  try {
+    const artists = await getFeaturedArtists({ limit: 50 })
+    return artists.map((artist) => ({ slug: artist.slug }))
+  } catch {
+    return []
+  }
+}
 
 const cvEntryTypeLabels: Record<CvEntryTypeType, string> = {
   exhibition: 'Exhibitions',
@@ -42,8 +54,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: `${artist.displayName} — Surfaced Art`,
         description,
         type: 'profile',
-        url: `https://surfaced.art/artist/${slug}`,
-        images: artist.profileImageUrl ? [{ url: artist.profileImageUrl }] : [],
+        url: `${SITE_URL}/artist/${slug}`,
+        images: artist.profileImageUrl ? [{ url: artist.profileImageUrl, width: 400, height: 400 }] : [],
+      },
+      twitter: {
+        images: artist.profileImageUrl ? [artist.profileImageUrl] : [],
       },
     }
   } catch {
@@ -81,8 +96,25 @@ export default async function ArtistProfilePage({ params }: Props) {
     cvByType.set(entry.type, existing)
   }
 
+  const sameAs = [artist.instagramUrl, artist.websiteUrl].filter(Boolean)
+
   return (
     <div className="space-y-16">
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: artist.displayName,
+        jobTitle: 'Artist',
+        description: artist.bio.length > 155 ? artist.bio.slice(0, 155) + '…' : artist.bio,
+        url: `${SITE_URL}/artist/${slug}`,
+        ...(artist.profileImageUrl && { image: artist.profileImageUrl }),
+        ...(sameAs.length > 0 && { sameAs }),
+      }} />
+      <Breadcrumbs items={[
+        { label: 'Home', href: '/' },
+        { label: artist.displayName },
+      ]} />
+
       {/* Hero */}
       <section data-testid="artist-hero">
         {/* Cover image */}
@@ -90,7 +122,7 @@ export default async function ArtistProfilePage({ params }: Props) {
           {artist.coverImageUrl ? (
             <Image
               src={artist.coverImageUrl}
-              alt=""
+              alt={`${artist.displayName}'s studio`}
               fill
               unoptimized
               className="object-cover"
@@ -175,7 +207,7 @@ export default async function ArtistProfilePage({ params }: Props) {
             <div className="mb-6 aspect-video overflow-hidden rounded-md bg-surface">
               <iframe
                 src={`https://stream.mux.com/${processVideo.videoPlaybackId}`}
-                title="Process video"
+                title={`${artist.displayName}'s process video`}
                 allow="autoplay; fullscreen"
                 allowFullScreen
                 className="size-full"
@@ -186,14 +218,14 @@ export default async function ArtistProfilePage({ params }: Props) {
           {/* Process photos grid */}
           {processPhotos.length > 0 && (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {processPhotos.map((photo) => (
+              {processPhotos.map((photo, index) => (
                 <div
                   key={photo.id}
                   className="relative aspect-square overflow-hidden rounded-md bg-surface"
                 >
                   <Image
                     src={photo.url!}
-                    alt="Process photo"
+                    alt={`${artist.displayName} process photo ${index + 1} of ${processPhotos.length}`}
                     fill
                     unoptimized
                     className="object-cover"
