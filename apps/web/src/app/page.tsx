@@ -34,7 +34,7 @@ async function fetchHomeData() {
     const [categories, listingsResponse, featuredArtists] = await Promise.all([
       getCategories(),
       getListings({ status: 'available', limit: 6 }),
-      getFeaturedArtists(4),
+      getFeaturedArtists({ limit: 4 }),
     ])
     return { categories, listings: listingsResponse.data, artists: featuredArtists }
   } catch (error) {

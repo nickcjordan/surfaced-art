@@ -6,11 +6,15 @@ import { Category } from '@surfaced-art/types'
 const allCategories = Object.values(Category)
 
 function createMockPrisma(overrides?: {
-  groupBy?: unknown
+  listingGroupBy?: unknown
+  artistCategoryGroupBy?: unknown
 }) {
   return {
     listing: {
-      groupBy: vi.fn().mockResolvedValue(overrides?.groupBy ?? []),
+      groupBy: vi.fn().mockResolvedValue(overrides?.listingGroupBy ?? []),
+    },
+    artistCategory: {
+      groupBy: vi.fn().mockResolvedValue(overrides?.artistCategoryGroupBy ?? []),
     },
   } as unknown as Parameters<typeof createCategoryRoutes>[0]
 }
@@ -29,10 +33,14 @@ describe('GET /categories', () => {
     beforeEach(() => {
       vi.clearAllMocks()
       mockPrisma = createMockPrisma({
-        groupBy: [
+        listingGroupBy: [
           { category: 'ceramics', _count: { id: 5 } },
           { category: 'painting', _count: { id: 3 } },
           { category: 'photography', _count: { id: 1 } },
+        ],
+        artistCategoryGroupBy: [
+          { category: 'ceramics', _count: { id: 2 } },
+          { category: 'painting', _count: { id: 1 } },
         ],
       })
       app = createTestApp(mockPrisma)
@@ -46,29 +54,40 @@ describe('GET /categories', () => {
       expect(body).toHaveLength(9)
     })
 
-    it('should include correct counts for categories with listings', async () => {
+    it('should include correct listing counts for categories with listings', async () => {
       const res = await app.request('/categories')
       const body = await res.json()
 
       const ceramics = body.find((c: { category: string }) => c.category === 'ceramics')
-      expect(ceramics).toEqual({ category: 'ceramics', count: 5 })
+      expect(ceramics.count).toBe(5)
 
       const painting = body.find((c: { category: string }) => c.category === 'painting')
-      expect(painting).toEqual({ category: 'painting', count: 3 })
+      expect(painting.count).toBe(3)
 
       const photography = body.find((c: { category: string }) => c.category === 'photography')
-      expect(photography).toEqual({ category: 'photography', count: 1 })
+      expect(photography.count).toBe(1)
     })
 
-    it('should return count=0 for categories with no listings', async () => {
+    it('should include correct artist counts', async () => {
+      const res = await app.request('/categories')
+      const body = await res.json()
+
+      const ceramics = body.find((c: { category: string }) => c.category === 'ceramics')
+      expect(ceramics.artistCount).toBe(2)
+
+      const painting = body.find((c: { category: string }) => c.category === 'painting')
+      expect(painting.artistCount).toBe(1)
+    })
+
+    it('should return count=0 and artistCount=0 for categories with no data', async () => {
       const res = await app.request('/categories')
       const body = await res.json()
 
       const jewelry = body.find((c: { category: string }) => c.category === 'jewelry')
-      expect(jewelry).toEqual({ category: 'jewelry', count: 0 })
+      expect(jewelry).toEqual({ category: 'jewelry', count: 0, artistCount: 0 })
 
       const woodworking = body.find((c: { category: string }) => c.category === 'woodworking')
-      expect(woodworking).toEqual({ category: 'woodworking', count: 0 })
+      expect(woodworking).toEqual({ category: 'woodworking', count: 0, artistCount: 0 })
     })
 
     it('should return categories in enum definition order', async () => {
@@ -86,8 +105,10 @@ describe('GET /categories', () => {
       for (const item of body) {
         expect(item).toHaveProperty('category')
         expect(item).toHaveProperty('count')
+        expect(item).toHaveProperty('artistCount')
         expect(typeof item.category).toBe('string')
         expect(typeof item.count).toBe('number')
+        expect(typeof item.artistCount).toBe('number')
         expect(allCategories).toContain(item.category)
       }
     })
@@ -97,7 +118,8 @@ describe('GET /categories', () => {
     beforeEach(() => {
       vi.clearAllMocks()
       mockPrisma = createMockPrisma({
-        groupBy: [{ category: 'ceramics', _count: { id: 2 } }],
+        listingGroupBy: [{ category: 'ceramics', _count: { id: 2 } }],
+        artistCategoryGroupBy: [],
       })
       app = createTestApp(mockPrisma)
     })
@@ -124,14 +146,33 @@ describe('GET /categories', () => {
     })
   })
 
-  describe('no listings at all', () => {
+  describe('artist count query', () => {
     beforeEach(() => {
       vi.clearAllMocks()
-      mockPrisma = createMockPrisma({ groupBy: [] })
+      mockPrisma = createMockPrisma({
+        listingGroupBy: [],
+        artistCategoryGroupBy: [{ category: 'ceramics', _count: { id: 3 } }],
+      })
       app = createTestApp(mockPrisma)
     })
 
-    it('should still return all 9 categories with count=0', async () => {
+    it('should query artistCategory with approved artist filter', async () => {
+      await app.request('/categories')
+
+      expect(mockPrisma.artistCategory.groupBy).toHaveBeenCalledTimes(1)
+      const callArgs = (mockPrisma.artistCategory.groupBy as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(callArgs.where.artist).toEqual({ status: 'approved' })
+    })
+  })
+
+  describe('no listings at all', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+      mockPrisma = createMockPrisma({ listingGroupBy: [], artistCategoryGroupBy: [] })
+      app = createTestApp(mockPrisma)
+    })
+
+    it('should still return all 9 categories with count=0 and artistCount=0', async () => {
       const res = await app.request('/categories')
       expect(res.status).toBe(200)
 
@@ -139,6 +180,7 @@ describe('GET /categories', () => {
       expect(body).toHaveLength(9)
       for (const item of body) {
         expect(item.count).toBe(0)
+        expect(item.artistCount).toBe(0)
       }
     })
   })
