@@ -99,7 +99,7 @@ export default async function ArtistProfilePage({ params }: Props) {
           {artist.coverImageUrl ? (
             <Image
               src={artist.coverImageUrl}
-              alt=""
+              alt={`${artist.displayName}'s studio`}
               fill
               unoptimized
               className="object-cover"
@@ -184,7 +184,7 @@ export default async function ArtistProfilePage({ params }: Props) {
             <div className="mb-6 aspect-video overflow-hidden rounded-md bg-surface">
               <iframe
                 src={`https://stream.mux.com/${processVideo.videoPlaybackId}`}
-                title="Process video"
+                title={`${artist.displayName}'s process video`}
                 allow="autoplay; fullscreen"
                 allowFullScreen
                 className="size-full"
@@ -195,14 +195,14 @@ export default async function ArtistProfilePage({ params }: Props) {
           {/* Process photos grid */}
           {processPhotos.length > 0 && (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {processPhotos.map((photo) => (
+              {processPhotos.map((photo, index) => (
                 <div
                   key={photo.id}
                   className="relative aspect-square overflow-hidden rounded-md bg-surface"
                 >
                   <Image
                     src={photo.url!}
-                    alt="Process photo"
+                    alt={`${artist.displayName} process photo ${index + 1} of ${processPhotos.length}`}
                     fill
                     unoptimized
                     className="object-cover"
