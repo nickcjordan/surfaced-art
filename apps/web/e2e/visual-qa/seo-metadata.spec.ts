@@ -100,18 +100,15 @@ test.describe('SEO Metadata — Listing Detail', () => {
       /^https?:\/\//
     )
 
-    // If JSON-LD Product schema is present, verify it has a price
+    // Verify JSON-LD Product schema has valid price
     const jsonLdEl = page.locator('script[type="application/ld+json"]')
-    if ((await jsonLdEl.count()) > 0) {
-      const jsonLd = await jsonLdEl.first().textContent()
-      if (jsonLd) {
-        const structured = JSON.parse(jsonLd)
-        if (structured['@type'] === 'Product') {
-          expect(structured.offers).toBeTruthy()
-          expect(structured.offers.price).toBeTruthy()
-        }
-      }
-    }
+    await expect(jsonLdEl.first()).toBeAttached()
+    const jsonLd = await jsonLdEl.first().textContent()
+    expect(jsonLd).toBeTruthy()
+    const structured = JSON.parse(jsonLd!)
+    expect(structured['@type']).toBe('Product')
+    expect(structured.offers).toBeTruthy()
+    expect(structured.offers.price).toBeTruthy()
   })
 })
 

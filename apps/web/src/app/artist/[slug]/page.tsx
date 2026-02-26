@@ -7,6 +7,7 @@ import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ListingCard } from '@/components/ListingCard'
 import { Badge } from '@/components/ui/badge'
 import { categoryLabels } from '@/lib/category-labels'
+import { JsonLd } from '@/components/JsonLd'
 import type { ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types'
 
 export const revalidate = 60
@@ -90,8 +91,21 @@ export default async function ArtistProfilePage({ params }: Props) {
     cvByType.set(entry.type, existing)
   }
 
+  const sameAs = [artist.instagramUrl, artist.websiteUrl].filter(Boolean)
+
   return (
     <div className="space-y-16">
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: artist.displayName,
+        jobTitle: 'Artist',
+        description: artist.bio.length > 155 ? artist.bio.slice(0, 155) + '…' : artist.bio,
+        url: `https://surfaced.art/artist/${slug}`,
+        ...(artist.profileImageUrl && { image: artist.profileImageUrl }),
+        ...(sameAs.length > 0 && { sameAs }),
+      }} />
+
       {/* Hero */}
       <section data-testid="artist-hero">
         {/* Cover image */}

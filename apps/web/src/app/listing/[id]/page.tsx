@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getListingDetail, ApiError } from '@/lib/api'
-import { formatCurrency } from '@surfaced-art/utils'
+import { formatCurrency, centsToDollars } from '@surfaced-art/utils'
 import { formatDimensions } from '@surfaced-art/utils'
 import { ImageGallery } from '@/components/ImageGallery'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { Badge } from '@/components/ui/badge'
 import { WaitlistForm } from '@/components/WaitlistForm'
+import { JsonLd } from '@/components/JsonLd'
 import { categoryLabels } from '@/lib/category-labels'
 import type { ListingDetailResponse } from '@surfaced-art/types'
 
@@ -68,6 +69,31 @@ export default async function ListingDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-12">
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: listing.title,
+        description: listing.description,
+        url: `https://surfaced.art/listing/${listing.id}`,
+        image: listing.images.map((img) => img.url),
+        category: categoryLabels[listing.category] ?? listing.category,
+        brand: {
+          '@type': 'Person',
+          name: listing.artist.displayName,
+        },
+        offers: {
+          '@type': 'Offer',
+          price: centsToDollars(listing.price),
+          priceCurrency: 'USD',
+          availability: listing.status === 'available'
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/SoldOut',
+          seller: {
+            '@type': 'Person',
+            name: listing.artist.displayName,
+          },
+        },
+      }} />
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         {/* Image Gallery */}
         <div>

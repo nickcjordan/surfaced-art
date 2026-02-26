@@ -5,6 +5,7 @@ import { ArtistCard } from '@/components/ArtistCard'
 import { ListingCard } from '@/components/ListingCard'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
+import { JsonLd } from '@/components/JsonLd'
 
 export const revalidate = 60
 
@@ -52,6 +53,21 @@ export default async function Home() {
 
   return (
     <div className="space-y-16 md:space-y-24">
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Surfaced Art',
+        url: 'https://surfaced.art',
+        description: 'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+      }} />
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Surfaced Art',
+        url: 'https://surfaced.art',
+        logo: 'https://surfaced.art/og-image.png',
+      }} />
+
       {/* Hero */}
       <section data-testid="hero" className="flex min-h-[40vh] flex-col items-center justify-center text-center">
         <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl lg:text-6xl">

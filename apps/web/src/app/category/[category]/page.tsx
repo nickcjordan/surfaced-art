@@ -4,6 +4,7 @@ import { getListings, getCategories, getFeaturedArtists, ApiError } from '@/lib/
 import { categoryLabels } from '@/lib/category-labels'
 import { CategoryFilterBar } from '@/components/CategoryFilterBar'
 import { CategoryBrowseView, type CategoryListingItem } from '@/components/CategoryBrowseView'
+import { JsonLd } from '@/components/JsonLd'
 import { CATEGORIES } from '@/lib/categories'
 import { Category } from '@surfaced-art/types'
 import type { CategoryType } from '@surfaced-art/types'
@@ -88,6 +89,13 @@ export default async function CategoryBrowsePage({ params }: Props) {
 
   return (
     <div className="space-y-8">
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: `${label} — Surfaced Art`,
+        description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
+        url: `https://surfaced.art/category/${categorySlug}`,
+      }} />
       <CategoryFilterBar
         activeCategory={categorySlug}
         basePath="/category"
