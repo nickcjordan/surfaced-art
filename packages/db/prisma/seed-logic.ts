@@ -5,7 +5,7 @@
  * side effects, so it can be imported safely by multiple scripts.
  */
 import type { PrismaClient } from '../src/generated/prisma/client'
-import { cdnUrl } from './seed-data'
+import { cdnUrl, seedKey } from './seed-data'
 import type { ArtistSeedConfig } from './seed-data'
 
 type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
@@ -116,8 +116,7 @@ export async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) 
 
     // Create 2 images per listing: primary + one additional angle
     // For documented listings, second image is a process photo
-    // S3 key structure: uploads/seed/artists/{slug}/listings/{listing-slug}/front
-    const listingImageBase = `uploads/seed/artists/${data.profile.slug}/listings/${listingSlug}`
+    const listingImageBase = `${seedKey(data.profile.slug, 'listings')}/${listingSlug}`
     await tx.listingImage.create({
       data: {
         listingId: listing.id,
