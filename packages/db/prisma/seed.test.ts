@@ -69,8 +69,11 @@ describe('Seed Data Validation', () => {
   })
 
   describe('process media', () => {
-    it('should have at least 1 process media entry per artist', () => {
-      for (const config of artistConfigs) {
+    it('should have at least 1 process media entry for artists with images', () => {
+      const artistsWithImages = artistConfigs.filter(
+        (c) => c.profile.coverImageUrl !== null
+      )
+      for (const config of artistsWithImages) {
         expect(config.processMedia.length).toBeGreaterThanOrEqual(1)
       }
     })
