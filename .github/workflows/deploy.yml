@@ -649,7 +649,7 @@ jobs:
         run: |
           # Build the prompt payload using jq for proper JSON escaping
           PROMPT=$(cat <<'PROMPT_EOF'
-          Summarize this pull request merge for a Slack notification to a non-technical team. Write 2-3 sentences max in plain English. Focus on what changed from a product or feature perspective — what would a user or stakeholder notice? Do not mention file names, function names, or technical implementation details unless they ARE the feature (e.g., "Added CI/CD pipeline" is fine). Be concise and direct.
+          Summarize this pull request merge for a Slack notification to a non-technical team. Write 1-5 sentences max per feature in plain English. Focus on what changed from a product or feature perspective — what would a user or stakeholder notice? Make sure to highlight changes to buyer and artist experience. Do not mention file names, function names, or technical implementation details unless they ARE the feature (e.g., "Added CI/CD pipeline" is fine). Be concise and direct.
           PROMPT_EOF
           )
 
@@ -904,57 +904,7 @@ jobs:
               core.setOutput('failed_step', 'Unknown step');
             }
 
-      - name: Send success to Slack actions channel
-        if: steps.status.outputs.result == 'success' && steps.pr_data.outputs.has_pr == 'true'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_ACTIONS_WEBHOOK_URL }}
-          PR_TITLE: ${{ steps.pr_data.outputs.pr_title }}
-          PR_URL: ${{ steps.pr_data.outputs.pr_url }}
-          PR_NUMBER: ${{ steps.pr_data.outputs.pr_number }}
-          PR_AUTHOR: ${{ steps.pr_data.outputs.pr_author }}
-          COMMIT_COUNT: ${{ steps.pr_data.outputs.commit_count }}
-          DIFF_STATS: ${{ steps.pr_data.outputs.diff_stats }}
-          AREAS: ${{ steps.pr_data.outputs.areas }}
-          FILES_COUNT: ${{ steps.pr_data.outputs.files_count }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          PAYLOAD=$(jq -n \
-            --arg pr_title "$PR_TITLE" \
-            --arg pr_url "$PR_URL" \
-            --arg pr_number "$PR_NUMBER" \
-            --arg pr_author "$PR_AUTHOR" \
-            --arg commit_count "$COMMIT_COUNT" \
-            --arg diff_stats "$DIFF_STATS" \
-            --arg areas "$AREAS" \
-            --arg files_count "$FILES_COUNT" \
-            --arg run_url "$RUN_URL" \
-            '{
-              blocks: [
-                {
-                  type: "header",
-                  text: {type: "plain_text", text: ("✅ main deploy succeeded"), emoji: true}
-                },
-                {
-                  type: "section",
-                  text: {
-                    type: "mrkdwn",
-                    text: ("*PR:* <" + $pr_url + "|#" + $pr_number + "> " + $pr_title + "\n*Author:* " + $pr_author + "\n*Commits:* " + $commit_count + " | *Diff:* " + $diff_stats + "\n*Areas:* " + $areas)
-                  }
-                },
-                {
-                  type: "context",
-                  elements: [
-                    {type: "mrkdwn", text: ("📁 " + $files_count + " files changed | <" + $run_url + "|View run>")}
-                  ]
-                }
-              ]
-            }')
-
-          curl -s --max-time 10 \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD" \
-            "$SLACK_WEBHOOK_URL" || true
-
+      # Success with a PR is already covered by notify-releases — skip actions channel
       - name: Send failure to Slack actions channel
         if: steps.status.outputs.result == 'failure' && steps.pr_data.outputs.has_pr == 'true'
         env:
