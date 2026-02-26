@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { CategoryType, FeaturedArtistItem, ListingStatusType } from '@surfaced-art/types'
 import { ViewToggle, getTabId, getPanelId } from '@/components/ViewToggle'
 import { CardGrid } from '@/components/CardGrid'
@@ -47,7 +47,7 @@ export function CategoryBrowseView({
 }: CategoryBrowseViewProps) {
   const [view, setView] = useState<BrowseView>('pieces')
 
-  const toggleId = 'category-browse'
+  const toggleId = `category-browse${useId()}`
   const count = view === 'pieces' ? totalListingCount : totalArtistCount
   const countLabel = view === 'pieces'
     ? `${count} ${count === 1 ? 'piece' : 'pieces'} available`

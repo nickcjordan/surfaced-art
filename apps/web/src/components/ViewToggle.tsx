@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import { cn } from '@/lib/utils'
 
 type ViewToggleOption<T extends string> = { value: T; label: string }
@@ -8,8 +9,8 @@ type ViewToggleProps<T extends string> = {
   options: ViewToggleOption<T>[]
   value: T
   onChange: (value: T) => void
-  /** Prefix for generating tab and panel IDs (e.g. "category" → "category-tab-pieces", "category-panel-pieces"). */
-  id: string
+  /** Optional prefix for generating tab and panel IDs (e.g. "category" → "category-tab-pieces", "category-panel-pieces"). When omitted a stable auto-generated ID is used. */
+  id?: string
   'data-testid'?: string
   className?: string
 }
@@ -28,10 +29,12 @@ export function ViewToggle<T extends string>({
   options,
   value,
   onChange,
-  id,
+  id: idProp,
   'data-testid': testId = 'view-toggle',
   className,
 }: ViewToggleProps<T>) {
+  const autoId = useId()
+  const id = idProp ?? `vt${autoId}`
   return (
     <div
       role="tablist"

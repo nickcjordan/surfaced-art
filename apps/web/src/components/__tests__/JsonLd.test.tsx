@@ -63,6 +63,20 @@ describe('JsonLd', () => {
     expect(parsed.description).toBe('Test </script><script>alert("xss")</script> value')
   })
 
+  it('escapes mixed-case </ScRiPt> sequences to prevent XSS', () => {
+    const data = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      description: 'Value </ScRiPt><script>alert("xss")</script> end',
+    }
+    const { container } = render(<JsonLd data={data} />)
+    const script = container.querySelector('script[type="application/ld+json"]')
+    const raw = script!.innerHTML
+    // Browser-parsed innerHTML lowercases tags, so check for the generic pattern
+    expect(raw).not.toMatch(/<\/script/i)
+    expect(raw).toContain('<\\/')
+  })
+
   it('escapes HTML comment sequences', () => {
     const data = {
       '@context': 'https://schema.org',
