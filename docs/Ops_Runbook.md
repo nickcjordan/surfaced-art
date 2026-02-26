@@ -86,6 +86,27 @@ curl -X POST https://surfaced.art/api/revalidate \
 
 ---
 
+## Reprocess all seed images
+
+Re-triggers the image processor Lambda for all seed images by copying them onto themselves, which fires S3 `PutObject` events.
+
+```bash
+aws s3 cp s3://surfaced-art-prod-media/uploads/seed/ \
+  s3://surfaced-art-prod-media/uploads/seed/ \
+  --recursive --metadata-directive REPLACE
+```
+
+**When to run:** After deploying a fix to the image processor Lambda, or if WebP variants (400w, 800w, 1200w) are missing from S3. The S3 event trigger only fires on new uploads, so images uploaded before a Lambda fix won't have processed variants until you run this.
+
+**Verify:** Check that processed variants exist afterwards:
+
+```bash
+aws s3 ls s3://surfaced-art-prod-media/uploads/seed/artists/abbey-peters/profile/
+# Should show 400w.webp, 800w.webp, 1200w.webp
+```
+
+---
+
 ## Infrastructure reference
 
 | Resource | Value |
