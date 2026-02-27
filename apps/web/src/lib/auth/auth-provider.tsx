@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react'
 import * as cognito from './cognito'
 import type { AuthTokens } from './cognito'
+import { AUTH_COOKIE_NAME } from './constants'
 
 export interface AuthUser {
   email: string
@@ -35,8 +36,6 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-const TOKEN_COOKIE_NAME = 'cognito-id-token'
-
 function extractUserFromTokens(tokens: AuthTokens): AuthUser {
   try {
     const payload = JSON.parse(atob(tokens.idToken.split('.')[1]))
@@ -49,16 +48,20 @@ function extractUserFromTokens(tokens: AuthTokens): AuthUser {
   }
 }
 
-/** Set a cookie for the Next.js middleware to check (client-side guard only). */
-function setTokenCookie(idToken: string) {
-  // SameSite=Lax, Secure in production, path=/ so middleware sees it
+/**
+ * Set a non-sensitive marker cookie for the Next.js middleware to check.
+ * The value is just "1" — the actual JWT is never stored in a cookie.
+ * This is a client-side routing guard only; real auth happens via the
+ * Authorization header validated by the API.
+ */
+function setAuthCookie() {
   const secure = window.location.protocol === 'https:' ? '; Secure' : ''
-  document.cookie = `${TOKEN_COOKIE_NAME}=${encodeURIComponent(idToken)}; path=/; SameSite=Lax; max-age=3600${secure}`
+  document.cookie = `${AUTH_COOKIE_NAME}=1; path=/; SameSite=Lax; max-age=3600${secure}`
 }
 
-/** Clear the middleware guard cookie. */
-function clearTokenCookie() {
-  document.cookie = `${TOKEN_COOKIE_NAME}=; path=/; max-age=0`
+/** Clear the middleware guard cookie on sign-out. */
+function clearAuthCookie() {
+  document.cookie = `${AUTH_COOKIE_NAME}=; path=/; max-age=0`
 }
 
 interface AuthProviderProps {
@@ -78,11 +81,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const tokens = await cognito.getCurrentSession()
         if (!cancelled && tokens) {
           setUser(extractUserFromTokens(tokens))
-          setTokenCookie(tokens.idToken)
+          setAuthCookie()
         }
       } catch {
         // No valid session — remain signed out
-        clearTokenCookie()
+        clearAuthCookie()
       } finally {
         if (!cancelled) {
           setLoading(false)
@@ -97,7 +100,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const handleSignIn = useCallback(async (email: string, password: string) => {
     const tokens = await cognito.signIn(email, password)
     setUser(extractUserFromTokens(tokens))
-    setTokenCookie(tokens.idToken)
+    setAuthCookie()
   }, [])
 
   const handleSignUp = useCallback(async (email: string, password: string, fullName: string) => {
@@ -115,7 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const handleSignOut = useCallback(() => {
     cognito.signOut()
-    clearTokenCookie()
+    clearAuthCookie()
     setUser(null)
   }, [])
 
