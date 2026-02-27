@@ -83,6 +83,34 @@ export const waitlistBody = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
 })
 
+/** POST /artists/apply body */
+export const artistApplicationBody = z.object({
+  fullName: z
+    .string()
+    .min(2, 'Full name must be at least 2 characters')
+    .max(100, 'Full name must be at most 100 characters'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  instagramUrl: z.string().url('Invalid Instagram URL').optional().or(z.literal('')),
+  websiteUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  statement: z
+    .string()
+    .min(50, 'Artist statement must be at least 50 characters')
+    .max(5000, 'Artist statement must be at most 5000 characters'),
+  exhibitionHistory: z
+    .string()
+    .max(5000, 'Exhibition history must be at most 5000 characters')
+    .optional()
+    .or(z.literal('')),
+  categories: z
+    .array(z.enum(categoryValues))
+    .min(1, 'Select at least one category'),
+})
+
+/** GET /artists/apply/check-email query */
+export const checkEmailQuery = z.object({
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+})
+
 // ============================================================================
 // Path param wrappers (for route param validation)
 // ============================================================================
@@ -131,3 +159,5 @@ export function sanitizeText(input: string): string {
 export type ArtistsQuery = z.infer<typeof artistsQuery>
 export type ListingsQuery = z.infer<typeof listingsQuery>
 export type WaitlistBody = z.infer<typeof waitlistBody>
+export type ArtistApplicationBody = z.infer<typeof artistApplicationBody>
+export type CheckEmailQuery = z.infer<typeof checkEmailQuery>

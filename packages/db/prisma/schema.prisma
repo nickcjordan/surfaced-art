@@ -86,6 +86,13 @@ enum ProcessMediaTypeType {
   video
 }
 
+enum ApplicationStatusType {
+  pending
+  approved
+  rejected
+  withdrawn
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -426,4 +433,25 @@ model Waitlist {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("waitlist")
+}
+
+/// Artist application - submitted via public /apply form, reviewed externally
+model ArtistApplication {
+  id                String                @id @default(uuid()) @db.Uuid
+  email             String                @unique
+  fullName          String                @map("full_name")
+  instagramUrl      String?               @map("instagram_url")
+  websiteUrl        String?               @map("website_url")
+  statement         String                @db.Text
+  exhibitionHistory String?               @map("exhibition_history") @db.Text
+  categories        CategoryType[]
+  status            ApplicationStatusType @default(pending)
+  reviewedBy        String?               @map("reviewed_by") @db.Uuid
+  reviewedAt        DateTime?             @map("reviewed_at")
+  reviewNotes       String?               @map("review_notes") @db.Text
+  submittedAt       DateTime              @default(now()) @map("submitted_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("artist_applications")
 }

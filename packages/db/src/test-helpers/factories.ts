@@ -167,3 +167,36 @@ export async function createTestWaitlistEntry(
     },
   })
 }
+
+type CreateTestApplicationOptions = {
+  email?: string
+  fullName?: string
+  instagramUrl?: string
+  websiteUrl?: string
+  statement?: string
+  exhibitionHistory?: string
+  categories?: Array<'ceramics' | 'painting' | 'print' | 'jewelry' | 'illustration' | 'photography' | 'woodworking' | 'fibers' | 'mixed_media'>
+  status?: 'pending' | 'approved' | 'rejected' | 'withdrawn'
+}
+
+/**
+ * Create a test artist application.
+ * Returns the Prisma-created record.
+ */
+export async function createTestApplication(
+  prisma: PrismaClient,
+  overrides: CreateTestApplicationOptions = {}
+) {
+  return prisma.artistApplication.create({
+    data: {
+      email: overrides.email ?? faker.internet.email().toLowerCase(),
+      fullName: overrides.fullName ?? faker.person.fullName(),
+      instagramUrl: overrides.instagramUrl ?? `https://instagram.com/${faker.internet.username()}`,
+      websiteUrl: overrides.websiteUrl ?? faker.internet.url(),
+      statement: overrides.statement ?? faker.lorem.paragraphs(2),
+      exhibitionHistory: overrides.exhibitionHistory ?? faker.lorem.paragraph(),
+      categories: overrides.categories ?? ['ceramics'],
+      status: overrides.status ?? 'pending',
+    },
+  })
+}

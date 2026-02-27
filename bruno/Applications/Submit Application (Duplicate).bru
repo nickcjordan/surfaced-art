@@ -1,0 +1,34 @@
+meta {
+  name: Submit Application (Duplicate)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{sa_baseUrl}}/artists/apply
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "fullName": "Duplicate Applicant",
+    "email": "duplicate-test@example.com",
+    "statement": "I create handmade ceramics that explore the intersection of form and function in everyday life. My work draws from traditional pottery techniques.",
+    "categories": ["ceramics"]
+  }
+}
+
+assert {
+  res.status: eq 409
+  res.body.error.code: eq CONFLICT
+}
+
+tests {
+  test("should return 409 conflict for duplicate email", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(409);
+    expect(body.error.code).to.equal("CONFLICT");
+    expect(body.error.message).to.include("already");
+  });
+}

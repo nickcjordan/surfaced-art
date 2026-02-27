@@ -1,0 +1,35 @@
+meta {
+  name: Submit Application (Invalid)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{sa_baseUrl}}/artists/apply
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "fullName": "",
+    "email": "not-an-email",
+    "statement": "Too short",
+    "categories": []
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.error.code: eq VALIDATION_ERROR
+}
+
+tests {
+  test("should return validation errors for invalid data", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(400);
+    expect(body.error.code).to.equal("VALIDATION_ERROR");
+    expect(body.error.details).to.be.an("array");
+    expect(body.error.details.length).to.be.greaterThan(0);
+  });
+}

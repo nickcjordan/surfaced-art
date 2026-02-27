@@ -1,0 +1,38 @@
+meta {
+  name: Submit Application
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{sa_baseUrl}}/artists/apply
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "fullName": "Test Artist {{$timestamp}}",
+    "email": "test-{{$timestamp}}@example.com",
+    "instagramUrl": "https://instagram.com/testartist",
+    "websiteUrl": "https://testartist.com",
+    "statement": "I create handmade ceramics that explore the intersection of form and function in everyday life. My work draws from traditional pottery techniques.",
+    "exhibitionHistory": "Solo show at Local Gallery, 2024",
+    "categories": ["ceramics"]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.message: eq Application submitted successfully
+  res.body.applicationId: isDefined
+}
+
+tests {
+  test("should return 201 with success message", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(201);
+    expect(body.message).to.equal("Application submitted successfully");
+    expect(body.applicationId).to.be.a("string");
+  });
+}
