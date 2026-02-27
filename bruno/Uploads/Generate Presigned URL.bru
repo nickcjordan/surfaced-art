@@ -1,0 +1,41 @@
+meta {
+  name: Generate Presigned URL
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{sa_baseUrl}}/uploads/presigned-url
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "context": "listing",
+    "contentType": "image/jpeg"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.url: isDefined
+  res.body.fields: isDefined
+  res.body.key: isDefined
+  res.body.expiresIn: eq 900
+}
+
+tests {
+  test("should return 200 with presigned post data", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.url).to.be.a("string");
+    expect(body.fields).to.be.an("object");
+    expect(body.key).to.match(/^uploads\/listing\//);
+    expect(body.expiresIn).to.equal(900);
+  });
+}

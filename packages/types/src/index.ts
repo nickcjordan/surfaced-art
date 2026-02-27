@@ -52,6 +52,7 @@ export type {
   ApiError,
   ArtistApplication,
   ApplicationSubmitResponse,
+  PresignedPostResponse,
 } from './interfaces'
 
 // Validation schemas
@@ -67,9 +68,11 @@ export {
   sanitizeText,
   artistApplicationBody,
   checkEmailQuery,
+  presignedUrlBody,
   type ArtistsQuery,
   type ListingsQuery,
   type WaitlistBody,
   type ArtistApplicationBody,
   type CheckEmailQuery,
+  type PresignedUrlBody,
 } from './schemas'

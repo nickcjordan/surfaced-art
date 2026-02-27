@@ -1,0 +1,31 @@
+meta {
+  name: Generate Presigned URL (No Auth)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{sa_baseUrl}}/uploads/presigned-url
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "context": "listing",
+    "contentType": "image/jpeg"
+  }
+}
+
+assert {
+  res.status: eq 401
+  res.body.error.code: eq UNAUTHORIZED
+}
+
+tests {
+  test("should return 401 without auth token", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(401);
+    expect(body.error.code).to.equal("UNAUTHORIZED");
+  });
+}
