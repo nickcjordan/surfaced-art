@@ -18,6 +18,7 @@ vi.mock('next/server', () => ({
 }))
 
 import { middleware, config } from '../middleware'
+import { AUTH_COOKIE_NAME } from '@/lib/auth/constants'
 
 function createRequest(url: string, cookies: Record<string, string> = {}) {
   const fullUrl = new URL(url, 'https://surfaced.art')
@@ -57,7 +58,7 @@ describe('Auth middleware', () => {
 
   it('should allow /dashboard access when auth token exists', () => {
     const request = createRequest('/dashboard', {
-      'cognito-id-token': 'some-jwt-token',
+      [AUTH_COOKIE_NAME]: '1',
     })
     middleware(request)
 
