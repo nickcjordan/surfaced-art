@@ -53,6 +53,8 @@ export type {
   ArtistApplication,
   ApplicationSubmitResponse,
   PresignedPostResponse,
+  DashboardResponse,
+  ProfileCompletionField,
 } from './interfaces'
 
 // Validation schemas

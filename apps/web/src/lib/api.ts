@@ -6,6 +6,7 @@ import type {
   ApplicationSubmitResponse,
   CategoryType,
   CategoryWithCount,
+  DashboardResponse,
   FeaturedArtistItem,
   ListingDetailResponse,
   ListingListItem,
@@ -110,6 +111,12 @@ export async function submitApplication(
   return apiFetch<ApplicationSubmitResponse>('/artists/apply', {
     method: 'POST',
     body: JSON.stringify(data),
+  })
+}
+
+export async function getDashboard(token: string): Promise<DashboardResponse> {
+  return apiFetch<DashboardResponse>('/me/dashboard', {
+    headers: { Authorization: `Bearer ${token}` },
   })
 }
 

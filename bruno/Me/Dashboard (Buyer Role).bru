@@ -1,0 +1,28 @@
+meta {
+  name: Dashboard (Buyer Role)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{sa_baseUrl}}/me/dashboard
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_buyerAuthToken}}
+}
+
+assert {
+  res.status: eq 403
+  res.body.error.code: eq FORBIDDEN
+}
+
+tests {
+  test("should return 403 for buyer role", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("FORBIDDEN");
+    expect(body.error.message).to.equal("Insufficient permissions");
+  });
+}
