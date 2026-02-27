@@ -14,6 +14,8 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.999.0",
+    "@aws-sdk/s3-presigned-post": "^3.999.0",
     "@hono/node-server": "^1.14.0",
     "@hono/zod-validator": "^0.7.6",
     "@surfaced-art/db": "^0.0.1",

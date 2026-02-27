@@ -1,0 +1,35 @@
+meta {
+  name: Generate Presigned URL (Buyer Role)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{sa_baseUrl}}/uploads/presigned-url
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_buyerAuthToken}}
+}
+
+body:json {
+  {
+    "context": "listing",
+    "contentType": "image/jpeg"
+  }
+}
+
+assert {
+  res.status: eq 403
+  res.body.error.code: eq FORBIDDEN
+}
+
+tests {
+  test("should return 403 for buyer role", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(403);
+    expect(body.error.code).to.equal("FORBIDDEN");
+  });
+}
