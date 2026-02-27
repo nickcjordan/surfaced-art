@@ -17,6 +17,7 @@
     "@hono/node-server": "^1.14.0",
     "@hono/zod-validator": "^0.7.6",
     "@surfaced-art/db": "^0.0.1",
+    "@surfaced-art/email": "^0.0.1",
     "@surfaced-art/types": "^0.0.1",
     "@surfaced-art/utils": "^0.0.1",
     "aws-jwt-verify": "^5.1.1",

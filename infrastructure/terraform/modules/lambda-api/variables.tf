@@ -86,6 +86,16 @@ variable "api_gateway_log_group_arn" {
   type        = string
 }
 
+variable "ses_from_address" {
+  description = "SES sender email address (e.g. support@surfacedart.com)"
+  type        = string
+}
+
+variable "ses_configuration_set_name" {
+  description = "SES configuration set name for email tracking"
+  type        = string
+}
+
 variable "log_retention_days" {
   description = "CloudWatch log group retention in days"
   type        = number

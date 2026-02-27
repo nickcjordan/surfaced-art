@@ -54,13 +54,15 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      NODE_ENV             = var.environment
-      DATABASE_URL         = var.database_url
-      COGNITO_USER_POOL_ID = var.cognito_user_pool_id
-      COGNITO_CLIENT_ID    = var.cognito_client_id
-      S3_BUCKET_NAME       = var.s3_bucket_name
-      CLOUDFRONT_URL       = var.cloudfront_url
-      FRONTEND_URL         = var.frontend_url
+      NODE_ENV              = var.environment
+      DATABASE_URL          = var.database_url
+      COGNITO_USER_POOL_ID  = var.cognito_user_pool_id
+      COGNITO_CLIENT_ID     = var.cognito_client_id
+      S3_BUCKET_NAME        = var.s3_bucket_name
+      CLOUDFRONT_URL        = var.cloudfront_url
+      FRONTEND_URL          = var.frontend_url
+      SES_FROM_ADDRESS      = var.ses_from_address
+      SES_CONFIGURATION_SET = var.ses_configuration_set_name
 
       # Add Amazon RDS CA certificates to Node.js trust store so the pg driver
       # can verify RDS server certificates. The Lambda base image ships this

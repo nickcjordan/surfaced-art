@@ -248,11 +248,13 @@ module "lambda_api" {
   placeholder_image_uri = var.placeholder_image_uri
 
   # Environment variables for Lambda
-  database_url         = module.rds.connection_string
-  cognito_user_pool_id = module.cognito.user_pool_id
-  cognito_client_id    = module.cognito.client_id
-  s3_bucket_name       = module.s3_cloudfront.bucket_name
-  cloudfront_url       = module.s3_cloudfront.cloudfront_url
+  database_url               = module.rds.connection_string
+  cognito_user_pool_id       = module.cognito.user_pool_id
+  cognito_client_id          = module.cognito.client_id
+  s3_bucket_name             = module.s3_cloudfront.bucket_name
+  cloudfront_url             = module.s3_cloudfront.cloudfront_url
+  ses_from_address           = "support@${var.ses_domain}"
+  ses_configuration_set_name = module.ses.configuration_set_name
 
   # Observability — log group managed centrally in observability.tf
   api_gateway_log_group_arn = aws_cloudwatch_log_group.api_gateway.arn
