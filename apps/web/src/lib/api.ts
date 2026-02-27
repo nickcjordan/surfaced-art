@@ -2,6 +2,7 @@ import { cache } from 'react'
 import type {
   ArtistProfileResponse,
   ArtistApplicationBody,
+  ApplicationStatusType,
   ApplicationSubmitResponse,
   CategoryType,
   CategoryWithCount,
@@ -114,8 +115,8 @@ export async function submitApplication(
 
 export async function checkApplicationEmail(
   email: string
-): Promise<{ exists: boolean; status?: string }> {
-  return apiFetch<{ exists: boolean; status?: string }>(
+): Promise<{ exists: boolean; status?: ApplicationStatusType }> {
+  return apiFetch<{ exists: boolean; status?: ApplicationStatusType }>(
     `/artists/apply/check-email?email=${encodeURIComponent(email)}`
   )
 }

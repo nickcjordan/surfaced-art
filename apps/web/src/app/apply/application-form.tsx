@@ -13,7 +13,7 @@ import { CATEGORIES } from '@/lib/categories'
 import { submitApplication, checkApplicationEmail, ApiError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
-type FormState = 'idle' | 'submitting' | 'success' | 'error' | 'duplicate'
+type FormState = 'idle' | 'submitting' | 'success' | 'error'
 
 interface FormData {
   fullName: string
@@ -40,7 +40,7 @@ export function ApplicationForm() {
   const [formState, setFormState] = useState<FormState>('idle')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [serverError, setServerError] = useState<string | null>(null)
-  const [emailChecked, setEmailChecked] = useState(false)
+  const [duplicateFound, setEmailChecked] = useState(false)
 
   function updateField<K extends keyof FormData>(field: K, value: FormData[K]) {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -109,7 +109,7 @@ export function ApplicationForm() {
     }
 
     // Block if email duplicate check found a conflict
-    if (emailChecked && fieldErrors.email) return
+    if (duplicateFound && fieldErrors.email) return
 
     setFormState('submitting')
     setFieldErrors({})

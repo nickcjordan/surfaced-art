@@ -20,17 +20,24 @@ export function createApplicationRoutes(prisma: PrismaClient) {
 
     const normalizedEmail = parsed.data.email.trim().toLowerCase()
 
-    const existing = await prisma.artistApplication.findUnique({
-      where: { email: normalizedEmail },
-      select: { id: true, status: true },
-    })
+    try {
+      const existing = await prisma.artistApplication.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true, status: true },
+      })
 
-    // Allow reapplication for rejected/withdrawn
-    if (!existing || existing.status === 'rejected' || existing.status === 'withdrawn') {
-      return c.json({ exists: false })
+      // Allow reapplication for rejected/withdrawn
+      if (!existing || existing.status === 'rejected' || existing.status === 'withdrawn') {
+        return c.json({ exists: false })
+      }
+
+      return c.json({ exists: true, status: existing.status })
+    } catch (err: unknown) {
+      logger.error('Email check failed', {
+        errorMessage: err instanceof Error ? err.message : String(err),
+      })
+      return internalError(c)
     }
-
-    return c.json({ exists: true, status: existing.status })
   })
 
   /**
@@ -66,48 +73,48 @@ export function createApplicationRoutes(prisma: PrismaClient) {
     const sanitizedStatement = sanitizeText(statement)
     const sanitizedHistory = exhibitionHistory ? sanitizeText(exhibitionHistory) : null
 
-    // Check for existing application
-    const existing = await prisma.artistApplication.findUnique({
-      where: { email: normalizedEmail },
-      select: { id: true, status: true },
-    })
-
-    if (existing) {
-      // Pending or approved — reject duplicate
-      if (existing.status === 'pending') {
-        return conflict(c, 'An application with this email is already under review')
-      }
-      if (existing.status === 'approved') {
-        return conflict(c, 'This email is already associated with an approved artist')
-      }
-
-      // Rejected or withdrawn — allow resubmission by updating existing record
-      const updated = await prisma.artistApplication.update({
-        where: { id: existing.id },
-        data: {
-          fullName: sanitizedFullName,
-          instagramUrl: instagramUrl || null,
-          websiteUrl: websiteUrl || null,
-          statement: sanitizedStatement,
-          exhibitionHistory: sanitizedHistory,
-          categories: categories as CategoryType[],
-          status: 'pending',
-        },
-      })
-
-      logger.info('Artist application resubmitted', {
-        applicationId: updated.id,
-        durationMs: Date.now() - start,
-      })
-
-      return c.json(
-        { message: 'Application submitted successfully', applicationId: updated.id },
-        201
-      )
-    }
-
-    // New application
     try {
+      // Check for existing application
+      const existing = await prisma.artistApplication.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true, status: true },
+      })
+
+      if (existing) {
+        // Pending or approved — reject duplicate
+        if (existing.status === 'pending') {
+          return conflict(c, 'An application with this email is already under review')
+        }
+        if (existing.status === 'approved') {
+          return conflict(c, 'This email is already associated with an approved artist')
+        }
+
+        // Rejected or withdrawn — allow resubmission by updating existing record
+        const updated = await prisma.artistApplication.update({
+          where: { id: existing.id },
+          data: {
+            fullName: sanitizedFullName,
+            instagramUrl: instagramUrl || null,
+            websiteUrl: websiteUrl || null,
+            statement: sanitizedStatement,
+            exhibitionHistory: sanitizedHistory,
+            categories: categories as CategoryType[],
+            status: 'pending',
+          },
+        })
+
+        logger.info('Artist application resubmitted', {
+          applicationId: updated.id,
+          durationMs: Date.now() - start,
+        })
+
+        return c.json(
+          { message: 'Application submitted successfully', applicationId: updated.id },
+          201
+        )
+      }
+
+      // New application
       const application = await prisma.artistApplication.create({
         data: {
           email: normalizedEmail,
