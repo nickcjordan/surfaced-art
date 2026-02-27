@@ -39,6 +39,13 @@ export function validationError(c: Context, zodError: ZodError) {
 }
 
 /**
+ * 409 Conflict
+ */
+export function conflict(c: Context, message: string) {
+  return c.json(errorBody('CONFLICT', message), 409)
+}
+
+/**
  * 500 Internal Server Error
  */
 export function internalError(c: Context) {

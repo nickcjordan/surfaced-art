@@ -1,6 +1,8 @@
 import { cache } from 'react'
 import type {
   ArtistProfileResponse,
+  ArtistApplicationBody,
+  ApplicationSubmitResponse,
   CategoryType,
   CategoryWithCount,
   FeaturedArtistItem,
@@ -99,4 +101,21 @@ export async function joinWaitlist(email: string): Promise<{ message: string }> 
     method: 'POST',
     body: JSON.stringify({ email }),
   })
+}
+
+export async function submitApplication(
+  data: ArtistApplicationBody
+): Promise<ApplicationSubmitResponse> {
+  return apiFetch<ApplicationSubmitResponse>('/artists/apply', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function checkApplicationEmail(
+  email: string
+): Promise<{ exists: boolean; status?: string }> {
+  return apiFetch<{ exists: boolean; status?: string }>(
+    `/artists/apply/check-email?email=${encodeURIComponent(email)}`
+  )
 }
