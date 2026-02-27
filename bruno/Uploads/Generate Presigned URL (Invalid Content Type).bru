@@ -1,0 +1,35 @@
+meta {
+  name: Generate Presigned URL (Invalid Content Type)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{sa_baseUrl}}/uploads/presigned-url
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "context": "listing",
+    "contentType": "image/gif"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.error.code: eq VALIDATION_ERROR
+}
+
+tests {
+  test("should return 400 for invalid content type", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(400);
+    expect(body.error.code).to.equal("VALIDATION_ERROR");
+  });
+}

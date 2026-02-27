@@ -86,7 +86,7 @@ variable "apple_private_key" {
 variable "ses_domain" {
   description = "Domain for SES email sending"
   type        = string
-  default     = "surfaced.art"
+  default     = "surfacedart.com"
 }
 
 # Lambda variables

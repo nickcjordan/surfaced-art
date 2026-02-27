@@ -12,6 +12,8 @@ import { createArtistRoutes } from './routes/artists'
 import { createListingRoutes } from './routes/listings'
 import { createCategoryRoutes } from './routes/categories'
 import { createWaitlistRoutes } from './routes/waitlist'
+import { createApplicationRoutes } from './routes/applications'
+import { createUploadRoutes } from './routes/uploads'
 
 // Create Hono app
 const app = new Hono()
@@ -45,13 +47,17 @@ app.use(
 
 // Rate limiting for sensitive endpoints
 app.use('/waitlist', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
+app.use('/artists/apply', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
+app.use('/uploads/*', rateLimiter({ maxRequests: 10, windowMs: 60_000 }))
 
-// Mount routes
+// Mount routes — /artists/apply MUST be before /artists to avoid /:slug collision
 app.route('/health', createHealthRoutes(prisma))
+app.route('/artists/apply', createApplicationRoutes(prisma))
 app.route('/artists', createArtistRoutes(prisma))
 app.route('/listings', createListingRoutes(prisma))
 app.route('/categories', createCategoryRoutes(prisma))
 app.route('/waitlist', createWaitlistRoutes(prisma))
+app.route('/uploads', createUploadRoutes(prisma))
 
 // Root route
 app.get('/', (c) => {

@@ -8,6 +8,7 @@ import type {
   OrderStatusType,
   CvEntryTypeType,
   ProcessMediaTypeType,
+  ApplicationStatusType,
 } from './enums'
 
 /**
@@ -356,6 +357,47 @@ export interface PaginatedResponse<T> {
     total: number
     totalPages: number
   }
+}
+
+// ─── Artist Application Types ─────────────────────────────────────────
+
+/**
+ * Artist application record
+ * Submitted via the public /apply form, reviewed externally
+ */
+export interface ArtistApplication {
+  id: string // UUID
+  email: string
+  fullName: string
+  instagramUrl: string | null
+  websiteUrl: string | null
+  statement: string
+  exhibitionHistory: string | null
+  categories: CategoryType[]
+  status: ApplicationStatusType
+  submittedAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Response from POST /artists/apply
+ */
+export interface ApplicationSubmitResponse {
+  message: string
+  applicationId: string
+}
+
+// ─── Upload Types ───────────────────────────────────────────────────
+
+/**
+ * Response from POST /uploads/presigned-url
+ * Contains everything the client needs to POST a file directly to S3.
+ */
+export interface PresignedPostResponse {
+  url: string // S3 endpoint to POST to
+  fields: Record<string, string> // Form fields (policy, signature, key, etc.)
+  key: string // The S3 object key
+  expiresIn: number // Seconds until URL expires
 }
 
 // ─── API Error Types ──────────────────────────────────────────────────

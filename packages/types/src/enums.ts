@@ -127,3 +127,19 @@ export const ProcessMediaType = {
 } as const
 
 export type ProcessMediaTypeType = (typeof ProcessMediaType)[keyof typeof ProcessMediaType]
+
+/**
+ * Artist application status
+ * - pending: Application submitted, awaiting review
+ * - approved: Accepted, artist profile will be created
+ * - rejected: Not accepted at this time
+ * - withdrawn: Applicant withdrew their application
+ */
+export const ApplicationStatus = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  WITHDRAWN: 'withdrawn',
+} as const
+
+export type ApplicationStatusType = (typeof ApplicationStatus)[keyof typeof ApplicationStatus]
