@@ -18,7 +18,10 @@ export function DashboardSidebar() {
     <nav data-testid="dashboard-sidebar" className="md:w-56 shrink-0">
       <div className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible">
         {navItems.map((item) => {
-          const isActive = pathname === item.href
+          const isActive =
+            item.href === '/dashboard'
+              ? pathname === '/dashboard'
+              : pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
