@@ -118,6 +118,20 @@ describe('sendEmail', () => {
     expect(mockSend).toHaveBeenCalledOnce()
   })
 
+  it('should return error when SES_FROM_ADDRESS is missing', async () => {
+    delete process.env.SES_FROM_ADDRESS
+
+    const result = await sendEmail({
+      to: 'artist@example.com',
+      subject: 'Test',
+      template: React.createElement(TestTemplate),
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error).toBe('SES_FROM_ADDRESS must be set')
+    expect(mockSend).not.toHaveBeenCalled()
+  })
+
   it('should omit ConfigurationSetName when not configured', async () => {
     delete process.env.SES_CONFIGURATION_SET
 

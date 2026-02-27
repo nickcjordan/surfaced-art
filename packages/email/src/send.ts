@@ -34,8 +34,33 @@ export async function sendEmail(
     return { success: false, error: 'Rate limit exceeded' }
   }
 
-  const config = getEmailConfig()
-  const client = getSESClient()
+  let config: ReturnType<typeof getEmailConfig>
+  try {
+    config = getEmailConfig()
+  } catch (err) {
+    logger.error('Email config error', {
+      errorMessage: err instanceof Error ? err.message : String(err),
+      subject: options.subject,
+    })
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Email configuration error',
+    }
+  }
+
+  let client: ReturnType<typeof getSESClient>
+  try {
+    client = getSESClient()
+  } catch (err) {
+    logger.error('SES client initialization error', {
+      errorMessage: err instanceof Error ? err.message : String(err),
+      subject: options.subject,
+    })
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'SES client error',
+    }
+  }
 
   // Render React Email template to HTML and plain text
   const html = await render(options.template)
