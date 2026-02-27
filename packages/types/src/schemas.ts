@@ -111,6 +111,12 @@ export const checkEmailQuery = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
 })
 
+/** POST /uploads/presigned-url body */
+export const presignedUrlBody = z.object({
+  context: z.enum(['profile', 'cover', 'listing', 'process']),
+  contentType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+})
+
 // ============================================================================
 // Path param wrappers (for route param validation)
 // ============================================================================
@@ -161,3 +167,4 @@ export type ListingsQuery = z.infer<typeof listingsQuery>
 export type WaitlistBody = z.infer<typeof waitlistBody>
 export type ArtistApplicationBody = z.infer<typeof artistApplicationBody>
 export type CheckEmailQuery = z.infer<typeof checkEmailQuery>
+export type PresignedUrlBody = z.infer<typeof presignedUrlBody>
