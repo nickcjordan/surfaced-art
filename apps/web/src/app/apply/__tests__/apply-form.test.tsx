@@ -169,6 +169,33 @@ describe('ApplicationForm', () => {
     })
   })
 
+  it('should prevent submit when duplicate email is detected on blur', async () => {
+    const user = userEvent.setup()
+    mockCheckApplicationEmail.mockResolvedValueOnce({ exists: true, status: 'pending' })
+
+    render(<ApplicationForm />)
+
+    await user.type(screen.getByTestId('apply-full-name'), 'Jane Artist')
+    await user.type(screen.getByTestId('apply-email'), 'jane@example.com')
+
+    // Blur the email field to trigger the duplicate check
+    await user.tab()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('apply-error-email')).toBeInTheDocument()
+      expect(screen.getByTestId('apply-error-email').textContent).toMatch(/already/i)
+    })
+
+    await user.type(
+      screen.getByTestId('apply-statement'),
+      'I create handmade ceramics that explore the intersection of form and function in everyday life.'
+    )
+    await user.click(screen.getByTestId('apply-category-ceramics'))
+    await user.click(screen.getByTestId('apply-submit'))
+
+    expect(mockSubmitApplication).not.toHaveBeenCalled()
+  })
+
   it('should disable submit button while submitting', async () => {
     const user = userEvent.setup()
     // Never resolves — keeps form in submitting state
