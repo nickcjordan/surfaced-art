@@ -8,6 +8,7 @@ import { createListingRoutes } from '../routes/listings.js'
 import { createCategoryRoutes } from '../routes/categories.js'
 import { createWaitlistRoutes } from '../routes/waitlist.js'
 import { createApplicationRoutes } from '../routes/applications.js'
+import { createMeRoutes } from '../routes/me.js'
 
 /**
  * Create a Hono app instance with a test PrismaClient injected.
@@ -34,6 +35,7 @@ export function createTestApp(prisma: PrismaClient) {
   app.route('/listings', createListingRoutes(prisma))
   app.route('/categories', createCategoryRoutes(prisma))
   app.route('/waitlist', createWaitlistRoutes(prisma))
+  app.route('/me', createMeRoutes(prisma))
 
   // Root route
   app.get('/', (c) => {
