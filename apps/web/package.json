@@ -21,6 +21,7 @@
     "@surfaced-art/types": "*",
     "@surfaced-art/utils": "*",
     "@testing-library/jest-dom": "^6.9.1",
+    "amazon-cognito-identity-js": "^6.3.16",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.575.0",

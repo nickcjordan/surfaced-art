@@ -1,0 +1,26 @@
+meta {
+  name: Get Artist Profile (Invalid Slug)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{sa_baseUrl}}/artists/INVALID_SLUG!!
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 400
+  res.body.error.code: eq VALIDATION_ERROR
+}
+
+tests {
+  test("should return 400 for invalid slug format", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("VALIDATION_ERROR");
+    expect(body.error.message).to.equal("Validation failed");
+    expect(body.error.details).to.be.an("array");
+    expect(body.error.details[0].field).to.equal("slug");
+  });
+}

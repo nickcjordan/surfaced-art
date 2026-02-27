@@ -59,6 +59,41 @@ resource "aws_cloudfront_origin_access_control" "media" {
   signing_protocol                  = "sigv4"
 }
 
+# CloudFront response headers policy — security headers for CDN-served assets
+resource "aws_cloudfront_response_headers_policy" "security" {
+  name    = "${var.project_name}-${var.environment}-security-headers"
+  comment = "Security headers for media CDN responses"
+
+  security_headers_config {
+    strict_transport_security {
+      access_control_max_age_sec = 63072000
+      include_subdomains         = true
+      preload                    = true
+      override                   = true
+    }
+
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    xss_protection {
+      mode_block = false
+      protection = false
+      override   = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+  }
+}
+
 # CloudFront distribution
 #trivy:ignore:AVD-AWS-0011 - WAF adds ~$5+/month cost, deferred to Phase 3
 #trivy:ignore:AVD-AWS-0010 - Access logging adds complexity, deferred to Phase 3
@@ -87,11 +122,12 @@ resource "aws_cloudfront_distribution" "media" {
       }
     }
 
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 86400    # 1 day
-    max_ttl                = 31536000 # 1 year
-    compress               = true
+    viewer_protocol_policy     = "redirect-to-https"
+    min_ttl                    = 0
+    default_ttl                = 86400    # 1 day
+    max_ttl                    = 31536000 # 1 year
+    compress                   = true
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
   # Cache behavior for images - longer TTL
@@ -108,11 +144,12 @@ resource "aws_cloudfront_distribution" "media" {
       }
     }
 
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 604800   # 1 week
-    max_ttl                = 31536000 # 1 year
-    compress               = true
+    viewer_protocol_policy     = "redirect-to-https"
+    min_ttl                    = 0
+    default_ttl                = 604800   # 1 week
+    max_ttl                    = 31536000 # 1 year
+    compress                   = true
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
   restrictions {

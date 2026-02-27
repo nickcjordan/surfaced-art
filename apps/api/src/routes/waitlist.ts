@@ -2,8 +2,8 @@ import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import { Prisma } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
+import { waitlistBody } from '@surfaced-art/types'
 import { badRequest, validationError, internalError } from '../errors'
-import { waitlistBodySchema } from '../schemas'
 
 export function createWaitlistRoutes(prisma: PrismaClient) {
   const waitlist = new Hono()
@@ -22,7 +22,7 @@ export function createWaitlistRoutes(prisma: PrismaClient) {
       return badRequest(c, 'Invalid JSON payload')
     }
 
-    const parsed = waitlistBodySchema.safeParse(body)
+    const parsed = waitlistBody.safeParse(body)
     if (!parsed.success) {
       return validationError(c, parsed.error)
     }

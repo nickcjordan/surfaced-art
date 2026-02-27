@@ -495,111 +495,6 @@ const karinaConfig: ArtistSeedConfig = {
 }
 
 // ============================================================================
-// Artist 4: Mako Sandusky
-// ============================================================================
-
-const makoConfig: ArtistSeedConfig = {
-  user: {
-    cognitoId: 'seed-mako-sandusky-cognito',
-    email: 'macaylasandusky@gmail.com',
-    fullName: 'Macayla Sandusky',
-    avatarUrl: null, // No images uploaded yet (blocked on artist providing photos)
-  },
-  profile: {
-    displayName: 'Mako Sandusky',
-    slug: 'mako-sandusky',
-    bio: 'Macayla is a ceramic artist pursuing an MFA at The University of Iowa. They received a BFA from The University of Arkansas with an emphasis in Ceramics and have held teaching positions at multiple community studios in New York City. Their functional vessels are a practice of self-reflection and translation of memory. The fantastical surface drawings blur and blend as the glazes move together to achieve a dreamy quality. By letting go of refinement, their pottery is imaginative while staying rooted in historical contexts of clay and illustration.',
-    location: 'Iowa City, IA',
-    websiteUrl: 'https://makomud.com',
-    instagramUrl: 'https://www.instagram.com/makomud',
-    originZip: '52240',
-    status: 'approved',
-    commissionsOpen: false,
-    coverImageUrl: null, // No images uploaded yet
-    profileImageUrl: null, // No images uploaded yet
-    applicationSource: 'advisor_network',
-  },
-  categories: ['ceramics', 'mixed_media'],
-  cvEntries: [
-    // Education
-    { type: 'education', title: 'MFA (in progress)', institution: 'University of Iowa, Iowa City, IA', year: 2025, sortOrder: 1 },
-    { type: 'education', title: 'BFA (emphasis: Ceramics)', institution: 'University of Arkansas', year: 2018, sortOrder: 2 },
-    // Exhibitions
-    { type: 'exhibition', title: 'Gallery Representation', institution: 'A.MANO Brooklyn, Brooklyn, NY', year: 2022, sortOrder: 3 },
-    { type: 'exhibition', title: 'Gallery Representation', institution: 'The Clay Studio, Philadelphia, PA', year: 2023, sortOrder: 4 },
-    // Professional experience
-    { type: 'other', title: 'Ceramic Educator', institution: 'Community studios, New York City', year: 2020, sortOrder: 5 },
-    { type: 'other', title: 'Intern', institution: 'Harvard Ceramics Program, Allston, MA', year: 2019, sortOrder: 6 },
-    { type: 'other', title: 'Apprentice to Corinne D Peterson', institution: 'Lillstreet Art Center, Chicago, IL', year: 2017, sortOrder: 7 },
-  ],
-  listings: [
-    // Available listings
-    {
-      title: 'Illustrated Jar, dreaming fox',
-      description: 'Functional stoneware jar with fantastical illustrated surface.',
-      medium: 'stoneware, glaze',
-      category: 'ceramics',
-      price: 8500,
-      status: 'available',
-      isDocumented: true,
-      artworkLength: 5, artworkWidth: 5, artworkHeight: 7,
-      packedLength: 9, packedWidth: 9, packedHeight: 11,
-      packedWeight: 3,
-    },
-    {
-      title: 'Illustrated Jar, night garden',
-      description: 'Functional stoneware jar with dreamy illustrated garden scene.',
-      medium: 'stoneware, glaze',
-      category: 'ceramics',
-      price: 8500,
-      status: 'available',
-      isDocumented: false,
-      artworkLength: 5, artworkWidth: 5, artworkHeight: 6.5,
-      packedLength: 9, packedWidth: 9, packedHeight: 10.5,
-      packedWeight: 3,
-    },
-    {
-      title: 'Illustrated Mug, tangled birds',
-      description: 'Functional stoneware mug with illustrated bird motif.',
-      medium: 'stoneware, glaze',
-      category: 'ceramics',
-      price: 4500,
-      status: 'available',
-      isDocumented: false,
-      artworkLength: 5, artworkWidth: 3.5, artworkHeight: 4,
-      packedLength: 9, packedWidth: 7.5, packedHeight: 8,
-      packedWeight: 2,
-    },
-    {
-      title: 'Illustrated Planter, forest creature',
-      description: 'Functional stoneware planter with fantastical creature illustration.',
-      medium: 'stoneware, glaze',
-      category: 'ceramics',
-      price: 9500,
-      status: 'available',
-      isDocumented: false,
-      artworkLength: 6, artworkWidth: 6, artworkHeight: 5.5,
-      packedLength: 10, packedWidth: 10, packedHeight: 9.5,
-      packedWeight: 3.5,
-    },
-    // Sold listings
-    {
-      title: 'Illustrated Jar, swimming fish',
-      description: 'Functional stoneware jar with illustrated swimming fish.',
-      medium: 'stoneware, glaze',
-      category: 'ceramics',
-      price: 8500,
-      status: 'sold',
-      isDocumented: false,
-      artworkLength: 5, artworkWidth: 5, artworkHeight: 7,
-      packedLength: 9, packedWidth: 9, packedHeight: 11,
-      packedWeight: 3,
-    },
-  ],
-  processMedia: [], // No images uploaded yet
-}
-
-// ============================================================================
 // Exported artist configs (ordered: Abbey is artist #1 / founding advisor)
 // ============================================================================
 
@@ -607,5 +502,4 @@ export const artistConfigs: ArtistSeedConfig[] = [
   abbeyConfig,
   davidConfig,
   karinaConfig,
-  makoConfig,
 ]

@@ -86,10 +86,10 @@ resource "aws_apigatewayv2_api" "main" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins     = [var.frontend_url, "http://localhost:3000"]
+    allow_origins     = [var.frontend_url, "https://www.surfaced.art", "http://localhost:3000"]
     allow_methods     = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     allow_headers     = ["Content-Type", "Authorization", "X-Amz-Date", "X-Api-Key"]
-    expose_headers    = ["Content-Length", "Content-Type"]
+    expose_headers    = ["Content-Length", "Content-Type", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"]
     allow_credentials = true
     max_age           = 300
   }
@@ -104,6 +104,11 @@ resource "aws_apigatewayv2_stage" "main" {
   api_id      = aws_apigatewayv2_api.main.id
   name        = "$default"
   auto_deploy = true
+
+  default_route_settings {
+    throttling_burst_limit = 100 # max concurrent requests
+    throttling_rate_limit  = 50  # requests per second steady state
+  }
 
   access_log_settings {
     destination_arn = var.api_gateway_log_group_arn

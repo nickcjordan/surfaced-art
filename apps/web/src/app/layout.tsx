@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { DM_Serif_Display, DM_Sans } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
+import { AuthProvider } from '@/lib/auth'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Container } from '@/components/ui/container'
@@ -51,13 +52,15 @@ export default function RootLayout({
     <html lang="en" className={`${dmSerifDisplay.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <body className="antialiased min-h-screen flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <Header />
-          <main className="flex-1">
-            <Container className="py-8 md:py-12">
-              {children}
-            </Container>
-          </main>
-          <Footer />
+          <AuthProvider>
+            <Header />
+            <main className="flex-1">
+              <Container className="py-8 md:py-12">
+                {children}
+              </Container>
+            </main>
+            <Footer />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

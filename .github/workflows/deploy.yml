@@ -650,6 +650,14 @@ jobs:
           # Build the prompt payload using jq for proper JSON escaping
           PROMPT=$(cat <<'PROMPT_EOF'
           Summarize this pull request merge for a Slack notification to a non-technical team. Write 1-5 sentences max per feature in plain English. Focus on what changed from a product or feature perspective — what would a user or stakeholder notice? Make sure to highlight changes to buyer and artist experience. Do not mention file names, function names, or technical implementation details unless they ARE the feature (e.g., "Added CI/CD pipeline" is fine). Be concise and direct.
+
+          CRITICAL formatting rules — this text will be rendered in Slack mrkdwn, NOT standard Markdown:
+          - Use *single asterisks* for bold (NOT **double asterisks**)
+          - Use _underscores_ for italics (NOT *single asterisks*)
+          - Use ~tildes~ for strikethrough
+          - Use `backticks` for inline code
+          - Do NOT use # headings — Slack mrkdwn has no heading syntax. Use *_bold underline text_* on its own line instead
+          - Standard Markdown bold (**text**) and headings (# text) will NOT render in Slack and will show raw characters
           PROMPT_EOF
           )
 
@@ -708,6 +716,12 @@ jobs:
           if [ -z "$SUMMARY" ]; then
             SUMMARY="Summary unavailable — see PR for details."
           fi
+
+          # Convert Markdown formatting to Slack mrkdwn (safety net)
+          # **bold** → *bold*
+          SUMMARY=$(echo "$SUMMARY" | sed 's/\*\*\([^*]*\)\*\*/\*\1\*/g')
+          # # Heading → *_Heading_* (strip 1-3 leading #'s and wrap in bold+underline)
+          SUMMARY=$(echo "$SUMMARY" | sed 's/^#\{1,3\} \+\(.*\)/\*_\1_\*/')
 
           # Build linked issues section if any exist
           ISSUES_BLOCK="[]"

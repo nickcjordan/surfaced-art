@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { Header } from '../Header'
 import { CATEGORIES } from '@/lib/categories'
+
+// Mock auth so Header can render without AuthProvider
+vi.mock('@/lib/auth', () => ({
+  useAuth: () => ({ user: null, loading: false, signOut: vi.fn() }),
+}))
 
 describe('Header', () => {
   it('should render the Surfaced Art brand name', () => {

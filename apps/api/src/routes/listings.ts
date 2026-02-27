@@ -2,12 +2,13 @@ import { Hono } from 'hono'
 import type { PrismaClient, Prisma, Listing, ListingImage, ArtistProfile, ArtistCategory } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
 import {
+  listingsQuery,
+  listingIdParam,
   type ListingListItem,
   type ListingDetailResponse,
   type PaginatedResponse,
 } from '@surfaced-art/types'
 import { notFound, badRequest, validationError } from '../errors'
-import { listingsQuerySchema, listingIdSchema } from '../schemas'
 
 /**
  * Transform Prisma listing fields to API response shape.
@@ -61,7 +62,7 @@ export function createListingRoutes(prisma: PrismaClient) {
   listings.get('/', async (c) => {
     const start = Date.now()
 
-    const parsed = listingsQuerySchema.safeParse({
+    const parsed = listingsQuery.safeParse({
       category: c.req.query('category'),
       status: c.req.query('status'),
       page: c.req.query('page'),
@@ -181,7 +182,7 @@ export function createListingRoutes(prisma: PrismaClient) {
     const id = c.req.param('id')
     const start = Date.now()
 
-    const parsed = listingIdSchema.safeParse({ id })
+    const parsed = listingIdParam.safeParse({ id })
     if (!parsed.success) {
       logger.warn('Invalid listing ID format', { listingId: id })
       return badRequest(c, 'Invalid listing ID format')
