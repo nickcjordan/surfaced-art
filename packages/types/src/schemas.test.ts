@@ -9,6 +9,8 @@ import {
   artistSlugParam,
   listingIdParam,
   sanitizeText,
+  artistApplicationBody,
+  checkEmailQuery,
 } from './schemas'
 
 describe('Shared Validation Schemas', () => {
@@ -237,6 +239,172 @@ describe('Shared Validation Schemas', () => {
 
     it('should strip HTML entities used for injection', () => {
       expect(sanitizeText('hello&lt;script&gt;')).not.toContain('<script>')
+    })
+  })
+
+  describe('artistApplicationBody', () => {
+    const validData = {
+      fullName: 'Jane Artist',
+      email: 'jane@example.com',
+      statement:
+        'I create handmade ceramics that explore the intersection of form and function in everyday life.',
+      categories: ['ceramics'] as string[],
+    }
+
+    it('should accept valid complete submission', () => {
+      const data = {
+        ...validData,
+        instagramUrl: 'https://instagram.com/janeartist',
+        websiteUrl: 'https://janeartist.com',
+        exhibitionHistory: 'Solo show at Local Gallery, 2024',
+      }
+      const result = artistApplicationBody.safeParse(data)
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept valid minimal submission (required fields only)', () => {
+      const result = artistApplicationBody.safeParse(validData)
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept multiple categories', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        categories: ['ceramics', 'painting', 'mixed_media'],
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept empty string for optional URL fields', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        instagramUrl: '',
+        websiteUrl: '',
+        exhibitionHistory: '',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject missing fullName', () => {
+      const { fullName: _, ...data } = validData
+      const result = artistApplicationBody.safeParse(data)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject fullName shorter than 2 characters', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        fullName: 'J',
+      })
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('at least 2')
+      }
+    })
+
+    it('should reject missing email', () => {
+      const { email: _, ...data } = validData
+      const result = artistApplicationBody.safeParse(data)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject invalid email format', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        email: 'not-an-email',
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject missing statement', () => {
+      const { statement: _, ...data } = validData
+      const result = artistApplicationBody.safeParse(data)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject statement shorter than 50 characters', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        statement: 'Too short.',
+      })
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('at least 50')
+      }
+    })
+
+    it('should reject statement longer than 5000 characters', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        statement: 'x'.repeat(5001),
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject missing categories', () => {
+      const { categories: _, ...data } = validData
+      const result = artistApplicationBody.safeParse(data)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject empty categories array', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        categories: [],
+      })
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('at least one')
+      }
+    })
+
+    it('should reject invalid category values', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        categories: ['not_a_category'],
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject invalid Instagram URL', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        instagramUrl: 'not-a-url',
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject invalid website URL', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        websiteUrl: 'not-a-url',
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject exhibition history longer than 5000 characters', () => {
+      const result = artistApplicationBody.safeParse({
+        ...validData,
+        exhibitionHistory: 'x'.repeat(5001),
+      })
+      expect(result.success).toBe(false)
+    })
+  })
+
+  describe('checkEmailQuery', () => {
+    it('should accept valid email', () => {
+      const result = checkEmailQuery.safeParse({ email: 'test@example.com' })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject empty email', () => {
+      const result = checkEmailQuery.safeParse({ email: '' })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject invalid email format', () => {
+      const result = checkEmailQuery.safeParse({ email: 'not-email' })
+      expect(result.success).toBe(false)
     })
   })
 })

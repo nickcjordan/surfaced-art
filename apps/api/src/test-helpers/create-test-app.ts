@@ -7,6 +7,7 @@ import { createArtistRoutes } from '../routes/artists.js'
 import { createListingRoutes } from '../routes/listings.js'
 import { createCategoryRoutes } from '../routes/categories.js'
 import { createWaitlistRoutes } from '../routes/waitlist.js'
+import { createApplicationRoutes } from '../routes/applications.js'
 
 /**
  * Create a Hono app instance with a test PrismaClient injected.
@@ -26,8 +27,9 @@ export function createTestApp(prisma: PrismaClient) {
     })
   )
 
-  // Mount routes with injected PrismaClient
+  // Mount routes with injected PrismaClient — /artists/apply BEFORE /artists
   app.route('/health', createHealthRoutes(prisma))
+  app.route('/artists/apply', createApplicationRoutes(prisma))
   app.route('/artists', createArtistRoutes(prisma))
   app.route('/listings', createListingRoutes(prisma))
   app.route('/categories', createCategoryRoutes(prisma))

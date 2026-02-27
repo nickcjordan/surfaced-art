@@ -8,6 +8,7 @@ import type {
   OrderStatusType,
   CvEntryTypeType,
   ProcessMediaTypeType,
+  ApplicationStatusType,
 } from './enums'
 
 /**
@@ -356,6 +357,34 @@ export interface PaginatedResponse<T> {
     total: number
     totalPages: number
   }
+}
+
+// ─── Artist Application Types ─────────────────────────────────────────
+
+/**
+ * Artist application record
+ * Submitted via the public /apply form, reviewed externally
+ */
+export interface ArtistApplication {
+  id: string // UUID
+  email: string
+  fullName: string
+  instagramUrl: string | null
+  websiteUrl: string | null
+  statement: string
+  exhibitionHistory: string | null
+  categories: CategoryType[]
+  status: ApplicationStatusType
+  submittedAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Response from POST /artists/apply
+ */
+export interface ApplicationSubmitResponse {
+  message: string
+  applicationId: string
 }
 
 // ─── API Error Types ──────────────────────────────────────────────────

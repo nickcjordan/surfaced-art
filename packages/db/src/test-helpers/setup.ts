@@ -81,6 +81,7 @@ export async function cleanupDatabase(prisma: PrismaClient): Promise<void> {
     'artist_profiles',
     'user_roles',
     'users',
+    'artist_applications',
     'waitlist',
   ]
 

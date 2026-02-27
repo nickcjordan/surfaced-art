@@ -4,4 +4,5 @@ export {
   createTestArtist,
   createTestListing,
   createTestWaitlistEntry,
+  createTestApplication,
 } from './factories.js'
