@@ -59,7 +59,7 @@ function isSquarespace(headers: Record<string, string>, html: string): boolean {
 
   // HTML checks
   if (html.includes('Static.SQUARESPACE_CONTEXT')) return true
-  if (html.includes('squarespace-cdn.com')) return true
+  if (/["']https?:\/\/[^"']*\.squarespace-cdn\.com\b/.test(html)) return true
   if (html.includes('<!-- This is Squarespace.')) return true
 
   return false
@@ -74,8 +74,8 @@ function isCargo(url: string, html: string): boolean {
   }
 
   if (html.includes('Cargo Collective')) return true
-  if (html.includes('cargo.site')) return true
-  if (html.includes('cargocollective.com')) return true
+  if (/["']https?:\/\/[^"']*\.cargo\.site\b/.test(html)) return true
+  if (/["']https?:\/\/[^"']*\.cargocollective\.com\b/.test(html)) return true
 
   return false
 }
@@ -94,7 +94,7 @@ function isWordPress(headers: Record<string, string>, html: string): boolean {
 
 function isShopify(html: string): boolean {
   if (html.includes('Shopify.theme')) return true
-  if (html.includes('cdn.shopify.com')) return true
-  if (html.includes('myshopify.com')) return true
+  if (/["']https?:\/\/cdn\.shopify\.com\b/.test(html)) return true
+  if (/["']https?:\/\/[^"']*\.myshopify\.com\b/.test(html)) return true
   return false
 }
