@@ -1,0 +1,35 @@
+meta {
+  name: Update Profile (Validation Error)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{sa_baseUrl}}/me/profile
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "websiteUrl": "not-a-valid-url"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.error.code: eq VALIDATION_ERROR
+}
+
+tests {
+  test("should return 400 for invalid URL", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(400);
+    expect(body.error.code).to.equal("VALIDATION_ERROR");
+    expect(body.error.details).to.be.an("array");
+  });
+}

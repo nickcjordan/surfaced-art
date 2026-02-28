@@ -421,10 +421,13 @@ export interface DashboardResponse {
     slug: string
     bio: string
     location: string
+    websiteUrl: string | null
+    instagramUrl: string | null
     profileImageUrl: string | null
     coverImageUrl: string | null
     status: ArtistStatusType
     stripeAccountId: string | null
+    categories: CategoryType[]
   }
   completion: {
     percentage: number // 0-100
@@ -436,6 +439,58 @@ export interface DashboardResponse {
     soldListings: number
     totalViews: number // Placeholder: always 0 until analytics
   }
+}
+
+// ─── Profile Update API Response Types ─────────────────────────────
+
+/**
+ * Response from PUT /me/profile.
+ * Returns the updated profile fields so the frontend can update its local state.
+ */
+export interface ProfileUpdateResponse {
+  id: string
+  displayName: string
+  slug: string
+  bio: string
+  location: string
+  websiteUrl: string | null
+  instagramUrl: string | null
+  profileImageUrl: string | null
+  coverImageUrl: string | null
+  status: ArtistStatusType
+}
+
+// ─── Categories Update API Response Types ─────────────────────────────
+
+/**
+ * Response from PUT /me/categories.
+ * Returns the updated category list.
+ */
+export interface CategoriesUpdateResponse {
+  categories: CategoryType[]
+}
+
+// ─── CV Entry API Response Types ──────────────────────────────────────
+
+/**
+ * Single CV entry as returned by the API.
+ * Omits artistId since it's implied by the /me scope.
+ */
+export interface CvEntryResponse {
+  id: string
+  type: CvEntryTypeType
+  title: string
+  institution: string | null
+  year: number
+  description: string | null
+  sortOrder: number
+}
+
+/**
+ * Response from GET /me/cv-entries.
+ */
+export interface CvEntryListResponse {
+  cvEntries: CvEntryResponse[]
 }
 
 // ─── Admin API Response Types ────────────────────────────────────────

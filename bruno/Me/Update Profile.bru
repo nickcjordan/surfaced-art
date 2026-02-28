@@ -1,0 +1,49 @@
+meta {
+  name: Update Profile
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{sa_baseUrl}}/me/profile
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "bio": "Mixed-media artist exploring the intersection of ceramics and textile art.",
+    "location": "Portland, OR"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.displayName: isDefined
+  res.body.slug: isDefined
+  res.body.bio: isDefined
+  res.body.location: isDefined
+  res.body.status: isDefined
+}
+
+tests {
+  test("should return 200 with updated profile", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body).to.have.property("id");
+    expect(body).to.have.property("displayName");
+    expect(body).to.have.property("slug");
+    expect(body).to.have.property("bio");
+    expect(body).to.have.property("location");
+    expect(body).to.have.property("profileImageUrl");
+    expect(body).to.have.property("coverImageUrl");
+    expect(body).to.have.property("status");
+    expect(body).to.not.have.property("userId");
+    expect(body).to.not.have.property("originZip");
+  });
+}

@@ -43,10 +43,13 @@ const mockDashboardData: DashboardResponse = {
     slug: 'test-artist',
     bio: 'A passionate artist.',
     location: 'Portland, OR',
+    websiteUrl: null,
+    instagramUrl: null,
     profileImageUrl: 'https://cdn.example.com/profile.jpg',
     coverImageUrl: 'https://cdn.example.com/cover.jpg',
     status: 'approved',
     stripeAccountId: null,
+    categories: ['ceramics'],
   },
   completion: {
     percentage: 67,

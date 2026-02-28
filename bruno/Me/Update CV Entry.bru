@@ -1,0 +1,42 @@
+meta {
+  name: Update CV Entry
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{sa_baseUrl}}/me/cv-entries/{{sa_cvEntryId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "type": "exhibition",
+    "title": "Updated Exhibition Title",
+    "institution": "Updated Museum",
+    "year": 2024,
+    "description": "Updated description."
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.title: eq Updated Exhibition Title
+}
+
+tests {
+  test("should return 200 with updated CV entry", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.id).to.be.a("string");
+    expect(body.title).to.equal("Updated Exhibition Title");
+    expect(body.institution).to.equal("Updated Museum");
+    expect(body.year).to.equal(2024);
+  });
+}
