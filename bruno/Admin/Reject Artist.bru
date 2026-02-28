@@ -1,0 +1,34 @@
+meta {
+  name: Reject Artist
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/artists/{{sa_targetUserId}}/reject
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "reviewNotes": "Not a fit for the gallery at this time."
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+}
+
+tests {
+  test("should return 200 with rejection message", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.message).to.include("rejected");
+  });
+}

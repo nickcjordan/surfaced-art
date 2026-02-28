@@ -438,6 +438,27 @@ export interface DashboardResponse {
   }
 }
 
+// ─── Admin API Response Types ────────────────────────────────────────
+
+/**
+ * Response from POST /admin/artists/:userId/approve
+ */
+export interface AdminApproveResponse {
+  message: string
+  profile: {
+    id: string
+    slug: string
+    displayName: string
+  }
+}
+
+/**
+ * Response from POST /admin/artists/:userId/reject
+ */
+export interface AdminRejectResponse {
+  message: string
+}
+
 // ─── API Error Types ──────────────────────────────────────────────────
 
 /**
