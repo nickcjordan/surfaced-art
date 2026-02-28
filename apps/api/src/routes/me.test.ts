@@ -43,6 +43,8 @@ function createMockPrisma(overrides?: {
   cvEntries?: unknown[]
   createdCvEntry?: unknown
   updatedCvEntry?: unknown
+  processMedia?: unknown[]
+  createdProcessMedia?: unknown
 }) {
   const roles = overrides?.roles ?? ['artist']
   const artistProfile = overrides?.artistProfile !== undefined ? overrides.artistProfile : mockArtistProfile
@@ -74,6 +76,14 @@ function createMockPrisma(overrides?: {
       update: vi.fn().mockResolvedValue(overrides?.updatedCvEntry ?? null),
       delete: vi.fn().mockResolvedValue({ id: 'deleted' }),
       count: vi.fn().mockResolvedValue(overrides?.cvEntries?.length ?? 0),
+    },
+    artistProcessMedia: {
+      findMany: vi.fn().mockResolvedValue(overrides?.processMedia ?? []),
+      findUnique: vi.fn().mockResolvedValue(overrides?.processMedia?.[0] ?? null),
+      create: vi.fn().mockResolvedValue(overrides?.createdProcessMedia ?? null),
+      update: vi.fn().mockResolvedValue(null),
+      delete: vi.fn().mockResolvedValue({ id: 'deleted' }),
+      count: vi.fn().mockResolvedValue(overrides?.processMedia?.length ?? 0),
     },
     listing: {
       count: vi.fn()
@@ -200,6 +210,70 @@ function putCvEntryReorder(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/cv-entries/reorder', {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function getProcessMedia(
+  app: ReturnType<typeof createTestApp>,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/process-media', { method: 'GET', headers })
+}
+
+function postProcessMediaPhoto(
+  app: ReturnType<typeof createTestApp>,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/process-media/photo', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function postProcessMediaVideo(
+  app: ReturnType<typeof createTestApp>,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/process-media/video', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function deleteProcessMedia(
+  app: ReturnType<typeof createTestApp>,
+  id: string,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request(`/me/process-media/${id}`, {
+    method: 'DELETE',
+    headers,
+  })
+}
+
+function putProcessMediaReorder(
+  app: ReturnType<typeof createTestApp>,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/process-media/reorder', {
     method: 'PUT',
     headers,
     body: JSON.stringify(body),
@@ -436,10 +510,12 @@ describe('PUT /me/profile', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setVerifier(createMockVerifier() as never)
+    process.env.CLOUDFRONT_DOMAIN = 'd2agn4aoo0e7ji.cloudfront.net'
   })
 
   afterEach(() => {
     resetVerifier()
+    delete process.env.CLOUDFRONT_DOMAIN
   })
 
   describe('authentication and authorization', () => {
@@ -1395,5 +1471,321 @@ describe('PUT /me/cv-entries/reorder', () => {
 
     const body = await res.json()
     expect(body.cvEntries).toHaveLength(2)
+  })
+})
+
+// ─── Process Media Tests ────────────────────────────────────────────
+
+const PROCESS_MEDIA_ID_1 = '33333333-3333-4333-8333-333333333333'
+const PROCESS_MEDIA_ID_2 = '44444444-4444-4444-8444-444444444444'
+
+const mockProcessMediaPhoto = {
+  id: PROCESS_MEDIA_ID_1,
+  artistId: 'artist-uuid-123',
+  type: 'photo',
+  url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/process/photo1.jpg',
+  videoAssetId: null,
+  videoPlaybackId: null,
+  videoProvider: null,
+  sortOrder: 0,
+  createdAt: new Date('2025-01-01'),
+}
+
+const mockProcessMediaVideo = {
+  id: PROCESS_MEDIA_ID_2,
+  artistId: 'artist-uuid-123',
+  type: 'video',
+  url: null,
+  videoAssetId: null,
+  videoPlaybackId: 'abc123playback',
+  videoProvider: 'mux',
+  sortOrder: 1,
+  createdAt: new Date('2025-01-02'),
+}
+
+describe('GET /me/process-media', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await getProcessMedia(app)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 403 for buyer-only role', async () => {
+    const prisma = createMockPrisma({ roles: ['buyer'] })
+    const app = createTestApp(prisma)
+    const res = await getProcessMedia(app, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when artist profile not found', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+    const res = await getProcessMedia(app, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return empty list when no process media exists', async () => {
+    const prisma = createMockPrisma({ processMedia: [] })
+    const app = createTestApp(prisma)
+    const res = await getProcessMedia(app, 'valid-token')
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.processMedia).toEqual([])
+  })
+
+  it('should return process media ordered by sortOrder', async () => {
+    const prisma = createMockPrisma({
+      processMedia: [mockProcessMediaPhoto, mockProcessMediaVideo],
+    })
+    const app = createTestApp(prisma)
+    const res = await getProcessMedia(app, 'valid-token')
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.processMedia).toHaveLength(2)
+    expect(body.processMedia[0].type).toBe('photo')
+    expect(body.processMedia[1].type).toBe('video')
+  })
+})
+
+describe('POST /me/process-media/photo', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+    process.env.CLOUDFRONT_DOMAIN = 'd2agn4aoo0e7ji.cloudfront.net'
+  })
+
+  afterEach(() => {
+    resetVerifier()
+    delete process.env.CLOUDFRONT_DOMAIN
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaPhoto(app, { url: 'https://d2agn4aoo0e7ji.cloudfront.net/photo.jpg' })
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 400 for invalid URL', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaPhoto(app, { url: 'not-a-url' }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 when URL is not from CloudFront', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaPhoto(app, {
+      url: 'https://evil.example.com/photo.jpg',
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 404 when artist profile not found', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaPhoto(app, {
+      url: 'https://d2agn4aoo0e7ji.cloudfront.net/photo.jpg',
+    }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should create a photo entry and return 201', async () => {
+    const created = { ...mockProcessMediaPhoto }
+    const prisma = createMockPrisma({ createdProcessMedia: created })
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaPhoto(app, {
+      url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/process/photo1.jpg',
+    }, 'valid-token')
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body.type).toBe('photo')
+    expect(body.url).toBe('https://d2agn4aoo0e7ji.cloudfront.net/uploads/process/photo1.jpg')
+  })
+})
+
+describe('POST /me/process-media/video', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaVideo(app, {
+      videoPlaybackId: 'abc123',
+      videoProvider: 'mux',
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 400 for missing playback ID', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaVideo(app, {
+      videoProvider: 'mux',
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for invalid provider', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaVideo(app, {
+      videoPlaybackId: 'abc123',
+      videoProvider: 'youtube',
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 404 when artist profile not found', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaVideo(app, {
+      videoPlaybackId: 'abc123',
+      videoProvider: 'mux',
+    }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should create a video entry and return 201', async () => {
+    const created = { ...mockProcessMediaVideo }
+    const prisma = createMockPrisma({ createdProcessMedia: created })
+    const app = createTestApp(prisma)
+    const res = await postProcessMediaVideo(app, {
+      videoPlaybackId: 'abc123playback',
+      videoProvider: 'mux',
+    }, 'valid-token')
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body.type).toBe('video')
+    expect(body.videoPlaybackId).toBe('abc123playback')
+    expect(body.videoProvider).toBe('mux')
+  })
+})
+
+describe('DELETE /me/process-media/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 404 when entry not found', async () => {
+    const prisma = createMockPrisma({ processMedia: [] })
+    ;(prisma.artistProcessMedia.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+    const app = createTestApp(prisma)
+    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 403 when entry belongs to another artist', async () => {
+    const otherEntry = { ...mockProcessMediaPhoto, artistId: 'other-artist-uuid' }
+    const prisma = createMockPrisma({ processMedia: [otherEntry] })
+    const app = createTestApp(prisma)
+    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 204 on successful delete', async () => {
+    const prisma = createMockPrisma({ processMedia: [mockProcessMediaPhoto] })
+    const app = createTestApp(prisma)
+    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1, 'valid-token')
+    expect(res.status).toBe(204)
+  })
+})
+
+describe('PUT /me/process-media/reorder', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await putProcessMediaReorder(app, {
+      orderedIds: [PROCESS_MEDIA_ID_1],
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 400 for invalid body (empty array)', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await putProcessMediaReorder(app, {
+      orderedIds: [],
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for non-UUID IDs', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+    const res = await putProcessMediaReorder(app, {
+      orderedIds: ['not-a-uuid'],
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 when IDs do not belong to this artist', async () => {
+    const media = [mockProcessMediaPhoto]
+    const prisma = createMockPrisma({ processMedia: media })
+    const app = createTestApp(prisma)
+    const res = await putProcessMediaReorder(app, {
+      orderedIds: [PROCESS_MEDIA_ID_1, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'],
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return the reordered process media', async () => {
+    const media = [mockProcessMediaPhoto, mockProcessMediaVideo]
+    const reordered = [
+      { ...mockProcessMediaVideo, sortOrder: 0 },
+      { ...mockProcessMediaPhoto, sortOrder: 1 },
+    ]
+    const prisma = createMockPrisma({ processMedia: media })
+    ;(prisma.artistProcessMedia.findMany as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(media)   // ownership check
+      .mockResolvedValueOnce(reordered) // final result
+    const app = createTestApp(prisma)
+
+    const res = await putProcessMediaReorder(app, {
+      orderedIds: [PROCESS_MEDIA_ID_2, PROCESS_MEDIA_ID_1],
+    }, 'valid-token')
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.processMedia).toHaveLength(2)
   })
 })

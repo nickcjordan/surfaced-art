@@ -16,6 +16,8 @@ import type {
   ListingListItem,
   PaginatedResponse,
   PresignedPostResponse,
+  ProcessMediaListResponse,
+  ProcessMediaResponse,
   ProfileUpdateResponse,
 } from '@surfaced-art/types'
 
@@ -206,6 +208,57 @@ export async function reorderCvEntries(
   orderedIds: string[],
 ): Promise<CvEntryListResponse> {
   return apiFetch<CvEntryListResponse>('/me/cv-entries/reorder', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ orderedIds }),
+  })
+}
+
+export async function getProcessMedia(
+  token: string,
+): Promise<ProcessMediaListResponse> {
+  return apiFetch<ProcessMediaListResponse>('/me/process-media', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function createProcessMediaPhoto(
+  token: string,
+  url: string,
+): Promise<ProcessMediaResponse> {
+  return apiFetch<ProcessMediaResponse>('/me/process-media/photo', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ url }),
+  })
+}
+
+export async function createProcessMediaVideo(
+  token: string,
+  videoPlaybackId: string,
+): Promise<ProcessMediaResponse> {
+  return apiFetch<ProcessMediaResponse>('/me/process-media/video', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ videoPlaybackId, videoProvider: 'mux' }),
+  })
+}
+
+export async function deleteProcessMedia(
+  token: string,
+  id: string,
+): Promise<void> {
+  await apiFetch<void>(`/me/process-media/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function reorderProcessMedia(
+  token: string,
+  orderedIds: string[],
+): Promise<ProcessMediaListResponse> {
+  return apiFetch<ProcessMediaListResponse>('/me/process-media/reorder', {
     method: 'PUT',
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ orderedIds }),

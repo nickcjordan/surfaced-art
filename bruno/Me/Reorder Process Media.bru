@@ -1,0 +1,38 @@
+meta {
+  name: Reorder Process Media
+  type: http
+  seq: 16
+}
+
+put {
+  url: {{sa_baseUrl}}/me/process-media/reorder
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "orderedIds": ["{{sa_processMediaId}}", "{{sa_processMediaId2}}"]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.processMedia: isDefined
+}
+
+tests {
+  test("should return 200 with reordered process media", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.processMedia).to.be.an("array");
+    if (body.processMedia.length >= 2) {
+      expect(body.processMedia[0].sortOrder).to.equal(0);
+      expect(body.processMedia[1].sortOrder).to.equal(1);
+    }
+  });
+}

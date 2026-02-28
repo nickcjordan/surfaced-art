@@ -493,6 +493,29 @@ export interface CvEntryListResponse {
   cvEntries: CvEntryResponse[]
 }
 
+// ─── Process Media API Response Types ─────────────────────────────────
+
+/**
+ * Single process media item as returned by the API.
+ * Omits artistId since it's implied by the /me scope.
+ */
+export interface ProcessMediaResponse {
+  id: string
+  type: ProcessMediaTypeType
+  url: string | null
+  videoPlaybackId: string | null
+  videoProvider: string | null
+  sortOrder: number
+  createdAt: string
+}
+
+/**
+ * Response from GET /me/process-media.
+ */
+export interface ProcessMediaListResponse {
+  processMedia: ProcessMediaResponse[]
+}
+
 // ─── Admin API Response Types ────────────────────────────────────────
 
 /**

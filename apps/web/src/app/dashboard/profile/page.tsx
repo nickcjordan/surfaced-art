@@ -2,6 +2,7 @@
 
 import { ProfileForm } from './components/profile-form'
 import { CvEntryList } from './components/cv-entry-list'
+import { ProcessMediaGrid } from './components/process-media-grid'
 
 export default function ProfilePage() {
   return (
@@ -14,6 +15,7 @@ export default function ProfilePage() {
       </div>
       <ProfileForm />
       <CvEntryList />
+      <ProcessMediaGrid />
     </div>
   )
 }
