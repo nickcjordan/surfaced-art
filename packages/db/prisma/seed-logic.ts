@@ -52,6 +52,7 @@ export async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) 
       coverImageUrl: data.profile.coverImageUrl,
       profileImageUrl: data.profile.profileImageUrl,
       applicationSource: data.profile.applicationSource,
+      isDemo: data.profile.isDemo,
     },
     create: {
       userId: user.id,

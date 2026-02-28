@@ -179,18 +179,13 @@ jobs:
           API_ECR_REPO="${API_ECR_URL##*/}"
           if aws ecr describe-images \
               --repository-name "$API_ECR_REPO" \
-              --image-ids imageTag=latest &>/dev/null; then
-            echo "API ECR has :latest — using as placeholder"
-            echo "placeholder_uri=$API_ECR_URL:latest" >> "$GITHUB_OUTPUT"
-          elif aws ecr describe-images \
-              --repository-name "$API_ECR_REPO" \
               --image-ids imageTag=bootstrap &>/dev/null; then
             echo "API ECR has :bootstrap — using as placeholder"
             echo "placeholder_uri=$API_ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
           else
-            # Neither :latest nor :bootstrap exists (repo has only custom tags).
+            # No :bootstrap exists (repo has only SHA tags from previous deploys).
             # Push :bootstrap so the placeholder URI points to a real image.
-            echo "No :latest or :bootstrap — pushing :bootstrap now"
+            echo "No :bootstrap — pushing :bootstrap now"
             docker tag "$LAMBDA_BOOTSTRAP_IMAGE" "$API_ECR_URL:bootstrap"
             docker push "$API_ECR_URL:bootstrap"
             echo "placeholder_uri=$API_ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
@@ -259,7 +254,6 @@ jobs:
         run: |
           docker build -f apps/api/Dockerfile \
             -t $ECR_REPOSITORY_URL:$IMAGE_TAG \
-            -t $ECR_REPOSITORY_URL:latest \
             .
 
       # Paths validated here must match the Dockerfile layout (apps/api/Dockerfile).
@@ -296,7 +290,6 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
-          docker push $ECR_REPOSITORY_URL:latest
 
       - name: Deploy API Lambda
         env:
@@ -318,7 +311,6 @@ jobs:
         run: |
           docker build -f tools/migrate/Dockerfile \
             -t $ECR_REPOSITORY_URL:$IMAGE_TAG \
-            -t $ECR_REPOSITORY_URL:latest \
             .
 
       # Paths validated here must match the Dockerfile layout (tools/migrate/Dockerfile)
@@ -358,7 +350,6 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
-          docker push $ECR_REPOSITORY_URL:latest
 
       - name: Deploy migrate Lambda
         env:
@@ -384,7 +375,6 @@ jobs:
         run: |
           docker build -f apps/image-processor/Dockerfile \
             -t $ECR_REPOSITORY_URL:$IMAGE_TAG \
-            -t $ECR_REPOSITORY_URL:latest \
             .
 
       - name: Validate image-processor container
@@ -418,7 +408,6 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
-          docker push $ECR_REPOSITORY_URL:latest
 
       - name: Deploy image-processor Lambda
         env:

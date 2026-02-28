@@ -400,6 +400,44 @@ export interface PresignedPostResponse {
   expiresIn: number // Seconds until URL expires
 }
 
+// ─── Dashboard API Response Types ──────────────────────────────────
+
+/**
+ * Individual field completion status for the profile completion indicator.
+ */
+export interface ProfileCompletionField {
+  label: string
+  complete: boolean
+}
+
+/**
+ * Dashboard response for GET /me/dashboard.
+ * Returns the artist's profile summary, completion status, and listing counts.
+ */
+export interface DashboardResponse {
+  profile: {
+    id: string
+    displayName: string
+    slug: string
+    bio: string
+    location: string
+    profileImageUrl: string | null
+    coverImageUrl: string | null
+    status: ArtistStatusType
+    stripeAccountId: string | null
+  }
+  completion: {
+    percentage: number // 0-100
+    fields: ProfileCompletionField[]
+  }
+  stats: {
+    totalListings: number
+    availableListings: number
+    soldListings: number
+    totalViews: number // Placeholder: always 0 until analytics
+  }
+}
+
 // ─── API Error Types ──────────────────────────────────────────────────
 
 /**

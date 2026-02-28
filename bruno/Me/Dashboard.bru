@@ -1,0 +1,39 @@
+meta {
+  name: Dashboard
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{sa_baseUrl}}/me/dashboard
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.profile: isDefined
+  res.body.completion: isDefined
+  res.body.stats: isDefined
+  res.body.completion.percentage: isNumber
+  res.body.stats.totalListings: isNumber
+}
+
+tests {
+  test("should return 200 with dashboard data", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.profile).to.have.property("displayName");
+    expect(body.profile).to.have.property("slug");
+    expect(body.completion.percentage).to.be.within(0, 100);
+    expect(body.completion.fields).to.be.an("array").with.lengthOf(6);
+    expect(body.stats).to.have.property("totalListings");
+    expect(body.stats).to.have.property("availableListings");
+    expect(body.stats).to.have.property("soldListings");
+    expect(body.stats.totalViews).to.equal(0);
+  });
+}

@@ -24,6 +24,16 @@ beforeEach(() => {
   mockCheckApplicationEmail.mockResolvedValue({ exists: false })
 })
 
+// Helper: paste text into a field (fires 1 event instead of N keystrokes)
+async function pasteInto(user: ReturnType<typeof userEvent.setup>, testId: string, text: string) {
+  const el = screen.getByTestId(testId)
+  await user.click(el)
+  await user.paste(text)
+}
+
+const LONG_STATEMENT =
+  'I create handmade ceramics that explore the intersection of form and function in everyday life.'
+
 describe('ApplicationForm', () => {
   it('should render all form fields with correct data-testid attributes', () => {
     render(<ApplicationForm />)
@@ -85,9 +95,9 @@ describe('ApplicationForm', () => {
     const user = userEvent.setup()
     render(<ApplicationForm />)
 
-    await user.type(screen.getByTestId('apply-full-name'), 'Jane Artist')
-    await user.type(screen.getByTestId('apply-email'), 'jane@example.com')
-    await user.type(screen.getByTestId('apply-statement'), 'Too short.')
+    await pasteInto(user, 'apply-full-name', 'Jane Artist')
+    await pasteInto(user, 'apply-email', 'jane@example.com')
+    await pasteInto(user, 'apply-statement', 'Too short.')
     await user.click(screen.getByTestId('apply-category-ceramics'))
     await user.click(screen.getByTestId('apply-submit'))
 
@@ -105,12 +115,9 @@ describe('ApplicationForm', () => {
 
     render(<ApplicationForm />)
 
-    await user.type(screen.getByTestId('apply-full-name'), 'Jane Artist')
-    await user.type(screen.getByTestId('apply-email'), 'jane@example.com')
-    await user.type(
-      screen.getByTestId('apply-statement'),
-      'I create handmade ceramics that explore the intersection of form and function in everyday life.'
-    )
+    await pasteInto(user, 'apply-full-name', 'Jane Artist')
+    await pasteInto(user, 'apply-email', 'jane@example.com')
+    await pasteInto(user, 'apply-statement', LONG_STATEMENT)
     await user.click(screen.getByTestId('apply-category-ceramics'))
     await user.click(screen.getByTestId('apply-submit'))
 
@@ -133,12 +140,9 @@ describe('ApplicationForm', () => {
 
     render(<ApplicationForm />)
 
-    await user.type(screen.getByTestId('apply-full-name'), 'Jane Artist')
-    await user.type(screen.getByTestId('apply-email'), 'jane@example.com')
-    await user.type(
-      screen.getByTestId('apply-statement'),
-      'I create handmade ceramics that explore the intersection of form and function in everyday life.'
-    )
+    await pasteInto(user, 'apply-full-name', 'Jane Artist')
+    await pasteInto(user, 'apply-email', 'jane@example.com')
+    await pasteInto(user, 'apply-statement', LONG_STATEMENT)
     await user.click(screen.getByTestId('apply-category-ceramics'))
     await user.click(screen.getByTestId('apply-submit'))
 
@@ -154,12 +158,9 @@ describe('ApplicationForm', () => {
 
     render(<ApplicationForm />)
 
-    await user.type(screen.getByTestId('apply-full-name'), 'Jane Artist')
-    await user.type(screen.getByTestId('apply-email'), 'jane@example.com')
-    await user.type(
-      screen.getByTestId('apply-statement'),
-      'I create handmade ceramics that explore the intersection of form and function in everyday life.'
-    )
+    await pasteInto(user, 'apply-full-name', 'Jane Artist')
+    await pasteInto(user, 'apply-email', 'jane@example.com')
+    await pasteInto(user, 'apply-statement', LONG_STATEMENT)
     await user.click(screen.getByTestId('apply-category-ceramics'))
     await user.click(screen.getByTestId('apply-submit'))
 
@@ -175,8 +176,8 @@ describe('ApplicationForm', () => {
 
     render(<ApplicationForm />)
 
-    await user.type(screen.getByTestId('apply-full-name'), 'Jane Artist')
-    await user.type(screen.getByTestId('apply-email'), 'jane@example.com')
+    await pasteInto(user, 'apply-full-name', 'Jane Artist')
+    await pasteInto(user, 'apply-email', 'jane@example.com')
 
     // Blur the email field to trigger the duplicate check
     await user.tab()
@@ -186,10 +187,7 @@ describe('ApplicationForm', () => {
       expect(screen.getByTestId('apply-error-email').textContent).toMatch(/already/i)
     })
 
-    await user.type(
-      screen.getByTestId('apply-statement'),
-      'I create handmade ceramics that explore the intersection of form and function in everyday life.'
-    )
+    await pasteInto(user, 'apply-statement', LONG_STATEMENT)
     await user.click(screen.getByTestId('apply-category-ceramics'))
     await user.click(screen.getByTestId('apply-submit'))
 
@@ -203,12 +201,9 @@ describe('ApplicationForm', () => {
 
     render(<ApplicationForm />)
 
-    await user.type(screen.getByTestId('apply-full-name'), 'Jane Artist')
-    await user.type(screen.getByTestId('apply-email'), 'jane@example.com')
-    await user.type(
-      screen.getByTestId('apply-statement'),
-      'I create handmade ceramics that explore the intersection of form and function in everyday life.'
-    )
+    await pasteInto(user, 'apply-full-name', 'Jane Artist')
+    await pasteInto(user, 'apply-email', 'jane@example.com')
+    await pasteInto(user, 'apply-statement', LONG_STATEMENT)
     await user.click(screen.getByTestId('apply-category-ceramics'))
     await user.click(screen.getByTestId('apply-submit'))
 
