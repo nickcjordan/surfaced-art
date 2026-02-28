@@ -1453,6 +1453,20 @@ describe('PUT /me/cv-entries/reorder', () => {
     expect(res.status).toBe(400)
   })
 
+  it('should return 400 when orderedIds is a partial list', async () => {
+    const entries = [mockCvEntry, mockCvEntry2]
+    const prisma = createMockPrisma({ cvEntries: entries })
+    ;(prisma.artistCvEntry.findMany as ReturnType<typeof vi.fn>).mockResolvedValue(entries)
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntryReorder(app, {
+      orderedIds: [CV_ENTRY_ID_1],
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error.message).toContain('all entry IDs')
+  })
+
   it('should return the reordered entries', async () => {
     const entries = [mockCvEntry, mockCvEntry2]
     const reordered = [
@@ -1766,6 +1780,19 @@ describe('PUT /me/process-media/reorder', () => {
       orderedIds: [PROCESS_MEDIA_ID_1, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'],
     }, 'valid-token')
     expect(res.status).toBe(400)
+  })
+
+  it('should return 400 when orderedIds is a partial list', async () => {
+    const media = [mockProcessMediaPhoto, mockProcessMediaVideo]
+    const prisma = createMockPrisma({ processMedia: media })
+    ;(prisma.artistProcessMedia.findMany as ReturnType<typeof vi.fn>).mockResolvedValue(media)
+    const app = createTestApp(prisma)
+    const res = await putProcessMediaReorder(app, {
+      orderedIds: [PROCESS_MEDIA_ID_1],
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error.message).toContain('all media IDs')
   })
 
   it('should return the reordered process media', async () => {
