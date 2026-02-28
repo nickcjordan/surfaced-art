@@ -16,8 +16,8 @@ describe('Seed Data Validation', () => {
       expect(artistConfigs.length).toBeGreaterThanOrEqual(2)
     })
 
-    it('should have exactly 3 artists', () => {
-      expect(artistConfigs.length).toBe(3)
+    it('should have exactly 27 artists (3 real + 24 demo)', () => {
+      expect(artistConfigs.length).toBe(27)
     })
   })
 
@@ -139,6 +139,24 @@ describe('Seed Data Validation', () => {
     it('should have cognitoIds prefixed with "seed-" (required by seed-safe.ts safety guard)', () => {
       for (const config of artistConfigs) {
         expect(config.user.cognitoId).toMatch(/^seed-/)
+      }
+    })
+  })
+
+  describe('isDemo flag', () => {
+    it('should have isDemo=false for real artists', () => {
+      const realArtists = artistConfigs.filter((c) => !c.profile.isDemo)
+      expect(realArtists.length).toBe(3)
+    })
+
+    it('should have isDemo=true for demo artists', () => {
+      const demoArtists = artistConfigs.filter((c) => c.profile.isDemo)
+      expect(demoArtists.length).toBe(24)
+    })
+
+    it('should have every artist with an explicit isDemo value', () => {
+      for (const config of artistConfigs) {
+        expect(typeof config.profile.isDemo).toBe('boolean')
       }
     })
   })

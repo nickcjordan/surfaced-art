@@ -1,0 +1,115 @@
+import type { ArtistSeedConfig } from '../types'
+import { cdnUrl, seedKey } from '../cdn'
+
+export const karinaConfig: ArtistSeedConfig = {
+  user: {
+    cognitoId: 'seed-karina-yanes-cognito',
+    email: 'karina@karinayanesceramics.com',
+    fullName: 'Karina Yanes',
+    avatarUrl: cdnUrl(seedKey('karina-yanes', 'profile')),
+  },
+  profile: {
+    displayName: 'Karina Yanes',
+    slug: 'karina-yanes',
+    bio: 'Karina Yanes is a Puerto Rican-Palestinian-Midwesterner ceramic artist based in Gainesville, FL. She creates and pieces together ceramic multiples, fragments, and tiles with collaged surfaces that hold onto traditions, icons, architecture, and language from her family\'s oral histories. Her practice highlights how cultures are carried on through repetition, daily gestures, and acts of care — reflected in her work through tedious, repetitive making and careful craft. Yanes holds an MFA in Studio Art from the University of Florida and a BA from Denison University. She has exhibited nationally and internationally, with forthcoming solo exhibitions at Art Center Sarasota and Morean Center for Clay.',
+    location: 'Gainesville, FL',
+    websiteUrl: 'https://karinayanesceramics.squarespace.com',
+    instagramUrl: 'https://www.instagram.com/karinayanes.ceramics',
+    originZip: '32601',
+    status: 'approved',
+    commissionsOpen: false,
+    coverImageUrl: cdnUrl(seedKey('karina-yanes', 'cover')),
+    profileImageUrl: cdnUrl(seedKey('karina-yanes', 'profile')),
+    applicationSource: 'advisor_network',
+    isDemo: false,
+  },
+  categories: ['ceramics', 'mixed_media'],
+  cvEntries: [
+    // Education
+    { type: 'education', title: 'MFA, Studio Art (Ceramics)', institution: 'University of Florida, Gainesville, FL', year: 2025, sortOrder: 1 },
+    { type: 'education', title: 'Post-Baccalaureate', institution: 'University of Florida, Gainesville, FL', year: 2022, sortOrder: 2 },
+    { type: 'education', title: 'BA, Studio Art & Communication', institution: 'Denison University, Granville, OH', year: 2017, sortOrder: 3 },
+    // Solo Exhibitions
+    { type: 'exhibition', title: 'Between Two Groves (Forthcoming)', institution: 'Morean Center for Clay, St. Petersburg, FL', year: 2026, sortOrder: 4 },
+    { type: 'exhibition', title: 'We Never Thought We\'d Be Here', institution: '4Most Gallery, Gainesville, FL', year: 2024, sortOrder: 5 },
+    // Selected Group Exhibitions
+    { type: 'exhibition', title: 'NCECA Annual: Absence Takes Form (Forthcoming)', institution: 'Wasserman Projects, Detroit, MI', year: 2026, sortOrder: 6 },
+    { type: 'exhibition', title: 'All We Ate Was Watermelon', institution: 'University Gallery, Gainesville, FL', year: 2025, sortOrder: 7 },
+    { type: 'exhibition', title: 'Beacon', institution: 'Human Rights Gallery at The Leonardo, Salt Lake City, UT', year: 2025, sortOrder: 8 },
+    { type: 'exhibition', title: 'Fresh Squeezed: Emerging Artists in Florida', institution: 'Morean Center for Arts, St. Petersburg, FL', year: 2024, sortOrder: 9 },
+    // Residencies
+    { type: 'residency', title: 'Artist in Residence', institution: 'ACRE, Steuben, WI', year: 2025, sortOrder: 10 },
+    { type: 'residency', title: 'Summer Residency', institution: 'Craigardan, Elizabethtown, NY', year: 2024, sortOrder: 11 },
+    { type: 'residency', title: 'Open Studio Residency', institution: 'Haystack Mountain School of Crafts, Deer Isle, ME', year: 2023, sortOrder: 12 },
+    // Awards
+    { type: 'award', title: 'NCECA Graduate Fellowship', institution: 'Richmond, VA', year: 2024, sortOrder: 13 },
+    { type: 'award', title: 'Penland School of Craft Higher Education Partners Scholarship', institution: 'University of Florida', year: 2024, sortOrder: 14 },
+  ],
+  listings: [
+    // Available listings
+    {
+      title: 'Olive Oil Bowl, blue tatreez',
+      description: 'Handmade olive oil bowl with tatreez-inspired surface pattern in blue.',
+      medium: 'stoneware, glaze',
+      category: 'ceramics',
+      price: 4200,
+      status: 'available',
+      isDocumented: false,
+      artworkLength: 6, artworkWidth: 6, artworkHeight: 2.5,
+      packedLength: 10, packedWidth: 10, packedHeight: 6.5,
+      packedWeight: 2,
+    },
+    {
+      title: 'Olive Oil Bowl, green and ochre',
+      description: 'Handmade olive oil bowl with collaged surface in green and ochre tones.',
+      medium: 'stoneware, glaze',
+      category: 'ceramics',
+      price: 4200,
+      status: 'available',
+      isDocumented: false,
+      artworkLength: 6, artworkWidth: 6, artworkHeight: 2.5,
+      packedLength: 10, packedWidth: 10, packedHeight: 6.5,
+      packedWeight: 2,
+    },
+    {
+      title: 'Collaged Tile, watermelon',
+      description: 'Ceramic tile with collaged underglaze surface depicting watermelon motif.',
+      medium: 'stoneware, underglaze, collage',
+      category: 'ceramics',
+      price: 6500,
+      status: 'available',
+      isDocumented: true,
+      artworkLength: 8, artworkWidth: 8, artworkHeight: 1,
+      packedLength: 12, packedWidth: 12, packedHeight: 5,
+      packedWeight: 3,
+    },
+    // Sold listings
+    {
+      title: 'Olive Oil Bowl 3',
+      description: 'Handmade olive oil bowl with collaged ceramic surface.',
+      medium: 'stoneware, glaze',
+      category: 'ceramics',
+      price: 4200,
+      status: 'sold',
+      isDocumented: false,
+      artworkLength: 6, artworkWidth: 6, artworkHeight: 2.5,
+      packedLength: 10, packedWidth: 10, packedHeight: 6.5,
+      packedWeight: 2,
+    },
+    {
+      title: 'Olive Oil Bowl 4',
+      description: 'Handmade olive oil bowl with collaged ceramic surface.',
+      medium: 'stoneware, glaze',
+      category: 'ceramics',
+      price: 4200,
+      status: 'sold',
+      isDocumented: false,
+      artworkLength: 6, artworkWidth: 6, artworkHeight: 2.5,
+      packedLength: 10, packedWidth: 10, packedHeight: 6.5,
+      packedWeight: 2,
+    },
+  ],
+  processMedia: [
+    { type: 'photo', url: cdnUrl(seedKey('karina-yanes', 'process/studio')), sortOrder: 0 },
+  ],
+}
