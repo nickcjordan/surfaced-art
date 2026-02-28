@@ -18,6 +18,7 @@ export { checkRateLimit, configureRateLimit, resetRateLimit } from './rate-limit
 export { ArtistApplicationConfirmation } from './templates/artist-application-confirmation.js'
 export { ArtistAcceptance } from './templates/artist-acceptance.js'
 export { AdminApplicationNotification } from './templates/admin-application-notification.js'
+export { ArtistRejection } from './templates/artist-rejection.js'
 export { WaitlistWelcome } from './templates/waitlist-welcome.js'
 
 // Layout (for custom templates)

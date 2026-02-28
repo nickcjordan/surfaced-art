@@ -1,0 +1,41 @@
+meta {
+  name: Approve Artist
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/artists/{{sa_targetUserId}}/approve
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "reviewNotes": "Excellent portfolio and artistic statement."
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+  res.body.profile: isDefined
+  res.body.profile.id: isDefined
+  res.body.profile.slug: isDefined
+  res.body.profile.displayName: isDefined
+}
+
+tests {
+  test("should return 200 with approved profile", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.message).to.include("approved");
+    expect(body.profile).to.have.property("id");
+    expect(body.profile).to.have.property("slug");
+    expect(body.profile).to.have.property("displayName");
+  });
+}
