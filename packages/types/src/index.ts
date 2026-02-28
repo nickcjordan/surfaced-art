@@ -55,6 +55,7 @@ export type {
   PresignedPostResponse,
   DashboardResponse,
   ProfileCompletionField,
+  ProfileUpdateResponse,
   AdminApproveResponse,
   AdminRejectResponse,
 } from './interfaces'
@@ -73,6 +74,7 @@ export {
   artistApplicationBody,
   checkEmailQuery,
   presignedUrlBody,
+  profileUpdateBody,
   adminReviewBody,
   type ArtistsQuery,
   type ListingsQuery,
@@ -80,5 +82,6 @@ export {
   type ArtistApplicationBody,
   type CheckEmailQuery,
   type PresignedUrlBody,
+  type ProfileUpdateBody,
   type AdminReviewBody,
 } from './schemas'

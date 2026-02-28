@@ -38,6 +38,7 @@ function createMockPrisma(overrides?: {
   roles?: string[]
   artistProfile?: unknown
   listingCounts?: [number, number, number]
+  updatedProfile?: unknown
 }) {
   const roles = overrides?.roles ?? ['artist']
   const artistProfile = overrides?.artistProfile !== undefined ? overrides.artistProfile : mockArtistProfile
@@ -55,6 +56,7 @@ function createMockPrisma(overrides?: {
     },
     artistProfile: {
       findUnique: vi.fn().mockResolvedValue(artistProfile),
+      update: vi.fn().mockResolvedValue(overrides?.updatedProfile ?? artistProfile),
     },
     listing: {
       count: vi.fn()
@@ -78,6 +80,20 @@ function getDashboard(
   const headers: Record<string, string> = {}
   if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/dashboard', { method: 'GET', headers })
+}
+
+function putProfile(
+  app: ReturnType<typeof createTestApp>,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/profile', {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  })
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────
@@ -297,6 +313,257 @@ describe('GET /me/dashboard', () => {
       const body = await res.json()
 
       expect(body.stats.totalViews).toBe(0)
+    })
+  })
+})
+
+// ─── PUT /me/profile ────────────────────────────────────────────────
+
+describe('PUT /me/profile', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  describe('authentication and authorization', () => {
+    it('should return 401 without auth token', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { bio: 'Updated bio' })
+      expect(res.status).toBe(401)
+    })
+
+    it('should return 403 for buyer-only role', async () => {
+      const prisma = createMockPrisma({ roles: ['buyer'] })
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { bio: 'Updated bio' }, 'valid-token')
+      expect(res.status).toBe(403)
+    })
+  })
+
+  describe('profile not found', () => {
+    it('should return 404 when artist profile does not exist', async () => {
+      const prisma = createMockPrisma({ artistProfile: null })
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { bio: 'Updated bio' }, 'valid-token')
+      expect(res.status).toBe(404)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('NOT_FOUND')
+    })
+  })
+
+  describe('validation', () => {
+    it('should return 400 for bio exceeding 5000 characters', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { bio: 'x'.repeat(5001) }, 'valid-token')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('should return 400 for location exceeding 200 characters', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { location: 'x'.repeat(201) }, 'valid-token')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('should return 400 for invalid websiteUrl', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { websiteUrl: 'not-a-url' }, 'valid-token')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('should return 400 for invalid instagramUrl', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { instagramUrl: 'not-a-url' }, 'valid-token')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('should return 400 for image URL not from CloudFront domain', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { profileImageUrl: 'https://evil.com/image.jpg' }, 'valid-token')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('BAD_REQUEST')
+      expect(body.error.message).toContain('CDN')
+    })
+
+    it('should return 400 for cover image URL not from CloudFront domain', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { coverImageUrl: 'https://evil.com/cover.jpg' }, 'valid-token')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('BAD_REQUEST')
+    })
+  })
+
+  describe('partial update behavior', () => {
+    it('should update only bio when only bio is provided', async () => {
+      const updatedProfile = { ...mockArtistProfile, bio: 'New bio text' }
+      const prisma = createMockPrisma({ updatedProfile })
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { bio: 'New bio text' }, 'valid-token')
+      expect(res.status).toBe(200)
+
+      const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(updateCall.data).toEqual({ bio: 'New bio text' })
+    })
+
+    it('should update only location when only location is provided', async () => {
+      const updatedProfile = { ...mockArtistProfile, location: 'Brooklyn, NY' }
+      const prisma = createMockPrisma({ updatedProfile })
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { location: 'Brooklyn, NY' }, 'valid-token')
+      expect(res.status).toBe(200)
+
+      const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(updateCall.data).toEqual({ location: 'Brooklyn, NY' })
+    })
+
+    it('should update multiple fields when multiple fields are provided', async () => {
+      const updatedProfile = { ...mockArtistProfile, bio: 'New bio', location: 'NYC' }
+      const prisma = createMockPrisma({ updatedProfile })
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { bio: 'New bio', location: 'NYC' }, 'valid-token')
+      expect(res.status).toBe(200)
+
+      const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(updateCall.data).toHaveProperty('bio', 'New bio')
+      expect(updateCall.data).toHaveProperty('location', 'NYC')
+    })
+
+    it('should clear websiteUrl when empty string is sent', async () => {
+      const updatedProfile = { ...mockArtistProfile, websiteUrl: null }
+      const prisma = createMockPrisma({ updatedProfile })
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { websiteUrl: '' }, 'valid-token')
+      expect(res.status).toBe(200)
+
+      const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(updateCall.data.websiteUrl).toBeNull()
+    })
+
+    it('should clear profileImageUrl when null is sent', async () => {
+      const updatedProfile = { ...mockArtistProfile, profileImageUrl: null }
+      const prisma = createMockPrisma({ updatedProfile })
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { profileImageUrl: null }, 'valid-token')
+      expect(res.status).toBe(200)
+
+      const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(updateCall.data.profileImageUrl).toBeNull()
+    })
+
+    it('should allow empty body (no-op update)', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, {}, 'valid-token')
+      expect(res.status).toBe(200)
+    })
+
+    it('should accept valid CloudFront image URL', async () => {
+      const cfUrl = 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/profile/user-123/abc.jpg'
+      const updatedProfile = { ...mockArtistProfile, profileImageUrl: cfUrl }
+      const prisma = createMockPrisma({ updatedProfile })
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { profileImageUrl: cfUrl }, 'valid-token')
+      expect(res.status).toBe(200)
+    })
+  })
+
+  describe('sanitization', () => {
+    it('should sanitize bio text (strip HTML)', async () => {
+      const prisma = createMockPrisma({ updatedProfile: { ...mockArtistProfile, bio: 'Clean bio' } })
+      const app = createTestApp(prisma)
+
+      await putProfile(app, { bio: '<script>alert("xss")</script>Clean bio' }, 'valid-token')
+
+      const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(updateCall.data.bio).not.toContain('<script>')
+      expect(updateCall.data.bio).toContain('Clean bio')
+    })
+
+    it('should sanitize location text (strip HTML)', async () => {
+      const prisma = createMockPrisma({ updatedProfile: { ...mockArtistProfile, location: 'Portland, OR' } })
+      const app = createTestApp(prisma)
+
+      await putProfile(app, { location: '<b>Portland</b>, OR' }, 'valid-token')
+
+      const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(updateCall.data.location).not.toContain('<b>')
+    })
+  })
+
+  describe('response shape', () => {
+    it('should return correct profile fields in response', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { bio: 'Updated' }, 'valid-token')
+      const body = await res.json()
+
+      expect(body).toHaveProperty('id')
+      expect(body).toHaveProperty('displayName')
+      expect(body).toHaveProperty('slug')
+      expect(body).toHaveProperty('bio')
+      expect(body).toHaveProperty('location')
+      expect(body).toHaveProperty('websiteUrl')
+      expect(body).toHaveProperty('instagramUrl')
+      expect(body).toHaveProperty('profileImageUrl')
+      expect(body).toHaveProperty('coverImageUrl')
+      expect(body).toHaveProperty('status')
+    })
+
+    it('should not leak sensitive fields', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(app, { bio: 'Updated' }, 'valid-token')
+      const body = await res.json()
+
+      expect(body).not.toHaveProperty('userId')
+      expect(body).not.toHaveProperty('originZip')
+      expect(body).not.toHaveProperty('applicationSource')
+      expect(body).not.toHaveProperty('stripeAccountId')
     })
   })
 })

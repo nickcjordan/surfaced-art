@@ -11,6 +11,8 @@ import type {
   ListingDetailResponse,
   ListingListItem,
   PaginatedResponse,
+  PresignedPostResponse,
+  ProfileUpdateResponse,
 } from '@surfaced-art/types'
 
 const API_BASE_URL =
@@ -117,6 +119,29 @@ export async function submitApplication(
 export async function getDashboard(token: string): Promise<DashboardResponse> {
   return apiFetch<DashboardResponse>('/me/dashboard', {
     headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function updateProfile(
+  token: string,
+  data: Record<string, unknown>,
+): Promise<ProfileUpdateResponse> {
+  return apiFetch<ProfileUpdateResponse>('/me/profile', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function getPresignedUrl(
+  token: string,
+  context: string,
+  contentType: string,
+): Promise<PresignedPostResponse> {
+  return apiFetch<PresignedPostResponse>('/uploads/presigned-url', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ context, contentType }),
   })
 }
 

@@ -438,6 +438,25 @@ export interface DashboardResponse {
   }
 }
 
+// ─── Profile Update API Response Types ─────────────────────────────
+
+/**
+ * Response from PUT /me/profile.
+ * Returns the updated profile fields so the frontend can update its local state.
+ */
+export interface ProfileUpdateResponse {
+  id: string
+  displayName: string
+  slug: string
+  bio: string
+  location: string
+  websiteUrl: string | null
+  instagramUrl: string | null
+  profileImageUrl: string | null
+  coverImageUrl: string | null
+  status: ArtistStatusType
+}
+
 // ─── Admin API Response Types ────────────────────────────────────────
 
 /**

@@ -158,6 +158,16 @@ export function sanitizeText(input: string): string {
   )
 }
 
+/** PUT /me/profile body — all fields optional for partial update */
+export const profileUpdateBody = z.object({
+  bio: z.string().max(5000, 'Bio must be at most 5000 characters').optional(),
+  location: z.string().max(200, 'Location must be at most 200 characters').optional(),
+  websiteUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  instagramUrl: z.string().url('Invalid Instagram URL').optional().or(z.literal('')),
+  profileImageUrl: z.string().url('Invalid image URL').nullable().optional(),
+  coverImageUrl: z.string().url('Invalid image URL').nullable().optional(),
+})
+
 /** POST /admin/artists/:userId/approve or /reject body */
 export const adminReviewBody = z.object({
   reviewNotes: z.string().max(2000, 'Review notes must be at most 2000 characters').optional(),
@@ -173,4 +183,5 @@ export type WaitlistBody = z.infer<typeof waitlistBody>
 export type ArtistApplicationBody = z.infer<typeof artistApplicationBody>
 export type CheckEmailQuery = z.infer<typeof checkEmailQuery>
 export type PresignedUrlBody = z.infer<typeof presignedUrlBody>
+export type ProfileUpdateBody = z.infer<typeof profileUpdateBody>
 export type AdminReviewBody = z.infer<typeof adminReviewBody>

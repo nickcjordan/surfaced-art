@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
-import type { DashboardResponse, ProfileCompletionField } from '@surfaced-art/types'
+import type { DashboardResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
+import { profileUpdateBody, sanitizeText } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
-import { notFound } from '../errors'
+import { notFound, badRequest, validationError } from '../errors'
 
 export function createMeRoutes(prisma: PrismaClient) {
   const me = new Hono<{ Variables: { user: AuthUser } }>()
@@ -78,6 +79,89 @@ export function createMeRoutes(prisma: PrismaClient) {
       artistId: artist.id,
       completionPct: percentage,
       durationMs: Date.now() - start,
+    })
+
+    return c.json(response)
+  })
+
+  /**
+   * PUT /me/profile
+   * Update the authenticated artist's profile fields.
+   * Supports partial updates — only provided fields are changed.
+   */
+  me.put('/profile', async (c) => {
+    const user = c.get('user')
+
+    const body = await c.req.json().catch(() => null)
+    if (body === null) {
+      return badRequest(c, 'Invalid JSON payload')
+    }
+
+    const parsed = profileUpdateBody.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    // Validate image URLs belong to our CloudFront domain
+    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN || '.cloudfront.net'
+    for (const field of ['profileImageUrl', 'coverImageUrl'] as const) {
+      const value = parsed.data[field]
+      if (value && !value.includes(cloudfrontDomain)) {
+        return badRequest(c, `${field} must be from the platform CDN`)
+      }
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    // Build update data — only include fields that were provided
+    const updateData: Record<string, unknown> = {}
+
+    if (parsed.data.bio !== undefined) {
+      updateData.bio = sanitizeText(parsed.data.bio)
+    }
+    if (parsed.data.location !== undefined) {
+      updateData.location = sanitizeText(parsed.data.location)
+    }
+    if (parsed.data.websiteUrl !== undefined) {
+      updateData.websiteUrl = parsed.data.websiteUrl || null
+    }
+    if (parsed.data.instagramUrl !== undefined) {
+      updateData.instagramUrl = parsed.data.instagramUrl || null
+    }
+    if (parsed.data.profileImageUrl !== undefined) {
+      updateData.profileImageUrl = parsed.data.profileImageUrl
+    }
+    if (parsed.data.coverImageUrl !== undefined) {
+      updateData.coverImageUrl = parsed.data.coverImageUrl
+    }
+
+    const updated = await prisma.artistProfile.update({
+      where: { id: artist.id },
+      data: updateData,
+    })
+
+    const response: ProfileUpdateResponse = {
+      id: updated.id,
+      displayName: updated.displayName,
+      slug: updated.slug,
+      bio: updated.bio,
+      location: updated.location,
+      websiteUrl: updated.websiteUrl,
+      instagramUrl: updated.instagramUrl,
+      profileImageUrl: updated.profileImageUrl,
+      coverImageUrl: updated.coverImageUrl,
+      status: updated.status,
+    }
+
+    logger.info('Artist profile updated', {
+      artistId: artist.id,
+      fieldsUpdated: Object.keys(updateData),
     })
 
     return c.json(response)
