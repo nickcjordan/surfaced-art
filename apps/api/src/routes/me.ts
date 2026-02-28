@@ -39,8 +39,8 @@ export function createMeRoutes(prisma: PrismaClient) {
     ])
 
     const fields: ProfileCompletionField[] = [
-      { label: 'Bio', complete: (artist.bio ?? '').trim().length > 0 },
-      { label: 'Location', complete: (artist.location ?? '').trim().length > 0 },
+      { label: 'Bio', complete: artist.bio.trim().length > 0 },
+      { label: 'Location', complete: artist.location.trim().length > 0 },
       { label: 'Profile image', complete: artist.profileImageUrl !== null },
       { label: 'Cover image', complete: artist.coverImageUrl !== null },
       { label: 'At least 1 category', complete: artist.categories.length > 0 },

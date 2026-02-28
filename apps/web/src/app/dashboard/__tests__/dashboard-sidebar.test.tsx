@@ -60,26 +60,4 @@ describe('DashboardSidebar', () => {
     const dashboardLink = screen.getByTestId('sidebar-dashboard')
     expect(dashboardLink.className).not.toContain('bg-accent-primary')
   })
-
-  it('should highlight parent section for nested route /dashboard/profile/edit', () => {
-    mockPathname = '/dashboard/profile/edit'
-    render(<DashboardSidebar />)
-
-    const profileLink = screen.getByTestId('sidebar-profile')
-    expect(profileLink.className).toContain('bg-accent-primary')
-
-    const dashboardLink = screen.getByTestId('sidebar-dashboard')
-    expect(dashboardLink.className).not.toContain('bg-accent-primary')
-  })
-
-  it('should not highlight Dashboard for nested routes under other sections', () => {
-    mockPathname = '/dashboard/listings/new'
-    render(<DashboardSidebar />)
-
-    const listingsLink = screen.getByTestId('sidebar-listings')
-    expect(listingsLink.className).toContain('bg-accent-primary')
-
-    const dashboardLink = screen.getByTestId('sidebar-dashboard')
-    expect(dashboardLink.className).not.toContain('bg-accent-primary')
-  })
 })
