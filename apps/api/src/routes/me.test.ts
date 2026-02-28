@@ -40,6 +40,9 @@ function createMockPrisma(overrides?: {
   listingCounts?: [number, number, number]
   updatedProfile?: unknown
   categoryResults?: unknown[]
+  cvEntries?: unknown[]
+  createdCvEntry?: unknown
+  updatedCvEntry?: unknown
 }) {
   const roles = overrides?.roles ?? ['artist']
   const artistProfile = overrides?.artistProfile !== undefined ? overrides.artistProfile : mockArtistProfile
@@ -64,6 +67,14 @@ function createMockPrisma(overrides?: {
       createMany: vi.fn().mockResolvedValue({ count: overrides?.categoryResults?.length ?? 0 }),
       findMany: vi.fn().mockResolvedValue(overrides?.categoryResults ?? []),
     },
+    artistCvEntry: {
+      findMany: vi.fn().mockResolvedValue(overrides?.cvEntries ?? []),
+      findUnique: vi.fn().mockResolvedValue(overrides?.cvEntries?.[0] ?? null),
+      create: vi.fn().mockResolvedValue(overrides?.createdCvEntry ?? null),
+      update: vi.fn().mockResolvedValue(overrides?.updatedCvEntry ?? null),
+      delete: vi.fn().mockResolvedValue({ id: 'deleted' }),
+      count: vi.fn().mockResolvedValue(overrides?.cvEntries?.length ?? 0),
+    },
     listing: {
       count: vi.fn()
         .mockResolvedValueOnce(total)
@@ -73,9 +84,15 @@ function createMockPrisma(overrides?: {
     $transaction: vi.fn(),
   } as unknown as PrismaClient
 
-  // $transaction passes the same mock as the transaction client
+  // $transaction supports both callback mode (categories) and batch mode (reorder)
   ;(mock.$transaction as ReturnType<typeof vi.fn>).mockImplementation(
-    async (fn: (tx: unknown) => Promise<unknown>) => fn(mock)
+    async (fnOrArray: ((tx: unknown) => Promise<unknown>) | unknown[]) => {
+      if (typeof fnOrArray === 'function') {
+        return fnOrArray(mock)
+      }
+      // Batch mode: resolve all promises in the array
+      return Promise.all(fnOrArray)
+    }
   )
 
   return mock
@@ -118,6 +135,71 @@ function putCategories(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/categories', {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function getCvEntries(
+  app: ReturnType<typeof createTestApp>,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/cv-entries', { method: 'GET', headers })
+}
+
+function postCvEntry(
+  app: ReturnType<typeof createTestApp>,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/cv-entries', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function putCvEntry(
+  app: ReturnType<typeof createTestApp>,
+  id: string,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request(`/me/cv-entries/${id}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function deleteCvEntry(
+  app: ReturnType<typeof createTestApp>,
+  id: string,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request(`/me/cv-entries/${id}`, {
+    method: 'DELETE',
+    headers,
+  })
+}
+
+function putCvEntryReorder(
+  app: ReturnType<typeof createTestApp>,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/cv-entries/reorder', {
     method: 'PUT',
     headers,
     body: JSON.stringify(body),
@@ -780,5 +862,500 @@ describe('PUT /me/categories', () => {
       expect(body).toHaveProperty('categories')
       expect(body.categories).toEqual(['painting', 'ceramics'])
     })
+  })
+})
+
+// ─── CV Entry CRUD ──────────────────────────────────────────────────
+
+const CV_ENTRY_ID_1 = '11111111-1111-4111-8111-111111111111'
+const CV_ENTRY_ID_2 = '22222222-2222-4222-8222-222222222222'
+
+const mockCvEntry = {
+  id: CV_ENTRY_ID_1,
+  artistId: 'artist-uuid-123',
+  type: 'exhibition',
+  title: 'Solo Show',
+  institution: 'Portland Art Museum',
+  year: 2025,
+  description: 'My first solo show.',
+  sortOrder: 0,
+}
+
+const mockCvEntry2 = {
+  id: CV_ENTRY_ID_2,
+  artistId: 'artist-uuid-123',
+  type: 'award',
+  title: 'Best in Show',
+  institution: null,
+  year: 2024,
+  description: null,
+  sortOrder: 1,
+}
+
+describe('GET /me/cv-entries', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await getCvEntries(app)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 403 for buyer-only role', async () => {
+    const prisma = createMockPrisma({ roles: ['buyer'] })
+    const app = createTestApp(prisma)
+
+    const res = await getCvEntries(app, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await getCvEntries(app, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return empty array when no entries exist', async () => {
+    const prisma = createMockPrisma({ cvEntries: [] })
+    const app = createTestApp(prisma)
+
+    const res = await getCvEntries(app, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.cvEntries).toEqual([])
+  })
+
+  it('should return CV entries ordered by sortOrder', async () => {
+    const prisma = createMockPrisma({ cvEntries: [mockCvEntry, mockCvEntry2] })
+    const app = createTestApp(prisma)
+
+    const res = await getCvEntries(app, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.cvEntries).toHaveLength(2)
+    expect(body.cvEntries[0].title).toBe('Solo Show')
+    expect(body.cvEntries[1].title).toBe('Best in Show')
+  })
+
+  it('should not include artistId in response entries', async () => {
+    const prisma = createMockPrisma({ cvEntries: [mockCvEntry] })
+    const app = createTestApp(prisma)
+
+    const res = await getCvEntries(app, 'valid-token')
+    const body = await res.json()
+
+    expect(body.cvEntries[0]).not.toHaveProperty('artistId')
+  })
+
+  it('should query with correct artistId and sort order', async () => {
+    const prisma = createMockPrisma({ cvEntries: [] })
+    const app = createTestApp(prisma)
+
+    await getCvEntries(app, 'valid-token')
+
+    const findManyCall = (prisma.artistCvEntry.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(findManyCall.where).toEqual({ artistId: 'artist-uuid-123' })
+    expect(findManyCall.orderBy).toEqual({ sortOrder: 'asc' })
+  })
+})
+
+describe('POST /me/cv-entries', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 2025 })
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 2025 }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 400 for missing title', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, { type: 'exhibition', year: 2025 }, 'valid-token')
+    expect(res.status).toBe(400)
+
+    const body = await res.json()
+    expect(body.error.code).toBe('VALIDATION_ERROR')
+  })
+
+  it('should return 400 for title exceeding 200 characters', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, { type: 'exhibition', title: 'x'.repeat(201), year: 2025 }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for invalid type', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, { type: 'invalid', title: 'Show', year: 2025 }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for year below 1900', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 1899 }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for year above 2100', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 2101 }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for description exceeding 2000 characters', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, {
+      type: 'exhibition', title: 'Show', year: 2025, description: 'x'.repeat(2001),
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for invalid JSON payload', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer valid-token',
+    }
+    const res = await app.request('/me/cv-entries', {
+      method: 'POST',
+      headers,
+      body: 'not json',
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('should create an entry with auto-assigned sortOrder', async () => {
+    const created = { ...mockCvEntry, sortOrder: 3 }
+    const prisma = createMockPrisma({ cvEntries: [mockCvEntry, mockCvEntry2], createdCvEntry: created })
+    // count returns existing entry count for sortOrder assignment
+    ;(prisma.artistCvEntry.count as ReturnType<typeof vi.fn>).mockResolvedValue(2)
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, {
+      type: 'exhibition', title: 'Solo Show', institution: 'Portland Art Museum',
+      year: 2025, description: 'My first solo show.',
+    }, 'valid-token')
+    expect(res.status).toBe(201)
+
+    const createCall = (prisma.artistCvEntry.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(createCall.data.artistId).toBe('artist-uuid-123')
+    expect(createCall.data.sortOrder).toBe(2)
+  })
+
+  it('should sanitize title and description', async () => {
+    const created = { ...mockCvEntry, title: 'Clean Title', description: 'Clean desc' }
+    const prisma = createMockPrisma({ createdCvEntry: created })
+    const app = createTestApp(prisma)
+
+    await postCvEntry(app, {
+      type: 'exhibition', title: '<b>Clean</b> Title', year: 2025,
+      description: '<script>alert("x")</script>Clean desc',
+    }, 'valid-token')
+
+    const createCall = (prisma.artistCvEntry.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(createCall.data.title).not.toContain('<b>')
+    expect(createCall.data.description).not.toContain('<script>')
+  })
+
+  it('should return created entry without artistId', async () => {
+    const created = { ...mockCvEntry }
+    const prisma = createMockPrisma({ createdCvEntry: created })
+    const app = createTestApp(prisma)
+
+    const res = await postCvEntry(app, {
+      type: 'exhibition', title: 'Solo Show', year: 2025,
+    }, 'valid-token')
+
+    const body = await res.json()
+    expect(body).toHaveProperty('id')
+    expect(body).toHaveProperty('type', 'exhibition')
+    expect(body).toHaveProperty('title', 'Solo Show')
+    expect(body).toHaveProperty('sortOrder')
+    expect(body).not.toHaveProperty('artistId')
+  })
+})
+
+describe('PUT /me/cv-entries/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntry(app, CV_ENTRY_ID_1, { title: 'Updated' })
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntry(app, CV_ENTRY_ID_1, {
+      type: 'exhibition', title: 'Updated', year: 2025,
+    }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 when entry does not exist', async () => {
+    const prisma = createMockPrisma({ cvEntries: [] })
+    ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntry(app, '99999999-9999-4999-8999-999999999999', {
+      type: 'exhibition', title: 'Updated', year: 2025,
+    }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 403 when entry belongs to another artist', async () => {
+    const otherEntry = { ...mockCvEntry, artistId: 'other-artist-uuid' }
+    const prisma = createMockPrisma({ cvEntries: [otherEntry] })
+    ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherEntry)
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntry(app, CV_ENTRY_ID_1, {
+      type: 'exhibition', title: 'Updated', year: 2025,
+    }, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 400 for invalid type value', async () => {
+    const prisma = createMockPrisma({ cvEntries: [mockCvEntry] })
+    ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockCvEntry)
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntry(app, CV_ENTRY_ID_1, {
+      type: 'invalid', title: 'Show', year: 2025,
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should update the entry and return updated data', async () => {
+    const updated = { ...mockCvEntry, title: 'Updated Show' }
+    const prisma = createMockPrisma({ cvEntries: [mockCvEntry], updatedCvEntry: updated })
+    ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockCvEntry)
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntry(app, CV_ENTRY_ID_1, {
+      type: 'exhibition', title: 'Updated Show', year: 2025,
+    }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.title).toBe('Updated Show')
+    expect(body).not.toHaveProperty('artistId')
+  })
+
+  it('should convert empty institution to null', async () => {
+    const updated = { ...mockCvEntry, institution: null }
+    const prisma = createMockPrisma({ cvEntries: [mockCvEntry], updatedCvEntry: updated })
+    ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockCvEntry)
+    const app = createTestApp(prisma)
+
+    await putCvEntry(app, CV_ENTRY_ID_1, {
+      type: 'exhibition', title: 'Show', year: 2025, institution: '',
+    }, 'valid-token')
+
+    const updateCall = (prisma.artistCvEntry.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.data.institution).toBeNull()
+  })
+})
+
+describe('DELETE /me/cv-entries/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await deleteCvEntry(app, CV_ENTRY_ID_1)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await deleteCvEntry(app, CV_ENTRY_ID_1, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 when entry does not exist', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+    const app = createTestApp(prisma)
+
+    const res = await deleteCvEntry(app, '99999999-9999-4999-8999-999999999999', 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 403 when entry belongs to another artist', async () => {
+    const otherEntry = { ...mockCvEntry, artistId: 'other-artist-uuid' }
+    const prisma = createMockPrisma()
+    ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherEntry)
+    const app = createTestApp(prisma)
+
+    const res = await deleteCvEntry(app, CV_ENTRY_ID_1, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should delete the entry and return 204', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockCvEntry)
+    const app = createTestApp(prisma)
+
+    const res = await deleteCvEntry(app, CV_ENTRY_ID_1, 'valid-token')
+    expect(res.status).toBe(204)
+
+    expect(prisma.artistCvEntry.delete).toHaveBeenCalledWith({
+      where: { id: CV_ENTRY_ID_1 },
+    })
+  })
+})
+
+describe('PUT /me/cv-entries/reorder', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntryReorder(app, { orderedIds: [CV_ENTRY_ID_1] })
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntryReorder(app, { orderedIds: [CV_ENTRY_ID_1] }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 400 for empty orderedIds array', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntryReorder(app, { orderedIds: [] }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for invalid UUID in orderedIds', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntryReorder(app, { orderedIds: ['not-a-uuid'] }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should update sortOrder for each entry in a transaction', async () => {
+    const entries = [mockCvEntry, mockCvEntry2]
+    const prisma = createMockPrisma({ cvEntries: entries })
+    // findMany returns entries scoped to artist
+    ;(prisma.artistCvEntry.findMany as ReturnType<typeof vi.fn>).mockResolvedValue(entries)
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntryReorder(app, {
+      orderedIds: [CV_ENTRY_ID_2, CV_ENTRY_ID_1],
+    }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    expect(prisma.$transaction).toHaveBeenCalled()
+  })
+
+  it('should return 400 when orderedIds contain IDs not owned by artist', async () => {
+    const prisma = createMockPrisma({ cvEntries: [mockCvEntry] })
+    // findMany returns only 1 entry — the other ID is not owned
+    ;(prisma.artistCvEntry.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockCvEntry])
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntryReorder(app, {
+      orderedIds: [CV_ENTRY_ID_1, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'],
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return the reordered entries', async () => {
+    const entries = [mockCvEntry, mockCvEntry2]
+    const reordered = [
+      { ...mockCvEntry2, sortOrder: 0 },
+      { ...mockCvEntry, sortOrder: 1 },
+    ]
+    const prisma = createMockPrisma({ cvEntries: entries })
+    ;(prisma.artistCvEntry.findMany as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(entries)  // ownership check
+      .mockResolvedValueOnce(reordered) // final result
+    const app = createTestApp(prisma)
+
+    const res = await putCvEntryReorder(app, {
+      orderedIds: [CV_ENTRY_ID_2, CV_ENTRY_ID_1],
+    }, 'valid-token')
+
+    const body = await res.json()
+    expect(body.cvEntries).toHaveLength(2)
   })
 })

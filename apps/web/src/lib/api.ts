@@ -6,6 +6,9 @@ import type {
   ApplicationSubmitResponse,
   CategoriesUpdateResponse,
   CategoryType,
+  CvEntryBody,
+  CvEntryListResponse,
+  CvEntryResponse,
   CategoryWithCount,
   DashboardResponse,
   FeaturedArtistItem,
@@ -154,6 +157,58 @@ export async function updateCategories(
     method: 'PUT',
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ categories }),
+  })
+}
+
+export async function getCvEntries(
+  token: string,
+): Promise<CvEntryListResponse> {
+  return apiFetch<CvEntryListResponse>('/me/cv-entries', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function createCvEntry(
+  token: string,
+  data: CvEntryBody,
+): Promise<CvEntryResponse> {
+  return apiFetch<CvEntryResponse>('/me/cv-entries', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateCvEntry(
+  token: string,
+  id: string,
+  data: CvEntryBody,
+): Promise<CvEntryResponse> {
+  return apiFetch<CvEntryResponse>(`/me/cv-entries/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteCvEntry(
+  token: string,
+  id: string,
+): Promise<void> {
+  await apiFetch<void>(`/me/cv-entries/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function reorderCvEntries(
+  token: string,
+  orderedIds: string[],
+): Promise<CvEntryListResponse> {
+  return apiFetch<CvEntryListResponse>('/me/cv-entries/reorder', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ orderedIds }),
   })
 }
 

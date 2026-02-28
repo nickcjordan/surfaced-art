@@ -57,6 +57,8 @@ export type {
   ProfileCompletionField,
   ProfileUpdateResponse,
   CategoriesUpdateResponse,
+  CvEntryResponse,
+  CvEntryListResponse,
   AdminApproveResponse,
   AdminRejectResponse,
 } from './interfaces'
@@ -77,6 +79,8 @@ export {
   presignedUrlBody,
   profileUpdateBody,
   categoriesUpdateBody,
+  cvEntryBody,
+  cvEntryReorderBody,
   adminReviewBody,
   type ArtistsQuery,
   type ListingsQuery,
@@ -86,5 +90,7 @@ export {
   type PresignedUrlBody,
   type ProfileUpdateBody,
   type CategoriesUpdateBody,
+  type CvEntryBody,
+  type CvEntryReorderBody,
   type AdminReviewBody,
 } from './schemas'

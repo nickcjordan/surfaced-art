@@ -1,6 +1,7 @@
 'use client'
 
 import { ProfileForm } from './components/profile-form'
+import { CvEntryList } from './components/cv-entry-list'
 
 export default function ProfilePage() {
   return (
@@ -12,6 +13,7 @@ export default function ProfilePage() {
         </p>
       </div>
       <ProfileForm />
+      <CvEntryList />
     </div>
   )
 }

@@ -1,0 +1,28 @@
+meta {
+  name: List CV Entries
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{sa_baseUrl}}/me/cv-entries
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.cvEntries: isDefined
+}
+
+tests {
+  test("should return 200 with CV entries list", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.cvEntries).to.be.an("array");
+  });
+}

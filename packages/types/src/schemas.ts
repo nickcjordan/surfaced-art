@@ -6,13 +6,14 @@
  */
 
 import { z } from 'zod'
-import { Category, ListingStatus } from './enums'
+import { Category, CvEntryType, ListingStatus } from './enums'
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
 const categoryValues = Object.values(Category) as [string, ...string[]]
+const cvEntryTypeValues = Object.values(CvEntryType) as [string, ...string[]]
 const statusValues = Object.values(ListingStatus) as [string, ...string[]]
 
 // ============================================================================
@@ -175,6 +176,31 @@ export const categoriesUpdateBody = z.object({
     .min(1, 'Select at least one category'),
 })
 
+/** POST /me/cv-entries or PUT /me/cv-entries/:id body */
+export const cvEntryBody = z.object({
+  type: z.enum(cvEntryTypeValues),
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(200, 'Title must be at most 200 characters'),
+  institution: z
+    .string()
+    .max(200, 'Institution must be at most 200 characters')
+    .optional()
+    .or(z.literal('')),
+  year: z.number().int().min(1900, 'Year must be 1900 or later').max(2100, 'Year must be 2100 or earlier'),
+  description: z
+    .string()
+    .max(2000, 'Description must be at most 2000 characters')
+    .optional()
+    .or(z.literal('')),
+})
+
+/** PUT /me/cv-entries/reorder body */
+export const cvEntryReorderBody = z.object({
+  orderedIds: z.array(z.string().uuid('Invalid UUID format')).min(1, 'At least one ID is required'),
+})
+
 /** POST /admin/artists/:userId/approve or /reject body */
 export const adminReviewBody = z.object({
   reviewNotes: z.string().max(2000, 'Review notes must be at most 2000 characters').optional(),
@@ -192,4 +218,6 @@ export type CheckEmailQuery = z.infer<typeof checkEmailQuery>
 export type PresignedUrlBody = z.infer<typeof presignedUrlBody>
 export type ProfileUpdateBody = z.infer<typeof profileUpdateBody>
 export type CategoriesUpdateBody = z.infer<typeof categoriesUpdateBody>
+export type CvEntryBody = z.infer<typeof cvEntryBody>
+export type CvEntryReorderBody = z.infer<typeof cvEntryReorderBody>
 export type AdminReviewBody = z.infer<typeof adminReviewBody>

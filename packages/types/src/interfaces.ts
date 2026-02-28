@@ -468,6 +468,29 @@ export interface CategoriesUpdateResponse {
   categories: CategoryType[]
 }
 
+// ─── CV Entry API Response Types ──────────────────────────────────────
+
+/**
+ * Single CV entry as returned by the API.
+ * Omits artistId since it's implied by the /me scope.
+ */
+export interface CvEntryResponse {
+  id: string
+  type: CvEntryTypeType
+  title: string
+  institution: string | null
+  year: number
+  description: string | null
+  sortOrder: number
+}
+
+/**
+ * Response from GET /me/cv-entries.
+ */
+export interface CvEntryListResponse {
+  cvEntries: CvEntryResponse[]
+}
+
 // ─── Admin API Response Types ────────────────────────────────────────
 
 /**
