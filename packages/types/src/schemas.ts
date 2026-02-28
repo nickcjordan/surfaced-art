@@ -158,6 +158,11 @@ export function sanitizeText(input: string): string {
   )
 }
 
+/** POST /admin/artists/:userId/approve or /reject body */
+export const adminReviewBody = z.object({
+  reviewNotes: z.string().max(2000, 'Review notes must be at most 2000 characters').optional(),
+})
+
 // ============================================================================
 // Inferred types (derive TypeScript types from schemas)
 // ============================================================================
@@ -168,3 +173,4 @@ export type WaitlistBody = z.infer<typeof waitlistBody>
 export type ArtistApplicationBody = z.infer<typeof artistApplicationBody>
 export type CheckEmailQuery = z.infer<typeof checkEmailQuery>
 export type PresignedUrlBody = z.infer<typeof presignedUrlBody>
+export type AdminReviewBody = z.infer<typeof adminReviewBody>

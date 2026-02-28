@@ -55,6 +55,8 @@ export type {
   PresignedPostResponse,
   DashboardResponse,
   ProfileCompletionField,
+  AdminApproveResponse,
+  AdminRejectResponse,
 } from './interfaces'
 
 // Validation schemas
@@ -71,10 +73,12 @@ export {
   artistApplicationBody,
   checkEmailQuery,
   presignedUrlBody,
+  adminReviewBody,
   type ArtistsQuery,
   type ListingsQuery,
   type WaitlistBody,
   type ArtistApplicationBody,
   type CheckEmailQuery,
   type PresignedUrlBody,
+  type AdminReviewBody,
 } from './schemas'

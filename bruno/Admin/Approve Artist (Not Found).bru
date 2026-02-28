@@ -1,0 +1,31 @@
+meta {
+  name: Approve Artist (Not Found)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/artists/00000000-0000-0000-0000-000000000000/approve
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 404
+  res.body.error.code: eq NOT_FOUND
+}
+
+tests {
+  test("should return 404 for non-existent user", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("NOT_FOUND");
+  });
+}
