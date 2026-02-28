@@ -29,7 +29,7 @@ data "aws_caller_identity" "current" {}
 # without creating a circular dependency (lambda-api depends on iam for the role ARN).
 resource "aws_ecr_repository" "api" {
   name                 = "${var.project_name}-${var.environment}-api"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true
@@ -95,7 +95,7 @@ resource "aws_ecr_lifecycle_policy" "api" {
 # ECR repository for migration Lambda container images
 resource "aws_ecr_repository" "migrate" {
   name                 = "${var.project_name}-${var.environment}-migrate"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true
@@ -131,7 +131,7 @@ resource "aws_ecr_lifecycle_policy" "migrate" {
 # ECR repository for image processor Lambda container images
 resource "aws_ecr_repository" "image_processor" {
   name                 = "${var.project_name}-${var.environment}-image-processor"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true

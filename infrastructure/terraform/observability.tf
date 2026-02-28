@@ -54,7 +54,8 @@ resource "aws_api_gateway_account" "main" {
 # the AWS email to activate the subscription. This is the only manual step.
 
 resource "aws_sns_topic" "platform_alerts" {
-  name = "${var.project_name}-${var.environment}-platform-alerts"
+  name              = "${var.project_name}-${var.environment}-platform-alerts"
+  kms_master_key_id = "alias/aws/sns"
 
   tags = {
     Name = "${var.project_name}-${var.environment}-platform-alerts"

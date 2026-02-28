@@ -13,68 +13,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  semgrep:
-    name: Semgrep Code Analysis
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Run Semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/default
-            p/typescript
-            p/nodejs
-            p/security-audit
-            p/secrets
-          generateSarif: false
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-        continue-on-error: true
-
-
-  trivy-fs-scan:
-    name: Trivy Filesystem Scan
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Run Trivy vulnerability scanner (filesystem)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'table'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-          skip-files: 'package-lock.json'
-          exit-code: '1'
-        continue-on-error: true
-
-  trivy-iac-scan:
-    name: Trivy IaC Scan
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Run Trivy for Terraform misconfigurations
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'config'
-          scan-ref: 'infrastructure/terraform'
-          format: 'table'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-          exit-code: '1'
-        continue-on-error: true
-
-  npm-audit:
-    name: NPM Audit
+  security-scan:
+    name: Security Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -90,9 +30,164 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # --- npm audit ---
       - name: Run npm audit
-        run: npm audit --audit-level=high
+        id: npm-audit
+        run: |
+          set +e
+          npm audit --audit-level=high 2>&1 | tee npm-audit-output.txt
+          EXIT_CODE=$?
+          set -e
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          fi
+
+      # --- Trivy filesystem scan ---
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
+          output: 'trivy-fs-output.txt'
+          skip-files: 'package-lock.json'
+
+      - name: Check Trivy FS results
+        id: trivy-fs
+        run: |
+          set +e
+          trivy fs --exit-code 1 --severity CRITICAL,HIGH --quiet --skip-files package-lock.json . > /dev/null 2>&1
+          EXIT_CODE=$?
+          set -e
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          fi
+
+      # --- Trivy IaC scan ---
+      - name: Run Trivy IaC scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: 'infrastructure/terraform'
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
+          output: 'trivy-iac-output.txt'
+
+      - name: Check Trivy IaC results
+        id: trivy-iac
+        run: |
+          set +e
+          trivy config --exit-code 1 --severity CRITICAL,HIGH --quiet infrastructure/terraform > /dev/null 2>&1
+          EXIT_CODE=$?
+          set -e
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          fi
+
+      # --- Semgrep ---
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/default
+            p/typescript
+            p/nodejs
+            p/security-audit
+            p/secrets
+          generateSarif: false
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
         continue-on-error: true
 
-      - name: Run npm audit (production only)
-        run: npm audit --omit=dev --audit-level=high
+      # --- Post PR comment with findings ---
+      - name: Comment security findings on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            const npmStatus = '${{ steps.npm-audit.outputs.status }}';
+            const trivyFsStatus = '${{ steps.trivy-fs.outputs.status }}';
+            const trivyIacStatus = '${{ steps.trivy-iac.outputs.status }}';
+
+            const readOutput = (file, maxLen = 4000) => {
+              try {
+                const content = fs.readFileSync(file, 'utf8');
+                return content.length > maxLen
+                  ? '...(truncated)\n' + content.slice(-maxLen)
+                  : content;
+              } catch {
+                return 'No output captured';
+              }
+            };
+
+            const npmOutput = readOutput('npm-audit-output.txt');
+            const trivyFsOutput = readOutput('trivy-fs-output.txt');
+            const trivyIacOutput = readOutput('trivy-iac-output.txt');
+
+            const hasFindings = npmStatus === 'fail' || trivyFsStatus === 'fail' || trivyIacStatus === 'fail';
+            const icon = (s) => s === 'fail' ? '❌' : '✅';
+
+            let body = `#### Security Scan Results ${hasFindings ? '⚠️' : '✅'}\n\n`;
+            body += `| Scanner | Result |\n|---|---|\n`;
+            body += `| npm audit (HIGH+) | ${icon(npmStatus)} |\n`;
+            body += `| Trivy Filesystem (HIGH+) | ${icon(trivyFsStatus)} |\n`;
+            body += `| Trivy IaC (HIGH+) | ${icon(trivyIacStatus)} |\n\n`;
+
+            if (npmStatus === 'fail') {
+              body += `<details><summary>npm audit findings</summary>\n\n\`\`\`\n${npmOutput}\n\`\`\`\n\n</details>\n\n`;
+            }
+            if (trivyFsStatus === 'fail') {
+              body += `<details><summary>Trivy filesystem findings</summary>\n\n\`\`\`\n${trivyFsOutput}\n\`\`\`\n\n</details>\n\n`;
+            }
+            if (trivyIacStatus === 'fail') {
+              body += `<details><summary>Trivy IaC findings</summary>\n\n\`\`\`\n${trivyIacOutput}\n\`\`\`\n\n</details>\n\n`;
+            }
+
+            if (!hasFindings) {
+              body += `No HIGH or CRITICAL findings detected.\n`;
+            }
+
+            body += `\n*Severity threshold: HIGH and CRITICAL. MEDIUM findings are shown in scan output but do not fail the check.*`;
+
+            // Update existing comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const marker = '#### Security Scan Results';
+            const existing = comments.find(c => c.body?.startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      # --- Fail the job if HIGH+ findings exist ---
+      - name: Fail if security findings detected
+        if: steps.npm-audit.outputs.status == 'fail' || steps.trivy-fs.outputs.status == 'fail' || steps.trivy-iac.outputs.status == 'fail'
+        run: |
+          echo "::error::Security scan found HIGH or CRITICAL findings — see PR comment for details"
+          exit 1
