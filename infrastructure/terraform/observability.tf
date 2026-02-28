@@ -53,6 +53,7 @@ resource "aws_api_gateway_account" "main" {
 # NOTE: After terraform apply, someone must click the confirmation link in
 # the AWS email to activate the subscription. This is the only manual step.
 
+#trivy:ignore:AVD-AWS-0136 AWS-managed key is sufficient for internal alerting; CMK adds cost with no security benefit pre-launch
 resource "aws_sns_topic" "platform_alerts" {
   name              = "${var.project_name}-${var.environment}-platform-alerts"
   kms_master_key_id = "alias/aws/sns"
