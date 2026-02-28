@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
-import type { DashboardResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
-import { profileUpdateBody, sanitizeText } from '@surfaced-art/types'
+import type { CategoryType as PrismaCategoryType } from '@surfaced-art/db'
+import type { CategoriesUpdateResponse, DashboardResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
+import { categoriesUpdateBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
 import { notFound, badRequest, validationError } from '../errors'
@@ -62,6 +63,7 @@ export function createMeRoutes(prisma: PrismaClient) {
         coverImageUrl: artist.coverImageUrl,
         status: artist.status,
         stripeAccountId: artist.stripeAccountId,
+        categories: artist.categories.map((c) => c.category),
       },
       completion: {
         percentage,
@@ -162,6 +164,64 @@ export function createMeRoutes(prisma: PrismaClient) {
     logger.info('Artist profile updated', {
       artistId: artist.id,
       fieldsUpdated: Object.keys(updateData),
+    })
+
+    return c.json(response)
+  })
+
+  /**
+   * PUT /me/categories
+   * Replace the authenticated artist's category assignments.
+   * Uses replace-all semantics: deletes existing, inserts new in a transaction.
+   */
+  me.put('/categories', async (c) => {
+    const user = c.get('user')
+
+    const body = await c.req.json().catch(() => null)
+    if (body === null) {
+      return badRequest(c, 'Invalid JSON payload')
+    }
+
+    const parsed = categoriesUpdateBody.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    // Deduplicate categories
+    const uniqueCategories = [...new Set(parsed.data.categories)]
+
+    const updatedCategories = await prisma.$transaction(async (tx) => {
+      await tx.artistCategory.deleteMany({
+        where: { artistId: artist.id },
+      })
+
+      await tx.artistCategory.createMany({
+        data: uniqueCategories.map((category) => ({
+          artistId: artist.id,
+          category: category as PrismaCategoryType,
+        })),
+      })
+
+      return tx.artistCategory.findMany({
+        where: { artistId: artist.id },
+      })
+    })
+
+    const response: CategoriesUpdateResponse = {
+      categories: updatedCategories.map((c) => c.category),
+    }
+
+    logger.info('Artist categories updated', {
+      artistId: artist.id,
+      categories: uniqueCategories,
     })
 
     return c.json(response)

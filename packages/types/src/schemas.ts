@@ -168,6 +168,13 @@ export const profileUpdateBody = z.object({
   coverImageUrl: z.string().url('Invalid image URL').nullable().optional(),
 })
 
+/** PUT /me/categories body — replace-all semantics */
+export const categoriesUpdateBody = z.object({
+  categories: z
+    .array(z.enum(categoryValues))
+    .min(1, 'Select at least one category'),
+})
+
 /** POST /admin/artists/:userId/approve or /reject body */
 export const adminReviewBody = z.object({
   reviewNotes: z.string().max(2000, 'Review notes must be at most 2000 characters').optional(),
@@ -184,4 +191,5 @@ export type ArtistApplicationBody = z.infer<typeof artistApplicationBody>
 export type CheckEmailQuery = z.infer<typeof checkEmailQuery>
 export type PresignedUrlBody = z.infer<typeof presignedUrlBody>
 export type ProfileUpdateBody = z.infer<typeof profileUpdateBody>
+export type CategoriesUpdateBody = z.infer<typeof categoriesUpdateBody>
 export type AdminReviewBody = z.infer<typeof adminReviewBody>

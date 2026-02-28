@@ -56,6 +56,7 @@ export type {
   DashboardResponse,
   ProfileCompletionField,
   ProfileUpdateResponse,
+  CategoriesUpdateResponse,
   AdminApproveResponse,
   AdminRejectResponse,
 } from './interfaces'
@@ -75,6 +76,7 @@ export {
   checkEmailQuery,
   presignedUrlBody,
   profileUpdateBody,
+  categoriesUpdateBody,
   adminReviewBody,
   type ArtistsQuery,
   type ListingsQuery,
@@ -83,5 +85,6 @@ export {
   type CheckEmailQuery,
   type PresignedUrlBody,
   type ProfileUpdateBody,
+  type CategoriesUpdateBody,
   type AdminReviewBody,
 } from './schemas'

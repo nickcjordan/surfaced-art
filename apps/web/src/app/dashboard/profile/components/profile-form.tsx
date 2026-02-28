@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth'
-import { getDashboard, updateProfile } from '@/lib/api'
-import type { DashboardResponse } from '@surfaced-art/types'
+import { getDashboard, updateProfile, updateCategories } from '@/lib/api'
+import type { CategoryType, DashboardResponse } from '@surfaced-art/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ImageUpload } from './image-upload'
+import { CATEGORIES } from '@/lib/categories'
 
 interface FormData {
   bio: string
@@ -37,6 +38,8 @@ export function ProfileForm() {
     coverImageUrl: null,
   })
   const [initialData, setInitialData] = useState<FormData | null>(null)
+  const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>([])
+  const [initialCategories, setInitialCategories] = useState<CategoryType[]>([])
   const [fetchError, setFetchError] = useState<string | null>(null)
 
   const fetchProfile = useCallback(async () => {
@@ -62,6 +65,8 @@ export function ProfileForm() {
 
       setFormData(data)
       setInitialData(data)
+      setSelectedCategories(profile.categories)
+      setInitialCategories(profile.categories)
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : 'Failed to load profile')
     } finally {
@@ -82,12 +87,38 @@ export function ProfileForm() {
     }
   }
 
+  function toggleCategory(category: CategoryType) {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    )
+    if (formState === 'success' || formState === 'error') {
+      setFormState('idle')
+      setServerError(null)
+    }
+  }
+
+  function categoriesChanged(): boolean {
+    if (selectedCategories.length !== initialCategories.length) return true
+    const sorted = [...selectedCategories].sort()
+    const sortedInitial = [...initialCategories].sort()
+    return sorted.some((c, i) => c !== sortedInitial[i])
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!initialData) return
 
-    // Build diff — only include changed fields
+    // Validate categories
+    if (selectedCategories.length === 0) {
+      setServerError('Select at least one category')
+      setFormState('error')
+      return
+    }
+
+    // Build profile diff — only include changed fields
     const changes: Record<string, unknown> = {}
 
     if (formData.bio !== initialData.bio) changes.bio = formData.bio
@@ -97,7 +128,9 @@ export function ProfileForm() {
     if (formData.profileImageUrl !== initialData.profileImageUrl) changes.profileImageUrl = formData.profileImageUrl
     if (formData.coverImageUrl !== initialData.coverImageUrl) changes.coverImageUrl = formData.coverImageUrl
 
-    if (Object.keys(changes).length === 0) {
+    const hasCategoryChanges = categoriesChanged()
+
+    if (Object.keys(changes).length === 0 && !hasCategoryChanges) {
       setFormState('success')
       return
     }
@@ -113,20 +146,30 @@ export function ProfileForm() {
         return
       }
 
-      const updated = await updateProfile(token, changes)
+      // Save profile fields if changed
+      if (Object.keys(changes).length > 0) {
+        const updated = await updateProfile(token, changes)
 
-      // Update form data and initial data from response
-      const newData: FormData = {
-        bio: updated.bio,
-        location: updated.location,
-        websiteUrl: updated.websiteUrl ?? '',
-        instagramUrl: updated.instagramUrl ?? '',
-        profileImageUrl: updated.profileImageUrl,
-        coverImageUrl: updated.coverImageUrl,
+        const newData: FormData = {
+          bio: updated.bio,
+          location: updated.location,
+          websiteUrl: updated.websiteUrl ?? '',
+          instagramUrl: updated.instagramUrl ?? '',
+          profileImageUrl: updated.profileImageUrl,
+          coverImageUrl: updated.coverImageUrl,
+        }
+
+        setFormData(newData)
+        setInitialData(newData)
       }
 
-      setFormData(newData)
-      setInitialData(newData)
+      // Save categories if changed
+      if (hasCategoryChanges) {
+        const result = await updateCategories(token, selectedCategories)
+        setSelectedCategories(result.categories)
+        setInitialCategories(result.categories)
+      }
+
       setFormState('success')
     } catch (err) {
       setServerError(err instanceof Error ? err.message : 'Failed to save profile')
@@ -190,6 +233,32 @@ export function ProfileForm() {
             testId="profile-image-upload"
             aspectHint="Recommended: square (1:1 ratio)"
           />
+        </CardContent>
+      </Card>
+
+      {/* Categories */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Categories</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div data-testid="profile-categories" className="flex flex-wrap gap-2">
+            {CATEGORIES.map((cat) => {
+              const isSelected = selectedCategories.includes(cat.slug)
+              return (
+                <Button
+                  key={cat.slug}
+                  type="button"
+                  variant={isSelected ? 'default' : 'outline'}
+                  size="sm"
+                  aria-pressed={isSelected}
+                  onClick={() => toggleCategory(cat.slug)}
+                >
+                  {cat.label}
+                </Button>
+              )
+            })}
+          </div>
         </CardContent>
       </Card>
 

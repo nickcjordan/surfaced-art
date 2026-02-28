@@ -39,12 +39,13 @@ function createMockPrisma(overrides?: {
   artistProfile?: unknown
   listingCounts?: [number, number, number]
   updatedProfile?: unknown
+  categoryResults?: unknown[]
 }) {
   const roles = overrides?.roles ?? ['artist']
   const artistProfile = overrides?.artistProfile !== undefined ? overrides.artistProfile : mockArtistProfile
   const [total, available, sold] = overrides?.listingCounts ?? [5, 3, 2]
 
-  return {
+  const mock = {
     user: {
       findUnique: vi.fn().mockResolvedValue({
         id: 'user-uuid-123',
@@ -58,13 +59,26 @@ function createMockPrisma(overrides?: {
       findUnique: vi.fn().mockResolvedValue(artistProfile),
       update: vi.fn().mockResolvedValue(overrides?.updatedProfile ?? artistProfile),
     },
+    artistCategory: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      createMany: vi.fn().mockResolvedValue({ count: overrides?.categoryResults?.length ?? 0 }),
+      findMany: vi.fn().mockResolvedValue(overrides?.categoryResults ?? []),
+    },
     listing: {
       count: vi.fn()
         .mockResolvedValueOnce(total)
         .mockResolvedValueOnce(available)
         .mockResolvedValueOnce(sold),
     },
+    $transaction: vi.fn(),
   } as unknown as PrismaClient
+
+  // $transaction passes the same mock as the transaction client
+  ;(mock.$transaction as ReturnType<typeof vi.fn>).mockImplementation(
+    async (fn: (tx: unknown) => Promise<unknown>) => fn(mock)
+  )
+
+  return mock
 }
 
 function createTestApp(prisma: PrismaClient) {
@@ -90,6 +104,20 @@ function putProfile(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/profile', {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function putCategories(
+  app: ReturnType<typeof createTestApp>,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/categories', {
     method: 'PUT',
     headers,
     body: JSON.stringify(body),
@@ -179,6 +207,7 @@ describe('GET /me/dashboard', () => {
         coverImageUrl: 'https://cdn.example.com/cover.jpg',
         status: 'approved',
         stripeAccountId: null,
+        categories: ['ceramics'],
       })
     })
 
@@ -564,6 +593,192 @@ describe('PUT /me/profile', () => {
       expect(body).not.toHaveProperty('originZip')
       expect(body).not.toHaveProperty('applicationSource')
       expect(body).not.toHaveProperty('stripeAccountId')
+    })
+  })
+})
+
+// ─── PUT /me/categories ─────────────────────────────────────────────
+
+describe('PUT /me/categories', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  describe('authentication and authorization', () => {
+    it('should return 401 without auth token', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: ['ceramics'] })
+      expect(res.status).toBe(401)
+    })
+
+    it('should return 403 for buyer-only role', async () => {
+      const prisma = createMockPrisma({ roles: ['buyer'] })
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: ['ceramics'] }, 'valid-token')
+      expect(res.status).toBe(403)
+    })
+  })
+
+  describe('profile not found', () => {
+    it('should return 404 when artist profile does not exist', async () => {
+      const prisma = createMockPrisma({ artistProfile: null })
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: ['ceramics'] }, 'valid-token')
+      expect(res.status).toBe(404)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('NOT_FOUND')
+    })
+  })
+
+  describe('validation', () => {
+    it('should return 400 for empty categories array', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: [] }, 'valid-token')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('should return 400 for invalid category value', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: ['not_a_category'] }, 'valid-token')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('should return 400 when categories field is missing', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, {}, 'valid-token')
+      expect(res.status).toBe(400)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('should return 400 for invalid JSON payload', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer valid-token',
+      }
+      const res = await app.request('/me/categories', {
+        method: 'PUT',
+        headers,
+        body: 'not json',
+      })
+      expect(res.status).toBe(400)
+    })
+  })
+
+  describe('replace-all behavior', () => {
+    it('should call deleteMany and createMany in a transaction', async () => {
+      const categoryResults = [
+        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'painting' },
+        { id: 'cat-new-2', artistId: 'artist-uuid-123', category: 'ceramics' },
+      ]
+      const prisma = createMockPrisma({ categoryResults })
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: ['painting', 'ceramics'] }, 'valid-token')
+      expect(res.status).toBe(200)
+
+      // Transaction was used
+      expect(prisma.$transaction).toHaveBeenCalled()
+
+      // deleteMany was called with the artist's ID
+      expect(
+        (prisma.artistCategory.deleteMany as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      ).toEqual({ where: { artistId: 'artist-uuid-123' } })
+
+      // createMany was called with the new categories
+      const createCall = (prisma.artistCategory.createMany as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(createCall.data).toHaveLength(2)
+      expect(createCall.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ artistId: 'artist-uuid-123', category: 'painting' }),
+          expect.objectContaining({ artistId: 'artist-uuid-123', category: 'ceramics' }),
+        ])
+      )
+    })
+
+    it('should accept a single category', async () => {
+      const categoryResults = [
+        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'jewelry' },
+      ]
+      const prisma = createMockPrisma({ categoryResults })
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: ['jewelry'] }, 'valid-token')
+      expect(res.status).toBe(200)
+    })
+
+    it('should accept all 9 categories', async () => {
+      const allCategories = [
+        'ceramics', 'painting', 'print', 'jewelry', 'illustration',
+        'photography', 'woodworking', 'fibers', 'mixed_media',
+      ]
+      const categoryResults = allCategories.map((c) => ({
+        id: `cat-${c}`,
+        artistId: 'artist-uuid-123',
+        category: c,
+      }))
+      const prisma = createMockPrisma({ categoryResults })
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: allCategories }, 'valid-token')
+      expect(res.status).toBe(200)
+    })
+
+    it('should deduplicate repeated categories', async () => {
+      const categoryResults = [
+        { id: 'cat-1', artistId: 'artist-uuid-123', category: 'ceramics' },
+      ]
+      const prisma = createMockPrisma({ categoryResults })
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: ['ceramics', 'ceramics'] }, 'valid-token')
+      expect(res.status).toBe(200)
+
+      const createCall = (prisma.artistCategory.createMany as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(createCall.data).toHaveLength(1)
+    })
+  })
+
+  describe('response shape', () => {
+    it('should return categories array', async () => {
+      const categoryResults = [
+        { id: 'cat-1', artistId: 'artist-uuid-123', category: 'painting' },
+        { id: 'cat-2', artistId: 'artist-uuid-123', category: 'ceramics' },
+      ]
+      const prisma = createMockPrisma({ categoryResults })
+      const app = createTestApp(prisma)
+
+      const res = await putCategories(app, { categories: ['painting', 'ceramics'] }, 'valid-token')
+      const body = await res.json()
+
+      expect(body).toHaveProperty('categories')
+      expect(body.categories).toEqual(['painting', 'ceramics'])
     })
   })
 })

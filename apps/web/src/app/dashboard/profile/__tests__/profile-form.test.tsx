@@ -16,10 +16,12 @@ vi.mock('@/lib/auth', () => ({
 // Mock API
 const mockGetDashboard = vi.fn()
 const mockUpdateProfile = vi.fn()
+const mockUpdateCategories = vi.fn()
 const mockGetPresignedUrl = vi.fn()
 vi.mock('@/lib/api', () => ({
   getDashboard: (...args: unknown[]) => mockGetDashboard(...args),
   updateProfile: (...args: unknown[]) => mockUpdateProfile(...args),
+  updateCategories: (...args: unknown[]) => mockUpdateCategories(...args),
   getPresignedUrl: (...args: unknown[]) => mockGetPresignedUrl(...args),
   ApiError: class ApiError extends Error {
     constructor(public status: number, message: string) {
@@ -56,6 +58,7 @@ const mockDashboardData: DashboardResponse = {
     coverImageUrl: 'https://cdn.example.com/cover.jpg',
     status: 'approved',
     stripeAccountId: null,
+    categories: ['ceramics', 'painting'],
   },
   completion: {
     percentage: 100,
@@ -84,6 +87,9 @@ beforeEach(() => {
     profileImageUrl: null,
     coverImageUrl: null,
     status: 'approved',
+  })
+  mockUpdateCategories.mockResolvedValue({
+    categories: ['ceramics', 'painting'],
   })
 })
 
@@ -242,6 +248,119 @@ describe('ProfileForm', () => {
       await waitFor(() => {
         expect(screen.getByTestId('profile-error')).toBeInTheDocument()
       })
+    })
+  })
+
+  describe('category section', () => {
+    it('should render all 9 category buttons', async () => {
+      render(<ProfileForm />)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-categories')).toBeInTheDocument()
+      })
+
+      expect(screen.getByRole('button', { name: /ceramics/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /painting/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /print/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /jewelry/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /illustration/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /photography/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /woodworking/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /fibers/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /mixed media/i })).toBeInTheDocument()
+    })
+
+    it('should pre-select categories from dashboard data', async () => {
+      render(<ProfileForm />)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-categories')).toBeInTheDocument()
+      })
+
+      // ceramics and painting should be visually selected (have aria-pressed=true)
+      expect(screen.getByRole('button', { name: /ceramics/i })).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByRole('button', { name: /painting/i })).toHaveAttribute('aria-pressed', 'true')
+      // jewelry should not be selected
+      expect(screen.getByRole('button', { name: /jewelry/i })).toHaveAttribute('aria-pressed', 'false')
+    })
+
+    it('should toggle category selection on click', async () => {
+      const user = userEvent.setup()
+      render(<ProfileForm />)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-categories')).toBeInTheDocument()
+      })
+
+      const jewelryButton = screen.getByRole('button', { name: /jewelry/i })
+      expect(jewelryButton).toHaveAttribute('aria-pressed', 'false')
+
+      await user.click(jewelryButton)
+      expect(jewelryButton).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('should call updateCategories when categories are saved', async () => {
+      const user = userEvent.setup()
+      render(<ProfileForm />)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-categories')).toBeInTheDocument()
+      })
+
+      // Add jewelry to the existing ceramics + painting
+      await user.click(screen.getByRole('button', { name: /jewelry/i }))
+      await user.click(screen.getByTestId('profile-save'))
+
+      await waitFor(() => {
+        expect(mockUpdateCategories).toHaveBeenCalledWith(
+          'mock-token',
+          expect.arrayContaining(['ceramics', 'painting', 'jewelry'])
+        )
+      })
+    })
+
+    it('should not call updateCategories when categories have not changed', async () => {
+      const user = userEvent.setup()
+      render(<ProfileForm />)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-bio')).toBeInTheDocument()
+      })
+
+      // Only change bio, not categories
+      const bioInput = screen.getByTestId('profile-bio')
+      await user.clear(bioInput)
+      await user.type(bioInput, 'New bio')
+
+      await user.click(screen.getByTestId('profile-save'))
+
+      await waitFor(() => {
+        expect(mockUpdateProfile).toHaveBeenCalled()
+      })
+
+      expect(mockUpdateCategories).not.toHaveBeenCalled()
+    })
+
+    it('should show error when trying to save with no categories selected', async () => {
+      const user = userEvent.setup()
+      render(<ProfileForm />)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-categories')).toBeInTheDocument()
+      })
+
+      // Deselect both ceramics and painting
+      await user.click(screen.getByRole('button', { name: /ceramics/i }))
+      await user.click(screen.getByRole('button', { name: /painting/i }))
+
+      await user.click(screen.getByTestId('profile-save'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('profile-error')).toBeInTheDocument()
+      })
+
+      // Should NOT call API
+      expect(mockUpdateCategories).not.toHaveBeenCalled()
     })
   })
 })

@@ -4,6 +4,7 @@ import type {
   ArtistApplicationBody,
   ApplicationStatusType,
   ApplicationSubmitResponse,
+  CategoriesUpdateResponse,
   CategoryType,
   CategoryWithCount,
   DashboardResponse,
@@ -142,6 +143,17 @@ export async function getPresignedUrl(
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ context, contentType }),
+  })
+}
+
+export async function updateCategories(
+  token: string,
+  categories: CategoryType[],
+): Promise<CategoriesUpdateResponse> {
+  return apiFetch<CategoriesUpdateResponse>('/me/categories', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ categories }),
   })
 }
 

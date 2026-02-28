@@ -425,6 +425,7 @@ export interface DashboardResponse {
     coverImageUrl: string | null
     status: ArtistStatusType
     stripeAccountId: string | null
+    categories: CategoryType[]
   }
   completion: {
     percentage: number // 0-100
@@ -455,6 +456,16 @@ export interface ProfileUpdateResponse {
   profileImageUrl: string | null
   coverImageUrl: string | null
   status: ArtistStatusType
+}
+
+// ─── Categories Update API Response Types ─────────────────────────────
+
+/**
+ * Response from PUT /me/categories.
+ * Returns the updated category list.
+ */
+export interface CategoriesUpdateResponse {
+  categories: CategoryType[]
 }
 
 // ─── Admin API Response Types ────────────────────────────────────────

@@ -47,6 +47,7 @@ const mockDashboardData: DashboardResponse = {
     coverImageUrl: 'https://cdn.example.com/cover.jpg',
     status: 'approved',
     stripeAccountId: null,
+    categories: ['ceramics'],
   },
   completion: {
     percentage: 67,
