@@ -71,6 +71,8 @@ export function createMeRoutes(prisma: PrismaClient) {
         slug: artist.slug,
         bio: artist.bio,
         location: artist.location,
+        websiteUrl: artist.websiteUrl,
+        instagramUrl: artist.instagramUrl,
         profileImageUrl: artist.profileImageUrl,
         coverImageUrl: artist.coverImageUrl,
         status: artist.status,
@@ -117,11 +119,22 @@ export function createMeRoutes(prisma: PrismaClient) {
     }
 
     // Validate image URLs belong to our CloudFront domain
-    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN || '.cloudfront.net'
+    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN
     for (const field of ['profileImageUrl', 'coverImageUrl'] as const) {
       const value = parsed.data[field]
-      if (value && !value.includes(cloudfrontDomain)) {
-        return badRequest(c, `${field} must be from the platform CDN`)
+      if (value) {
+        let hostname: string
+        try {
+          hostname = new URL(value).hostname
+        } catch {
+          return badRequest(c, `${field} must be a valid URL from the platform CDN`)
+        }
+        const isValid = cloudfrontDomain
+          ? hostname === cloudfrontDomain
+          : hostname.endsWith('.cloudfront.net')
+        if (!isValid) {
+          return badRequest(c, `${field} must be from the platform CDN`)
+        }
       }
     }
 

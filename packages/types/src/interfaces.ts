@@ -421,6 +421,8 @@ export interface DashboardResponse {
     slug: string
     bio: string
     location: string
+    websiteUrl: string | null
+    instagramUrl: string | null
     profileImageUrl: string | null
     coverImageUrl: string | null
     status: ArtistStatusType

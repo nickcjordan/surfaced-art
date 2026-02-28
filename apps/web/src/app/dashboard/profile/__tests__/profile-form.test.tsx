@@ -54,6 +54,8 @@ const mockDashboardData: DashboardResponse = {
     slug: 'test-artist',
     bio: 'A passionate artist.',
     location: 'Portland, OR',
+    websiteUrl: 'https://testartist.com',
+    instagramUrl: null,
     profileImageUrl: 'https://cdn.example.com/profile.jpg',
     coverImageUrl: 'https://cdn.example.com/cover.jpg',
     status: 'approved',

@@ -6,7 +6,9 @@ import { getPresignedUrl } from '@/lib/api'
 import { validateFile, uploadToS3, UploadError } from '@/lib/upload'
 import { Button } from '@/components/ui/button'
 
-const CLOUDFRONT_DOMAIN = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN || ''
+function getCloudfrontDomain(): string {
+  return process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN || ''
+}
 
 interface ImageUploadProps {
   label: string
@@ -52,9 +54,11 @@ export function ImageUpload({
       await uploadToS3(file, presigned)
 
       // Construct CloudFront URL from the S3 key
-      const cloudFrontUrl = CLOUDFRONT_DOMAIN
-        ? `https://${CLOUDFRONT_DOMAIN}/${presigned.key}`
-        : presigned.key
+      const cloudfrontDomain = getCloudfrontDomain()
+      if (!cloudfrontDomain) {
+        throw new Error('Image CDN is not configured. Please contact support.')
+      }
+      const cloudFrontUrl = `https://${cloudfrontDomain}/${presigned.key}`
 
       onUploadComplete(cloudFrontUrl)
     } catch (err) {

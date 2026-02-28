@@ -285,6 +285,8 @@ describe('GET /me/dashboard', () => {
         slug: 'test-artist',
         bio: 'A passionate artist making beautiful work.',
         location: 'Portland, OR',
+        websiteUrl: 'https://testartist.com',
+        instagramUrl: null,
         profileImageUrl: 'https://cdn.example.com/profile.jpg',
         coverImageUrl: 'https://cdn.example.com/cover.jpg',
         status: 'approved',
@@ -537,6 +539,42 @@ describe('PUT /me/profile', () => {
 
       const body = await res.json()
       expect(body.error.code).toBe('BAD_REQUEST')
+    })
+
+    it('should reject URL with cloudfront.net as substring but different hostname', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(
+        app,
+        { profileImageUrl: 'https://evil.cloudfront.net.attacker.com/image.jpg' },
+        'valid-token'
+      )
+      expect(res.status).toBe(400)
+    })
+
+    it('should reject URL with cloudfront.net in path but different hostname', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(
+        app,
+        { profileImageUrl: 'https://evil.com/.cloudfront.net/image.jpg' },
+        'valid-token'
+      )
+      expect(res.status).toBe(400)
+    })
+
+    it('should reject URL where cloudfront.net appears only in the path', async () => {
+      const prisma = createMockPrisma()
+      const app = createTestApp(prisma)
+
+      const res = await putProfile(
+        app,
+        { profileImageUrl: 'https://attacker.com/d2agn4aoo0e7ji.cloudfront.net/image.jpg' },
+        'valid-token'
+      )
+      expect(res.status).toBe(400)
     })
   })
 

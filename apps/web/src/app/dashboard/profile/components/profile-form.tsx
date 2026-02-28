@@ -57,8 +57,8 @@ export function ProfileForm() {
       const data: FormData = {
         bio: profile.bio,
         location: profile.location,
-        websiteUrl: (profile as unknown as Record<string, string | null>).websiteUrl ?? '',
-        instagramUrl: (profile as unknown as Record<string, string | null>).instagramUrl ?? '',
+        websiteUrl: profile.websiteUrl ?? '',
+        instagramUrl: profile.instagramUrl ?? '',
         profileImageUrl: profile.profileImageUrl,
         coverImageUrl: profile.coverImageUrl,
       }
