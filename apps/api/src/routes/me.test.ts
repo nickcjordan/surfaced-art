@@ -510,10 +510,12 @@ describe('PUT /me/profile', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setVerifier(createMockVerifier() as never)
+    process.env.CLOUDFRONT_DOMAIN = 'd2agn4aoo0e7ji.cloudfront.net'
   })
 
   afterEach(() => {
     resetVerifier()
+    delete process.env.CLOUDFRONT_DOMAIN
   })
 
   describe('authentication and authorization', () => {
@@ -1481,7 +1483,7 @@ const mockProcessMediaPhoto = {
   id: PROCESS_MEDIA_ID_1,
   artistId: 'artist-uuid-123',
   type: 'photo',
-  url: 'https://test.cloudfront.net/uploads/process/photo1.jpg',
+  url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/process/photo1.jpg',
   videoAssetId: null,
   videoPlaybackId: null,
   videoProvider: null,
@@ -1559,7 +1561,7 @@ describe('POST /me/process-media/photo', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setVerifier(createMockVerifier() as never)
-    process.env.CLOUDFRONT_DOMAIN = '.cloudfront.net'
+    process.env.CLOUDFRONT_DOMAIN = 'd2agn4aoo0e7ji.cloudfront.net'
   })
 
   afterEach(() => {
@@ -1570,7 +1572,7 @@ describe('POST /me/process-media/photo', () => {
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await postProcessMediaPhoto(app, { url: 'https://test.cloudfront.net/photo.jpg' })
+    const res = await postProcessMediaPhoto(app, { url: 'https://d2agn4aoo0e7ji.cloudfront.net/photo.jpg' })
     expect(res.status).toBe(401)
   })
 
@@ -1594,7 +1596,7 @@ describe('POST /me/process-media/photo', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
     const res = await postProcessMediaPhoto(app, {
-      url: 'https://test.cloudfront.net/photo.jpg',
+      url: 'https://d2agn4aoo0e7ji.cloudfront.net/photo.jpg',
     }, 'valid-token')
     expect(res.status).toBe(404)
   })
@@ -1604,12 +1606,12 @@ describe('POST /me/process-media/photo', () => {
     const prisma = createMockPrisma({ createdProcessMedia: created })
     const app = createTestApp(prisma)
     const res = await postProcessMediaPhoto(app, {
-      url: 'https://test.cloudfront.net/uploads/process/photo1.jpg',
+      url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/process/photo1.jpg',
     }, 'valid-token')
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body.type).toBe('photo')
-    expect(body.url).toBe('https://test.cloudfront.net/uploads/process/photo1.jpg')
+    expect(body.url).toBe('https://d2agn4aoo0e7ji.cloudfront.net/uploads/process/photo1.jpg')
   })
 })
 

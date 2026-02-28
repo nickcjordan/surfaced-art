@@ -132,6 +132,10 @@ export function createMeRoutes(prisma: PrismaClient) {
 
     // Validate image URLs belong to our CloudFront domain
     const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN
+    if (!cloudfrontDomain) {
+      logger.error('CLOUDFRONT_DOMAIN env var is not set')
+      return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Server configuration error' } }, 500)
+    }
     for (const field of ['profileImageUrl', 'coverImageUrl'] as const) {
       const value = parsed.data[field]
       if (value) {
@@ -141,10 +145,7 @@ export function createMeRoutes(prisma: PrismaClient) {
         } catch {
           return badRequest(c, `${field} must be a valid URL from the platform CDN`)
         }
-        const isValid = cloudfrontDomain
-          ? hostname === cloudfrontDomain
-          : hostname.endsWith('.cloudfront.net')
-        if (!isValid) {
+        if (hostname !== cloudfrontDomain) {
           return badRequest(c, `${field} must be from the platform CDN`)
         }
       }
@@ -542,9 +543,19 @@ export function createMeRoutes(prisma: PrismaClient) {
       return validationError(c, parsed.error)
     }
 
-    // Validate CloudFront URL
-    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN || '.cloudfront.net'
-    if (!parsed.data.url.includes(cloudfrontDomain)) {
+    // Validate CloudFront URL via hostname parsing
+    const photoCloudfrontDomain = process.env.CLOUDFRONT_DOMAIN
+    if (!photoCloudfrontDomain) {
+      logger.error('CLOUDFRONT_DOMAIN env var is not set')
+      return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Server configuration error' } }, 500)
+    }
+    let photoHostname: string
+    try {
+      photoHostname = new URL(parsed.data.url).hostname
+    } catch {
+      return badRequest(c, 'URL must be a valid URL from the platform CDN')
+    }
+    if (photoHostname !== photoCloudfrontDomain) {
       return badRequest(c, 'URL must be from the platform CDN')
     }
 
