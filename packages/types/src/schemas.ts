@@ -201,6 +201,22 @@ export const cvEntryReorderBody = z.object({
   orderedIds: z.array(z.string().uuid('Invalid UUID format')).min(1, 'At least one ID is required'),
 })
 
+/** POST /me/process-media/photo body */
+export const processMediaPhotoBody = z.object({
+  url: z.string().url('Invalid URL'),
+})
+
+/** POST /me/process-media/video body */
+export const processMediaVideoBody = z.object({
+  videoPlaybackId: z.string().min(1, 'Playback ID is required'),
+  videoProvider: z.literal('mux'),
+})
+
+/** PUT /me/process-media/reorder body */
+export const processMediaReorderBody = z.object({
+  orderedIds: z.array(z.string().uuid('Invalid UUID format')).min(1, 'At least one ID is required'),
+})
+
 /** POST /admin/artists/:userId/approve or /reject body */
 export const adminReviewBody = z.object({
   reviewNotes: z.string().max(2000, 'Review notes must be at most 2000 characters').optional(),
@@ -220,4 +236,7 @@ export type ProfileUpdateBody = z.infer<typeof profileUpdateBody>
 export type CategoriesUpdateBody = z.infer<typeof categoriesUpdateBody>
 export type CvEntryBody = z.infer<typeof cvEntryBody>
 export type CvEntryReorderBody = z.infer<typeof cvEntryReorderBody>
+export type ProcessMediaPhotoBody = z.infer<typeof processMediaPhotoBody>
+export type ProcessMediaVideoBody = z.infer<typeof processMediaVideoBody>
+export type ProcessMediaReorderBody = z.infer<typeof processMediaReorderBody>
 export type AdminReviewBody = z.infer<typeof adminReviewBody>

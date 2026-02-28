@@ -59,6 +59,8 @@ export type {
   CategoriesUpdateResponse,
   CvEntryResponse,
   CvEntryListResponse,
+  ProcessMediaResponse,
+  ProcessMediaListResponse,
   AdminApproveResponse,
   AdminRejectResponse,
 } from './interfaces'
@@ -81,6 +83,9 @@ export {
   categoriesUpdateBody,
   cvEntryBody,
   cvEntryReorderBody,
+  processMediaPhotoBody,
+  processMediaVideoBody,
+  processMediaReorderBody,
   adminReviewBody,
   type ArtistsQuery,
   type ListingsQuery,
@@ -92,5 +97,8 @@ export {
   type CategoriesUpdateBody,
   type CvEntryBody,
   type CvEntryReorderBody,
+  type ProcessMediaPhotoBody,
+  type ProcessMediaVideoBody,
+  type ProcessMediaReorderBody,
   type AdminReviewBody,
 } from './schemas'

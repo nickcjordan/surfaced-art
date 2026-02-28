@@ -1,11 +1,23 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { CategoryType as PrismaCategoryType } from '@surfaced-art/db'
-import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, DashboardResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
-import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
+import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, DashboardResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
+import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
 import { notFound, badRequest, validationError } from '../errors'
+
+function formatProcessMedia(entry: { id: string; type: string; url: string | null; videoPlaybackId: string | null; videoProvider: string | null; sortOrder: number; createdAt: Date }): ProcessMediaResponse {
+  return {
+    id: entry.id,
+    type: entry.type as ProcessMediaResponse['type'],
+    url: entry.url,
+    videoPlaybackId: entry.videoPlaybackId,
+    videoProvider: entry.videoProvider,
+    sortOrder: entry.sortOrder,
+    createdAt: entry.createdAt.toISOString(),
+  }
+}
 
 function formatCvEntry(entry: { id: string; type: string; title: string; institution: string | null; year: number; description: string | null; sortOrder: number }): CvEntryResponse {
   return {
@@ -480,6 +492,230 @@ export function createMeRoutes(prisma: PrismaClient) {
     })
 
     logger.info('CV entry deleted', { artistId: artist.id, entryId })
+
+    return c.body(null, 204)
+  })
+
+  // ─── Process Media Endpoints ────────────────────────────────────────
+
+  /**
+   * GET /me/process-media
+   * List all process media for the authenticated artist, ordered by sortOrder.
+   */
+  me.get('/process-media', async (c) => {
+    const user = c.get('user')
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const entries = await prisma.artistProcessMedia.findMany({
+      where: { artistId: artist.id },
+      orderBy: { sortOrder: 'asc' },
+    })
+
+    const response: ProcessMediaListResponse = {
+      processMedia: entries.map(formatProcessMedia),
+    }
+
+    return c.json(response)
+  })
+
+  /**
+   * POST /me/process-media/photo
+   * Create a new process media photo entry. Validates CloudFront URL.
+   */
+  me.post('/process-media/photo', async (c) => {
+    const user = c.get('user')
+
+    const body = await c.req.json().catch(() => null)
+    if (body === null) {
+      return badRequest(c, 'Invalid JSON payload')
+    }
+
+    const parsed = processMediaPhotoBody.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    // Validate CloudFront URL
+    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN || '.cloudfront.net'
+    if (!parsed.data.url.includes(cloudfrontDomain)) {
+      return badRequest(c, 'URL must be from the platform CDN')
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const count = await prisma.artistProcessMedia.count({
+      where: { artistId: artist.id },
+    })
+
+    const created = await prisma.artistProcessMedia.create({
+      data: {
+        artistId: artist.id,
+        type: 'photo',
+        url: parsed.data.url,
+        sortOrder: count,
+      },
+    })
+
+    logger.info('Process media photo created', { artistId: artist.id, entryId: created.id })
+
+    return c.json(formatProcessMedia(created), 201)
+  })
+
+  /**
+   * POST /me/process-media/video
+   * Create a new process media video entry (Mux playback ID).
+   */
+  me.post('/process-media/video', async (c) => {
+    const user = c.get('user')
+
+    const body = await c.req.json().catch(() => null)
+    if (body === null) {
+      return badRequest(c, 'Invalid JSON payload')
+    }
+
+    const parsed = processMediaVideoBody.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const count = await prisma.artistProcessMedia.count({
+      where: { artistId: artist.id },
+    })
+
+    const created = await prisma.artistProcessMedia.create({
+      data: {
+        artistId: artist.id,
+        type: 'video',
+        videoPlaybackId: parsed.data.videoPlaybackId,
+        videoProvider: parsed.data.videoProvider,
+        sortOrder: count,
+      },
+    })
+
+    logger.info('Process media video created', { artistId: artist.id, entryId: created.id })
+
+    return c.json(formatProcessMedia(created), 201)
+  })
+
+  /**
+   * PUT /me/process-media/reorder
+   * Reorder process media by providing an ordered array of IDs.
+   * Must be registered before the :id route to avoid path conflicts.
+   */
+  me.put('/process-media/reorder', async (c) => {
+    const user = c.get('user')
+
+    const body = await c.req.json().catch(() => null)
+    if (body === null) {
+      return badRequest(c, 'Invalid JSON payload')
+    }
+
+    const parsed = processMediaReorderBody.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    // Verify all IDs belong to this artist
+    const existingEntries = await prisma.artistProcessMedia.findMany({
+      where: { artistId: artist.id },
+    })
+
+    const ownedIds = new Set(existingEntries.map((e) => e.id))
+    const invalidIds = parsed.data.orderedIds.filter((id) => !ownedIds.has(id))
+
+    if (invalidIds.length > 0) {
+      return badRequest(c, 'Some media IDs do not belong to this artist')
+    }
+
+    // Update sortOrder in a transaction
+    await prisma.$transaction(
+      parsed.data.orderedIds.map((id, index) =>
+        prisma.artistProcessMedia.update({
+          where: { id },
+          data: { sortOrder: index },
+        })
+      )
+    )
+
+    const reordered = await prisma.artistProcessMedia.findMany({
+      where: { artistId: artist.id },
+      orderBy: { sortOrder: 'asc' },
+    })
+
+    const response: ProcessMediaListResponse = {
+      processMedia: reordered.map(formatProcessMedia),
+    }
+
+    logger.info('Process media reordered', { artistId: artist.id })
+
+    return c.json(response)
+  })
+
+  /**
+   * DELETE /me/process-media/:id
+   * Delete a process media entry. Validates ownership.
+   */
+  me.delete('/process-media/:id', async (c) => {
+    const user = c.get('user')
+    const mediaId = c.req.param('id')
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const entry = await prisma.artistProcessMedia.findUnique({
+      where: { id: mediaId },
+    })
+
+    if (!entry) {
+      return notFound(c, 'Process media not found')
+    }
+
+    if (entry.artistId !== artist.id) {
+      return c.json(
+        { error: { code: 'FORBIDDEN', message: 'You do not own this process media' } },
+        403,
+      )
+    }
+
+    await prisma.artistProcessMedia.delete({
+      where: { id: mediaId },
+    })
+
+    logger.info('Process media deleted', { artistId: artist.id, mediaId })
 
     return c.body(null, 204)
   })
