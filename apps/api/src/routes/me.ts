@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { CategoryType as PrismaCategoryType } from '@surfaced-art/db'
-import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, DashboardResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
-import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
+import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, DashboardResponse, MyListingImageResponse, MyListingListItem, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
+import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingCreateBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
-import { notFound, badRequest, validationError } from '../errors'
+import { notFound, badRequest, validationError, conflict } from '../errors'
 
 function formatProcessMedia(entry: { id: string; type: string; url: string | null; videoPlaybackId: string | null; videoProvider: string | null; sortOrder: number; createdAt: Date }): ProcessMediaResponse {
   return {
@@ -28,6 +28,93 @@ function formatCvEntry(entry: { id: string; type: string; title: string; institu
     year: entry.year,
     description: entry.description,
     sortOrder: entry.sortOrder,
+  }
+}
+
+// Prisma Decimal has a toNumber() method; plain numbers pass through
+function toNumber(val: unknown): number {
+  if (val !== null && val !== undefined && typeof (val as { toNumber?: unknown }).toNumber === 'function') {
+    return (val as { toNumber: () => number }).toNumber()
+  }
+  return val as number
+}
+
+function toNumberOrNull(val: unknown): number | null {
+  if (val === null || val === undefined) return null
+  return toNumber(val)
+}
+
+function formatListingImage(img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }): MyListingImageResponse {
+  return {
+    id: img.id,
+    url: img.url,
+    isProcessPhoto: img.isProcessPhoto,
+    sortOrder: img.sortOrder,
+    createdAt: img.createdAt.toISOString(),
+  }
+}
+
+function formatListingResponse(listing: {
+  id: string; type: string; title: string; description: string; medium: string;
+  category: string; price: number; status: string; isDocumented: boolean;
+  quantityTotal: number; quantityRemaining: number;
+  artworkLength: unknown; artworkWidth: unknown; artworkHeight: unknown;
+  packedLength: unknown; packedWidth: unknown; packedHeight: unknown; packedWeight: unknown;
+  editionNumber: number | null; editionTotal: number | null;
+  reservedUntil: Date | null; createdAt: Date; updatedAt: Date;
+  images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }[];
+}): MyListingResponse {
+  return {
+    id: listing.id,
+    type: listing.type as MyListingResponse['type'],
+    title: listing.title,
+    description: listing.description,
+    medium: listing.medium,
+    category: listing.category as MyListingResponse['category'],
+    price: listing.price,
+    status: listing.status as MyListingResponse['status'],
+    isDocumented: listing.isDocumented,
+    quantityTotal: listing.quantityTotal,
+    quantityRemaining: listing.quantityRemaining,
+    artworkLength: toNumberOrNull(listing.artworkLength),
+    artworkWidth: toNumberOrNull(listing.artworkWidth),
+    artworkHeight: toNumberOrNull(listing.artworkHeight),
+    packedLength: toNumber(listing.packedLength),
+    packedWidth: toNumber(listing.packedWidth),
+    packedHeight: toNumber(listing.packedHeight),
+    packedWeight: toNumber(listing.packedWeight),
+    editionNumber: listing.editionNumber,
+    editionTotal: listing.editionTotal,
+    reservedUntil: listing.reservedUntil?.toISOString() ?? null,
+    createdAt: listing.createdAt.toISOString(),
+    updatedAt: listing.updatedAt.toISOString(),
+    images: listing.images.map(formatListingImage),
+  }
+}
+
+function formatListingListItem(listing: {
+  id: string; type: string; title: string; medium: string; category: string;
+  price: number; status: string; isDocumented: boolean;
+  quantityTotal: number; quantityRemaining: number;
+  createdAt: Date; updatedAt: Date;
+  images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }[];
+}): MyListingListItem {
+  const firstImage = listing.images[0]
+  const primaryImage = firstImage ? formatListingImage(firstImage) : null
+  return {
+    id: listing.id,
+    type: listing.type as MyListingListItem['type'],
+    title: listing.title,
+    medium: listing.medium,
+    category: listing.category as MyListingListItem['category'],
+    price: listing.price,
+    status: listing.status as MyListingListItem['status'],
+    isDocumented: listing.isDocumented,
+    quantityTotal: listing.quantityTotal,
+    quantityRemaining: listing.quantityRemaining,
+    createdAt: listing.createdAt.toISOString(),
+    updatedAt: listing.updatedAt.toISOString(),
+    primaryImage,
   }
 }
 
@@ -735,6 +822,287 @@ export function createMeRoutes(prisma: PrismaClient) {
     })
 
     logger.info('Process media deleted', { artistId: artist.id, mediaId })
+
+    return c.body(null, 204)
+  })
+
+  // ─── Listing Management Endpoints ──────────────────────────────────
+
+  /**
+   * GET /me/listings
+   * Paginated list of the authenticated artist's listings.
+   * Supports optional status and category filters.
+   */
+  me.get('/listings', async (c) => {
+    const user = c.get('user')
+
+    const queryParsed = myListingsQuery.safeParse(Object.fromEntries(new URL(c.req.url).searchParams))
+    if (!queryParsed.success) {
+      return validationError(c, queryParsed.error)
+    }
+
+    const { page, limit, status, category } = queryParsed.data
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const where: Record<string, unknown> = { artistId: artist.id }
+    if (status) where.status = status
+    if (category) where.category = category
+
+    const [total, listings] = await Promise.all([
+      prisma.listing.count({ where }),
+      prisma.listing.findMany({
+        where,
+        include: { images: { orderBy: { sortOrder: 'asc' } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ])
+
+    const data: MyListingListItem[] = listings.map((listing) => formatListingListItem(listing))
+
+    return c.json({
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    })
+  })
+
+  /**
+   * POST /me/listings
+   * Create a new listing for the authenticated artist.
+   */
+  me.post('/listings', async (c) => {
+    const user = c.get('user')
+
+    const body = await c.req.json().catch(() => null)
+    if (body === null) {
+      return badRequest(c, 'Invalid JSON payload')
+    }
+
+    const parsed = listingCreateBody.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const { quantityTotal, ...rest } = parsed.data
+
+    const created = await prisma.listing.create({
+      data: {
+        artistId: artist.id,
+        title: sanitizeText(rest.title),
+        description: sanitizeText(rest.description),
+        medium: sanitizeText(rest.medium),
+        category: rest.category as PrismaCategoryType,
+        type: rest.type as 'standard' | 'commission',
+        price: rest.price,
+        status: 'available',
+        quantityTotal,
+        quantityRemaining: quantityTotal,
+        artworkLength: rest.artworkLength ?? null,
+        artworkWidth: rest.artworkWidth ?? null,
+        artworkHeight: rest.artworkHeight ?? null,
+        packedLength: rest.packedLength,
+        packedWidth: rest.packedWidth,
+        packedHeight: rest.packedHeight,
+        packedWeight: rest.packedWeight,
+        editionNumber: rest.editionNumber ?? null,
+        editionTotal: rest.editionTotal ?? null,
+      },
+      include: { images: { orderBy: { sortOrder: 'asc' } } },
+    })
+
+    logger.info('Listing created', { artistId: artist.id, listingId: created.id })
+
+    return c.json(formatListingResponse(created), 201)
+  })
+
+  /**
+   * GET /me/listings/:id
+   * Single listing with images for the edit form.
+   */
+  me.get('/listings/:id', async (c) => {
+    const user = c.get('user')
+    const listingId = c.req.param('id')
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+      include: { images: { orderBy: { sortOrder: 'asc' } } },
+    })
+
+    if (!listing) {
+      return notFound(c, 'Listing not found')
+    }
+
+    if (listing.artistId !== artist.id) {
+      return c.json(
+        { error: { code: 'FORBIDDEN', message: 'You do not own this listing' } },
+        403,
+      )
+    }
+
+    // Handle expired system reservation — persist to database
+    if (listing.status === 'reserved_system' && listing.reservedUntil && listing.reservedUntil < new Date()) {
+      const updated = await prisma.listing.update({
+        where: { id: listingId },
+        data: { status: 'available', reservedUntil: null },
+        include: { images: { orderBy: { sortOrder: 'asc' } } },
+      })
+      return c.json(formatListingResponse(updated))
+    }
+
+    return c.json(formatListingResponse(listing))
+  })
+
+  /**
+   * PUT /me/listings/:id
+   * Partial update of a listing. Only provided fields are changed.
+   */
+  me.put('/listings/:id', async (c) => {
+    const user = c.get('user')
+    const listingId = c.req.param('id')
+
+    const body = await c.req.json().catch(() => null)
+    if (body === null) {
+      return badRequest(c, 'Invalid JSON payload')
+    }
+
+    const parsed = listingUpdateBody.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+    })
+
+    if (!listing) {
+      return notFound(c, 'Listing not found')
+    }
+
+    if (listing.artistId !== artist.id) {
+      return c.json(
+        { error: { code: 'FORBIDDEN', message: 'You do not own this listing' } },
+        403,
+      )
+    }
+
+    // Build update data — only include fields that were provided
+    const updateData: Record<string, unknown> = {}
+
+    if (parsed.data.title !== undefined) updateData.title = sanitizeText(parsed.data.title)
+    if (parsed.data.description !== undefined) updateData.description = sanitizeText(parsed.data.description)
+    if (parsed.data.medium !== undefined) updateData.medium = sanitizeText(parsed.data.medium)
+    if (parsed.data.category !== undefined) updateData.category = parsed.data.category
+    if (parsed.data.type !== undefined) updateData.type = parsed.data.type
+    if (parsed.data.price !== undefined) updateData.price = parsed.data.price
+    if (parsed.data.quantityTotal !== undefined) {
+      updateData.quantityTotal = parsed.data.quantityTotal
+      if (listing.quantityRemaining > parsed.data.quantityTotal) {
+        updateData.quantityRemaining = parsed.data.quantityTotal
+      }
+    }
+    if (parsed.data.artworkLength !== undefined) updateData.artworkLength = parsed.data.artworkLength
+    if (parsed.data.artworkWidth !== undefined) updateData.artworkWidth = parsed.data.artworkWidth
+    if (parsed.data.artworkHeight !== undefined) updateData.artworkHeight = parsed.data.artworkHeight
+    if (parsed.data.packedLength !== undefined) updateData.packedLength = parsed.data.packedLength
+    if (parsed.data.packedWidth !== undefined) updateData.packedWidth = parsed.data.packedWidth
+    if (parsed.data.packedHeight !== undefined) updateData.packedHeight = parsed.data.packedHeight
+    if (parsed.data.packedWeight !== undefined) updateData.packedWeight = parsed.data.packedWeight
+    if (parsed.data.editionNumber !== undefined) updateData.editionNumber = parsed.data.editionNumber
+    if (parsed.data.editionTotal !== undefined) updateData.editionTotal = parsed.data.editionTotal
+
+    const updated = await prisma.listing.update({
+      where: { id: listingId },
+      data: updateData,
+      include: { images: { orderBy: { sortOrder: 'asc' } } },
+    })
+
+    logger.info('Listing updated', { artistId: artist.id, listingId, fieldsUpdated: Object.keys(updateData) })
+
+    return c.json(formatListingResponse(updated))
+  })
+
+  /**
+   * DELETE /me/listings/:id
+   * Hard delete a listing. Rejects if listing has any orders.
+   */
+  me.delete('/listings/:id', async (c) => {
+    const user = c.get('user')
+    const listingId = c.req.param('id')
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+    })
+
+    if (!listing) {
+      return notFound(c, 'Listing not found')
+    }
+
+    if (listing.artistId !== artist.id) {
+      return c.json(
+        { error: { code: 'FORBIDDEN', message: 'You do not own this listing' } },
+        403,
+      )
+    }
+
+    // Check for existing orders — cannot delete if orders exist
+    const orderCount = await prisma.order.count({
+      where: { listingId },
+    })
+
+    if (orderCount > 0) {
+      return conflict(c, 'Cannot delete a listing that has orders')
+    }
+
+    await prisma.listing.delete({
+      where: { id: listingId },
+    })
+
+    logger.info('Listing deleted', { artistId: artist.id, listingId })
 
     return c.body(null, 204)
   })

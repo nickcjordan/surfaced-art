@@ -1,0 +1,30 @@
+meta {
+  name: List Listings (Filtered)
+  type: http
+  seq: 23
+}
+
+get {
+  url: {{sa_baseUrl}}/me/listings?status=available&category=ceramics&page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.data: isDefined
+  res.body.meta.limit: eq 10
+}
+
+tests {
+  test("should return 200 with filtered listings", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.data).to.be.an("array");
+    expect(body.meta.limit).to.equal(10);
+  });
+}

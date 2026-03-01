@@ -537,6 +537,71 @@ export interface AdminRejectResponse {
   message: string
 }
 
+// ─── Listing Management API Response Types ────────────────────────────
+
+/**
+ * Single listing image as returned by the /me listing endpoints.
+ * Omits listingId since it's implied by the listing scope.
+ */
+export interface MyListingImageResponse {
+  id: string
+  url: string
+  isProcessPhoto: boolean
+  sortOrder: number
+  createdAt: string
+}
+
+/**
+ * Single listing as returned by GET /me/listings/:id.
+ * Includes images, omits artistId since it's implied by /me scope.
+ */
+export interface MyListingResponse {
+  id: string
+  type: ListingTypeType
+  title: string
+  description: string
+  medium: string
+  category: CategoryType
+  price: number
+  status: ListingStatusType
+  isDocumented: boolean
+  quantityTotal: number
+  quantityRemaining: number
+  artworkLength: number | null
+  artworkWidth: number | null
+  artworkHeight: number | null
+  packedLength: number
+  packedWidth: number
+  packedHeight: number
+  packedWeight: number
+  editionNumber: number | null
+  editionTotal: number | null
+  reservedUntil: string | null
+  createdAt: string
+  updatedAt: string
+  images: MyListingImageResponse[]
+}
+
+/**
+ * Lightweight listing item for the paginated list at GET /me/listings.
+ * Includes only the primary image (first by sortOrder).
+ */
+export interface MyListingListItem {
+  id: string
+  type: ListingTypeType
+  title: string
+  medium: string
+  category: CategoryType
+  price: number
+  status: ListingStatusType
+  isDocumented: boolean
+  quantityTotal: number
+  quantityRemaining: number
+  createdAt: string
+  updatedAt: string
+  primaryImage: MyListingImageResponse | null
+}
+
 // ─── API Error Types ──────────────────────────────────────────────────
 
 /**
