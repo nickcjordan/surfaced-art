@@ -968,10 +968,14 @@ export function createMeRoutes(prisma: PrismaClient) {
       )
     }
 
-    // Handle expired system reservation
+    // Handle expired system reservation — persist to database
     if (listing.status === 'reserved_system' && listing.reservedUntil && listing.reservedUntil < new Date()) {
-      listing.status = 'available' as typeof listing.status
-      listing.reservedUntil = null
+      const updated = await prisma.listing.update({
+        where: { id: listingId },
+        data: { status: 'available', reservedUntil: null },
+        include: { images: { orderBy: { sortOrder: 'asc' } } },
+      })
+      return c.json(formatListingResponse(updated))
     }
 
     return c.json(formatListingResponse(listing))
@@ -1027,7 +1031,12 @@ export function createMeRoutes(prisma: PrismaClient) {
     if (parsed.data.category !== undefined) updateData.category = parsed.data.category
     if (parsed.data.type !== undefined) updateData.type = parsed.data.type
     if (parsed.data.price !== undefined) updateData.price = parsed.data.price
-    if (parsed.data.quantityTotal !== undefined) updateData.quantityTotal = parsed.data.quantityTotal
+    if (parsed.data.quantityTotal !== undefined) {
+      updateData.quantityTotal = parsed.data.quantityTotal
+      if (listing.quantityRemaining > parsed.data.quantityTotal) {
+        updateData.quantityRemaining = parsed.data.quantityTotal
+      }
+    }
     if (parsed.data.artworkLength !== undefined) updateData.artworkLength = parsed.data.artworkLength
     if (parsed.data.artworkWidth !== undefined) updateData.artworkWidth = parsed.data.artworkWidth
     if (parsed.data.artworkHeight !== undefined) updateData.artworkHeight = parsed.data.artworkHeight

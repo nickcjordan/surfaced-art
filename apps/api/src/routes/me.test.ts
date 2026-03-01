@@ -2513,14 +2513,20 @@ describe('GET /me/listings/:id', () => {
     expect(typeof body.updatedAt).toBe('string')
   })
 
-  it('should handle expired system reservation by clearing status', async () => {
+  it('should handle expired system reservation by clearing status and persisting to database', async () => {
     const expiredListing = {
       ...mockListingDb,
       status: 'reserved_system',
       reservedUntil: new Date('2020-01-01'), // in the past
     }
+    const updatedListing = {
+      ...mockListingDb,
+      status: 'available',
+      reservedUntil: null,
+    }
     const prisma = createMockPrisma()
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(expiredListing)
+    ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updatedListing)
     const app = createTestApp(prisma)
 
     const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
@@ -2529,6 +2535,14 @@ describe('GET /me/listings/:id', () => {
     const body = await res.json()
     // Expired reservation should be treated as available
     expect(body.status).toBe('available')
+    expect(body.reservedUntil).toBeNull()
+
+    // Should persist the status change to the database
+    expect(prisma.listing.update).toHaveBeenCalledWith({
+      where: { id: LISTING_ID_1 },
+      data: { status: 'available', reservedUntil: null },
+      include: { images: { orderBy: { sortOrder: 'asc' } } },
+    })
   })
 })
 
@@ -2684,6 +2698,38 @@ describe('PUT /me/listings/:id', () => {
 
     const res = await putListing(app, LISTING_ID_1, {}, 'valid-token')
     expect(res.status).toBe(200)
+  })
+
+  it('should clamp quantityRemaining when quantityTotal is lowered below it', async () => {
+    const listingWithInventory = { ...mockListingDb, quantityTotal: 10, quantityRemaining: 8 }
+    const updated = { ...listingWithInventory, quantityTotal: 5, quantityRemaining: 5, images: [mockListingImage] }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(listingWithInventory)
+    ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { quantityTotal: 5 }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const updateCall = (prisma.listing.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.data.quantityTotal).toBe(5)
+    expect(updateCall.data.quantityRemaining).toBe(5)
+  })
+
+  it('should not clamp quantityRemaining when quantityTotal is raised', async () => {
+    const listingWithInventory = { ...mockListingDb, quantityTotal: 5, quantityRemaining: 3 }
+    const updated = { ...listingWithInventory, quantityTotal: 10, images: [mockListingImage] }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(listingWithInventory)
+    ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { quantityTotal: 10 }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const updateCall = (prisma.listing.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.data.quantityTotal).toBe(10)
+    expect(updateCall.data).not.toHaveProperty('quantityRemaining')
   })
 })
 
