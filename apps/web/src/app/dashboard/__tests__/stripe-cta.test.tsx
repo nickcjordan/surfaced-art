@@ -141,6 +141,18 @@ describe('Stripe CTA on Dashboard', () => {
     locationHref.mockRestore()
   })
 
+  it('should hide CTA when Stripe status fetch fails', async () => {
+    mockGetStripeStatus.mockRejectedValue(new Error('Network error'))
+
+    render(<DashboardPage />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-content')).toBeInTheDocument()
+    })
+
+    expect(screen.queryByTestId('stripe-cta')).not.toBeInTheDocument()
+  })
+
   it('should show error when onboarding API call fails', async () => {
     const user = userEvent.setup()
     mockInitiateStripeOnboarding.mockRejectedValue(new Error('Network error'))

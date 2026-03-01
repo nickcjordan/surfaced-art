@@ -1453,32 +1453,37 @@ export function createMeRoutes(prisma: PrismaClient) {
     const stripe = getStripeClient()
     let stripeAccountId = artist.stripeAccountId
 
-    // Create a new Stripe account if one doesn't exist yet
-    if (!stripeAccountId) {
-      const account = await stripe.accounts.create({
-        type: 'standard',
-        email: user.email,
-      })
-      stripeAccountId = account.id
+    try {
+      // Create a new Stripe account if one doesn't exist yet
+      if (!stripeAccountId) {
+        const account = await stripe.accounts.create({
+          type: 'standard',
+          email: user.email,
+        })
+        stripeAccountId = account.id
 
-      // Store the account ID immediately so the webhook can find this artist later
-      await prisma.artistProfile.update({
-        where: { id: artist.id },
-        data: { stripeAccountId },
+        // Store the account ID immediately so the webhook can find this artist later
+        await prisma.artistProfile.update({
+          where: { id: artist.id },
+          data: { stripeAccountId },
+        })
+
+        logger.info('Stripe Connect account created', { artistId: artist.id, stripeAccountId })
+      }
+
+      // Generate a new account link (works for both new and returning onboarding)
+      const accountLink = await stripe.accountLinks.create({
+        account: stripeAccountId,
+        return_url: `${frontendUrl}/dashboard?stripe=complete`,
+        refresh_url: `${frontendUrl}/dashboard?stripe=refresh`,
+        type: 'account_onboarding',
       })
 
-      logger.info('Stripe Connect account created', { artistId: artist.id, stripeAccountId })
+      return c.json({ url: accountLink.url } satisfies StripeOnboardingResponse)
+    } catch (err) {
+      logger.error('Stripe onboarding failed', { err, artistId: artist.id, stripeAccountId })
+      return internalError(c)
     }
-
-    // Generate a new account link (works for both new and returning onboarding)
-    const accountLink = await stripe.accountLinks.create({
-      account: stripeAccountId,
-      return_url: `${frontendUrl}/dashboard?stripe=complete`,
-      refresh_url: `${frontendUrl}/dashboard?stripe=refresh`,
-      type: 'account_onboarding',
-    })
-
-    return c.json({ url: accountLink.url } satisfies StripeOnboardingResponse)
   })
 
   me.get('/stripe/status', authMiddleware(prisma), requireRole('artist'), async (c) => {
@@ -1496,15 +1501,20 @@ export function createMeRoutes(prisma: PrismaClient) {
     }
 
     // Query Stripe to get the current onboarding status
-    const stripe = getStripeClient()
-    const account = await stripe.accounts.retrieve(artist.stripeAccountId)
+    try {
+      const stripe = getStripeClient()
+      const account = await stripe.accounts.retrieve(artist.stripeAccountId)
 
-    const status = account.charges_enabled ? 'complete' : 'pending'
+      const status = account.charges_enabled ? 'complete' : 'pending'
 
-    return c.json({
-      status,
-      stripeAccountId: artist.stripeAccountId,
-    } satisfies StripeStatusResponse)
+      return c.json({
+        status,
+        stripeAccountId: artist.stripeAccountId,
+      } satisfies StripeStatusResponse)
+    } catch (err) {
+      logger.error('Stripe status check failed', { err, artistId: artist.id, stripeAccountId: artist.stripeAccountId })
+      return internalError(c)
+    }
   })
 
   return me

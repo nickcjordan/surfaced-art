@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [stripeStatus, setStripeStatus] = useState<StripeOnboardingStatus>('not_started')
+  const [stripeStatusLoaded, setStripeStatusLoaded] = useState(false)
   const [stripeLoading, setStripeLoading] = useState(false)
   const [stripeError, setStripeError] = useState<string | null>(null)
 
@@ -32,8 +33,15 @@ export default function DashboardPage() {
 
       // Fetch Stripe status in parallel (non-blocking — don't fail the dashboard on Stripe error)
       getStripeStatus(token)
-        .then((status) => setStripeStatus(status.status))
-        .catch(() => {/* Stripe status fetch is best-effort */})
+        .then((status) => {
+          setStripeStatus(status.status)
+          setStripeStatusLoaded(true)
+        })
+        .catch(() => {
+          // On error, leave status as not_started but don't show the CTA —
+          // avoids misleading "Connect Stripe" prompt when artist may already be onboarded
+          setStripeStatusLoaded(false)
+        })
     } catch (err) {
       if (err instanceof Error && 'status' in err && (err as ApiError).status === 403) {
         setError('You do not have artist access.')
@@ -155,8 +163,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Stripe Connect CTA */}
-      {stripeStatus !== 'complete' && (
+      {/* Stripe Connect CTA — only shown after status is confirmed loaded */}
+      {stripeStatusLoaded && stripeStatus !== 'complete' && (
         <Card data-testid="stripe-cta" className="border-warning/50">
           <CardHeader>
             <CardTitle>Set Up Payments</CardTitle>

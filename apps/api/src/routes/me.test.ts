@@ -3746,6 +3746,34 @@ describe('POST /me/stripe/onboarding', () => {
     const res = await postStripeOnboarding(app, 'valid-token')
     expect(res.status).toBe(500)
   })
+
+  it('should return 500 when Stripe account creation fails', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    mockStripeAccountsCreate.mockRejectedValue(new Error('Stripe API error'))
+
+    const res = await postStripeOnboarding(app, 'valid-token')
+    expect(res.status).toBe(500)
+
+    const body = await res.json()
+    expect(body.error.code).toBe('INTERNAL_ERROR')
+  })
+
+  it('should return 500 when Stripe account link creation fails', async () => {
+    const prisma = createMockPrisma({
+      artistProfile: { ...mockArtistProfile, stripeAccountId: 'acct_existing_456' },
+    })
+    const app = createTestApp(prisma)
+
+    mockStripeAccountLinksCreate.mockRejectedValue(new Error('Stripe API error'))
+
+    const res = await postStripeOnboarding(app, 'valid-token')
+    expect(res.status).toBe(500)
+
+    const body = await res.json()
+    expect(body.error.code).toBe('INTERNAL_ERROR')
+  })
 })
 
 describe('GET /me/stripe/status', () => {
@@ -3815,5 +3843,20 @@ describe('GET /me/stripe/status', () => {
     const body = await res.json()
     expect(body.status).toBe('pending')
     expect(body.stripeAccountId).toBe('acct_pending_101')
+  })
+
+  it('should return 500 when Stripe account retrieval fails', async () => {
+    const prisma = createMockPrisma({
+      artistProfile: { ...mockArtistProfile, stripeAccountId: 'acct_failing_999' },
+    })
+    const app = createTestApp(prisma)
+
+    mockStripeAccountsRetrieve.mockRejectedValue(new Error('Stripe API unavailable'))
+
+    const res = await getStripeStatus(app, 'valid-token')
+    expect(res.status).toBe(500)
+
+    const body = await res.json()
+    expect(body.error.code).toBe('INTERNAL_ERROR')
   })
 })

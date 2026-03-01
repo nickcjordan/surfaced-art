@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
-import { badRequest } from '../errors'
+import { badRequest, internalError } from '../errors'
 import { getStripeClient } from '../lib/stripe'
 
 export function createWebhookRoutes(prisma: PrismaClient) {
@@ -16,7 +16,7 @@ export function createWebhookRoutes(prisma: PrismaClient) {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
     if (!webhookSecret) {
       logger.error('STRIPE_WEBHOOK_SECRET not configured')
-      return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } }, 500)
+      return internalError(c)
     }
 
     const stripe = getStripeClient()
