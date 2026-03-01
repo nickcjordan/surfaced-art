@@ -1,0 +1,36 @@
+meta {
+  name: Add Listing Image (Process Photo)
+  type: http
+  seq: 25
+}
+
+post {
+  url: {{sa_baseUrl}}/me/listings/{{sa_myListingId}}/images
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "url": "https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/process-photo.jpg",
+    "isProcessPhoto": true
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isDefined
+  res.body.isProcessPhoto: eq true
+}
+
+tests {
+  test("should return 201 with process photo flag set", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(201);
+    expect(body.isProcessPhoto).to.equal(true);
+  });
+}

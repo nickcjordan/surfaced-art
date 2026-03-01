@@ -1,0 +1,57 @@
+meta {
+  name: Create Listing
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{sa_baseUrl}}/me/listings
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "title": "Mountain Vase",
+    "description": "A handmade ceramic vase inspired by Pacific Northwest mountains. Wheel-thrown and hand-glazed.",
+    "medium": "Stoneware clay, glazed",
+    "category": "ceramics",
+    "type": "standard",
+    "price": 15000,
+    "packedLength": 14,
+    "packedWidth": 14,
+    "packedHeight": 18,
+    "packedWeight": 5,
+    "artworkLength": 8,
+    "artworkWidth": 8,
+    "artworkHeight": 12
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isDefined
+  res.body.title: eq Mountain Vase
+  res.body.price: eq 15000
+  res.body.status: eq available
+}
+
+tests {
+  test("should return 201 with created listing", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(201);
+    expect(body.id).to.be.a("string");
+    expect(body.title).to.equal("Mountain Vase");
+    expect(body.price).to.equal(15000);
+    expect(body.status).to.equal("available");
+    expect(body.category).to.equal("ceramics");
+    expect(body.type).to.equal("standard");
+    expect(body.quantityTotal).to.equal(1);
+    expect(body.quantityRemaining).to.equal(1);
+    expect(body.images).to.be.an("array");
+  });
+}

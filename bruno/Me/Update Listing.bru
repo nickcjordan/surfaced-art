@@ -1,0 +1,41 @@
+meta {
+  name: Update Listing
+  type: http
+  seq: 20
+}
+
+put {
+  url: {{sa_baseUrl}}/me/listings/{{sa_myListingId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "title": "Updated Mountain Vase",
+    "price": 17500,
+    "description": "An updated handmade ceramic vase with a new glaze technique."
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.title: eq Updated Mountain Vase
+  res.body.price: eq 17500
+}
+
+tests {
+  test("should return 200 with updated listing", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.title).to.equal("Updated Mountain Vase");
+    expect(body.price).to.equal(17500);
+    expect(body.images).to.be.an("array");
+    expect(body).to.not.have.property("artistId");
+  });
+}

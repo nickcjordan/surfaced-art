@@ -1,0 +1,34 @@
+meta {
+  name: Reorder Listing Images
+  type: http
+  seq: 27
+}
+
+put {
+  url: {{sa_baseUrl}}/me/listings/{{sa_myListingId}}/images/reorder
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "orderedIds": ["{{sa_myListingImageId}}"]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.images: isDefined
+}
+
+tests {
+  test("should return 200 with reordered images", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.images).to.be.an("array");
+  });
+}
