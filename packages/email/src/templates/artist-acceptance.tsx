@@ -5,8 +5,7 @@ export interface ArtistAcceptanceProps {
   artistName: string
 }
 
-// TODO(#181): Update this URL to the profile editor when it ships
-const PROFILE_SETUP_URL = 'https://surfacedart.com'
+const PROFILE_SETUP_URL = 'https://surfacedart.com/dashboard'
 
 export function ArtistAcceptance({ artistName }: ArtistAcceptanceProps) {
   return (
