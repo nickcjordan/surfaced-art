@@ -103,7 +103,7 @@ export function ListingImages({ listingId, images, onImagesChange }: ListingImag
       if (!token) return
 
       const result = await reorderListingImages(token, listingId, orderedIds)
-      onImagesChange(result)
+      onImagesChange(result.images)
     } catch {
       // Revert on error
       onImagesChange(images)
