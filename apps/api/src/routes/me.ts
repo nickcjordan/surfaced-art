@@ -2,10 +2,11 @@ import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { CategoryType as PrismaCategoryType } from '@surfaced-art/db'
 import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, DashboardResponse, MyListingImageResponse, MyListingListItem, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
-import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
+import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingAvailabilityBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
 import { notFound, badRequest, validationError, conflict } from '../errors'
+import { triggerRevalidation } from '../lib/revalidation'
 
 function formatProcessMedia(entry: { id: string; type: string; url: string | null; videoPlaybackId: string | null; videoProvider: string | null; sortOrder: number; createdAt: Date }): ProcessMediaResponse {
   return {
@@ -933,6 +934,8 @@ export function createMeRoutes(prisma: PrismaClient) {
 
     logger.info('Listing created', { artistId: artist.id, listingId: created.id })
 
+    triggerRevalidation({ type: 'listing', id: created.id, category: created.category, artistSlug: artist.slug })
+
     return c.json(formatListingResponse(created), 201)
   })
 
@@ -1046,6 +1049,8 @@ export function createMeRoutes(prisma: PrismaClient) {
 
     logger.info('Listing updated', { artistId: artist.id, listingId, fieldsUpdated: Object.keys(updateData) })
 
+    triggerRevalidation({ type: 'listing', id: listingId, category: updated.category, artistSlug: artist.slug })
+
     return c.json(formatListingResponse(updated))
   })
 
@@ -1094,6 +1099,8 @@ export function createMeRoutes(prisma: PrismaClient) {
     })
 
     logger.info('Listing deleted', { artistId: artist.id, listingId })
+
+    triggerRevalidation({ type: 'listing', id: listingId, category: listing.category, artistSlug: artist.slug })
 
     return c.body(null, 204)
   })
@@ -1187,6 +1194,8 @@ export function createMeRoutes(prisma: PrismaClient) {
 
     logger.info('Listing image created', { artistId: artist.id, listingId, imageId: created.id })
 
+    triggerRevalidation({ type: 'listing', id: listingId, category: listing.category, artistSlug: artist.slug })
+
     return c.json(formatListingImage(created), 201)
   })
 
@@ -1257,6 +1266,8 @@ export function createMeRoutes(prisma: PrismaClient) {
     }
 
     logger.info('Listing image deleted', { artistId: artist.id, listingId, imageId })
+
+    triggerRevalidation({ type: 'listing', id: listingId, category: listing.category, artistSlug: artist.slug })
 
     return c.body(null, 204)
   })
@@ -1342,6 +1353,73 @@ export function createMeRoutes(prisma: PrismaClient) {
     return c.json({
       images: reordered.map((img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }) => formatListingImage(img)),
     })
+  })
+
+  // ─── Listing Availability ───────────────────────────────────────────
+
+  /**
+   * PUT /me/listings/:id/availability
+   * Toggle listing between available and reserved_artist.
+   * Rejects if listing is sold or reserved_system.
+   */
+  me.put('/listings/:id/availability', async (c) => {
+    const user = c.get('user')
+    const listingId = c.req.param('id')
+
+    let rawBody: unknown
+    try {
+      rawBody = await c.req.json()
+    } catch {
+      return badRequest(c, 'Invalid JSON body')
+    }
+
+    const parsed = listingAvailabilityBody.safeParse(rawBody)
+    if (!parsed.success) {
+      return c.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: parsed.error.issues } },
+        400,
+      )
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+    })
+
+    if (!listing) {
+      return notFound(c, 'Listing not found')
+    }
+
+    if (listing.artistId !== artist.id) {
+      return c.json(
+        { error: { code: 'FORBIDDEN', message: 'You do not own this listing' } },
+        403,
+      )
+    }
+
+    // Cannot toggle sold or system-reserved listings
+    if (listing.status === 'sold' || listing.status === 'reserved_system') {
+      return conflict(c, `Cannot change availability of a ${listing.status} listing`)
+    }
+
+    const updated = await prisma.listing.update({
+      where: { id: listingId },
+      data: { status: parsed.data.status },
+      include: { images: { orderBy: { sortOrder: 'asc' } } },
+    })
+
+    logger.info('Listing availability toggled', { artistId: artist.id, listingId, status: parsed.data.status })
+
+    triggerRevalidation({ type: 'listing', id: listingId, category: listing.category, artistSlug: artist.slug })
+
+    return c.json(formatListingResponse(updated))
   })
 
   return me

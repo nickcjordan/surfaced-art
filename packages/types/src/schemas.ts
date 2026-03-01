@@ -308,6 +308,11 @@ export const myListingsQuery = z.object({
     .transform((v) => Math.min(v, 100)),
 })
 
+/** PUT /me/listings/:id/availability body */
+export const listingAvailabilityBody = z.object({
+  status: z.enum(['available', 'reserved_artist']),
+})
+
 // ============================================================================
 // Listing image management schemas
 // ============================================================================
@@ -344,5 +349,6 @@ export type AdminReviewBody = z.infer<typeof adminReviewBody>
 export type ListingCreateBody = z.infer<typeof listingCreateBody>
 export type ListingUpdateBody = z.infer<typeof listingUpdateBody>
 export type MyListingsQuery = z.infer<typeof myListingsQuery>
+export type ListingAvailabilityBody = z.infer<typeof listingAvailabilityBody>
 export type ListingImageBody = z.infer<typeof listingImageBody>
 export type ListingImageReorderBody = z.infer<typeof listingImageReorderBody>
