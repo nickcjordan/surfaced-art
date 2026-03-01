@@ -45,6 +45,12 @@ function createMockPrisma(overrides?: {
   updatedCvEntry?: unknown
   processMedia?: unknown[]
   createdProcessMedia?: unknown
+  // Listing management overrides
+  listings?: unknown[]
+  createdListing?: unknown
+  updatedListing?: unknown
+  listingImages?: unknown[]
+  orderCount?: number
 }) {
   const roles = overrides?.roles ?? ['artist']
   const artistProfile = overrides?.artistProfile !== undefined ? overrides.artistProfile : mockArtistProfile
@@ -90,6 +96,17 @@ function createMockPrisma(overrides?: {
         .mockResolvedValueOnce(total)
         .mockResolvedValueOnce(available)
         .mockResolvedValueOnce(sold),
+      findMany: vi.fn().mockResolvedValue(overrides?.listings ?? []),
+      findUnique: vi.fn().mockResolvedValue(overrides?.listings?.[0] ?? null),
+      create: vi.fn().mockResolvedValue(overrides?.createdListing ?? null),
+      update: vi.fn().mockResolvedValue(overrides?.updatedListing ?? null),
+      delete: vi.fn().mockResolvedValue({ id: 'deleted' }),
+    },
+    listingImage: {
+      findMany: vi.fn().mockResolvedValue(overrides?.listingImages ?? []),
+    },
+    order: {
+      count: vi.fn().mockResolvedValue(overrides?.orderCount ?? 0),
     },
     $transaction: vi.fn(),
   } as unknown as PrismaClient
@@ -1814,5 +1831,948 @@ describe('PUT /me/process-media/reorder', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.processMedia).toHaveLength(2)
+  })
+})
+
+// ─── Listing CRUD Tests ───────────────────────────────────────────────
+
+const LISTING_ID_1 = '55555555-5555-4555-8555-555555555555'
+const LISTING_ID_2 = '66666666-6666-4666-8666-666666666666'
+
+const mockListingImage = {
+  id: '77777777-7777-4777-8777-777777777777',
+  listingId: LISTING_ID_1,
+  url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
+  isProcessPhoto: false,
+  sortOrder: 0,
+  createdAt: new Date('2025-06-01'),
+}
+
+const mockListingDb = {
+  id: LISTING_ID_1,
+  artistId: 'artist-uuid-123',
+  type: 'standard',
+  title: 'Mountain Vase',
+  description: 'A handmade ceramic vase inspired by Pacific Northwest mountains.',
+  medium: 'Stoneware clay, glazed',
+  category: 'ceramics',
+  price: 15000, // $150.00
+  status: 'available',
+  isDocumented: false,
+  quantityTotal: 1,
+  quantityRemaining: 1,
+  artworkLength: { toNumber: () => 8 },
+  artworkWidth: { toNumber: () => 8 },
+  artworkHeight: { toNumber: () => 12 },
+  packedLength: { toNumber: () => 14 },
+  packedWidth: { toNumber: () => 14 },
+  packedHeight: { toNumber: () => 18 },
+  packedWeight: { toNumber: () => 5 },
+  editionNumber: null,
+  editionTotal: null,
+  reservedUntil: null,
+  createdAt: new Date('2025-06-01'),
+  updatedAt: new Date('2025-06-01'),
+  images: [mockListingImage],
+}
+
+const mockListingDb2 = {
+  ...mockListingDb,
+  id: LISTING_ID_2,
+  title: 'Sunset Bowl',
+  description: 'A warm-toned bowl with sunset glaze.',
+  price: 8500,
+  status: 'sold',
+  images: [],
+}
+
+const validListingCreateBody = {
+  title: 'Mountain Vase',
+  description: 'A handmade ceramic vase inspired by Pacific Northwest mountains.',
+  medium: 'Stoneware clay, glazed',
+  category: 'ceramics',
+  type: 'standard',
+  price: 15000,
+  packedLength: 14,
+  packedWidth: 14,
+  packedHeight: 18,
+  packedWeight: 5,
+}
+
+// ─── Listing request helpers ────────────────────────────────────────
+
+function getMyListings(
+  app: ReturnType<typeof createTestApp>,
+  query?: string,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const url = query ? `/me/listings?${query}` : '/me/listings'
+  return app.request(url, { method: 'GET', headers })
+}
+
+function postListing(
+  app: ReturnType<typeof createTestApp>,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/listings', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function getMyListing(
+  app: ReturnType<typeof createTestApp>,
+  id: string,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request(`/me/listings/${id}`, { method: 'GET', headers })
+}
+
+function putListing(
+  app: ReturnType<typeof createTestApp>,
+  id: string,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request(`/me/listings/${id}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function deleteListing(
+  app: ReturnType<typeof createTestApp>,
+  id: string,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request(`/me/listings/${id}`, {
+    method: 'DELETE',
+    headers,
+  })
+}
+
+// ─── GET /me/listings ─────────────────────────────────────────────────
+
+describe('GET /me/listings', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 403 for buyer-only role', async () => {
+    const prisma = createMockPrisma({ roles: ['buyer'] })
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, undefined, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, undefined, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return empty paginated response when no listings exist', async () => {
+    const prisma = createMockPrisma({ listings: [] })
+    // Override listing.count for pagination total (not dashboard counts)
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockReset()
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockResolvedValue(0)
+    ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([])
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, undefined, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.data).toEqual([])
+    expect(body.meta.total).toBe(0)
+    expect(body.meta.page).toBe(1)
+  })
+
+  it('should return paginated listings with primary image', async () => {
+    const listings = [mockListingDb, mockListingDb2]
+    const prisma = createMockPrisma({ listings })
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockReset()
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockResolvedValue(2)
+    ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue(listings)
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, undefined, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.data).toHaveLength(2)
+    expect(body.meta.total).toBe(2)
+    expect(body.meta.totalPages).toBe(1)
+  })
+
+  it('should filter by status query param', async () => {
+    const prisma = createMockPrisma({ listings: [mockListingDb] })
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockReset()
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockResolvedValue(1)
+    ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, 'status=available', 'valid-token')
+    expect(res.status).toBe(200)
+
+    // Verify the where clause includes status filter
+    const countCall = (prisma.listing.count as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(countCall.where.status).toBe('available')
+  })
+
+  it('should filter by category query param', async () => {
+    const prisma = createMockPrisma({ listings: [mockListingDb] })
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockReset()
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockResolvedValue(1)
+    ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, 'category=ceramics', 'valid-token')
+    expect(res.status).toBe(200)
+
+    const countCall = (prisma.listing.count as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(countCall.where.category).toBe('ceramics')
+  })
+
+  it('should return 400 for invalid status filter', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, 'status=invalid_status', 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for invalid category filter', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, 'category=invalid_category', 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should respect pagination params', async () => {
+    const prisma = createMockPrisma({ listings: [mockListingDb] })
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockReset()
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockResolvedValue(25)
+    ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, 'page=2&limit=10', 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.meta.page).toBe(2)
+    expect(body.meta.limit).toBe(10)
+    expect(body.meta.totalPages).toBe(3)
+
+    // Verify skip was applied
+    const findManyCall = (prisma.listing.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(findManyCall.skip).toBe(10) // (page 2 - 1) * limit 10
+    expect(findManyCall.take).toBe(10)
+  })
+
+  it('should not include artistId in listing items', async () => {
+    const prisma = createMockPrisma({ listings: [mockListingDb] })
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockReset()
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockResolvedValue(1)
+    ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, undefined, 'valid-token')
+    const body = await res.json()
+
+    expect(body.data[0]).not.toHaveProperty('artistId')
+  })
+
+  it('should convert Decimal fields to numbers', async () => {
+    const prisma = createMockPrisma({ listings: [mockListingDb] })
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockReset()
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockResolvedValue(1)
+    ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, undefined, 'valid-token')
+    const body = await res.json()
+
+    // Decimal fields should be plain numbers, not objects
+    expect(typeof body.data[0].price).toBe('number')
+  })
+
+  it('should cap limit at 100', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockReset()
+    ;(prisma.listing.count as ReturnType<typeof vi.fn>).mockResolvedValue(0)
+    ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([])
+    const app = createTestApp(prisma)
+
+    const res = await getMyListings(app, 'limit=500', 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.meta.limit).toBe(100)
+  })
+})
+
+// ─── POST /me/listings ────────────────────────────────────────────────
+
+describe('POST /me/listings', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, validListingCreateBody)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 403 for buyer-only role', async () => {
+    const prisma = createMockPrisma({ roles: ['buyer'] })
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, validListingCreateBody, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, validListingCreateBody, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 400 for missing title', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const { title: _, ...bodyWithoutTitle } = validListingCreateBody
+    const res = await postListing(app, bodyWithoutTitle, 'valid-token')
+    expect(res.status).toBe(400)
+
+    const body = await res.json()
+    expect(body.error.code).toBe('VALIDATION_ERROR')
+  })
+
+  it('should return 400 for missing description', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const { description: _, ...bodyWithout } = validListingCreateBody
+    const res = await postListing(app, bodyWithout, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for missing medium', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const { medium: _, ...bodyWithout } = validListingCreateBody
+    const res = await postListing(app, bodyWithout, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for invalid category', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, { ...validListingCreateBody, category: 'invalid' }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for invalid type', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, { ...validListingCreateBody, type: 'invalid' }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for zero price', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, { ...validListingCreateBody, price: 0 }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for negative price', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, { ...validListingCreateBody, price: -100 }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for non-integer price', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, { ...validListingCreateBody, price: 99.99 }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for missing packed dimensions', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const { packedLength: _, ...bodyWithout } = validListingCreateBody
+    const res = await postListing(app, bodyWithout, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for zero packed dimension', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, { ...validListingCreateBody, packedWeight: 0 }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for title exceeding 200 characters', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, { ...validListingCreateBody, title: 'x'.repeat(201) }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for description exceeding 5000 characters', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, { ...validListingCreateBody, description: 'x'.repeat(5001) }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for invalid JSON payload', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer valid-token',
+    }
+    const res = await app.request('/me/listings', {
+      method: 'POST',
+      headers,
+      body: 'not json',
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('should create a listing and return 201', async () => {
+    const created = { ...mockListingDb, images: [] }
+    const prisma = createMockPrisma({ createdListing: created })
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, validListingCreateBody, 'valid-token')
+    expect(res.status).toBe(201)
+
+    const body = await res.json()
+    expect(body.id).toBe(LISTING_ID_1)
+    expect(body.title).toBe('Mountain Vase')
+    expect(body.price).toBe(15000)
+    expect(body.status).toBe('available')
+  })
+
+  it('should sanitize title, description, and medium', async () => {
+    const created = { ...mockListingDb, title: 'Clean Title', description: 'Clean desc', medium: 'Clay' }
+    const prisma = createMockPrisma({ createdListing: created })
+    const app = createTestApp(prisma)
+
+    await postListing(app, {
+      ...validListingCreateBody,
+      title: '<b>Clean</b> Title',
+      description: '<script>alert("x")</script>Clean desc',
+      medium: '<em>Clay</em>',
+    }, 'valid-token')
+
+    const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(createCall.data.title).not.toContain('<b>')
+    expect(createCall.data.description).not.toContain('<script>')
+    expect(createCall.data.medium).not.toContain('<em>')
+  })
+
+  it('should set quantityRemaining equal to quantityTotal', async () => {
+    const created = { ...mockListingDb, quantityTotal: 5, quantityRemaining: 5 }
+    const prisma = createMockPrisma({ createdListing: created })
+    const app = createTestApp(prisma)
+
+    await postListing(app, { ...validListingCreateBody, quantityTotal: 5 }, 'valid-token')
+
+    const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(createCall.data.quantityRemaining).toBe(5)
+  })
+
+  it('should default quantityTotal to 1', async () => {
+    const created = { ...mockListingDb }
+    const prisma = createMockPrisma({ createdListing: created })
+    const app = createTestApp(prisma)
+
+    const { quantityTotal: _, ...bodyWithout } = validListingCreateBody
+    await postListing(app, bodyWithout, 'valid-token')
+
+    const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(createCall.data.quantityTotal).toBe(1)
+    expect(createCall.data.quantityRemaining).toBe(1)
+  })
+
+  it('should accept optional artwork dimensions', async () => {
+    const created = { ...mockListingDb }
+    const prisma = createMockPrisma({ createdListing: created })
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, {
+      ...validListingCreateBody,
+      artworkLength: 8,
+      artworkWidth: 8,
+      artworkHeight: 12,
+    }, 'valid-token')
+    expect(res.status).toBe(201)
+
+    const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(createCall.data.artworkLength).toBe(8)
+  })
+
+  it('should accept optional edition info', async () => {
+    const created = { ...mockListingDb, editionNumber: 3, editionTotal: 10 }
+    const prisma = createMockPrisma({ createdListing: created })
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, {
+      ...validListingCreateBody,
+      editionNumber: 3,
+      editionTotal: 10,
+    }, 'valid-token')
+    expect(res.status).toBe(201)
+  })
+
+  it('should not include artistId in response', async () => {
+    const created = { ...mockListingDb, images: [] }
+    const prisma = createMockPrisma({ createdListing: created })
+    const app = createTestApp(prisma)
+
+    const res = await postListing(app, validListingCreateBody, 'valid-token')
+    const body = await res.json()
+
+    expect(body).not.toHaveProperty('artistId')
+  })
+
+  it('should set default status to available', async () => {
+    const created = { ...mockListingDb }
+    const prisma = createMockPrisma({ createdListing: created })
+    const app = createTestApp(prisma)
+
+    await postListing(app, validListingCreateBody, 'valid-token')
+
+    const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(createCall.data.status).toBe('available')
+  })
+})
+
+// ─── GET /me/listings/:id ─────────────────────────────────────────────
+
+describe('GET /me/listings/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, LISTING_ID_1)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 403 for buyer-only role', async () => {
+    const prisma = createMockPrisma({ roles: ['buyer'] })
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 when listing does not exist', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, '99999999-9999-4999-8999-999999999999', 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 403 when listing belongs to another artist', async () => {
+    const otherListing = { ...mockListingDb, artistId: 'other-artist-uuid' }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherListing)
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return listing with images', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.id).toBe(LISTING_ID_1)
+    expect(body.title).toBe('Mountain Vase')
+    expect(body.images).toHaveLength(1)
+  })
+
+  it('should not include artistId in response', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const body = await res.json()
+
+    expect(body).not.toHaveProperty('artistId')
+  })
+
+  it('should convert Decimal fields to numbers', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const body = await res.json()
+
+    expect(typeof body.packedLength).toBe('number')
+    expect(body.packedLength).toBe(14)
+    expect(typeof body.artworkHeight).toBe('number')
+    expect(body.artworkHeight).toBe(12)
+  })
+
+  it('should convert Date fields to ISO strings', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const body = await res.json()
+
+    expect(typeof body.createdAt).toBe('string')
+    expect(typeof body.updatedAt).toBe('string')
+  })
+
+  it('should handle expired system reservation by clearing status', async () => {
+    const expiredListing = {
+      ...mockListingDb,
+      status: 'reserved_system',
+      reservedUntil: new Date('2020-01-01'), // in the past
+    }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(expiredListing)
+    const app = createTestApp(prisma)
+
+    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    // Expired reservation should be treated as available
+    expect(body.status).toBe('available')
+  })
+})
+
+// ─── PUT /me/listings/:id ─────────────────────────────────────────────
+
+describe('PUT /me/listings/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' })
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 403 for buyer-only role', async () => {
+    const prisma = createMockPrisma({ roles: ['buyer'] })
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 when listing does not exist', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, '99999999-9999-4999-8999-999999999999', { title: 'Updated' }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 403 when listing belongs to another artist', async () => {
+    const otherListing = { ...mockListingDb, artistId: 'other-artist-uuid' }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherListing)
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 400 for invalid JSON payload', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer valid-token',
+    }
+    const res = await app.request(`/me/listings/${LISTING_ID_1}`, {
+      method: 'PUT',
+      headers,
+      body: 'not json',
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for invalid category value', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { category: 'invalid' }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for title exceeding 200 characters', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { title: 'x'.repeat(201) }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 for zero price', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { price: 0 }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should update only provided fields (partial update)', async () => {
+    const updated = { ...mockListingDb, title: 'Updated Vase', images: [mockListingImage] }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated Vase' }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const updateCall = (prisma.listing.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.data.title).toBe('Updated Vase')
+    // Should not include other fields that weren't sent
+    expect(updateCall.data).not.toHaveProperty('description')
+    expect(updateCall.data).not.toHaveProperty('medium')
+  })
+
+  it('should sanitize updated text fields', async () => {
+    const updated = { ...mockListingDb, title: 'Clean Title', images: [mockListingImage] }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
+    const app = createTestApp(prisma)
+
+    await putListing(app, LISTING_ID_1, {
+      title: '<script>Clean</script> Title',
+    }, 'valid-token')
+
+    const updateCall = (prisma.listing.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.data.title).not.toContain('<script>')
+  })
+
+  it('should return updated listing with images', async () => {
+    const updated = { ...mockListingDb, title: 'Updated', images: [mockListingImage] }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, 'valid-token')
+    const body = await res.json()
+
+    expect(body).toHaveProperty('id')
+    expect(body).toHaveProperty('images')
+    expect(body).not.toHaveProperty('artistId')
+  })
+
+  it('should allow empty body (no-op update)', async () => {
+    const updated = { ...mockListingDb, images: [mockListingImage] }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
+    const app = createTestApp(prisma)
+
+    const res = await putListing(app, LISTING_ID_1, {}, 'valid-token')
+    expect(res.status).toBe(200)
+  })
+})
+
+// ─── DELETE /me/listings/:id ──────────────────────────────────────────
+
+describe('DELETE /me/listings/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await deleteListing(app, LISTING_ID_1)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 403 for buyer-only role', async () => {
+    const prisma = createMockPrisma({ roles: ['buyer'] })
+    const app = createTestApp(prisma)
+
+    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 when listing does not exist', async () => {
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+    const app = createTestApp(prisma)
+
+    const res = await deleteListing(app, '99999999-9999-4999-8999-999999999999', 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 403 when listing belongs to another artist', async () => {
+    const otherListing = { ...mockListingDb, artistId: 'other-artist-uuid' }
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherListing)
+    const app = createTestApp(prisma)
+
+    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 409 when listing has orders', async () => {
+    const prisma = createMockPrisma({ orderCount: 2 })
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    const app = createTestApp(prisma)
+
+    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(409)
+
+    const body = await res.json()
+    expect(body.error.code).toBe('CONFLICT')
+  })
+
+  it('should delete the listing and return 204', async () => {
+    const prisma = createMockPrisma({ orderCount: 0 })
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    const app = createTestApp(prisma)
+
+    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(204)
+
+    expect(prisma.listing.delete).toHaveBeenCalledWith({
+      where: { id: LISTING_ID_1 },
+    })
+  })
+
+  it('should allow delete when listing has zero orders', async () => {
+    const prisma = createMockPrisma({ orderCount: 0 })
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    const app = createTestApp(prisma)
+
+    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    expect(res.status).toBe(204)
   })
 })

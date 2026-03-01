@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod'
-import { Category, CvEntryType, ListingStatus } from './enums'
+import { Category, CvEntryType, ListingStatus, ListingType } from './enums'
 
 // ============================================================================
 // Helpers
@@ -15,6 +15,7 @@ import { Category, CvEntryType, ListingStatus } from './enums'
 const categoryValues = Object.values(Category) as [string, ...string[]]
 const cvEntryTypeValues = Object.values(CvEntryType) as [string, ...string[]]
 const statusValues = Object.values(ListingStatus) as [string, ...string[]]
+const listingTypeValues = Object.values(ListingType) as [string, ...string[]]
 
 // ============================================================================
 // Primitive validators (reusable building blocks)
@@ -223,6 +224,91 @@ export const adminReviewBody = z.object({
 })
 
 // ============================================================================
+// Listing management schemas (artist dashboard)
+// ============================================================================
+
+/** Positive dimension value (inches or lbs) */
+const positiveDimension = z.number().positive('Must be a positive number')
+
+/** POST /me/listings body */
+export const listingCreateBody = z.object({
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(200, 'Title must be at most 200 characters'),
+  description: z
+    .string()
+    .min(1, 'Description is required')
+    .max(5000, 'Description must be at most 5000 characters'),
+  medium: z
+    .string()
+    .min(1, 'Medium is required')
+    .max(200, 'Medium must be at most 200 characters'),
+  category: z.enum(categoryValues),
+  type: z.enum(listingTypeValues),
+  price: z.number().int('Price must be a whole number (cents)').positive('Price must be greater than zero'),
+  quantityTotal: z.number().int().min(1, 'Quantity must be at least 1').optional().default(1),
+  // Artwork dimensions (optional — the piece itself, in inches)
+  artworkLength: positiveDimension.nullable().optional(),
+  artworkWidth: positiveDimension.nullable().optional(),
+  artworkHeight: positiveDimension.nullable().optional(),
+  // Packed dimensions (required — shipping box, in inches/lbs)
+  packedLength: positiveDimension,
+  packedWidth: positiveDimension,
+  packedHeight: positiveDimension,
+  packedWeight: positiveDimension,
+  // Edition info (optional — for prints)
+  editionNumber: z.number().int().positive().nullable().optional(),
+  editionTotal: z.number().int().positive().nullable().optional(),
+})
+
+/** PUT /me/listings/:id body — all fields optional for partial update */
+export const listingUpdateBody = z.object({
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(200, 'Title must be at most 200 characters')
+    .optional(),
+  description: z
+    .string()
+    .min(1, 'Description is required')
+    .max(5000, 'Description must be at most 5000 characters')
+    .optional(),
+  medium: z
+    .string()
+    .min(1, 'Medium is required')
+    .max(200, 'Medium must be at most 200 characters')
+    .optional(),
+  category: z.enum(categoryValues).optional(),
+  type: z.enum(listingTypeValues).optional(),
+  price: z.number().int('Price must be a whole number (cents)').positive('Price must be greater than zero').optional(),
+  quantityTotal: z.number().int().min(1, 'Quantity must be at least 1').optional(),
+  artworkLength: positiveDimension.nullable().optional(),
+  artworkWidth: positiveDimension.nullable().optional(),
+  artworkHeight: positiveDimension.nullable().optional(),
+  packedLength: positiveDimension.optional(),
+  packedWidth: positiveDimension.optional(),
+  packedHeight: positiveDimension.optional(),
+  packedWeight: positiveDimension.optional(),
+  editionNumber: z.number().int().positive().nullable().optional(),
+  editionTotal: z.number().int().positive().nullable().optional(),
+})
+
+/** GET /me/listings query params */
+export const myListingsQuery = z.object({
+  status: z.enum(statusValues).optional(),
+  category: z.enum(categoryValues).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+// ============================================================================
 // Inferred types (derive TypeScript types from schemas)
 // ============================================================================
 
@@ -240,3 +326,6 @@ export type ProcessMediaPhotoBody = z.infer<typeof processMediaPhotoBody>
 export type ProcessMediaVideoBody = z.infer<typeof processMediaVideoBody>
 export type ProcessMediaReorderBody = z.infer<typeof processMediaReorderBody>
 export type AdminReviewBody = z.infer<typeof adminReviewBody>
+export type ListingCreateBody = z.infer<typeof listingCreateBody>
+export type ListingUpdateBody = z.infer<typeof listingUpdateBody>
+export type MyListingsQuery = z.infer<typeof myListingsQuery>
