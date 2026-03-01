@@ -14,6 +14,7 @@ This document defines the complete database schema for Surfaced Art. All tables 
 - Behavioral and observability data (page views, search terms, session data) belongs in the analytics layer, not the database
 - Denormalized counts deferred until query profiling justifies them — calculate in real time at launch
 - Schema changes are always made through Prisma migrations, never by manually altering the database
+- The `UserRoleType` enum and `user_roles` join table are designed to accommodate additional user types (e.g., `venue`) without breaking changes — new roles require only an enum value addition and new profile tables, not modifications to existing tables. See ADR-007 and the Venue Strategy in Notion for context.
 
 **Legend**
 - Fields marked PK are primary keys — shown in orange

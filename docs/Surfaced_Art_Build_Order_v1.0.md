@@ -248,3 +248,23 @@ The following are out of scope for v1. Do not build until real traffic and trans
 - OpenNext migration — move from Vercel to AWS only when cost justifies
 
 > *This is a living document. Update phase contents as decisions evolve. Do not add scope to phases without explicit discussion.*
+
+## 8. Future Phases: Venue Support (Third User Type)
+
+Venue support introduces a third user type — "Venues" — encompassing art fairs, physical galleries, festivals, markets, and art collectives. This is **not part of Phases 1–4** and should only be pursued after the core artist-buyer marketplace is established and operating. Full strategy documented in Notion under *Surfaced Art — Venue Strategy (Third User Type)*.
+
+**Prerequisites before any venue work:**
+- Hundreds of active artists across multiple regions
+- Functioning marketplace with real transaction volume
+- Established brand credibility in the art community
+
+**Tentative future phases:**
+
+| Phase | Name | Timing (Post-Launch) | Deliverable |
+| --- | --- | --- | --- |
+| 5 | Venue Passive Profiles | 6–12 months | Basic venue profiles, directory listing, event calendar. Invite 5–10 design partners. |
+| 6 | Show History Links | 12–18 months | Artists link shows to venue profiles. Venues confirm. Verified show history begins. |
+| 7 | Calls for Artists | 18–24 months | Venues post open calls. Artists apply through SA. Application workflow. |
+| 8 | Paid Venue Tiers | 24+ months | Artist search by radius/experience, analytics, featured placement. Subscription revenue. |
+
+**Data model readiness:** The current `UserRoleType` enum and `user_roles` join table architecture already supports adding a `venue` role without breaking changes. Venue-specific data (profiles, events, show history) would live in new tables — no changes to existing tables required.
