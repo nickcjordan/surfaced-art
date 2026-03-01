@@ -50,20 +50,14 @@ export function Footer() {
             </h3>
             <ul className="space-y-2.5">
               <li>
-                <Link
-                  href="/about"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
+                <span className="text-sm text-muted-foreground/60">
                   About
-                </Link>
+                </span>
               </li>
               <li>
-                <Link
-                  href="/artists"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
+                <span className="text-sm text-muted-foreground/60">
                   Artists
-                </Link>
+                </span>
               </li>
             </ul>
           </div>
