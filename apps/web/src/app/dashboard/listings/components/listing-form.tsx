@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { createMyListing, updateMyListing, getMyListing } from '@/lib/api'
 import { dollarsToCents } from '@surfaced-art/utils'
-import type { CategoryType, ListingTypeType } from '@surfaced-art/types'
+import type { CategoryType, ListingTypeType, MyListingImageResponse } from '@surfaced-art/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CATEGORIES } from '@/lib/categories'
+import { ListingImages } from './listing-images'
 
 interface FormData {
   title: string
@@ -67,6 +68,7 @@ export function ListingForm({ mode, listingId }: ListingFormProps) {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM)
   const [serverError, setServerError] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [images, setImages] = useState<MyListingImageResponse[]>([])
 
   const fetchListing = useCallback(async () => {
     if (mode !== 'edit' || !listingId) return
@@ -83,6 +85,7 @@ export function ListingForm({ mode, listingId }: ListingFormProps) {
 
       const listing = await getMyListing(token, listingId)
 
+      setImages(listing.images)
       setFormData({
         title: listing.title,
         description: listing.description,
@@ -499,6 +502,15 @@ export function ListingForm({ mode, listingId }: ListingFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Images (edit mode only) */}
+      {mode === 'edit' && listingId && (
+        <ListingImages
+          listingId={listingId}
+          images={images}
+          onImagesChange={setImages}
+        />
+      )}
 
       {/* Feedback */}
       {formState === 'error' && serverError && (
