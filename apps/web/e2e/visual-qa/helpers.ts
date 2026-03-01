@@ -23,6 +23,11 @@ export function isIgnorableAsset(urlOrMessage: string): boolean {
   // Next.js RSC prefetch requests to the deployment origin root return 400 on
   // Vercel previews — matches "400 https://example.vercel.app" or "400 https://example.vercel.app/"
   if (/^400 https?:\/\/[^/]+(\/)?$/.test(urlOrMessage)) return true
+  // Vercel preview toolbar injects feedback.js which our CSP blocks — not an app error
+  if (urlOrMessage.includes('vercel.live')) return true
+  // Next.js RSC prefetch requests can be aborted mid-navigation (net::ERR_ABORTED) —
+  // this is normal browser behaviour when the user or framework cancels a prefetch
+  if (urlOrMessage.includes('net::ERR_ABORTED')) return true
   return false
 }
 
