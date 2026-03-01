@@ -25,9 +25,11 @@ export function isIgnorableAsset(urlOrMessage: string): boolean {
   if (/^400 https?:\/\/[^/]+(\/)?$/.test(urlOrMessage)) return true
   // Vercel preview toolbar injects feedback.js which our CSP blocks — not an app error
   if (urlOrMessage.includes('vercel.live')) return true
-  // Next.js RSC prefetch requests can be aborted mid-navigation (net::ERR_ABORTED) —
-  // this is normal browser behaviour when the user or framework cancels a prefetch
-  if (urlOrMessage.includes('net::ERR_ABORTED')) return true
+  // Browser-level network errors (net::ERR_ABORTED, net::ERR_BLOCKED_BY_ORB, etc.)
+  // are infrastructure/CORS issues on preview deployments, not application errors.
+  // ERR_ABORTED = prefetch cancelled mid-navigation, ERR_BLOCKED_BY_ORB = cross-origin
+  // CDN images without CORS headers on ephemeral Vercel preview subdomains.
+  if (urlOrMessage.includes('net::ERR_')) return true
   return false
 }
 

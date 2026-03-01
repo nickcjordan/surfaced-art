@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Waitlist Flow — Email Capture', () => {
+  // These tests call the live Lambda API which may cold-start (3-10s).
+  // The duplicate test does two full submissions, so needs extra headroom.
+  test.describe.configure({ timeout: 60_000 })
+
   test('valid email submission shows success state', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
