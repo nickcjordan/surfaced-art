@@ -4,13 +4,21 @@ import type {
   ArtistApplicationBody,
   ApplicationStatusType,
   ApplicationSubmitResponse,
+  CategoriesUpdateResponse,
   CategoryType,
+  CvEntryBody,
+  CvEntryListResponse,
+  CvEntryResponse,
   CategoryWithCount,
   DashboardResponse,
   FeaturedArtistItem,
   ListingDetailResponse,
   ListingListItem,
   PaginatedResponse,
+  PresignedPostResponse,
+  ProcessMediaListResponse,
+  ProcessMediaResponse,
+  ProfileUpdateResponse,
 } from '@surfaced-art/types'
 
 const API_BASE_URL =
@@ -117,6 +125,143 @@ export async function submitApplication(
 export async function getDashboard(token: string): Promise<DashboardResponse> {
   return apiFetch<DashboardResponse>('/me/dashboard', {
     headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function updateProfile(
+  token: string,
+  data: Record<string, unknown>,
+): Promise<ProfileUpdateResponse> {
+  return apiFetch<ProfileUpdateResponse>('/me/profile', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function getPresignedUrl(
+  token: string,
+  context: string,
+  contentType: string,
+): Promise<PresignedPostResponse> {
+  return apiFetch<PresignedPostResponse>('/uploads/presigned-url', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ context, contentType }),
+  })
+}
+
+export async function updateCategories(
+  token: string,
+  categories: CategoryType[],
+): Promise<CategoriesUpdateResponse> {
+  return apiFetch<CategoriesUpdateResponse>('/me/categories', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ categories }),
+  })
+}
+
+export async function getCvEntries(
+  token: string,
+): Promise<CvEntryListResponse> {
+  return apiFetch<CvEntryListResponse>('/me/cv-entries', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function createCvEntry(
+  token: string,
+  data: CvEntryBody,
+): Promise<CvEntryResponse> {
+  return apiFetch<CvEntryResponse>('/me/cv-entries', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateCvEntry(
+  token: string,
+  id: string,
+  data: CvEntryBody,
+): Promise<CvEntryResponse> {
+  return apiFetch<CvEntryResponse>(`/me/cv-entries/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteCvEntry(
+  token: string,
+  id: string,
+): Promise<void> {
+  await apiFetch<void>(`/me/cv-entries/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function reorderCvEntries(
+  token: string,
+  orderedIds: string[],
+): Promise<CvEntryListResponse> {
+  return apiFetch<CvEntryListResponse>('/me/cv-entries/reorder', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ orderedIds }),
+  })
+}
+
+export async function getProcessMedia(
+  token: string,
+): Promise<ProcessMediaListResponse> {
+  return apiFetch<ProcessMediaListResponse>('/me/process-media', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function createProcessMediaPhoto(
+  token: string,
+  url: string,
+): Promise<ProcessMediaResponse> {
+  return apiFetch<ProcessMediaResponse>('/me/process-media/photo', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ url }),
+  })
+}
+
+export async function createProcessMediaVideo(
+  token: string,
+  videoPlaybackId: string,
+): Promise<ProcessMediaResponse> {
+  return apiFetch<ProcessMediaResponse>('/me/process-media/video', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ videoPlaybackId, videoProvider: 'mux' }),
+  })
+}
+
+export async function deleteProcessMedia(
+  token: string,
+  id: string,
+): Promise<void> {
+  await apiFetch<void>(`/me/process-media/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function reorderProcessMedia(
+  token: string,
+  orderedIds: string[],
+): Promise<ProcessMediaListResponse> {
+  return apiFetch<ProcessMediaListResponse>('/me/process-media/reorder', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ orderedIds }),
   })
 }
 

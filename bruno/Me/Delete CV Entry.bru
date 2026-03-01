@@ -1,0 +1,25 @@
+meta {
+  name: Delete CV Entry
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{sa_baseUrl}}/me/cv-entries/{{sa_cvEntryId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 204
+}
+
+tests {
+  test("should return 204 on successful delete", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+}

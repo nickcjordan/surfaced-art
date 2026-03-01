@@ -1,0 +1,38 @@
+meta {
+  name: Reorder CV Entries
+  type: http
+  seq: 11
+}
+
+put {
+  url: {{sa_baseUrl}}/me/cv-entries/reorder
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "orderedIds": ["{{sa_cvEntryId}}", "{{sa_cvEntryId2}}"]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.cvEntries: isDefined
+}
+
+tests {
+  test("should return 200 with reordered CV entries", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.cvEntries).to.be.an("array");
+    if (body.cvEntries.length >= 2) {
+      expect(body.cvEntries[0].sortOrder).to.equal(0);
+      expect(body.cvEntries[1].sortOrder).to.equal(1);
+    }
+  });
+}
