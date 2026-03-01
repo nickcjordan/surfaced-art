@@ -1,0 +1,36 @@
+meta {
+  name: Toggle Listing Availability
+  type: http
+  seq: 28
+}
+
+put {
+  url: {{sa_baseUrl}}/me/listings/{{sa_myListingId}}/availability
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "status": "reserved_artist"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.status: eq reserved_artist
+}
+
+tests {
+  test("should return 200 with updated listing", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.status).to.equal("reserved_artist");
+    expect(body).to.not.have.property("artistId");
+  });
+}

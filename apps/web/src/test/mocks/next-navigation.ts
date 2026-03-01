@@ -26,6 +26,10 @@ export function usePathname() {
   return '/'
 }
 
+export function useParams() {
+  return {}
+}
+
 export function redirect(url: string) {
   throw new Error(`NEXT_REDIRECT:${url}`)
 }

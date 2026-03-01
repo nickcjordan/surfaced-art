@@ -1,0 +1,34 @@
+meta {
+  name: Toggle Listing Availability (Sold)
+  type: http
+  seq: 29
+}
+
+put {
+  url: {{sa_baseUrl}}/me/listings/{{sa_myListingId}}/availability
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "status": "available"
+  }
+}
+
+assert {
+  res.status: eq 409
+  res.body.error.code: eq CONFLICT
+}
+
+tests {
+  test("should return 409 for sold listing", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(409);
+    expect(body.error.code).to.equal("CONFLICT");
+  });
+}
