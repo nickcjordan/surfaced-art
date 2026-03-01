@@ -64,6 +64,8 @@ resource "aws_lambda_function" "api" {
       FRONTEND_URL          = var.frontend_url
       SES_FROM_ADDRESS      = var.ses_from_address
       SES_CONFIGURATION_SET = var.ses_configuration_set_name
+      STRIPE_SECRET_KEY      = var.stripe_secret_key
+      STRIPE_WEBHOOK_SECRET  = var.stripe_webhook_secret
 
       # Add Amazon RDS CA certificates to Node.js trust store so the pg driver
       # can verify RDS server certificates. The Lambda base image ships this

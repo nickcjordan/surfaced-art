@@ -101,6 +101,20 @@ variable "ses_configuration_set_name" {
   type        = string
 }
 
+variable "stripe_secret_key" {
+  description = "Stripe secret API key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "stripe_webhook_secret" {
+  description = "Stripe webhook signing secret"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "log_retention_days" {
   description = "CloudWatch log group retention in days"
   type        = number

@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
-import { getDashboard, ApiError } from '@/lib/api'
-import type { DashboardResponse } from '@surfaced-art/types'
+import { getDashboard, getStripeStatus, initiateStripeOnboarding, ApiError } from '@/lib/api'
+import type { DashboardResponse, StripeOnboardingStatus } from '@surfaced-art/types'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -15,6 +15,9 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [stripeStatus, setStripeStatus] = useState<StripeOnboardingStatus>('not_started')
+  const [stripeLoading, setStripeLoading] = useState(false)
+  const [stripeError, setStripeError] = useState<string | null>(null)
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -26,6 +29,11 @@ export default function DashboardPage() {
 
       const dashboard = await getDashboard(token)
       setData(dashboard)
+
+      // Fetch Stripe status in parallel (non-blocking — don't fail the dashboard on Stripe error)
+      getStripeStatus(token)
+        .then((status) => setStripeStatus(status.status))
+        .catch(() => {/* Stripe status fetch is best-effort */})
     } catch (err) {
       if (err instanceof Error && 'status' in err && (err as ApiError).status === 403) {
         setError('You do not have artist access.')
@@ -59,6 +67,22 @@ export default function DashboardPage() {
         </Button>
       </div>
     )
+  }
+
+  async function handleStripeConnect() {
+    setStripeError(null)
+    setStripeLoading(true)
+    try {
+      const token = await getIdToken()
+      if (!token) return
+
+      const result = await initiateStripeOnboarding(token)
+      window.location.href = result.url
+    } catch {
+      setStripeError('Failed to start Stripe setup. Please try again.')
+    } finally {
+      setStripeLoading(false)
+    }
   }
 
   if (!data) return null
@@ -132,16 +156,27 @@ export default function DashboardPage() {
       </div>
 
       {/* Stripe Connect CTA */}
-      {profile.stripeAccountId === null && (
+      {stripeStatus !== 'complete' && (
         <Card data-testid="stripe-cta" className="border-warning/50">
           <CardHeader>
             <CardTitle>Set Up Payments</CardTitle>
             <CardDescription>
-              Connect your Stripe account to start receiving payments for your artwork.
+              {stripeStatus === 'pending'
+                ? 'Your Stripe account setup is incomplete. Continue to finish verification.'
+                : 'Connect your Stripe account to start receiving payments for your artwork.'}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button>Connect Stripe</Button>
+          <CardContent className="space-y-2">
+            <Button onClick={handleStripeConnect} disabled={stripeLoading}>
+              {stripeLoading
+                ? 'Redirecting...'
+                : stripeStatus === 'pending'
+                  ? 'Continue Setup'
+                  : 'Connect Stripe'}
+            </Button>
+            {stripeError && (
+              <p className="text-sm text-destructive">{stripeError}</p>
+            )}
           </CardContent>
         </Card>
       )}
