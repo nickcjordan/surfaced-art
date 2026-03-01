@@ -76,6 +76,11 @@ variable "cloudfront_url" {
   type        = string
 }
 
+variable "cloudfront_domain" {
+  description = "CloudFront distribution domain name for CDN URL validation"
+  type        = string
+}
+
 variable "placeholder_image_uri" {
   description = "Lambda base image URI used as a placeholder until CI/CD deploys the service image. Value is passed from the root module; source of truth is LAMBDA_BOOTSTRAP_IMAGE in .github/workflows/deploy.yml."
   type        = string

@@ -376,6 +376,10 @@ export function createMeRoutes(prisma: PrismaClient) {
       return badRequest(c, 'Some entry IDs do not belong to this artist')
     }
 
+    if (parsed.data.orderedIds.length !== existingEntries.length) {
+      return badRequest(c, 'Must provide all entry IDs for reordering')
+    }
+
     // Update sortOrder in a transaction
     await prisma.$transaction(
       parsed.data.orderedIds.map((id, index) =>
@@ -665,6 +669,10 @@ export function createMeRoutes(prisma: PrismaClient) {
 
     if (invalidIds.length > 0) {
       return badRequest(c, 'Some media IDs do not belong to this artist')
+    }
+
+    if (parsed.data.orderedIds.length !== existingEntries.length) {
+      return badRequest(c, 'Must provide all media IDs for reordering')
     }
 
     // Update sortOrder in a transaction
