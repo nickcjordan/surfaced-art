@@ -60,6 +60,7 @@ resource "aws_lambda_function" "api" {
       COGNITO_CLIENT_ID     = var.cognito_client_id
       S3_BUCKET_NAME        = var.s3_bucket_name
       CLOUDFRONT_URL        = var.cloudfront_url
+      CLOUDFRONT_DOMAIN     = var.cloudfront_domain
       FRONTEND_URL          = var.frontend_url
       SES_FROM_ADDRESS      = var.ses_from_address
       SES_CONFIGURATION_SET = var.ses_configuration_set_name
