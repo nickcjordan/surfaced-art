@@ -1163,9 +1163,11 @@ export function createMeRoutes(prisma: PrismaClient) {
       )
     }
 
-    // Auto-assign sortOrder based on existing image count
-    const imageCount = await prisma.listingImage.count({
+    // Auto-assign sortOrder based on max existing sortOrder + 1
+    const maxSortOrder = await prisma.listingImage.findFirst({
       where: { listingId },
+      orderBy: { sortOrder: 'desc' },
+      select: { sortOrder: true },
     })
 
     const created = await prisma.listingImage.create({
@@ -1173,7 +1175,7 @@ export function createMeRoutes(prisma: PrismaClient) {
         listingId,
         url: parsed.data.url,
         isProcessPhoto: parsed.data.isProcessPhoto,
-        sortOrder: imageCount,
+        sortOrder: maxSortOrder ? maxSortOrder.sortOrder + 1 : 0,
       },
     })
 
@@ -1315,10 +1317,12 @@ export function createMeRoutes(prisma: PrismaClient) {
     const existingIds = new Set(existingImages.map((img: { id: string }) => img.id))
     const requestedIds = parsed.data.orderedIds
 
-    // All provided IDs must exist in this listing and cover ALL images
+    // All provided IDs must exist in this listing, cover ALL images, and be unique
+    const requestedIdSet = new Set(requestedIds)
     const allBelong = requestedIds.every((id: string) => existingIds.has(id))
-    if (!allBelong || requestedIds.length !== existingIds.size) {
-      return badRequest(c, 'orderedIds must contain all image IDs for this listing')
+    const hasDuplicates = requestedIdSet.size !== requestedIds.length
+    if (!allBelong || requestedIds.length !== existingIds.size || hasDuplicates) {
+      return badRequest(c, 'orderedIds must contain all unique image IDs for this listing')
     }
 
     // Batch update sortOrder in a transaction

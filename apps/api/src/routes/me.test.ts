@@ -105,6 +105,7 @@ function createMockPrisma(overrides?: {
     },
     listingImage: {
       findMany: vi.fn().mockResolvedValue(overrides?.listingImages ?? []),
+      findFirst: vi.fn().mockResolvedValue(null),
       findUnique: vi.fn().mockResolvedValue(overrides?.listingImages?.[0] ?? null),
       create: vi.fn().mockResolvedValue(overrides?.createdListingImage ?? null),
       update: vi.fn().mockResolvedValue(null),
@@ -2957,11 +2958,11 @@ describe('POST /me/listings/:id/images', () => {
     expect(res.status).toBe(400)
   })
 
-  it('should create an image with auto-assigned sortOrder and return 201', async () => {
-    const created = { ...mockListingImageForTest, sortOrder: 3 }
+  it('should create an image with sortOrder based on max existing sortOrder + 1', async () => {
+    const created = { ...mockListingImageForTest, sortOrder: 5 }
     const prisma = createMockPrisma({ createdListingImage: created })
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
-    ;(prisma.listingImage.count as ReturnType<typeof vi.fn>).mockResolvedValue(3)
+    ;(prisma.listingImage.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({ sortOrder: 4 })
     const app = createTestApp(prisma)
 
     const res = await postListingImage(app, LISTING_ID_1, {
@@ -2971,8 +2972,24 @@ describe('POST /me/listings/:id/images', () => {
 
     const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(createCall.data.listingId).toBe(LISTING_ID_1)
-    expect(createCall.data.sortOrder).toBe(3)
+    expect(createCall.data.sortOrder).toBe(5)
     expect(createCall.data.isProcessPhoto).toBe(false)
+  })
+
+  it('should assign sortOrder 0 when listing has no existing images', async () => {
+    const created = { ...mockListingImageForTest, sortOrder: 0 }
+    const prisma = createMockPrisma({ createdListingImage: created })
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    ;(prisma.listingImage.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+    const app = createTestApp(prisma)
+
+    const res = await postListingImage(app, LISTING_ID_1, {
+      url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
+    }, 'valid-token')
+    expect(res.status).toBe(201)
+
+    const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(createCall.data.sortOrder).toBe(0)
   })
 
   it('should default isProcessPhoto to false', async () => {
@@ -3249,7 +3266,7 @@ describe('PUT /me/listings/:id/images/reorder', () => {
     }, 'valid-token')
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error.message).toContain('all image IDs')
+    expect(body.error.message).toContain('all unique image IDs')
   })
 
   it('should return 400 for invalid JSON payload', async () => {
@@ -3266,6 +3283,21 @@ describe('PUT /me/listings/:id/images/reorder', () => {
       body: 'not json',
     })
     expect(res.status).toBe(400)
+  })
+
+  it('should return 400 when orderedIds contains duplicate IDs', async () => {
+    const images = [mockListingImageForTest, mockListingImageProcess]
+    const prisma = createMockPrisma()
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+    ;(prisma.listingImage.findMany as ReturnType<typeof vi.fn>).mockResolvedValue(images)
+    const app = createTestApp(prisma)
+
+    const res = await putListingImageReorder(app, LISTING_ID_1, {
+      orderedIds: [LISTING_IMAGE_ID_1, LISTING_IMAGE_ID_1],
+    }, 'valid-token')
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error.message).toContain('all')
   })
 
   it('should update sortOrder for each image in a transaction', async () => {
