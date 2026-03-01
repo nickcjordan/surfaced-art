@@ -253,6 +253,7 @@ module "lambda_api" {
   cognito_client_id          = module.cognito.client_id
   s3_bucket_name             = module.s3_cloudfront.bucket_name
   cloudfront_url             = module.s3_cloudfront.cloudfront_url
+  cloudfront_domain          = module.s3_cloudfront.cloudfront_domain_name
   ses_from_address           = "support@${var.ses_domain}"
   ses_configuration_set_name = module.ses.configuration_set_name
 
