@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { joinWaitlist } from '@/lib/api'
+import { trackWaitlistSignup } from '@/lib/analytics'
 
 type WaitlistState = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -38,6 +39,7 @@ export function WaitlistForm() {
       await joinWaitlist(trimmed)
       setState('success')
       setEmail('')
+      trackWaitlistSignup()
     } catch {
       setState('error')
       setErrorMessage('Something went wrong. Please try again.')
