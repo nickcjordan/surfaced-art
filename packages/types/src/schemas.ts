@@ -309,6 +309,21 @@ export const myListingsQuery = z.object({
 })
 
 // ============================================================================
+// Listing image management schemas
+// ============================================================================
+
+/** POST /me/listings/:id/images body */
+export const listingImageBody = z.object({
+  url: z.string().url('Invalid URL'),
+  isProcessPhoto: z.boolean().optional().default(false),
+})
+
+/** PUT /me/listings/:id/images/reorder body */
+export const listingImageReorderBody = z.object({
+  orderedIds: z.array(z.string().uuid('Invalid UUID format')).min(1, 'At least one ID is required'),
+})
+
+// ============================================================================
 // Inferred types (derive TypeScript types from schemas)
 // ============================================================================
 
@@ -329,3 +344,5 @@ export type AdminReviewBody = z.infer<typeof adminReviewBody>
 export type ListingCreateBody = z.infer<typeof listingCreateBody>
 export type ListingUpdateBody = z.infer<typeof listingUpdateBody>
 export type MyListingsQuery = z.infer<typeof myListingsQuery>
+export type ListingImageBody = z.infer<typeof listingImageBody>
+export type ListingImageReorderBody = z.infer<typeof listingImageReorderBody>

@@ -107,7 +107,11 @@ export {
   listingCreateBody,
   listingUpdateBody,
   myListingsQuery,
+  listingImageBody,
+  listingImageReorderBody,
   type ListingCreateBody,
   type ListingUpdateBody,
   type MyListingsQuery,
+  type ListingImageBody,
+  type ListingImageReorderBody,
 } from './schemas'

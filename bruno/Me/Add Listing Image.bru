@@ -1,0 +1,39 @@
+meta {
+  name: Add Listing Image
+  type: http
+  seq: 24
+}
+
+post {
+  url: {{sa_baseUrl}}/me/listings/{{sa_myListingId}}/images
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "url": "https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/test-image.jpg",
+    "isProcessPhoto": false
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isDefined
+  res.body.url: isDefined
+  res.body.sortOrder: isNumber
+}
+
+tests {
+  test("should return 201 with created image", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(201);
+    expect(body.id).to.be.a("string");
+    expect(body.url).to.be.a("string");
+    expect(body).to.not.have.property("listingId");
+  });
+}

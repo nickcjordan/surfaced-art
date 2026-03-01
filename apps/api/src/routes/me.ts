@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { CategoryType as PrismaCategoryType } from '@surfaced-art/db'
 import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, DashboardResponse, MyListingImageResponse, MyListingListItem, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
-import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingCreateBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
+import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
 import { notFound, badRequest, validationError, conflict } from '../errors'
@@ -1096,6 +1096,252 @@ export function createMeRoutes(prisma: PrismaClient) {
     logger.info('Listing deleted', { artistId: artist.id, listingId })
 
     return c.body(null, 204)
+  })
+
+  // ─── Listing Image Management ───────────────────────────────────────
+
+  /**
+   * POST /me/listings/:id/images
+   * Add an image to a listing. Auto-assigns sortOrder.
+   * Updates listing.isDocumented if process photo.
+   */
+  me.post('/listings/:id/images', async (c) => {
+    const user = c.get('user')
+    const listingId = c.req.param('id')
+
+    let rawBody: unknown
+    try {
+      rawBody = await c.req.json()
+    } catch {
+      return badRequest(c, 'Invalid JSON body')
+    }
+
+    const parsed = listingImageBody.safeParse(rawBody)
+    if (!parsed.success) {
+      return c.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: parsed.error.issues } },
+        400,
+      )
+    }
+
+    // Validate CloudFront URL
+    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN
+    if (!cloudfrontDomain) {
+      logger.error('CLOUDFRONT_DOMAIN env var is not set')
+      return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Server configuration error' } }, 500)
+    }
+    let hostname: string
+    try {
+      hostname = new URL(parsed.data.url).hostname
+    } catch {
+      return badRequest(c, 'URL must be a valid URL from the platform CDN')
+    }
+    if (hostname !== cloudfrontDomain) {
+      return badRequest(c, 'URL must be from the platform CDN')
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+    })
+
+    if (!listing) {
+      return notFound(c, 'Listing not found')
+    }
+
+    if (listing.artistId !== artist.id) {
+      return c.json(
+        { error: { code: 'FORBIDDEN', message: 'You do not own this listing' } },
+        403,
+      )
+    }
+
+    // Auto-assign sortOrder based on existing image count
+    const imageCount = await prisma.listingImage.count({
+      where: { listingId },
+    })
+
+    const created = await prisma.listingImage.create({
+      data: {
+        listingId,
+        url: parsed.data.url,
+        isProcessPhoto: parsed.data.isProcessPhoto,
+        sortOrder: imageCount,
+      },
+    })
+
+    // Update listing.isDocumented if this is a process photo
+    if (parsed.data.isProcessPhoto) {
+      await prisma.listing.update({
+        where: { id: listingId },
+        data: { isDocumented: true },
+      })
+    }
+
+    logger.info('Listing image created', { artistId: artist.id, listingId, imageId: created.id })
+
+    return c.json(formatListingImage(created), 201)
+  })
+
+  /**
+   * DELETE /me/listings/:id/images/:imageId
+   * Remove an image from a listing.
+   * Updates listing.isDocumented if last process photo is removed.
+   */
+  me.delete('/listings/:id/images/:imageId', async (c) => {
+    const user = c.get('user')
+    const listingId = c.req.param('id')
+    const imageId = c.req.param('imageId')
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+    })
+
+    if (!listing) {
+      return notFound(c, 'Listing not found')
+    }
+
+    if (listing.artistId !== artist.id) {
+      return c.json(
+        { error: { code: 'FORBIDDEN', message: 'You do not own this listing' } },
+        403,
+      )
+    }
+
+    const image = await prisma.listingImage.findUnique({
+      where: { id: imageId },
+    })
+
+    if (!image) {
+      return notFound(c, 'Image not found')
+    }
+
+    if (image.listingId !== listingId) {
+      return c.json(
+        { error: { code: 'FORBIDDEN', message: 'Image does not belong to this listing' } },
+        403,
+      )
+    }
+
+    await prisma.listingImage.delete({
+      where: { id: imageId },
+    })
+
+    // If deleted image was a process photo, check if any remain
+    if (image.isProcessPhoto) {
+      const remainingProcessPhotos = await prisma.listingImage.count({
+        where: { listingId, isProcessPhoto: true },
+      })
+
+      if (remainingProcessPhotos === 0) {
+        await prisma.listing.update({
+          where: { id: listingId },
+          data: { isDocumented: false },
+        })
+      }
+    }
+
+    logger.info('Listing image deleted', { artistId: artist.id, listingId, imageId })
+
+    return c.body(null, 204)
+  })
+
+  /**
+   * PUT /me/listings/:id/images/reorder
+   * Reorder all images for a listing. Must include all image IDs.
+   */
+  me.put('/listings/:id/images/reorder', async (c) => {
+    const user = c.get('user')
+    const listingId = c.req.param('id')
+
+    let rawBody: unknown
+    try {
+      rawBody = await c.req.json()
+    } catch {
+      return badRequest(c, 'Invalid JSON body')
+    }
+
+    const parsed = listingImageReorderBody.safeParse(rawBody)
+    if (!parsed.success) {
+      return c.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: parsed.error.issues } },
+        400,
+      )
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+    })
+
+    if (!listing) {
+      return notFound(c, 'Listing not found')
+    }
+
+    if (listing.artistId !== artist.id) {
+      return c.json(
+        { error: { code: 'FORBIDDEN', message: 'You do not own this listing' } },
+        403,
+      )
+    }
+
+    // Verify all IDs belong to this listing
+    const existingImages = await prisma.listingImage.findMany({
+      where: { listingId },
+    })
+
+    const existingIds = new Set(existingImages.map((img: { id: string }) => img.id))
+    const requestedIds = parsed.data.orderedIds
+
+    // All provided IDs must exist in this listing and cover ALL images
+    const allBelong = requestedIds.every((id: string) => existingIds.has(id))
+    if (!allBelong || requestedIds.length !== existingIds.size) {
+      return badRequest(c, 'orderedIds must contain all image IDs for this listing')
+    }
+
+    // Batch update sortOrder in a transaction
+    await prisma.$transaction(
+      requestedIds.map((id: string, index: number) =>
+        prisma.listingImage.update({
+          where: { id },
+          data: { sortOrder: index },
+        }),
+      ),
+    )
+
+    // Fetch the reordered list
+    const reordered = await prisma.listingImage.findMany({
+      where: { listingId },
+      orderBy: { sortOrder: 'asc' },
+    })
+
+    logger.info('Listing images reordered', { artistId: artist.id, listingId })
+
+    return c.json({
+      images: reordered.map((img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }) => formatListingImage(img)),
+    })
   })
 
   return me
