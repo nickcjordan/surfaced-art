@@ -64,7 +64,7 @@ describe('ListingImages', () => {
     vi.clearAllMocks()
     mockGetIdToken.mockResolvedValue('test-token')
     mockDeleteListingImage.mockResolvedValue(undefined)
-    mockReorderListingImages.mockResolvedValue(mockImages)
+    mockReorderListingImages.mockResolvedValue({ images: mockImages })
 
     // Mock environment variable
     vi.stubEnv('NEXT_PUBLIC_CLOUDFRONT_DOMAIN', 'cdn.example.com')
@@ -161,7 +161,7 @@ describe('ListingImages', () => {
     const onImagesChange = vi.fn()
     const user = userEvent.setup()
 
-    mockReorderListingImages.mockResolvedValue([mockImages[1], mockImages[0]])
+    mockReorderListingImages.mockResolvedValue({ images: [mockImages[1], mockImages[0]] })
 
     render(
       <ListingImages
@@ -188,7 +188,7 @@ describe('ListingImages', () => {
     const onImagesChange = vi.fn()
     const user = userEvent.setup()
 
-    mockReorderListingImages.mockResolvedValue([mockImages[1], mockImages[0]])
+    mockReorderListingImages.mockResolvedValue({ images: [mockImages[1], mockImages[0]] })
 
     render(
       <ListingImages
