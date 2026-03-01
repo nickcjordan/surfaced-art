@@ -374,8 +374,8 @@ export async function reorderListingImages(
   token: string,
   listingId: string,
   orderedIds: string[],
-): Promise<MyListingImageResponse[]> {
-  return apiFetch<MyListingImageResponse[]>(
+): Promise<{ images: MyListingImageResponse[] }> {
+  return apiFetch<{ images: MyListingImageResponse[] }>(
     `/me/listings/${encodeURIComponent(listingId)}/images/reorder`,
     {
       method: 'PUT',
