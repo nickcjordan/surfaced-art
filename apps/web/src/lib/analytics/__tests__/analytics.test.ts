@@ -81,6 +81,35 @@ describe('consent management', () => {
     expect(getStoredConsent()).toBe('pending')
   })
 
+  it('should return "pending" when localStorage throws (e.g. private browsing)', () => {
+    const spy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Storage disabled')
+    })
+    expect(getStoredConsent()).toBe('pending')
+    spy.mockRestore()
+  })
+
+  it('grantConsent should still call posthog when localStorage throws', () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage disabled')
+    })
+    grantConsent()
+    expect(posthog.opt_in_capturing).toHaveBeenCalled()
+    expect(posthog.set_config).toHaveBeenCalledWith({
+      persistence: 'localStorage+cookie',
+    })
+    spy.mockRestore()
+  })
+
+  it('denyConsent should still call posthog when localStorage throws', () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage disabled')
+    })
+    denyConsent()
+    expect(posthog.opt_out_capturing).toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
   it('grantConsent should store "granted" and call posthog.opt_in_capturing', () => {
     grantConsent()
     expect(localStorage.getItem('sa_analytics_consent')).toBe('granted')
@@ -104,11 +133,17 @@ describe('tracking helpers', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks()
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', 'phc_test123')
     vi.resetModules()
     const mod = await import('../analytics')
     trackWaitlistSignup = mod.trackWaitlistSignup
     trackListingView = mod.trackListingView
     trackArtistProfileView = mod.trackArtistProfileView
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
   })
 
   it('trackWaitlistSignup should capture waitlist_signup without PII', () => {
@@ -129,6 +164,19 @@ describe('tracking helpers', () => {
     expect(posthog.capture).toHaveBeenCalledWith('artist_profile_view', {
       artist_slug: 'jane-doe',
     })
+  })
+
+  it('tracking helpers should no-op when POSTHOG_KEY is empty', async () => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_KEY', '')
+    vi.resetModules()
+    vi.clearAllMocks()
+    const mod = await import('../analytics')
+    mod.trackWaitlistSignup()
+    mod.trackListingView('abc', 'ceramics')
+    mod.trackArtistProfileView('jane')
+    expect(posthog.capture).not.toHaveBeenCalled()
+    vi.unstubAllEnvs()
+    vi.resetModules()
   })
 })
 

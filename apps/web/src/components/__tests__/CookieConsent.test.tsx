@@ -22,10 +22,10 @@ describe('CookieConsent', () => {
     mockStatus = 'pending'
   })
 
-  it('should render the consent dialog when status is "pending"', () => {
+  it('should render the consent banner when status is "pending"', () => {
     render(<CookieConsent />)
     expect(screen.getByTestId('cookie-consent')).toBeInTheDocument()
-    expect(screen.getByRole('dialog')).toHaveAttribute(
+    expect(screen.getByRole('region')).toHaveAttribute(
       'aria-label',
       'Cookie consent',
     )

@@ -87,6 +87,10 @@ export function useAnalyticsConsent(): ConsentContextValue {
  * Wraps PostHogProvider (initialization) + ConsentProvider (GDPR consent state).
  */
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
+  if (!POSTHOG_KEY) {
+    return <ConsentProvider>{children}</ConsentProvider>
+  }
+
   return (
     <PostHogProvider apiKey={POSTHOG_KEY} options={POSTHOG_OPTIONS}>
       <ConsentProvider>{children}</ConsentProvider>

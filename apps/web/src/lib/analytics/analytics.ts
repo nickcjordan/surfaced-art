@@ -38,30 +38,44 @@ export type ConsentStatus = 'granted' | 'denied' | 'pending'
 
 export function getStoredConsent(): ConsentStatus {
   if (typeof window === 'undefined') return 'pending'
-  const value = localStorage.getItem(CONSENT_KEY)
-  if (value === 'granted' || value === 'denied') return value
+  try {
+    const value = localStorage.getItem(CONSENT_KEY)
+    if (value === 'granted' || value === 'denied') return value
+  } catch {
+    // Storage unavailable (e.g. private browsing), treat as no stored decision
+  }
   return 'pending'
 }
 
 export function grantConsent(): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(CONSENT_KEY, 'granted')
+  try {
+    localStorage.setItem(CONSENT_KEY, 'granted')
+  } catch {
+    // Storage unavailable — consent still applied in-memory via PostHog
+  }
   posthog.opt_in_capturing()
   posthog.set_config({ persistence: 'localStorage+cookie' })
 }
 
 export function denyConsent(): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(CONSENT_KEY, 'denied')
+  try {
+    localStorage.setItem(CONSENT_KEY, 'denied')
+  } catch {
+    // Storage unavailable — consent still applied in-memory via PostHog
+  }
   posthog.opt_out_capturing()
 }
 
 // ─── Tracking Helpers ─────────────────────────────────────────
 export function trackWaitlistSignup(): void {
+  if (!isAnalyticsEnabled()) return
   posthog.capture(ANALYTICS_EVENTS.WAITLIST_SIGNUP)
 }
 
 export function trackListingView(listingId: string, category: string): void {
+  if (!isAnalyticsEnabled()) return
   posthog.capture(ANALYTICS_EVENTS.LISTING_VIEW, {
     listing_id: listingId,
     category,
@@ -69,6 +83,7 @@ export function trackListingView(listingId: string, category: string): void {
 }
 
 export function trackArtistProfileView(artistSlug: string): void {
+  if (!isAnalyticsEnabled()) return
   posthog.capture(ANALYTICS_EVENTS.ARTIST_PROFILE_VIEW, {
     artist_slug: artistSlug,
   })
