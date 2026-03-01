@@ -12,8 +12,10 @@ import type {
   CategoryWithCount,
   DashboardResponse,
   FeaturedArtistItem,
+  ListingCreateBody,
   ListingDetailResponse,
   ListingListItem,
+  ListingUpdateBody,
   MyListingListItem,
   MyListingResponse,
   PaginatedResponse,
@@ -310,5 +312,28 @@ export async function deleteMyListing(
   await apiFetch<void>(`/me/listings/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function createMyListing(
+  token: string,
+  data: ListingCreateBody,
+): Promise<MyListingResponse> {
+  return apiFetch<MyListingResponse>('/me/listings', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateMyListing(
+  token: string,
+  id: string,
+  data: ListingUpdateBody,
+): Promise<MyListingResponse> {
+  return apiFetch<MyListingResponse>(`/me/listings/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
   })
 }
