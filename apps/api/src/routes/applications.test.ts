@@ -385,6 +385,22 @@ describe('POST /artists/apply', () => {
 
       expect(sendEmail).not.toHaveBeenCalled()
     })
+
+    it('should use persisted submittedAt for admin notification date', async () => {
+      const { sendEmail } = await import('@surfaced-art/email')
+
+      await postApply(app, validApplication)
+
+      // The mock create returns submittedAt: new Date('2025-02-27T00:00:00Z')
+      // Verify the admin notification template receives a date derived from that,
+      // not from new Date() (which would be today's date)
+      const adminCall = vi.mocked(sendEmail).mock.calls.find(
+        (call) => call[0].to === 'surfacedartllc@gmail.com'
+      )
+      expect(adminCall).toBeDefined()
+      const templateProps = adminCall![0].template.props
+      expect(templateProps.applicationDate).toContain('2025')
+    })
   })
 })
 

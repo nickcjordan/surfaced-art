@@ -1,4 +1,4 @@
-import { createElement } from 'react'
+import { createElement, type ReactElement } from 'react'
 import { Hono } from 'hono'
 import type { PrismaClient, CategoryType } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
@@ -10,6 +10,25 @@ import {
 } from '@surfaced-art/email'
 import { artistApplicationBody, checkEmailQuery, sanitizeText } from '@surfaced-art/types'
 import { badRequest, validationError, conflict, internalError } from '../errors'
+
+/** Fire-and-forget email with structured error logging */
+function sendEmailAsync(opts: {
+  to: string
+  subject: string
+  template: ReactElement
+  context: { applicationId: string; emailType: string }
+}) {
+  sendEmail({
+    to: opts.to,
+    subject: opts.subject,
+    template: opts.template,
+  }).catch((err) => {
+    logger.error(`Failed to send ${opts.context.emailType} email`, {
+      applicationId: opts.context.applicationId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  })
+}
 
 export function createApplicationRoutes(prisma: PrismaClient) {
   const applications = new Hono()
@@ -140,36 +159,28 @@ export function createApplicationRoutes(prisma: PrismaClient) {
       })
 
       // Send confirmation email to applicant (fire-and-forget)
-      sendEmail({
+      sendEmailAsync({
         to: normalizedEmail,
         subject: 'We Received Your Application — Surfaced Art',
         template: createElement(ArtistApplicationConfirmation, { artistName: sanitizedFullName }),
-      }).catch((err) => {
-        logger.error('Failed to send application confirmation email', {
-          applicationId: application.id,
-          error: err instanceof Error ? err.message : String(err),
-        })
+        context: { applicationId: application.id, emailType: 'application confirmation' },
       })
 
       // Send notification email to admin team (fire-and-forget)
-      sendEmail({
+      sendEmailAsync({
         to: ADMIN_EMAIL,
         subject: `New Artist Application: ${sanitizedFullName}`,
         template: createElement(AdminApplicationNotification, {
           artistName: sanitizedFullName,
           artistEmail: normalizedEmail,
           categories: categories as string[],
-          applicationDate: new Date().toLocaleDateString('en-US', {
+          applicationDate: application.submittedAt.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
           }),
         }),
-      }).catch((err) => {
-        logger.error('Failed to send admin notification email', {
-          applicationId: application.id,
-          error: err instanceof Error ? err.message : String(err),
-        })
+        context: { applicationId: application.id, emailType: 'admin notification' },
       })
 
       return c.json(
