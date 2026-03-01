@@ -14,6 +14,8 @@ import type {
   FeaturedArtistItem,
   ListingDetailResponse,
   ListingListItem,
+  MyListingListItem,
+  MyListingResponse,
   PaginatedResponse,
   PresignedPostResponse,
   ProcessMediaListResponse,
@@ -271,4 +273,42 @@ export async function checkApplicationEmail(
   return apiFetch<{ exists: boolean; status?: ApplicationStatusType }>(
     `/artists/apply/check-email?email=${encodeURIComponent(email)}`
   )
+}
+
+// ─── Listing Management (Dashboard) ──────────────────────────────────
+
+export async function getMyListings(
+  token: string,
+  params?: { status?: string; category?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<MyListingListItem>> {
+  const qs = new URLSearchParams()
+  if (params?.status) qs.set('status', params.status)
+  if (params?.category) qs.set('category', params.category)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<MyListingListItem>>(
+    `/me/listings${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function getMyListing(
+  token: string,
+  id: string,
+): Promise<MyListingResponse> {
+  return apiFetch<MyListingResponse>(
+    `/me/listings/${encodeURIComponent(id)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function deleteMyListing(
+  token: string,
+  id: string,
+): Promise<void> {
+  await apiFetch<void>(`/me/listings/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
 }
