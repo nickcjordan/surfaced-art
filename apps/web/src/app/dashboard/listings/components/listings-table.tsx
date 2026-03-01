@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useAuth } from '@/lib/auth'
-import { getMyListings, deleteMyListing } from '@/lib/api'
+import { getMyListings, deleteMyListing, updateListingAvailability } from '@/lib/api'
 import { formatCurrency } from '@surfaced-art/utils'
 import type { MyListingListItem } from '@surfaced-art/types'
 import { Button } from '@/components/ui/button'
@@ -96,6 +96,27 @@ export function ListingsTable() {
       setDeleteConfirmId(null)
     } catch {
       // Could show toast here in the future
+    }
+  }
+
+  async function handleToggleAvailability(listing: MyListingListItem) {
+    const newStatus = listing.status === 'available' ? 'reserved_artist' : 'available'
+
+    // Optimistic update
+    setListings((prev) =>
+      prev.map((l) => (l.id === listing.id ? { ...l, status: newStatus as MyListingListItem['status'] } : l)),
+    )
+
+    try {
+      const token = await getIdToken()
+      if (!token) return
+
+      await updateListingAvailability(token, listing.id, { status: newStatus })
+    } catch {
+      // Revert on error
+      setListings((prev) =>
+        prev.map((l) => (l.id === listing.id ? { ...l, status: listing.status } : l)),
+      )
     }
   }
 
@@ -235,6 +256,16 @@ export function ListingsTable() {
                 </>
               ) : (
                 <>
+                  {(listing.status === 'available' || listing.status === 'reserved_artist') && (
+                    <Button
+                      data-testid="availability-toggle"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleAvailability(listing)}
+                    >
+                      {listing.status === 'available' ? 'Reserve' : 'Unreserve'}
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"

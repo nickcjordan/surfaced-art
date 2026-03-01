@@ -12,10 +12,13 @@ import type {
   CategoryWithCount,
   DashboardResponse,
   FeaturedArtistItem,
+  ListingAvailabilityBody,
   ListingCreateBody,
   ListingDetailResponse,
+  ListingImageBody,
   ListingListItem,
   ListingUpdateBody,
+  MyListingImageResponse,
   MyListingListItem,
   MyListingResponse,
   PaginatedResponse,
@@ -336,4 +339,63 @@ export async function updateMyListing(
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
   })
+}
+
+export async function addListingImage(
+  token: string,
+  listingId: string,
+  data: ListingImageBody,
+): Promise<MyListingImageResponse> {
+  return apiFetch<MyListingImageResponse>(
+    `/me/listings/${encodeURIComponent(listingId)}/images`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    },
+  )
+}
+
+export async function deleteListingImage(
+  token: string,
+  listingId: string,
+  imageId: string,
+): Promise<void> {
+  await apiFetch<void>(
+    `/me/listings/${encodeURIComponent(listingId)}/images/${encodeURIComponent(imageId)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  )
+}
+
+export async function reorderListingImages(
+  token: string,
+  listingId: string,
+  orderedIds: string[],
+): Promise<MyListingImageResponse[]> {
+  return apiFetch<MyListingImageResponse[]>(
+    `/me/listings/${encodeURIComponent(listingId)}/images/reorder`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ orderedIds }),
+    },
+  )
+}
+
+export async function updateListingAvailability(
+  token: string,
+  id: string,
+  data: ListingAvailabilityBody,
+): Promise<MyListingResponse> {
+  return apiFetch<MyListingResponse>(
+    `/me/listings/${encodeURIComponent(id)}/availability`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    },
+  )
 }
