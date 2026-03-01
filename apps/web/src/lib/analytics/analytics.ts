@@ -1,0 +1,75 @@
+import posthog from 'posthog-js'
+import type { PostHogConfig } from 'posthog-js'
+
+// ─── Event Names ──────────────────────────────────────────────
+export const ANALYTICS_EVENTS = {
+  WAITLIST_SIGNUP: 'waitlist_signup',
+  LISTING_VIEW: 'listing_view',
+  ARTIST_PROFILE_VIEW: 'artist_profile_view',
+} as const
+
+// ─── Configuration ───────────────────────────────────────────
+// Exported so layout.tsx can pass them to PostHogProvider from posthog-js/react.
+export const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? ''
+export const POSTHOG_HOST =
+  process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com'
+
+export function isAnalyticsEnabled(): boolean {
+  return POSTHOG_KEY.length > 0 && typeof window !== 'undefined'
+}
+
+/** PostHog init options passed to PostHogProvider from posthog-js/react. */
+export const POSTHOG_OPTIONS: Partial<PostHogConfig> = {
+  api_host: POSTHOG_HOST,
+  // GDPR: start opted out, memory-only persistence until consent
+  opt_out_capturing_by_default: true,
+  persistence: 'memory',
+  // Disable autocapture — we track explicit events only
+  autocapture: false,
+  // Capture pageviews manually via PostHogPageView component
+  capture_pageview: false,
+  capture_pageleave: true,
+}
+
+// ─── Consent Management ──────────────────────────────────────
+const CONSENT_KEY = 'sa_analytics_consent'
+
+export type ConsentStatus = 'granted' | 'denied' | 'pending'
+
+export function getStoredConsent(): ConsentStatus {
+  if (typeof window === 'undefined') return 'pending'
+  const value = localStorage.getItem(CONSENT_KEY)
+  if (value === 'granted' || value === 'denied') return value
+  return 'pending'
+}
+
+export function grantConsent(): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(CONSENT_KEY, 'granted')
+  posthog.opt_in_capturing()
+  posthog.set_config({ persistence: 'localStorage+cookie' })
+}
+
+export function denyConsent(): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(CONSENT_KEY, 'denied')
+  posthog.opt_out_capturing()
+}
+
+// ─── Tracking Helpers ─────────────────────────────────────────
+export function trackWaitlistSignup(): void {
+  posthog.capture(ANALYTICS_EVENTS.WAITLIST_SIGNUP)
+}
+
+export function trackListingView(listingId: string, category: string): void {
+  posthog.capture(ANALYTICS_EVENTS.LISTING_VIEW, {
+    listing_id: listingId,
+    category,
+  })
+}
+
+export function trackArtistProfileView(artistSlug: string): void {
+  posthog.capture(ANALYTICS_EVENTS.ARTIST_PROFILE_VIEW, {
+    artist_slug: artistSlug,
+  })
+}
