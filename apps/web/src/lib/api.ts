@@ -30,10 +30,10 @@ import type {
   StripeStatusResponse,
 } from '@surfaced-art/types'
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.API_URL ||
-  'https://api.surfaced.art'
+if (!process.env.NEXT_PUBLIC_API_URL) {
+  throw new Error('NEXT_PUBLIC_API_URL is required')
+}
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`

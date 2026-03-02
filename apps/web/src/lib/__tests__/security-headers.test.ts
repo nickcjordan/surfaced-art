@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const REQUIRED_HEADERS = [
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
@@ -9,8 +9,18 @@ const REQUIRED_HEADERS = [
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
 ]
 
+beforeEach(() => {
+  vi.resetModules()
+  vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfacedart.com')
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.resetModules()
+})
+
 /** Import (or re-import) the module so env var changes take effect. */
-async function loadHeaders() {
+const loadHeaders = async () => {
   const mod = await import('../security-headers')
   return mod.SECURITY_HEADERS
 }
@@ -47,10 +57,10 @@ describe('security headers config', () => {
     expect(csp.value).toContain('fonts.gstatic.com')
   })
 
-  it('CSP should allow API domain for fetch requests by default', async () => {
+  it('CSP should include the configured API URL in connect-src', async () => {
     const headers = await loadHeaders()
     const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
-    expect(csp.value).toContain('api.surfaced.art')
+    expect(csp.value).toContain('api.surfacedart.com')
   })
 
   it('CSP should allow Cognito IDP for authentication by default', async () => {
@@ -76,12 +86,17 @@ describe('security headers config', () => {
     const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
     expect(csp.value).toMatch(/connect-src[^;]*us\.i\.posthog\.com/)
   })
+
+  it('should throw if NEXT_PUBLIC_API_URL is not set', async () => {
+    vi.unstubAllEnvs()
+    vi.stubEnv('NEXT_PUBLIC_API_URL', '')
+    await expect(import('../security-headers')).rejects.toThrow('NEXT_PUBLIC_API_URL is required')
+  })
 })
 
 describe('CSP environment overrides', () => {
   it('should use NEXT_PUBLIC_CDN_DOMAINS for img-src when set', async () => {
     vi.stubEnv('NEXT_PUBLIC_CDN_DOMAINS', 'https://staging-cdn.example.com')
-    // Re-import to pick up new env
     vi.resetModules()
     const { SECURITY_HEADERS } = await import('../security-headers')
     const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
@@ -92,12 +107,12 @@ describe('CSP environment overrides', () => {
   })
 
   it('should use NEXT_PUBLIC_API_URL for connect-src when set', async () => {
-    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.staging.surfaced.art')
+    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.dev.surfacedart.com')
     vi.resetModules()
     const { SECURITY_HEADERS } = await import('../security-headers')
     const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
-    expect(csp.value).toContain('api.staging.surfaced.art')
-    expect(csp.value).not.toContain('api.surfaced.art')
+    expect(csp.value).toContain('api.dev.surfacedart.com')
+    expect(csp.value).not.toContain('api.surfacedart.com')
     vi.unstubAllEnvs()
     vi.resetModules()
   })

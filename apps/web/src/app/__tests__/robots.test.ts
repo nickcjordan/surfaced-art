@@ -1,4 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfacedart.com')
+vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfacedart.com')
+
 import robots from '../robots'
 
 describe('robots.txt', () => {
@@ -33,6 +37,6 @@ describe('robots.txt', () => {
   })
 
   it('should reference sitemap URL', () => {
-    expect(config.sitemap).toBe('https://surfaced.art/sitemap.xml')
+    expect(config.sitemap).toBe('https://surfacedart.com/sitemap.xml')
   })
 })

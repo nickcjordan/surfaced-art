@@ -10,15 +10,21 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write
 
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
 
 jobs:
   quality-gates:
     name: Quality Gates
     runs-on: ubuntu-latest
+    env:
+      # Required by next.config.ts at build time — placeholder values are fine for CI
+      NEXT_PUBLIC_SITE_URL: https://surfacedart.com
+      NEXT_PUBLIC_API_URL: https://api.surfacedart.com
 
     steps:
       - name: Checkout
@@ -44,3 +50,121 @@ jobs:
 
       - name: Test
         run: npm run test
+
+  terraform-plan-dev:
+    name: Terraform Plan (dev)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check for infrastructure changes
+        id: infra_changes
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            const hasInfra = files.some(f => f.filename.startsWith('infrastructure/'));
+            core.setOutput('changed', hasInfra ? 'true' : 'false');
+
+      - name: Setup Terraform
+        if: steps.infra_changes.outputs.changed == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5'
+          terraform_wrapper: false
+
+      - name: Configure AWS Credentials
+        if: steps.infra_changes.outputs.changed == 'true'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        if: steps.infra_changes.outputs.changed == 'true'
+        working-directory: infrastructure/terraform
+        run: |
+          terraform init \
+            -backend-config="key=dev/terraform.tfstate"
+
+      - name: Terraform Plan
+        if: steps.infra_changes.outputs.changed == 'true'
+        id: plan
+        working-directory: infrastructure/terraform
+        run: |
+          set -o pipefail
+          terraform plan -no-color \
+            -var-file="environments/dev.tfvars" \
+            -var="db_password=plan-placeholder" \
+            -var="google_client_id=plan-placeholder" \
+            -var="google_client_secret=plan-placeholder" \
+            -var="alert_email_address=plan@placeholder.com" \
+            -var="stripe_secret_key=plan-placeholder" \
+            -var="stripe_webhook_secret=plan-placeholder" \
+            -var="placeholder_image_uri=public.ecr.aws/lambda/nodejs:20" \
+            2>&1 | tee /tmp/plan.txt
+          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Post plan as PR comment
+        if: steps.infra_changes.outputs.changed == 'true' && always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('/tmp/plan.txt', 'utf8');
+            const truncated = plan.length > 60000 ? plan.slice(-60000) + '\n\n[...truncated — see full run for details]' : plan;
+
+            const body = [
+              '## Terraform Plan (dev)',
+              '',
+              '<details><summary>Show plan</summary>',
+              '',
+              '```terraform',
+              truncated,
+              '```',
+              '',
+              '</details>',
+              '',
+              `Plan generated from commit ${context.sha.substring(0, 7)}.`,
+            ].join('\n');
+
+            // Find and update existing plan comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.startsWith('## Terraform Plan (dev)')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body,
+              });
+            }
+
+      - name: No infrastructure changes
+        if: steps.infra_changes.outputs.changed != 'true'
+        run: echo "No infrastructure changes detected — skipping Terraform plan."
