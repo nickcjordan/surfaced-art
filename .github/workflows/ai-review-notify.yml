@@ -1,0 +1,195 @@
+name: AI Review Notify
+
+# Fires once per bot review submission (not per individual comment).
+# Triggers whether the PR is open or already merged — bots that finish
+# after merge still produce a Slack digest in #ai-code-review.
+# This workflow is fully independent of deploy-dev.yml.
+on:
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  notify:
+    name: Post AI review digest to Slack
+    runs-on: ubuntu-latest
+    # Only process reviews from known AI bots
+    if: |
+      github.event.review.user.login == 'greptile-apps[bot]' ||
+      github.event.review.user.login == 'sourcery-ai[bot]'
+    timeout-minutes: 3
+    continue-on-error: true
+
+    steps:
+      - name: Fetch review comments and post digest
+        uses: actions/github-script@v7
+        env:
+          SLACK_AI_REVIEW_WEBHOOK_URL: ${{ secrets.SLACK_AI_REVIEW_WEBHOOK_URL }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const botLogin = context.payload.review.user.login;
+            const prNumber = context.payload.pull_request.number;
+            const prTitle = context.payload.pull_request.title;
+            const prUrl = context.payload.pull_request.html_url;
+            const reviewUrl = context.payload.review.html_url;
+            const webhookUrl = process.env.SLACK_AI_REVIEW_WEBHOOK_URL;
+
+            if (!webhookUrl) {
+              core.warning('SLACK_AI_REVIEW_WEBHOOK_URL not set — skipping Slack notification');
+              return;
+            }
+
+            // Fetch all review comments from this bot on this PR
+            const { data: comments } = await github.rest.pulls.listReviewComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+
+            const botComments = comments.filter(c => c.user.login === botLogin);
+
+            // Also include the review body itself if non-empty
+            const reviewBody = context.payload.review.body || '';
+
+            // Parse severity from comment text
+            // Sourcery format: **{type} ({category}):** description
+            // Greptile format: free-form prose with keyword detection
+            const parseSeverity = (text) => {
+              // Sourcery structured format: **type (category):**
+              const sourceryMatch = text.match(/\*\*([^(]+)\s*\(([^)]+)\)\s*:\*\*/i);
+              if (sourceryMatch) {
+                const type = sourceryMatch[1].trim().toLowerCase();
+                if (['bug', 'error', 'critical'].some(k => type.includes(k))) return 'critical';
+                if (type.includes('security')) return 'high';
+                if (['performance', 'refactor'].some(k => type.includes(k))) return 'medium';
+                return 'suggestion';
+              }
+
+              // Greptile keyword detection
+              const lower = text.toLowerCase();
+              if (['critical', 'severity: critical', 'security vulnerability', 'data loss'].some(k => lower.includes(k))) return 'critical';
+              if (['high', 'severity: high', 'potential bug', 'race condition', 'memory leak'].some(k => lower.includes(k))) return 'high';
+              if (['medium', 'severity: medium', 'performance', 'inefficient'].some(k => lower.includes(k))) return 'medium';
+              if (['low', 'severity: low', 'suggestion', 'consider', 'style'].some(k => lower.includes(k))) return 'low';
+              return 'info';
+            };
+
+            const severityEmoji = { critical: '🔴', high: '🟠', medium: '🟡', low: '🔵', suggestion: '💡', info: 'ℹ️' };
+            const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, suggestion: 4, info: 5 };
+
+            // Parse all comments
+            const parsed = botComments.map(c => ({
+              body: c.body,
+              path: c.path,
+              severity: parseSeverity(c.body),
+              url: c.html_url,
+            })).sort((a, b) => (severityOrder[a.severity] ?? 5) - (severityOrder[b.severity] ?? 5));
+
+            // Count by severity
+            const counts = {};
+            for (const { severity } of parsed) {
+              counts[severity] = (counts[severity] || 0) + 1;
+            }
+
+            const totalComments = parsed.length;
+            const botDisplayName = botLogin.replace('[bot]', '');
+
+            // Build severity summary line
+            const severitySummary = Object.entries(counts)
+              .sort(([a], [b]) => (severityOrder[a] ?? 5) - (severityOrder[b] ?? 5))
+              .map(([sev, count]) => `${severityEmoji[sev] || '•'} ${count} ${sev}`)
+              .join('   ');
+
+            // Top 3 comments preview (truncated)
+            const topComments = parsed.slice(0, 3).map(c => {
+              const preview = c.body.replace(/\n+/g, ' ').replace(/\*\*/g, '').slice(0, 120);
+              const truncated = c.body.length > 120 ? preview + '...' : preview;
+              return `${severityEmoji[c.severity] || '•'} \`${c.path}\` — ${truncated}`;
+            }).join('\n');
+
+            // Build Slack Block Kit payload
+            const blocks = [
+              {
+                type: 'header',
+                text: {
+                  type: 'plain_text',
+                  text: `🤖 AI Review: ${botDisplayName} — PR #${prNumber}`,
+                  emoji: true,
+                },
+              },
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: `*<${prUrl}|#${prNumber} ${prTitle}>*`,
+                },
+              },
+            ];
+
+            if (reviewBody && reviewBody.trim()) {
+              const reviewPreview = reviewBody.replace(/\n+/g, ' ').slice(0, 200);
+              blocks.push({
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: `_Review summary:_ ${reviewPreview}${reviewBody.length > 200 ? '...' : ''}`,
+                },
+              });
+            }
+
+            if (totalComments > 0) {
+              blocks.push(
+                { type: 'divider' },
+                {
+                  type: 'section',
+                  text: {
+                    type: 'mrkdwn',
+                    text: `*${totalComments} inline comment${totalComments !== 1 ? 's' : ''}*\n${severitySummary}`,
+                  },
+                },
+              );
+
+              if (topComments) {
+                blocks.push({
+                  type: 'section',
+                  text: {
+                    type: 'mrkdwn',
+                    text: topComments,
+                  },
+                });
+              }
+            } else {
+              blocks.push({
+                type: 'section',
+                text: { type: 'mrkdwn', text: '_No inline comments — see review body above._' },
+              });
+            }
+
+            blocks.push({
+              type: 'actions',
+              elements: [
+                {
+                  type: 'button',
+                  text: { type: 'plain_text', text: 'View full review', emoji: true },
+                  url: reviewUrl,
+                },
+              ],
+            });
+
+            const payload = JSON.stringify({ blocks });
+
+            const { execSync } = require('child_process');
+            try {
+              execSync(
+                `curl -s --max-time 10 -H "Content-Type: application/json" -d '${payload.replace(/'/g, "'\\''")}' "${webhookUrl}"`,
+                { stdio: 'inherit' }
+              );
+              core.info('Slack notification sent successfully');
+            } catch (e) {
+              core.warning(`Failed to send Slack notification: ${e.message}`);
+            }

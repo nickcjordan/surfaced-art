@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 
+vi.stubEnv('FRONTEND_URL', 'https://surfacedart.com')
+
 vi.mock('@surfaced-art/db', () => ({
   prisma: {
     $queryRawUnsafe: vi.fn().mockResolvedValue([{ now: new Date() }]),

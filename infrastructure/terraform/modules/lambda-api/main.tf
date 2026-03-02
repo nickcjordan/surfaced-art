@@ -91,7 +91,7 @@ resource "aws_apigatewayv2_api" "main" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins     = [var.frontend_url, "https://www.surfaced.art", "http://localhost:3000"]
+    allow_origins     = [var.frontend_url, "http://localhost:3000"]
     allow_methods     = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     allow_headers     = ["Content-Type", "Authorization", "X-Amz-Date", "X-Api-Key"]
     expose_headers    = ["Content-Length", "Content-Type", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"]

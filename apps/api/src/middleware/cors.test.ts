@@ -1,27 +1,27 @@
-import { describe, it, expect } from 'vitest'
-import { app } from '../index'
+import { describe, it, expect, vi } from 'vitest'
+
+vi.mock('@surfaced-art/db', () => ({
+  prisma: {
+    $queryRawUnsafe: vi.fn().mockResolvedValue([{ now: new Date() }]),
+    artistProfile: { findUnique: vi.fn(), findFirst: vi.fn().mockResolvedValue({ id: 'test-id' }) },
+    listing: { findMany: vi.fn().mockResolvedValue([]), count: vi.fn().mockResolvedValue(0), findUnique: vi.fn() },
+  },
+}))
+
+vi.stubEnv('FRONTEND_URL', 'https://surfacedart.com')
+
+const { app } = await import('../index')
 
 describe('CORS configuration', () => {
-  it('should allow requests from surfaced.art', async () => {
+  it('should allow requests from the configured FRONTEND_URL', async () => {
     const res = await app.request('/health', {
       method: 'OPTIONS',
       headers: {
-        Origin: 'https://surfaced.art',
+        Origin: 'https://surfacedart.com',
         'Access-Control-Request-Method': 'GET',
       },
     })
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://surfaced.art')
-  })
-
-  it('should allow requests from www.surfaced.art', async () => {
-    const res = await app.request('/health', {
-      method: 'OPTIONS',
-      headers: {
-        Origin: 'https://www.surfaced.art',
-        'Access-Control-Request-Method': 'GET',
-      },
-    })
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://www.surfaced.art')
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://surfacedart.com')
   })
 
   it('should allow requests from localhost:3000', async () => {
@@ -62,10 +62,20 @@ describe('CORS configuration', () => {
     const res = await app.request('/health', {
       method: 'OPTIONS',
       headers: {
-        Origin: 'https://surfaced.art',
+        Origin: 'https://surfacedart.com',
         'Access-Control-Request-Method': 'GET',
       },
     })
     expect(res.headers.get('Access-Control-Allow-Credentials')).toBe('true')
+  })
+})
+
+describe('CORS: missing FRONTEND_URL', () => {
+  it('should throw if FRONTEND_URL is not set', async () => {
+    vi.resetModules()
+    vi.stubEnv('FRONTEND_URL', '')
+    await expect(import('../index')).rejects.toThrow('FRONTEND_URL is required')
+    vi.unstubAllEnvs()
+    vi.stubEnv('FRONTEND_URL', 'https://surfacedart.com')
   })
 })

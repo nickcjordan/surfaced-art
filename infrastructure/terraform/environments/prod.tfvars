@@ -10,4 +10,4 @@ lambda_memory_size = 256
 lambda_timeout     = 30
 
 # URLs
-frontend_url = "https://surfaced.art"
+frontend_url = "https://surfacedart.com"
