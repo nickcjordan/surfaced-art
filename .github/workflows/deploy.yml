@@ -43,6 +43,9 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://surfacedart.com
+          NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com/prod
         run: npm run build
 
       - name: Type Check
