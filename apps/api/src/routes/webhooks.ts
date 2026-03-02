@@ -19,13 +19,16 @@ export function createWebhookRoutes(prisma: PrismaClient) {
       return internalError(c)
     }
 
-    const stripe = getStripeClient()
-    const rawBody = await c.req.text()
-
     let event
     try {
+      const stripe = getStripeClient()
+      const rawBody = await c.req.text()
       event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
     } catch (err) {
+      if (err instanceof Error && err.message.includes("STRIPE_SECRET_KEY")) {
+        logger.error("Stripe client misconfigured", { error: err.message })
+        return internalError(c)
+      }
       logger.warn('Stripe webhook signature verification failed', {
         error: err instanceof Error ? err.message : String(err),
       })

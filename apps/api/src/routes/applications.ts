@@ -25,7 +25,8 @@ function sendEmailAsync(opts: {
   }).catch((err) => {
     logger.error(`Failed to send ${opts.context.emailType} email`, {
       applicationId: opts.context.applicationId,
-      error: err instanceof Error ? err.message : String(err),
+      emailType: opts.context.emailType,
+      error: err,
     })
   })
 }

@@ -1450,10 +1450,10 @@ export function createMeRoutes(prisma: PrismaClient) {
       return notFound(c, 'Artist profile not found')
     }
 
-    const stripe = getStripeClient()
     let stripeAccountId = artist.stripeAccountId
 
     try {
+      const stripe = getStripeClient()
       // Create a new Stripe account if one doesn't exist yet
       if (!stripeAccountId) {
         const account = await stripe.accounts.create({
