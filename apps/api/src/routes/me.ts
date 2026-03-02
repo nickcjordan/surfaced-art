@@ -1,12 +1,13 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { CategoryType as PrismaCategoryType } from '@surfaced-art/db'
-import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, DashboardResponse, MyListingImageResponse, MyListingListItem, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileCompletionField, ProfileUpdateResponse } from '@surfaced-art/types'
+import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, DashboardResponse, MyListingImageResponse, MyListingListItem, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileCompletionField, ProfileUpdateResponse, StripeOnboardingResponse, StripeStatusResponse } from '@surfaced-art/types'
 import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingAvailabilityBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
-import { notFound, badRequest, validationError, conflict } from '../errors'
+import { notFound, badRequest, validationError, conflict, internalError } from '../errors'
 import { triggerRevalidation } from '../lib/revalidation'
+import { getStripeClient } from '../lib/stripe'
 
 function formatProcessMedia(entry: { id: string; type: string; url: string | null; videoPlaybackId: string | null; videoProvider: string | null; sortOrder: number; createdAt: Date }): ProcessMediaResponse {
   return {
@@ -1429,6 +1430,91 @@ export function createMeRoutes(prisma: PrismaClient) {
     triggerRevalidation({ type: 'listing', id: listingId, category: listing.category, artistSlug: artist.slug })
 
     return c.json(formatListingResponse(updated))
+  })
+
+  // ─── Stripe Connect Onboarding ──────────────────────────────────────
+
+  me.post('/stripe/onboarding', authMiddleware(prisma), requireRole('artist'), async (c) => {
+    const user = c.get('user') as AuthUser
+
+    const frontendUrl = process.env.FRONTEND_URL
+    if (!frontendUrl) {
+      logger.error('FRONTEND_URL not configured')
+      return internalError(c)
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const stripe = getStripeClient()
+    let stripeAccountId = artist.stripeAccountId
+
+    try {
+      // Create a new Stripe account if one doesn't exist yet
+      if (!stripeAccountId) {
+        const account = await stripe.accounts.create({
+          type: 'standard',
+          email: user.email,
+        })
+        stripeAccountId = account.id
+
+        // Store the account ID immediately so the webhook can find this artist later
+        await prisma.artistProfile.update({
+          where: { id: artist.id },
+          data: { stripeAccountId },
+        })
+
+        logger.info('Stripe Connect account created', { artistId: artist.id, stripeAccountId })
+      }
+
+      // Generate a new account link (works for both new and returning onboarding)
+      const accountLink = await stripe.accountLinks.create({
+        account: stripeAccountId,
+        return_url: `${frontendUrl}/dashboard?stripe=complete`,
+        refresh_url: `${frontendUrl}/dashboard?stripe=refresh`,
+        type: 'account_onboarding',
+      })
+
+      return c.json({ url: accountLink.url } satisfies StripeOnboardingResponse)
+    } catch (err) {
+      logger.error('Stripe onboarding failed', { err, artistId: artist.id, stripeAccountId })
+      return internalError(c)
+    }
+  })
+
+  me.get('/stripe/status', authMiddleware(prisma), requireRole('artist'), async (c) => {
+    const user = c.get('user') as AuthUser
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    if (!artist.stripeAccountId) {
+      return c.json({ status: 'not_started', stripeAccountId: null } satisfies StripeStatusResponse)
+    }
+
+    // Query Stripe to get the current onboarding status
+    try {
+      const stripe = getStripeClient()
+      const account = await stripe.accounts.retrieve(artist.stripeAccountId)
+
+      const status = account.charges_enabled ? 'complete' : 'pending'
+
+      return c.json({
+        status,
+        stripeAccountId: artist.stripeAccountId,
+      } satisfies StripeStatusResponse)
+    } catch (err) {
+      logger.error('Stripe status check failed', { err, artistId: artist.id, stripeAccountId: artist.stripeAccountId })
+      return internalError(c)
+    }
   })
 
   return me

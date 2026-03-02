@@ -24,8 +24,11 @@ vi.mock('@/lib/auth', () => ({
 
 // Mock api
 const mockGetDashboard = vi.fn()
+const mockGetStripeStatus = vi.fn()
 vi.mock('@/lib/api', () => ({
   getDashboard: (...args: unknown[]) => mockGetDashboard(...args),
+  getStripeStatus: (...args: unknown[]) => mockGetStripeStatus(...args),
+  initiateStripeOnboarding: vi.fn(),
   ApiError: class ApiError extends Error {
     constructor(public status: number, message: string) {
       super(message)
@@ -74,6 +77,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockGetIdToken.mockResolvedValue('mock-token')
   mockGetDashboard.mockResolvedValue(mockDashboardData)
+  mockGetStripeStatus.mockResolvedValue({ status: 'not_started', stripeAccountId: null })
 })
 
 describe('DashboardPage', () => {
@@ -180,6 +184,7 @@ describe('DashboardPage', () => {
       profile: { ...mockDashboardData.profile, stripeAccountId: 'acct_123' },
     }
     mockGetDashboard.mockResolvedValue(dataWithStripe)
+    mockGetStripeStatus.mockResolvedValue({ status: 'complete', stripeAccountId: 'acct_123' })
 
     render(<DashboardPage />)
 

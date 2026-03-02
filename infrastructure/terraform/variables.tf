@@ -82,6 +82,21 @@ variable "apple_private_key" {
   default     = ""
 }
 
+# Stripe Connect variables
+variable "stripe_secret_key" {
+  description = "Stripe secret API key (sk_test_* for dev, sk_live_* for prod)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "stripe_webhook_secret" {
+  description = "Stripe webhook signing secret (whsec_*)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 # SES variables
 variable "ses_domain" {
   description = "Domain for SES email sending"

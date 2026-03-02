@@ -1,0 +1,35 @@
+meta {
+  name: Stripe Account Updated
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{sa_baseUrl}}/webhooks/stripe
+  body: json
+  auth: none
+}
+
+headers {
+  stripe-signature: t=1234567890,v1=test_signature
+}
+
+body:json {
+  {
+    "id": "evt_test_123",
+    "type": "account.updated",
+    "data": {
+      "object": {
+        "id": "acct_test_123",
+        "charges_enabled": true
+      }
+    }
+  }
+}
+
+docs {
+  Note: This request will return 400 because the stripe-signature header
+  contains a test value. In production, Stripe signs webhooks with a real
+  signature verified against STRIPE_WEBHOOK_SECRET. This request is for
+  documentation purposes — it shows the expected payload shape.
+}

@@ -256,6 +256,8 @@ module "lambda_api" {
   cloudfront_domain          = module.s3_cloudfront.cloudfront_domain_name
   ses_from_address           = "support@${var.ses_domain}"
   ses_configuration_set_name = module.ses.configuration_set_name
+  stripe_secret_key          = var.stripe_secret_key
+  stripe_webhook_secret      = var.stripe_webhook_secret
 
   # Observability — log group managed centrally in observability.tf
   api_gateway_log_group_arn = aws_cloudwatch_log_group.api_gateway.arn

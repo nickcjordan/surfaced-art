@@ -26,6 +26,8 @@ import type {
   ProcessMediaListResponse,
   ProcessMediaResponse,
   ProfileUpdateResponse,
+  StripeOnboardingResponse,
+  StripeStatusResponse,
 } from '@surfaced-art/types'
 
 const API_BASE_URL =
@@ -398,4 +400,23 @@ export async function updateListingAvailability(
       body: JSON.stringify(data),
     },
   )
+}
+
+// ─── Stripe Connect ───────────────────────────────────────────────────
+
+export async function initiateStripeOnboarding(
+  token: string,
+): Promise<StripeOnboardingResponse> {
+  return apiFetch<StripeOnboardingResponse>('/me/stripe/onboarding', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function getStripeStatus(
+  token: string,
+): Promise<StripeStatusResponse> {
+  return apiFetch<StripeStatusResponse>('/me/stripe/status', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
 }
