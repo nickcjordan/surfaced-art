@@ -1,0 +1,29 @@
+meta {
+  name: Stripe Onboarding
+  type: http
+  seq: 30
+}
+
+post {
+  url: {{sa_baseUrl}}/me/stripe/onboarding
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.url: isString
+}
+
+tests {
+  test("should return 200 with Stripe onboarding URL", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.url).to.be.a("string");
+    expect(body.url).to.include("stripe.com");
+  });
+}

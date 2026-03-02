@@ -64,6 +64,18 @@ describe('security headers config', () => {
     const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
     expect(csp.value).toContain("frame-ancestors 'none'")
   })
+
+  it('CSP should allow PostHog host in script-src by default', async () => {
+    const headers = await loadHeaders()
+    const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).toMatch(/script-src[^;]*us\.i\.posthog\.com/)
+  })
+
+  it('CSP should allow PostHog host in connect-src by default', async () => {
+    const headers = await loadHeaders()
+    const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).toMatch(/connect-src[^;]*us\.i\.posthog\.com/)
+  })
 })
 
 describe('CSP environment overrides', () => {
@@ -97,6 +109,17 @@ describe('CSP environment overrides', () => {
     const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
     expect(csp.value).toContain('cognito-idp.eu-west-1.amazonaws.com')
     expect(csp.value).not.toContain('cognito-idp.us-east-1.amazonaws.com')
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  it('should use NEXT_PUBLIC_POSTHOG_HOST for PostHog CSP when set', async () => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_HOST', 'https://eu.i.posthog.com')
+    vi.resetModules()
+    const { SECURITY_HEADERS } = await import('../security-headers')
+    const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).toContain('eu.i.posthog.com')
+    expect(csp.value).not.toContain('us.i.posthog.com')
     vi.unstubAllEnvs()
     vi.resetModules()
   })

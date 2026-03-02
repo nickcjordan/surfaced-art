@@ -24,13 +24,17 @@ const COGNITO_IDP = (
   'https://cognito-idp.us-east-1.amazonaws.com'
 ).trim()
 
+const POSTHOG_HOST = (
+  process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com'
+).trim()
+
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${POSTHOG_HOST}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   `img-src 'self' data: ${CDN_DOMAINS}`,
-  `connect-src 'self' ${API_ORIGIN} ${COGNITO_IDP}`,
+  `connect-src 'self' ${API_ORIGIN} ${COGNITO_IDP} ${POSTHOG_HOST}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

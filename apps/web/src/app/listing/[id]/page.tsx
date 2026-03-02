@@ -8,6 +8,7 @@ import { ImageGallery } from '@/components/ImageGallery'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { Badge } from '@/components/ui/badge'
 import { WaitlistForm } from '@/components/WaitlistForm'
+import { ListingViewTracker } from '@/components/ListingViewTracker'
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SITE_URL } from '@/lib/site-config'
@@ -74,6 +75,7 @@ export default async function ListingDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-12">
+      <ListingViewTracker listingId={listing.id} category={listing.category} />
       <JsonLd data={{
         '@context': 'https://schema.org',
         '@type': 'Product',

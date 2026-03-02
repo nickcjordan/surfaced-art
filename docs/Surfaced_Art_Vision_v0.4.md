@@ -26,6 +26,7 @@ A curated digital gallery for real makers. Every artist is vetted. Every piece i
 - A trust signal for buyers who are tired of being burned by Etsy slop
 - A scouting ground where galleries can discover emerging talent
 - A community built by artists, for artists
+- A bridge between digital discovery and physical art experiences — connecting artists with venues (art fairs, galleries, markets) for real-world opportunities *(future — see Venue Strategy in Notion)*
 
 ## 2. Target Audience
 
@@ -54,6 +55,7 @@ Buyers who have been burned by Etsy and want a trustworthy alternative. They are
 **Gallery Commission: **30% of each sale. This covers all transaction fees, marketing, artist profile maintenance, and customer service — framed as a bundled service to artists, not merely a revenue cut. Industry standard at physical galleries is 40%; 30% is competitive and validated by real-world comparable operators.
 **No commission on shipping: **Shipping costs are a buyer-paid pass-through to the artist. The platform takes no commission on shipping.
 **Future consideration: **Optional monthly studio subscription tier unlocking premium features (analytics, featured placement, additional portfolio slots)
+**Future consideration: **Venue subscription tiers — a third user type ("Venues") encompassing art fairs, galleries, festivals, and markets. Revenue via tiered subscriptions ($0–$149/mo) gating artist discovery tools. Not targeted until 12–18 months post-launch. See Venue Strategy in Notion for full details.
 **No listing fees at launch: **Artists are not charged to maintain a profile or list work
 
 ### Commission Disclosure to Buyers

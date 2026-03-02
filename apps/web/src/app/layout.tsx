@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { DM_Serif_Display, DM_Sans } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '@/lib/auth'
+import { AnalyticsProvider, PostHogPageView } from '@/lib/analytics'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { CookieConsent } from '@/components/CookieConsent'
 import { Container } from '@/components/ui/container'
 import { SITE_URL } from '@/lib/site-config'
 import './globals.css'
@@ -53,13 +56,19 @@ export default function RootLayout({
       <body className="antialiased min-h-screen flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
-            <Header />
-            <main className="flex-1">
-              <Container className="py-8 md:py-12">
-                {children}
-              </Container>
-            </main>
-            <Footer />
+            <AnalyticsProvider>
+              <Suspense fallback={null}>
+                <PostHogPageView />
+              </Suspense>
+              <Header />
+              <main className="flex-1">
+                <Container className="py-8 md:py-12">
+                  {children}
+                </Container>
+              </main>
+              <Footer />
+              <CookieConsent />
+            </AnalyticsProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
