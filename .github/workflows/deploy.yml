@@ -55,21 +55,21 @@ jobs:
         run: npm run test
 
       - name: Upload API artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: api-dist
           path: apps/api/dist/
           retention-days: 1
 
       - name: Upload migrate artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: migrate-dist
           path: tools/migrate/dist/
           retention-days: 1
 
       - name: Upload image-processor artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: image-processor-dist
           path: apps/image-processor/dist/
