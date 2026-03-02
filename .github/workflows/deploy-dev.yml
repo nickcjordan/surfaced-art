@@ -277,7 +277,13 @@ jobs:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
+          ECR_REPO="${ECR_REPOSITORY_URL##*/}"
+          if aws ecr describe-images --repository-name "$ECR_REPO" \
+              --image-ids imageTag="$IMAGE_TAG" &>/dev/null; then
+            echo "Tag $IMAGE_TAG already exists in ECR — skipping push."
+          else
+            docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
+          fi
 
       - name: Deploy API Lambda
         env:
@@ -333,7 +339,13 @@ jobs:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.migrate_ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
+          ECR_REPO="${ECR_REPOSITORY_URL##*/}"
+          if aws ecr describe-images --repository-name "$ECR_REPO" \
+              --image-ids imageTag="$IMAGE_TAG" &>/dev/null; then
+            echo "Tag $IMAGE_TAG already exists in ECR — skipping push."
+          else
+            docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
+          fi
 
       - name: Deploy migrate Lambda
         env:
@@ -391,7 +403,13 @@ jobs:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.image_processor_ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
+          ECR_REPO="${ECR_REPOSITORY_URL##*/}"
+          if aws ecr describe-images --repository-name "$ECR_REPO" \
+              --image-ids imageTag="$IMAGE_TAG" &>/dev/null; then
+            echo "Tag $IMAGE_TAG already exists in ECR — skipping push."
+          else
+            docker push $ECR_REPOSITORY_URL:$IMAGE_TAG
+          fi
 
       - name: Deploy image-processor Lambda
         env:
