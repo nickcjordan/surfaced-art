@@ -13,14 +13,14 @@
     "scrape": "tsx src/cli.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.52.0",
+    "@anthropic-ai/sdk": "^0.78.0",
     "@surfaced-art/types": "*",
     "@surfaced-art/utils": "*",
     "cheerio": "^1.0.0",
     "playwright": "^1.52.0"
   },
   "devDependencies": {
-    "@types/node": "^25.3.0",
+    "@types/node": "^25.3.3",
     "tsup": "^8.4.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
