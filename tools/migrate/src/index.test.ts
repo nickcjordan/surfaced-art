@@ -140,14 +140,38 @@ describe('migrate handler', () => {
     })
   })
 
-  it('should run force-reapply-baseline: resolve failed, delete record, then migrate deploy', async () => {
-    mockedExecSync.mockReturnValue('')
+  it('should run force-reapply-baseline when tables already exist: mark applied then deploy', async () => {
+    mockedExecSync
+      .mockReturnValueOnce('')       // (1) resolve failed migrations
+      .mockReturnValueOnce('true')   // (2) check baseline tables — "true" in output = tables exist
+      .mockReturnValueOnce('')       // (3) migrate resolve --applied
+      .mockReturnValueOnce('')       // (4) migrate deploy
 
     const result = await handler({ command: 'force-reapply-baseline' })
 
     expect(result).toEqual({ success: true })
-    // 3 calls: (1) resolve failed migrations, (2) delete baseline record, (3) migrate deploy
-    expect(mockedExecSync).toHaveBeenCalledTimes(3)
+    expect(mockedExecSync).toHaveBeenCalledTimes(4)
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('migrate resolve --applied'),
+      expect.objectContaining({ encoding: 'utf-8' })
+    )
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('migrate deploy'),
+      expect.objectContaining({ encoding: 'utf-8' })
+    )
+  })
+
+  it('should run force-reapply-baseline when tables missing: delete baseline record then deploy', async () => {
+    mockedExecSync
+      .mockReturnValueOnce('')      // (1) resolve failed migrations
+      .mockReturnValueOnce('false') // (2) check baseline tables — "false" = tables missing
+      .mockReturnValueOnce('')      // (3) delete baseline record
+      .mockReturnValueOnce('')      // (4) migrate deploy
+
+    const result = await handler({ command: 'force-reapply-baseline' })
+
+    expect(result).toEqual({ success: true })
+    expect(mockedExecSync).toHaveBeenCalledTimes(4)
     expect(mockedExecSync).toHaveBeenCalledWith(
       expect.stringContaining('db execute --stdin'),
       expect.objectContaining({ encoding: 'utf-8', shell: '/bin/sh' })
@@ -159,11 +183,10 @@ describe('migrate handler', () => {
   })
 
   it('should return error when force-reapply-baseline fails on migrate deploy', async () => {
-    // First two db execute calls (resolve-failed, delete baseline) succeed;
-    // the final migrate deploy call fails.
     mockedExecSync
-      .mockReturnValueOnce('') // resolve failed migrations
-      .mockReturnValueOnce('') // delete baseline record
+      .mockReturnValueOnce('')      // (1) resolve failed migrations
+      .mockReturnValueOnce('true')  // (2) check baseline tables — exist
+      .mockReturnValueOnce('')      // (3) migrate resolve --applied
       .mockImplementationOnce(() => {
         throw new Error('migrate deploy failed: connection refused')
       })

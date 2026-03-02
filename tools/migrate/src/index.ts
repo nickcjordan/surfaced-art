@@ -76,15 +76,20 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
     }
   }
 
-  // force-reapply-baseline: resolves any failed migrations as rolled-back,
-  // deletes the baseline record from _prisma_migrations, then runs migrate
-  // deploy so the baseline SQL actually executes. Use when the baseline was
-  // recorded as "applied" but the actual tables are missing (e.g. after a
-  // database recreate), or when a subsequent migration failed because it ran
-  // before the baseline tables existed.
+  // force-reapply-baseline: recovers a database that is in any of these states:
+  //   1. Completely fresh (no schema, no _prisma_migrations table)
+  //   2. Partially initialised (some types/tables exist, migrations in failed state)
+  //   3. Fully initialised but subsequent migrations failed
+  //
+  // Strategy:
+  //   a. Resolve any failed/in-progress migration records as rolled-back (clears P3009)
+  //   b. Check whether the baseline tables actually exist in the DB
+  //   c. If they exist → mark baseline as applied (skip re-running its SQL)
+  //      If they don't → delete the baseline record so migrate deploy re-runs it
+  //   d. Run migrate deploy
   if (event.command === 'force-reapply-baseline') {
     try {
-      // Resolve any failed migrations as rolled-back so P3009 doesn't block deploy
+      // Step a: resolve any failed/in-progress migrations as rolled-back
       const resolveFailedSql = `UPDATE _prisma_migrations SET rolled_back_at = now() WHERE finished_at IS NULL AND rolled_back_at IS NULL AND started_at IS NOT NULL;`
       try {
         execSync(
@@ -93,23 +98,55 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
         )
         console.log('Resolved any in-progress/failed migrations as rolled-back')
       } catch {
-        // _prisma_migrations may not exist yet on a fresh DB — that's fine
         console.log('No _prisma_migrations table yet (fresh DB), skipping resolve step')
       }
 
-      // Delete the baseline record so migrate deploy will re-execute its SQL
-      const deleteSql = `DELETE FROM _prisma_migrations WHERE migration_name = '${BASELINE_MIGRATION}';`
+      // Step b: check if baseline tables exist (use "users" as the canonical indicator)
+      let baselineTablesExist = false
       try {
-        execSync(
-          `echo "${deleteSql}" | ${PRISMA_CMD} db execute --stdin`,
+        const checkSql = `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users');`
+        const result = execSync(
+          `echo "${checkSql}" | ${PRISMA_CMD} db execute --stdin`,
           { ...execOpts, shell: '/bin/sh' }
         )
-        console.log('Deleted baseline record from _prisma_migrations')
+        baselineTablesExist = String(result).includes('true')
+        console.log(`Baseline tables exist: ${baselineTablesExist}`)
       } catch {
-        console.log('No baseline record to delete (fresh DB), continuing')
+        console.log('Could not check baseline tables, assuming they do not exist')
       }
 
-      // Now run migrate deploy — baseline SQL runs first, then all subsequent migrations
+      if (baselineTablesExist) {
+        // Step c (tables exist): mark baseline as applied so migrate deploy skips its SQL
+        try {
+          execSync(
+            `${PRISMA_CMD} migrate resolve --applied ${BASELINE_MIGRATION}`,
+            execOpts
+          )
+          console.log('Baseline marked as applied (tables already exist)')
+        } catch (resolveErr: unknown) {
+          const msg = resolveErr instanceof Error ? resolveErr.message : String(resolveErr)
+          if (msg.includes('already recorded') || msg.includes('already been applied')) {
+            console.log('Baseline already applied, skipping')
+          } else {
+            console.error('Baseline resolve failed:', msg)
+            return { success: false, error: `Baseline resolve failed: ${msg}` }
+          }
+        }
+      } else {
+        // Step c (tables missing): delete the baseline record so migrate deploy re-runs its SQL
+        const deleteSql = `DELETE FROM _prisma_migrations WHERE migration_name = '${BASELINE_MIGRATION}';`
+        try {
+          execSync(
+            `echo "${deleteSql}" | ${PRISMA_CMD} db execute --stdin`,
+            { ...execOpts, shell: '/bin/sh' }
+          )
+          console.log('Deleted baseline record — baseline SQL will be re-executed')
+        } catch {
+          console.log('No baseline record to delete (fresh DB), continuing')
+        }
+      }
+
+      // Step d: run migrate deploy
       const output = execSync(`${PRISMA_CMD} migrate deploy`, execOpts)
       console.log('Migration output:', output)
       return { success: true }
