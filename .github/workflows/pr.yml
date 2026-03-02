@@ -268,7 +268,7 @@ jobs:
       - name: Get failure context
         id: failure
         if: steps.status.outputs.result == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
