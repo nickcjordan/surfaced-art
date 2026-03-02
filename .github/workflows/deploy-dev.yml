@@ -451,9 +451,13 @@ jobs:
 
       - name: Run migrations via Lambda
         run: |
+          # Use force-reapply-baseline for dev: the RDS instance may be freshly
+          # created by Terraform with no schema. This command resolves any failed
+          # migration records, re-executes the baseline SQL, then runs all
+          # subsequent migrations — idempotent on subsequent runs.
           aws lambda invoke \
             --function-name ${{ needs.terraform.outputs.migrate_function_name }} \
-            --payload '{"command":"migrate"}' \
+            --payload '{"command":"force-reapply-baseline"}' \
             --cli-binary-format raw-in-base64-out \
             /tmp/migrate-response.json
 
