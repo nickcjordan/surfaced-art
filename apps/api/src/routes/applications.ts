@@ -1,8 +1,35 @@
+import { createElement, type ReactElement } from 'react'
 import { Hono } from 'hono'
 import type { PrismaClient, CategoryType } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
+import {
+  sendEmail,
+  ArtistApplicationConfirmation,
+  AdminApplicationNotification,
+  ADMIN_EMAIL,
+} from '@surfaced-art/email'
 import { artistApplicationBody, checkEmailQuery, sanitizeText } from '@surfaced-art/types'
 import { badRequest, validationError, conflict, internalError } from '../errors'
+
+/** Fire-and-forget email with structured error logging */
+function sendEmailAsync(opts: {
+  to: string
+  subject: string
+  template: ReactElement
+  context: { applicationId: string; emailType: string }
+}) {
+  sendEmail({
+    to: opts.to,
+    subject: opts.subject,
+    template: opts.template,
+  }).catch((err) => {
+    logger.error(`Failed to send ${opts.context.emailType} email`, {
+      applicationId: opts.context.applicationId,
+      emailType: opts.context.emailType,
+      error: err,
+    })
+  })
+}
 
 export function createApplicationRoutes(prisma: PrismaClient) {
   const applications = new Hono()
@@ -132,8 +159,30 @@ export function createApplicationRoutes(prisma: PrismaClient) {
         durationMs: Date.now() - start,
       })
 
-      // TODO: Send confirmation email to applicant (depends on #177)
-      // TODO: Send notification email to admin team (depends on #177)
+      // Send confirmation email to applicant (fire-and-forget)
+      sendEmailAsync({
+        to: normalizedEmail,
+        subject: 'We Received Your Application — Surfaced Art',
+        template: createElement(ArtistApplicationConfirmation, { artistName: sanitizedFullName }),
+        context: { applicationId: application.id, emailType: 'application confirmation' },
+      })
+
+      // Send notification email to admin team (fire-and-forget)
+      sendEmailAsync({
+        to: ADMIN_EMAIL,
+        subject: `New Artist Application: ${sanitizedFullName}`,
+        template: createElement(AdminApplicationNotification, {
+          artistName: sanitizedFullName,
+          artistEmail: normalizedEmail,
+          categories: categories as string[],
+          applicationDate: application.submittedAt.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+        }),
+        context: { applicationId: application.id, emailType: 'admin notification' },
+      })
 
       return c.json(
         { message: 'Application submitted successfully', applicationId: application.id },

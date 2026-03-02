@@ -1,0 +1,34 @@
+meta {
+  name: Stripe Status
+  type: http
+  seq: 31
+}
+
+get {
+  url: {{sa_baseUrl}}/me/stripe/status
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: isString
+}
+
+tests {
+  test("should return 200 with Stripe status", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.status).to.be.oneOf(["not_started", "pending", "complete"]);
+    // stripeAccountId is null when not_started, a string otherwise
+    if (body.status === "not_started") {
+      expect(body.stripeAccountId).to.be.null;
+    } else {
+      expect(body.stripeAccountId).to.be.a("string");
+    }
+  });
+}

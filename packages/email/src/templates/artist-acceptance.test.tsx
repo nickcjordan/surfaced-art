@@ -31,11 +31,11 @@ describe('ArtistAcceptance template', () => {
     expect(html).toContain('selected your work')
   })
 
-  it('should include a CTA button for profile setup', async () => {
+  it('should include a CTA button linking to dashboard', async () => {
     const html = await render(<ArtistAcceptance {...props} />)
 
     expect(html).toContain('Set Up Your Profile')
-    expect(html).toContain('surfacedart.com')
+    expect(html).toContain('surfacedart.com/dashboard')
   })
 
   it('should include brand header and footer', async () => {

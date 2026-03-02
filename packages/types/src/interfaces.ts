@@ -602,6 +602,33 @@ export interface MyListingListItem {
   primaryImage: MyListingImageResponse | null
 }
 
+// ─── Stripe Connect Types ─────────────────────────────────────────────
+
+/**
+ * Stripe Connect onboarding status for an artist.
+ * - not_started: no Stripe account created yet
+ * - pending: account created but charges not yet enabled
+ * - complete: account fully onboarded, charges enabled
+ */
+export type StripeOnboardingStatus = 'not_started' | 'pending' | 'complete'
+
+/**
+ * Response from POST /me/stripe/onboarding.
+ * Contains the Stripe-hosted onboarding URL to redirect the artist to.
+ */
+export interface StripeOnboardingResponse {
+  url: string
+}
+
+/**
+ * Response from GET /me/stripe/status.
+ * Returns the current Stripe Connect onboarding status.
+ */
+export interface StripeStatusResponse {
+  status: StripeOnboardingStatus
+  stripeAccountId: string | null
+}
+
 // ─── API Error Types ──────────────────────────────────────────────────
 
 /**

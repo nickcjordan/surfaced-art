@@ -8,6 +8,7 @@ import { ListingCard } from '@/components/ListingCard'
 import { Badge } from '@/components/ui/badge'
 import { categoryLabels } from '@/lib/category-labels'
 import { JsonLd } from '@/components/JsonLd'
+import { ArtistProfileViewTracker } from '@/components/ArtistProfileViewTracker'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SITE_URL } from '@/lib/site-config'
 import type { ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types'
@@ -98,6 +99,7 @@ export default async function ArtistProfilePage({ params }: Props) {
 
   return (
     <div className="space-y-16">
+      <ArtistProfileViewTracker artistSlug={slug} />
       <JsonLd data={{
         '@context': 'https://schema.org',
         '@type': 'Person',

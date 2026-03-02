@@ -10,6 +10,22 @@ vi.mock('../lib/revalidation', () => ({
 }))
 import { triggerRevalidation } from '../lib/revalidation'
 
+// Mock the Stripe client module
+const mockStripeAccountsCreate = vi.fn()
+const mockStripeAccountsRetrieve = vi.fn()
+const mockStripeAccountLinksCreate = vi.fn()
+vi.mock('../lib/stripe', () => ({
+  getStripeClient: () => ({
+    accounts: {
+      create: mockStripeAccountsCreate,
+      retrieve: mockStripeAccountsRetrieve,
+    },
+    accountLinks: {
+      create: mockStripeAccountLinksCreate,
+    },
+  }),
+}))
+
 // ─── Test helpers ────────────────────────────────────────────────────
 
 function createMockVerifier(sub = 'cognito-123', email = 'artist@example.com', name = 'Test Artist') {
@@ -3615,5 +3631,232 @@ describe('Revalidation wiring on listing mutations', () => {
       category: 'ceramics',
       artistSlug: 'test-artist',
     })
+  })
+})
+
+// ─── Stripe Connect Onboarding ────────────────────────────────────────
+
+function postStripeOnboarding(
+  app: ReturnType<typeof createTestApp>,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/stripe/onboarding', { method: 'POST', headers })
+}
+
+function getStripeStatus(
+  app: ReturnType<typeof createTestApp>,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/stripe/status', { method: 'GET', headers })
+}
+
+describe('POST /me/stripe/onboarding', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    const verifier = createMockVerifier()
+    setVerifier(verifier)
+    vi.stubEnv('FRONTEND_URL', 'https://surfaced.art')
+  })
+
+  afterEach(() => {
+    resetVerifier()
+    vi.unstubAllEnvs()
+  })
+
+  it('should return 401 without auth', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postStripeOnboarding(app)
+    expect(res.status).toBe(401)
+  })
+
+  it('should create Stripe account and return onboarding URL when no stripeAccountId', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    mockStripeAccountsCreate.mockResolvedValue({ id: 'acct_test_123' })
+    mockStripeAccountLinksCreate.mockResolvedValue({ url: 'https://connect.stripe.com/setup/s/test-link' })
+
+    const res = await postStripeOnboarding(app, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.url).toBe('https://connect.stripe.com/setup/s/test-link')
+
+    // Should have created a Stripe account
+    expect(mockStripeAccountsCreate).toHaveBeenCalledWith({
+      type: 'standard',
+      email: 'artist@example.com',
+    })
+
+    // Should have stored the Stripe account ID
+    expect(prisma.artistProfile.update).toHaveBeenCalledWith({
+      where: { id: 'artist-uuid-123' },
+      data: { stripeAccountId: 'acct_test_123' },
+    })
+
+    // Should have created an account link
+    expect(mockStripeAccountLinksCreate).toHaveBeenCalledWith({
+      account: 'acct_test_123',
+      return_url: 'https://surfaced.art/dashboard?stripe=complete',
+      refresh_url: 'https://surfaced.art/dashboard?stripe=refresh',
+      type: 'account_onboarding',
+    })
+  })
+
+  it('should generate new link when stripeAccountId already exists', async () => {
+    const prisma = createMockPrisma({
+      artistProfile: { ...mockArtistProfile, stripeAccountId: 'acct_existing_456' },
+    })
+    const app = createTestApp(prisma)
+
+    mockStripeAccountLinksCreate.mockResolvedValue({ url: 'https://connect.stripe.com/setup/s/continue-link' })
+
+    const res = await postStripeOnboarding(app, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.url).toBe('https://connect.stripe.com/setup/s/continue-link')
+
+    // Should NOT have created a new Stripe account
+    expect(mockStripeAccountsCreate).not.toHaveBeenCalled()
+
+    // Should NOT have updated the artist profile
+    expect(prisma.artistProfile.update).not.toHaveBeenCalled()
+
+    // Should have created an account link with existing account
+    expect(mockStripeAccountLinksCreate).toHaveBeenCalledWith({
+      account: 'acct_existing_456',
+      return_url: 'https://surfaced.art/dashboard?stripe=complete',
+      refresh_url: 'https://surfaced.art/dashboard?stripe=refresh',
+      type: 'account_onboarding',
+    })
+  })
+
+  it('should return 500 when FRONTEND_URL is not configured', async () => {
+    vi.stubEnv('FRONTEND_URL', '')
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await postStripeOnboarding(app, 'valid-token')
+    expect(res.status).toBe(500)
+  })
+
+  it('should return 500 when Stripe account creation fails', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    mockStripeAccountsCreate.mockRejectedValue(new Error('Stripe API error'))
+
+    const res = await postStripeOnboarding(app, 'valid-token')
+    expect(res.status).toBe(500)
+
+    const body = await res.json()
+    expect(body.error.code).toBe('INTERNAL_ERROR')
+  })
+
+  it('should return 500 when Stripe account link creation fails', async () => {
+    const prisma = createMockPrisma({
+      artistProfile: { ...mockArtistProfile, stripeAccountId: 'acct_existing_456' },
+    })
+    const app = createTestApp(prisma)
+
+    mockStripeAccountLinksCreate.mockRejectedValue(new Error('Stripe API error'))
+
+    const res = await postStripeOnboarding(app, 'valid-token')
+    expect(res.status).toBe(500)
+
+    const body = await res.json()
+    expect(body.error.code).toBe('INTERNAL_ERROR')
+  })
+})
+
+describe('GET /me/stripe/status', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    const verifier = createMockVerifier()
+    setVerifier(verifier)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await getStripeStatus(app)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return not_started when no stripeAccountId', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await getStripeStatus(app, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.status).toBe('not_started')
+    expect(body.stripeAccountId).toBeNull()
+  })
+
+  it('should return complete when charges_enabled is true', async () => {
+    const prisma = createMockPrisma({
+      artistProfile: { ...mockArtistProfile, stripeAccountId: 'acct_complete_789' },
+    })
+    const app = createTestApp(prisma)
+
+    mockStripeAccountsRetrieve.mockResolvedValue({
+      id: 'acct_complete_789',
+      charges_enabled: true,
+    })
+
+    const res = await getStripeStatus(app, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.status).toBe('complete')
+    expect(body.stripeAccountId).toBe('acct_complete_789')
+  })
+
+  it('should return pending when charges_enabled is false', async () => {
+    const prisma = createMockPrisma({
+      artistProfile: { ...mockArtistProfile, stripeAccountId: 'acct_pending_101' },
+    })
+    const app = createTestApp(prisma)
+
+    mockStripeAccountsRetrieve.mockResolvedValue({
+      id: 'acct_pending_101',
+      charges_enabled: false,
+    })
+
+    const res = await getStripeStatus(app, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.status).toBe('pending')
+    expect(body.stripeAccountId).toBe('acct_pending_101')
+  })
+
+  it('should return 500 when Stripe account retrieval fails', async () => {
+    const prisma = createMockPrisma({
+      artistProfile: { ...mockArtistProfile, stripeAccountId: 'acct_failing_999' },
+    })
+    const app = createTestApp(prisma)
+
+    mockStripeAccountsRetrieve.mockRejectedValue(new Error('Stripe API unavailable'))
+
+    const res = await getStripeStatus(app, 'valid-token')
+    expect(res.status).toBe(500)
+
+    const body = await res.json()
+    expect(body.error.code).toBe('INTERNAL_ERROR')
   })
 })
