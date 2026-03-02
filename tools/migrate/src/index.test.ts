@@ -51,58 +51,25 @@ describe('migrate handler', () => {
     expect(mockedExecSync).not.toHaveBeenCalled()
   })
 
-  it('should run baseline resolve and migrate deploy', async () => {
+  // --- migrate ---
+
+  it('should run migrate deploy directly', async () => {
     mockedExecSync.mockReturnValue('')
 
     const result = await handler({ command: 'migrate' })
 
     expect(result).toEqual({ success: true })
-    expect(mockedExecSync).toHaveBeenCalledTimes(2)
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'migrate resolve --applied 20250101000000_baseline'
-      ),
-      expect.objectContaining({ encoding: 'utf-8' })
-    )
+    expect(mockedExecSync).toHaveBeenCalledTimes(1)
     expect(mockedExecSync).toHaveBeenCalledWith(
       expect.stringContaining('migrate deploy'),
       expect.objectContaining({ encoding: 'utf-8' })
     )
   })
 
-  it('should continue when baseline is already applied', async () => {
-    mockedExecSync
-      .mockImplementationOnce(() => {
-        throw new Error('already recorded as applied')
-      })
-      .mockReturnValueOnce('')
-
-    const result = await handler({ command: 'migrate' })
-
-    expect(result).toEqual({ success: true })
-    expect(mockedExecSync).toHaveBeenCalledTimes(2)
-  })
-
-  it('should fail fast when baseline resolve fails with unexpected error', async () => {
-    mockedExecSync.mockImplementationOnce(() => {
-      throw new Error('some unexpected resolve error')
-    })
-
-    const result = await handler({ command: 'migrate' })
-
-    expect(result).toEqual({
-      success: false,
-      error: 'Baseline resolve failed: some unexpected resolve error',
-    })
-    expect(mockedExecSync).toHaveBeenCalledTimes(1)
-  })
-
   it('should return error when migrate deploy fails', async () => {
-    mockedExecSync
-      .mockReturnValueOnce('')
-      .mockImplementationOnce(() => {
-        throw new Error('migration failed: connection refused')
-      })
+    mockedExecSync.mockImplementationOnce(() => {
+      throw new Error('migration failed: connection refused')
+    })
 
     const result = await handler({ command: 'migrate' })
 
@@ -111,6 +78,84 @@ describe('migrate handler', () => {
       error: 'migration failed: connection refused',
     })
   })
+
+  it('should return ENOENT-specific error when prisma binary missing at runtime', async () => {
+    mockedExecSync.mockImplementationOnce(() => {
+      const err = new Error('spawn ENOENT') as NodeJS.ErrnoException
+      err.code = 'ENOENT'
+      throw err
+    })
+
+    const result = await handler({ command: 'migrate' })
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('ENOENT')
+    expect(result.error).toContain('Check LAMBDA_TASK_ROOT')
+  })
+
+  // --- reset-schema ---
+
+  it('should run reset-schema: drop and recreate public schema', async () => {
+    mockedExecSync.mockReturnValue('')
+
+    const result = await handler({ command: 'reset-schema' })
+
+    expect(result).toEqual({ success: true })
+    expect(mockedExecSync).toHaveBeenCalledTimes(1)
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('DROP SCHEMA public CASCADE'),
+      expect.objectContaining({ encoding: 'utf-8', shell: '/bin/sh' })
+    )
+  })
+
+  it('should return error when reset-schema fails', async () => {
+    mockedExecSync.mockImplementationOnce(() => {
+      throw new Error('permission denied')
+    })
+
+    const result = await handler({ command: 'reset-schema' })
+
+    expect(result).toEqual({
+      success: false,
+      error: 'permission denied',
+    })
+  })
+
+  // --- force-reapply-baseline ---
+
+  it('should run force-reapply-baseline: wipe schema then migrate deploy', async () => {
+    mockedExecSync
+      .mockReturnValueOnce('') // (1) DROP SCHEMA / CREATE SCHEMA
+      .mockReturnValueOnce('') // (2) migrate deploy
+
+    const result = await handler({ command: 'force-reapply-baseline' })
+
+    expect(result).toEqual({ success: true })
+    expect(mockedExecSync).toHaveBeenCalledTimes(2)
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('DROP SCHEMA public CASCADE'),
+      expect.objectContaining({ encoding: 'utf-8', shell: '/bin/sh' })
+    )
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('migrate deploy'),
+      expect.objectContaining({ encoding: 'utf-8' })
+    )
+  })
+
+  it('should return error when force-reapply-baseline fails', async () => {
+    mockedExecSync.mockImplementationOnce(() => {
+      throw new Error('migrate deploy failed: connection refused')
+    })
+
+    const result = await handler({ command: 'force-reapply-baseline' })
+
+    expect(result).toEqual({
+      success: false,
+      error: 'migrate deploy failed: connection refused',
+    })
+  })
+
+  // --- reset-baseline ---
 
   it('should run reset-baseline command', async () => {
     mockedExecSync.mockReturnValue('')
@@ -140,35 +185,7 @@ describe('migrate handler', () => {
     })
   })
 
-  it('should run force-reapply-baseline: delete record then migrate deploy', async () => {
-    mockedExecSync.mockReturnValue('')
-
-    const result = await handler({ command: 'force-reapply-baseline' })
-
-    expect(result).toEqual({ success: true })
-    expect(mockedExecSync).toHaveBeenCalledTimes(2)
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      expect.stringContaining('db execute --stdin'),
-      expect.objectContaining({ encoding: 'utf-8', shell: '/bin/sh' })
-    )
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      expect.stringContaining('migrate deploy'),
-      expect.objectContaining({ encoding: 'utf-8' })
-    )
-  })
-
-  it('should return error when force-reapply-baseline fails', async () => {
-    mockedExecSync.mockImplementationOnce(() => {
-      throw new Error('db execute failed: permission denied')
-    })
-
-    const result = await handler({ command: 'force-reapply-baseline' })
-
-    expect(result).toEqual({
-      success: false,
-      error: 'db execute failed: permission denied',
-    })
-  })
+  // --- seed ---
 
   it('should run seed command via tsx when seed script exists', async () => {
     mockedExecSync.mockReturnValue('')
@@ -208,21 +225,5 @@ describe('migrate handler', () => {
       success: false,
       error: 'SEED BLOCKED: Found 3 non-seed user(s)',
     })
-  })
-
-  it('should return ENOENT-specific error when prisma binary missing at runtime', async () => {
-    mockedExecSync
-      .mockReturnValueOnce('')
-      .mockImplementationOnce(() => {
-        const err = new Error('spawn ENOENT') as NodeJS.ErrnoException
-        err.code = 'ENOENT'
-        throw err
-      })
-
-    const result = await handler({ command: 'migrate' })
-
-    expect(result.success).toBe(false)
-    expect(result.error).toContain('ENOENT')
-    expect(result.error).toContain('Check LAMBDA_TASK_ROOT')
   })
 })

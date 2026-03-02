@@ -18,24 +18,26 @@ import { createMeRoutes } from './routes/me'
 import { createAdminRoutes } from './routes/admin'
 import { createWebhookRoutes } from './routes/webhooks'
 
+// FRONTEND_URL is required — drives CORS allowed origins.
+// www redirect is handled at DNS/CDN level, not here.
+const FRONTEND_URL = process.env.FRONTEND_URL
+if (!FRONTEND_URL) {
+  throw new Error('FRONTEND_URL is required')
+}
+const allowedOrigins = [FRONTEND_URL, 'http://localhost:3000']
+
 // Create Hono app
 const app = new Hono()
 
 // Middleware
 app.use('*', securityHeaders())
 app.use('*', honoLogger())
-// CORS — allow production frontend, localhost for dev, and Vercel preview deploys
-const allowedOrigins = [
-  'https://surfaced.art',
-  'https://www.surfaced.art',
-  'http://localhost:3000',
-]
-
+// CORS — allow configured frontend URL, localhost for dev, and Vercel preview deploys
 app.use(
   '*',
   cors({
     origin: (origin) => {
-      if (!origin) return 'https://surfaced.art'
+      if (!origin) return FRONTEND_URL
       if (allowedOrigins.includes(origin)) return origin
       // Allow Vercel preview deploys (*.vercel.app)
       if (origin.endsWith('.vercel.app')) return origin
