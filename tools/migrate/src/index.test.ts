@@ -140,13 +140,14 @@ describe('migrate handler', () => {
     })
   })
 
-  it('should run force-reapply-baseline: delete record then migrate deploy', async () => {
+  it('should run force-reapply-baseline: resolve failed, delete record, then migrate deploy', async () => {
     mockedExecSync.mockReturnValue('')
 
     const result = await handler({ command: 'force-reapply-baseline' })
 
     expect(result).toEqual({ success: true })
-    expect(mockedExecSync).toHaveBeenCalledTimes(2)
+    // 3 calls: (1) resolve failed migrations, (2) delete baseline record, (3) migrate deploy
+    expect(mockedExecSync).toHaveBeenCalledTimes(3)
     expect(mockedExecSync).toHaveBeenCalledWith(
       expect.stringContaining('db execute --stdin'),
       expect.objectContaining({ encoding: 'utf-8', shell: '/bin/sh' })
@@ -157,16 +158,21 @@ describe('migrate handler', () => {
     )
   })
 
-  it('should return error when force-reapply-baseline fails', async () => {
-    mockedExecSync.mockImplementationOnce(() => {
-      throw new Error('db execute failed: permission denied')
-    })
+  it('should return error when force-reapply-baseline fails on migrate deploy', async () => {
+    // First two db execute calls (resolve-failed, delete baseline) succeed;
+    // the final migrate deploy call fails.
+    mockedExecSync
+      .mockReturnValueOnce('') // resolve failed migrations
+      .mockReturnValueOnce('') // delete baseline record
+      .mockImplementationOnce(() => {
+        throw new Error('migrate deploy failed: connection refused')
+      })
 
     const result = await handler({ command: 'force-reapply-baseline' })
 
     expect(result).toEqual({
       success: false,
-      error: 'db execute failed: permission denied',
+      error: 'migrate deploy failed: connection refused',
     })
   })
 
