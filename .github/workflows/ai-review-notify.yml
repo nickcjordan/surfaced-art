@@ -43,15 +43,18 @@ jobs:
               return;
             }
 
-            // Fetch all review comments from this bot on this PR
-            const { data: comments } = await github.rest.pulls.listReviewComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber,
-              per_page: 100,
-            });
+            // Fetch all review comments from this bot on this PR (paginated)
+            const allComments = await github.paginate(
+              github.rest.pulls.listReviewComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                per_page: 100,
+              }
+            );
 
-            const botComments = comments.filter(c => c.user.login === botLogin);
+            const botComments = allComments.filter(c => c.user && c.user.login === botLogin);
 
             // Also include the review body itself if non-empty
             const reviewBody = context.payload.review.body || '';
@@ -183,13 +186,35 @@ jobs:
 
             const payload = JSON.stringify({ blocks });
 
-            const { execSync } = require('child_process');
-            try {
-              execSync(
-                `curl -s --max-time 10 -H "Content-Type: application/json" -d '${payload.replace(/'/g, "'\\''")}' "${webhookUrl}"`,
-                { stdio: 'inherit' }
+            // Use Node.js https instead of curl/execSync to avoid shell injection
+            // with user-controlled data (PR titles, bot comments) in the payload.
+            await new Promise((resolve, reject) => {
+              const https = require('https');
+              const url = new URL(webhookUrl);
+              const body = Buffer.from(payload, 'utf8');
+              const req = https.request(
+                {
+                  hostname: url.hostname,
+                  path: url.pathname + url.search,
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': body.length,
+                  },
+                  timeout: 10000,
+                },
+                (res) => {
+                  res.resume();
+                  if (res.statusCode >= 200 && res.statusCode < 300) {
+                    core.info('Slack notification sent successfully');
+                    resolve();
+                  } else {
+                    reject(new Error(`Slack webhook returned ${res.statusCode}`));
+                  }
+                }
               );
-              core.info('Slack notification sent successfully');
-            } catch (e) {
-              core.warning(`Failed to send Slack notification: ${e.message}`);
-            }
+              req.on('error', reject);
+              req.on('timeout', () => { req.destroy(); reject(new Error('Slack webhook timed out')); });
+              req.write(body);
+              req.end();
+            }).catch(e => core.warning(`Failed to send Slack notification: ${e.message}`));
