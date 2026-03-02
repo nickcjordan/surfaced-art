@@ -54,7 +54,6 @@ jobs:
   terraform-plan-dev:
     name: Terraform Plan (dev)
     runs-on: ubuntu-latest
-    environment: dev
 
     steps:
       - name: Checkout
@@ -105,12 +104,12 @@ jobs:
           set -o pipefail
           terraform plan -no-color \
             -var-file="environments/dev.tfvars" \
-            -var="db_password=${{ secrets.TF_VAR_db_password }}" \
-            -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
-            -var="google_client_secret=${{ secrets.TF_VAR_google_client_secret }}" \
-            -var="alert_email_address=${{ secrets.TF_VAR_alert_email_address }}" \
-            -var="stripe_secret_key=${{ secrets.TF_VAR_stripe_secret_key }}" \
-            -var="stripe_webhook_secret=${{ secrets.TF_VAR_stripe_webhook_secret }}" \
+            -var="db_password=plan-placeholder" \
+            -var="google_client_id=plan-placeholder" \
+            -var="google_client_secret=plan-placeholder" \
+            -var="alert_email_address=plan@placeholder.com" \
+            -var="stripe_secret_key=plan-placeholder" \
+            -var="stripe_webhook_secret=plan-placeholder" \
             -var="placeholder_image_uri=public.ecr.aws/lambda/nodejs:20" \
             2>&1 | tee /tmp/plan.txt
           echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
