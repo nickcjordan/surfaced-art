@@ -1,5 +1,8 @@
--- CreateEnum
-CREATE TYPE "ApplicationStatusType" AS ENUM ('pending', 'approved', 'rejected', 'withdrawn');
+-- CreateEnum (idempotent: no-op if type already exists from a partial prior run)
+DO $$ BEGIN
+  CREATE TYPE "ApplicationStatusType" AS ENUM ('pending', 'approved', 'rejected', 'withdrawn');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
 CREATE TABLE "artist_applications" (
