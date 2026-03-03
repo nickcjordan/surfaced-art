@@ -20,6 +20,10 @@ import {
   adminArtistUpdateBody,
   adminListingUpdateBody,
   adminListingHideBody,
+  adminAuditLogQuery,
+  adminWaitlistQuery,
+  adminBulkListingStatusBody,
+  adminBulkRoleGrantBody,
 } from './schemas'
 
 describe('Shared Validation Schemas', () => {
@@ -791,6 +795,182 @@ describe('Shared Validation Schemas', () => {
 
     it('should reject reason longer than 2000 characters', () => {
       expect(adminListingHideBody.safeParse({ reason: 'x'.repeat(2001) }).success).toBe(false)
+    })
+  })
+
+  describe('adminAuditLogQuery', () => {
+    it('should use defaults when no params provided', () => {
+      const result = adminAuditLogQuery.safeParse({})
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.page).toBe(1)
+        expect(result.data.limit).toBe(20)
+      }
+    })
+
+    it('should accept valid UUID filters', () => {
+      const result = adminAuditLogQuery.safeParse({
+        adminId: '550e8400-e29b-41d4-a716-446655440000',
+        targetId: '550e8400-e29b-41d4-a716-446655440001',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject invalid adminId UUID', () => {
+      expect(adminAuditLogQuery.safeParse({ adminId: 'not-a-uuid' }).success).toBe(false)
+    })
+
+    it('should accept targetType and action strings', () => {
+      const result = adminAuditLogQuery.safeParse({ targetType: 'user', action: 'role_grant' })
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept valid datetime strings for date range', () => {
+      const result = adminAuditLogQuery.safeParse({
+        dateFrom: '2025-03-01T00:00:00Z',
+        dateTo: '2025-03-31T23:59:59Z',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject invalid datetime format', () => {
+      expect(adminAuditLogQuery.safeParse({ dateFrom: 'not-a-date' }).success).toBe(false)
+    })
+
+    it('should cap limit at 100', () => {
+      const result = adminAuditLogQuery.safeParse({ limit: '200' })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.limit).toBe(100)
+      }
+    })
+  })
+
+  describe('adminWaitlistQuery', () => {
+    it('should use defaults when no params provided', () => {
+      const result = adminWaitlistQuery.safeParse({})
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.page).toBe(1)
+        expect(result.data.limit).toBe(20)
+      }
+    })
+
+    it('should accept search param', () => {
+      const result = adminWaitlistQuery.safeParse({ search: 'test@example.com' })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject search longer than 200 characters', () => {
+      expect(adminWaitlistQuery.safeParse({ search: 'x'.repeat(201) }).success).toBe(false)
+    })
+
+    it('should cap limit at 100', () => {
+      const result = adminWaitlistQuery.safeParse({ limit: '200' })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.limit).toBe(100)
+      }
+    })
+  })
+
+  describe('adminBulkListingStatusBody', () => {
+    it('should accept valid body', () => {
+      const result = adminBulkListingStatusBody.safeParse({
+        listingIds: ['550e8400-e29b-41d4-a716-446655440000'],
+        status: 'hidden',
+        reason: 'Inappropriate content',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject empty listingIds', () => {
+      expect(adminBulkListingStatusBody.safeParse({
+        listingIds: [],
+        status: 'hidden',
+        reason: 'test',
+      }).success).toBe(false)
+    })
+
+    it('should reject more than 100 IDs', () => {
+      const ids = Array.from({ length: 101 }, (_, i) =>
+        `550e8400-e29b-41d4-a716-${String(i).padStart(12, '0')}`,
+      )
+      expect(adminBulkListingStatusBody.safeParse({
+        listingIds: ids,
+        status: 'hidden',
+        reason: 'test',
+      }).success).toBe(false)
+    })
+
+    it('should reject invalid UUIDs in listingIds', () => {
+      expect(adminBulkListingStatusBody.safeParse({
+        listingIds: ['not-a-uuid'],
+        status: 'hidden',
+        reason: 'test',
+      }).success).toBe(false)
+    })
+
+    it('should accept all listing statuses including hidden', () => {
+      for (const status of ['available', 'reserved_system', 'reserved_artist', 'sold', 'hidden']) {
+        const result = adminBulkListingStatusBody.safeParse({
+          listingIds: ['550e8400-e29b-41d4-a716-446655440000'],
+          status,
+          reason: 'test',
+        })
+        expect(result.success).toBe(true)
+      }
+    })
+
+    it('should reject missing reason', () => {
+      expect(adminBulkListingStatusBody.safeParse({
+        listingIds: ['550e8400-e29b-41d4-a716-446655440000'],
+        status: 'hidden',
+      }).success).toBe(false)
+    })
+  })
+
+  describe('adminBulkRoleGrantBody', () => {
+    it('should accept valid body', () => {
+      const result = adminBulkRoleGrantBody.safeParse({
+        userIds: ['550e8400-e29b-41d4-a716-446655440000'],
+        role: 'artist',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject empty userIds', () => {
+      expect(adminBulkRoleGrantBody.safeParse({
+        userIds: [],
+        role: 'artist',
+      }).success).toBe(false)
+    })
+
+    it('should reject more than 100 user IDs', () => {
+      const ids = Array.from({ length: 101 }, (_, i) =>
+        `550e8400-e29b-41d4-a716-${String(i).padStart(12, '0')}`,
+      )
+      expect(adminBulkRoleGrantBody.safeParse({
+        userIds: ids,
+        role: 'artist',
+      }).success).toBe(false)
+    })
+
+    it('should accept valid roles', () => {
+      for (const role of ['buyer', 'artist', 'admin', 'curator', 'moderator']) {
+        const result = adminBulkRoleGrantBody.safeParse({
+          userIds: ['550e8400-e29b-41d4-a716-446655440000'],
+          role,
+        })
+        expect(result.success).toBe(true)
+      }
+    })
+
+    it('should reject invalid role', () => {
+      expect(adminBulkRoleGrantBody.safeParse({
+        userIds: ['550e8400-e29b-41d4-a716-446655440000'],
+        role: 'superadmin',
+      }).success).toBe(false)
     })
   })
 })

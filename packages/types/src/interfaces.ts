@@ -696,6 +696,47 @@ export interface AdminActionResponse {
   message: string
 }
 
+/**
+ * Audit log entry for GET /admin/audit-log
+ */
+export interface AdminAuditLogEntry {
+  id: string
+  adminId: string
+  adminName: string
+  action: string
+  targetType: string
+  targetId: string
+  details: Record<string, unknown> | null
+  ipAddress: string | null
+  createdAt: string
+}
+
+/**
+ * Waitlist entry for GET /admin/waitlist
+ */
+export interface AdminWaitlistEntry {
+  id: string
+  email: string
+  createdAt: string
+}
+
+/**
+ * Response from POST /admin/listings/bulk-status
+ */
+export interface AdminBulkStatusResponse {
+  updated: number
+  failed: { id: string; error: string }[]
+}
+
+/**
+ * Response from POST /admin/users/bulk-role
+ */
+export interface AdminBulkRoleGrantResponse {
+  granted: number
+  skipped: number
+  failed: { id: string; error: string }[]
+}
+
 // ─── Listing Management API Response Types ────────────────────────────
 
 /**

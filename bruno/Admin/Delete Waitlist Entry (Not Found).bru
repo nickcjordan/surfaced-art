@@ -1,0 +1,25 @@
+meta {
+  name: Delete Waitlist Entry (Not Found)
+  type: http
+  seq: 32
+}
+
+delete {
+  url: {{sa_baseUrl}}/admin/waitlist/00000000-0000-4000-8000-000000000000
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 404
+}
+
+tests {
+  test("should return 404 for non-existent entry", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

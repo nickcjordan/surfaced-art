@@ -443,6 +443,56 @@ export const adminListingHideBody = z.object({
   reason: z.string().min(1, 'Reason is required').max(2000),
 })
 
+/** GET /admin/audit-log query params */
+export const adminAuditLogQuery = z.object({
+  adminId: z.string().uuid().optional(),
+  targetType: z.string().max(50).optional(),
+  targetId: z.string().uuid().optional(),
+  action: z.string().max(100).optional(),
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** GET /admin/waitlist query params */
+export const adminWaitlistQuery = z.object({
+  search: z.string().max(200).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** POST /admin/listings/bulk-status body */
+export const adminBulkListingStatusBody = z.object({
+  listingIds: z
+    .array(z.string().uuid())
+    .min(1, 'At least one listing ID is required')
+    .max(100, 'Maximum 100 listings per request'),
+  status: z.enum([...statusValues, 'hidden'] as [string, ...string[]]),
+  reason: z.string().min(1, 'Reason is required').max(2000),
+})
+
+/** POST /admin/users/bulk-role body */
+export const adminBulkRoleGrantBody = z.object({
+  userIds: z
+    .array(z.string().uuid())
+    .min(1, 'At least one user ID is required')
+    .max(100, 'Maximum 100 users per request'),
+  role: z.enum(['buyer', 'artist', 'admin', 'curator', 'moderator'] as const),
+})
+
 // ============================================================================
 // Inferred types (derive TypeScript types from schemas)
 // ============================================================================
@@ -476,3 +526,7 @@ export type AdminSuspendBody = z.infer<typeof adminSuspendBody>
 export type AdminArtistUpdateBody = z.infer<typeof adminArtistUpdateBody>
 export type AdminListingUpdateBody = z.infer<typeof adminListingUpdateBody>
 export type AdminListingHideBody = z.infer<typeof adminListingHideBody>
+export type AdminAuditLogQuery = z.infer<typeof adminAuditLogQuery>
+export type AdminWaitlistQuery = z.infer<typeof adminWaitlistQuery>
+export type AdminBulkListingStatusBody = z.infer<typeof adminBulkListingStatusBody>
+export type AdminBulkRoleGrantBody = z.infer<typeof adminBulkRoleGrantBody>
