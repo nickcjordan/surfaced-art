@@ -42,6 +42,7 @@ export const ListingStatus = {
   RESERVED_SYSTEM: 'reserved_system',
   RESERVED_ARTIST: 'reserved_artist',
   SOLD: 'sold',
+  HIDDEN: 'hidden',
 } as const
 
 export type ListingStatusType = (typeof ListingStatus)[keyof typeof ListingStatus]

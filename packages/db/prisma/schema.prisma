@@ -35,6 +35,7 @@ enum ListingStatusType {
   reserved_system
   reserved_artist
   sold
+  hidden
 }
 
 enum ListingTypeType {
@@ -122,6 +123,7 @@ model User {
   reviewsAsBuyer           Review[]
   saves                    Save[]
   follows                  Follow[]
+  auditLogsPerformed       AdminAuditLog[]     @relation("AuditLogAdmin")
 
   @@map("users")
 }
@@ -434,6 +436,27 @@ model Waitlist {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("waitlist")
+}
+
+/// Admin audit log - records all admin actions for accountability
+model AdminAuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  adminId     String   @map("admin_id") @db.Uuid
+  action      String
+  targetType  String   @map("target_type")
+  targetId    String   @map("target_id") @db.Uuid
+  details     Json?    @db.JsonB
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  admin       User     @relation("AuditLogAdmin", fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([targetType, targetId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("admin_audit_log")
 }
 
 /// Artist application - submitted via public /apply form, reviewed externally
