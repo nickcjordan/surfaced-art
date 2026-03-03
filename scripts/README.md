@@ -30,7 +30,7 @@ NOTION_API_TOKEN=secret_xxx npx tsx scripts/notion-to-s3.ts --artist "Elena Cord
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `NOTION_API_TOKEN` | Yes | — | Notion integration token |
-| `NOTION_DATABASE_ID` | No | `98c10909-...` | Tracker database ID |
+| `NOTION_DATA_SOURCE_ID` | No | `d190c7e8-...` | Tracker data source (collection) ID |
 | `S3_MEDIA_BUCKET` | No | `surfaced-art-prod-media` | Target S3 bucket |
 | `AWS_REGION` | No | `us-east-1` | AWS region |
 

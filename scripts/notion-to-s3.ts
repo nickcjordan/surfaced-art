@@ -17,7 +17,7 @@
  *
  * Environment variables:
  *   NOTION_API_TOKEN       (required) Notion integration token
- *   NOTION_DATABASE_ID     (optional) defaults to the tracker DB ID
+ *   NOTION_DATA_SOURCE_ID  (optional) defaults to the tracker data source ID
  *   S3_MEDIA_BUCKET        (optional) defaults to surfaced-art-prod-media
  *   AWS_REGION             (optional) defaults to us-east-1
  */
@@ -39,8 +39,10 @@ import {
 // Configuration
 // ---------------------------------------------------------------------------
 
-const NOTION_DATABASE_ID =
-  process.env.NOTION_DATABASE_ID ?? '98c10909-b35d-47b0-954b-f992993a1bc3'
+// Notion SDK v5 uses dataSources.query (not databases.query).
+// The data source ID is the collection ID from the Notion database.
+const NOTION_DATA_SOURCE_ID =
+  process.env.NOTION_DATA_SOURCE_ID ?? 'd190c7e8-fbcb-49c6-ac4e-abf6389575cf'
 const S3_BUCKET = process.env.S3_MEDIA_BUCKET ?? 'surfaced-art-prod-media'
 const AWS_REGION = process.env.AWS_REGION ?? 'us-east-1'
 
@@ -98,9 +100,9 @@ async function fetchCompletedRows(
       : { and: filterConditions }
 
   do {
-    const response = await notion.databases.query({
-      database_id: NOTION_DATABASE_ID,
-      filter: filter as Parameters<typeof notion.databases.query>[0]['filter'],
+    const response = await notion.dataSources.query({
+      data_source_id: NOTION_DATA_SOURCE_ID,
+      filter: filter as Parameters<typeof notion.dataSources.query>[0]['filter'],
       start_cursor: cursor,
       page_size: 100,
     })
@@ -186,7 +188,7 @@ async function main(): Promise<void> {
 
   console.log(`Bucket:   ${S3_BUCKET}`)
   console.log(`Region:   ${AWS_REGION}`)
-  console.log(`Database: ${NOTION_DATABASE_ID}`)
+  console.log(`Data src: ${NOTION_DATA_SOURCE_ID}`)
   if (artist) console.log(`Artist:   ${artist}`)
   if (dryRun) console.log(`Mode:     DRY RUN (no uploads)`)
   console.log('')
