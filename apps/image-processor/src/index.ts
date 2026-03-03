@@ -44,8 +44,11 @@ function stripExtension(key: string): string {
 
 /**
  * Processes a single image: fetches from S3, generates WebP variants at
- * target widths (skipping widths larger than the source), and uploads
- * variants back to S3.
+ * target widths, and uploads variants back to S3.
+ *
+ * For target widths larger than the source, a WebP conversion at the
+ * source's native width is produced (no upscaling). Duplicate variants
+ * (same output width) are skipped.
  */
 async function processImage(
   bucket: string,
@@ -70,12 +73,17 @@ async function processImage(
 
   const baseKey = stripExtension(key)
   const variants: string[] = []
+  let lastOutputWidth = 0
 
   for (const targetWidth of TARGET_WIDTHS) {
-    // Do not upscale — skip if the source is narrower than the target
-    if (sourceWidth <= targetWidth) {
+    const outputWidth = Math.min(sourceWidth, targetWidth)
+
+    // Skip if this would produce a duplicate of the previous variant
+    if (outputWidth === lastOutputWidth) {
       continue
     }
+
+    lastOutputWidth = outputWidth
 
     const resized = sharpInstance
       .clone()
@@ -109,8 +117,9 @@ async function processImage(
  * aspect ratio). Variants are stored alongside the original at:
  *   `{original-key-without-extension}/{width}w.webp`
  *
- * Skips non-image files and avoids upscaling (if the source is smaller
- * than a target width, that variant is omitted).
+ * Skips non-image files. Images narrower than a target width are converted
+ * to WebP at their native resolution (no upscaling); duplicate variants
+ * with the same output width are skipped.
  */
 export const handler = async (
   event: S3Event,
