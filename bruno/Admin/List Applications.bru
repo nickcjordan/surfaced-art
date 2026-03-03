@@ -1,0 +1,59 @@
+meta {
+  name: List Applications
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/applications
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+params:query {
+  ~status: pending
+  ~search:
+  ~page: 1
+  ~limit: 20
+}
+
+assert {
+  res.status: eq 200
+  res.body.meta.page: isNumber
+  res.body.meta.total: isNumber
+}
+
+tests {
+  test("should return paginated applications", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("data");
+    expect(body).to.have.property("meta");
+    expect(body.data).to.be.an("array");
+    expect(body.meta).to.have.property("page");
+    expect(body.meta).to.have.property("limit");
+    expect(body.meta).to.have.property("total");
+    expect(body.meta).to.have.property("totalPages");
+  });
+
+  test("each application should have required fields", function() {
+    const apps = res.getBody().data;
+    if (apps.length > 0) {
+      const app = apps[0];
+      expect(app).to.have.property("id");
+      expect(app).to.have.property("email");
+      expect(app).to.have.property("fullName");
+      expect(app).to.have.property("categories");
+      expect(app).to.have.property("status");
+      expect(app).to.have.property("submittedAt");
+
+      // Store first application ID for detail request
+      if (app.id) {
+        bru.setVar("sa_applicationId", app.id);
+      }
+    }
+  });
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Unsuspend Artist
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/artists/{{sa_adminArtistId}}/unsuspend
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+}
+
+tests {
+  test("should unsuspend artist successfully", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("message");
+    expect(body.message).to.include("unsuspended");
+  });
+}

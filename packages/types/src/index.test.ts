@@ -44,10 +44,11 @@ describe('Enums', () => {
       expect(ListingStatus.RESERVED_SYSTEM).toBe('reserved_system')
       expect(ListingStatus.RESERVED_ARTIST).toBe('reserved_artist')
       expect(ListingStatus.SOLD).toBe('sold')
+      expect(ListingStatus.HIDDEN).toBe('hidden')
     })
 
-    it('should have exactly 4 statuses', () => {
-      expect(Object.keys(ListingStatus)).toHaveLength(4)
+    it('should have exactly 5 statuses', () => {
+      expect(Object.keys(ListingStatus)).toHaveLength(5)
     })
   })
 

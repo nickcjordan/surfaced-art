@@ -1,0 +1,43 @@
+meta {
+  name: Get Listing Detail
+  type: http
+  seq: 23
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/listings/{{sa_adminListingId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.title: isDefined
+  res.body.price: isDefined
+}
+
+tests {
+  test("should return full listing detail with counts", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id");
+    expect(body).to.have.property("artistId");
+    expect(body).to.have.property("title");
+    expect(body).to.have.property("description");
+    expect(body).to.have.property("price");
+    expect(body).to.have.property("status");
+    expect(body).to.have.property("category");
+    expect(body).to.have.property("images");
+    expect(body).to.have.property("artist");
+    expect(body).to.have.property("orderCount");
+    expect(body).to.have.property("reviewCount");
+    expect(body.artist).to.have.property("id");
+    expect(body.artist).to.have.property("displayName");
+    expect(body.artist).to.have.property("slug");
+    expect(body.artist).to.have.property("status");
+  });
+}
