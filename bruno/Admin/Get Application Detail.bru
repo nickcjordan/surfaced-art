@@ -1,0 +1,37 @@
+meta {
+  name: Get Application Detail
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/applications/{{sa_applicationId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.email: isDefined
+  res.body.fullName: isDefined
+}
+
+tests {
+  test("should return full application detail", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id");
+    expect(body).to.have.property("email");
+    expect(body).to.have.property("fullName");
+    expect(body).to.have.property("statement");
+    expect(body).to.have.property("categories");
+    expect(body).to.have.property("status");
+    expect(body).to.have.property("submittedAt");
+    expect(body).to.have.property("reviewerName");
+    expect(body).to.have.property("reviewNotes");
+  });
+}

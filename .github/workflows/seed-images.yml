@@ -1,0 +1,64 @@
+name: Seed Images — Notion to S3
+
+on:
+  workflow_dispatch:
+    inputs:
+      artist:
+        description: 'Upload images for a single artist (leave empty for all)'
+        required: false
+        default: ''
+      dry-run:
+        description: 'Preview what would be uploaded without uploading'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: seed-images
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  NODE_VERSION: '20'
+
+jobs:
+  upload-images:
+    name: Upload demo images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload images to S3
+        env:
+          NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
+          S3_MEDIA_BUCKET: surfaced-art-prod-media
+        run: |
+          ARGS=""
+          if [ "${{ inputs.dry-run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          if [ -n "${{ inputs.artist }}" ]; then
+            ARGS="$ARGS --artist \"${{ inputs.artist }}\""
+          fi
+          npx tsx scripts/notion-to-s3.ts $ARGS

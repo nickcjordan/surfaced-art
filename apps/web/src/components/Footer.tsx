@@ -43,21 +43,27 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Platform links placeholder */}
+          {/* Platform links */}
           <div className="md:col-span-1 lg:col-span-1">
             <h3 className="text-xs font-medium uppercase tracking-widest text-foreground mb-4">
               Platform
             </h3>
             <ul className="space-y-2.5">
               <li>
-                <span className="text-sm text-muted-foreground/60">
+                <Link
+                  href="/about"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
                   About
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-sm text-muted-foreground/60">
+                <Link
+                  href="/artists"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
                   Artists
-                </span>
+                </Link>
               </li>
             </ul>
           </div>

@@ -1,0 +1,28 @@
+meta {
+  name: Unhide Listing
+  type: http
+  seq: 27
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/listings/{{sa_adminListingId}}/unhide
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+}
+
+tests {
+  test("should unhide listing successfully", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("message");
+    expect(body.message).to.include("unhidden");
+  });
+}

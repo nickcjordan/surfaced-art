@@ -39,6 +39,13 @@ export function validationError(c: Context, zodError: ZodError) {
 }
 
 /**
+ * 403 Forbidden
+ */
+export function forbidden(c: Context, message: string) {
+  return c.json(errorBody('FORBIDDEN', message), 403)
+}
+
+/**
  * 409 Conflict
  */
 export function conflict(c: Context, message: string) {

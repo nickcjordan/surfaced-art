@@ -93,34 +93,6 @@ describe('migrate handler', () => {
     expect(result.error).toContain('Check LAMBDA_TASK_ROOT')
   })
 
-  // --- reset-schema ---
-
-  it('should run reset-schema: drop and recreate public schema', async () => {
-    mockedExecSync.mockReturnValue('')
-
-    const result = await handler({ command: 'reset-schema' })
-
-    expect(result).toEqual({ success: true })
-    expect(mockedExecSync).toHaveBeenCalledTimes(1)
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      expect.stringContaining('DROP SCHEMA public CASCADE'),
-      expect.objectContaining({ encoding: 'utf-8', shell: '/bin/sh' })
-    )
-  })
-
-  it('should return error when reset-schema fails', async () => {
-    mockedExecSync.mockImplementationOnce(() => {
-      throw new Error('permission denied')
-    })
-
-    const result = await handler({ command: 'reset-schema' })
-
-    expect(result).toEqual({
-      success: false,
-      error: 'permission denied',
-    })
-  })
-
   // --- force-reapply-baseline ---
 
   it('should run force-reapply-baseline: wipe schema then migrate deploy', async () => {

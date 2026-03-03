@@ -1,0 +1,44 @@
+meta {
+  name: Get Artist Detail
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/artists/{{sa_adminArtistId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.displayName: isDefined
+  res.body.slug: isDefined
+}
+
+tests {
+  test("should return full artist detail with admin-only fields", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id");
+    expect(body).to.have.property("userId");
+    expect(body).to.have.property("displayName");
+    expect(body).to.have.property("slug");
+    expect(body).to.have.property("bio");
+    expect(body).to.have.property("status");
+    expect(body).to.have.property("originZip");
+    expect(body).to.have.property("isDemo");
+    expect(body).to.have.property("hasStripeAccount");
+    expect(body).to.have.property("user");
+    expect(body).to.have.property("categories");
+    expect(body).to.have.property("stats");
+    expect(body.stats).to.have.property("totalListings");
+    expect(body.stats).to.have.property("availableListings");
+    expect(body.stats).to.have.property("soldListings");
+    expect(body.stats).to.have.property("followerCount");
+  });
+}

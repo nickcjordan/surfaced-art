@@ -1,0 +1,39 @@
+meta {
+  name: Bulk Role Grant
+  type: http
+  seq: 34
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/users/bulk-role
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "userIds": ["{{sa_targetUserId}}"],
+    "role": "artist"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.granted: isDefined
+  res.body.skipped: isDefined
+  res.body.failed: isDefined
+}
+
+tests {
+  test("should bulk grant roles", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("granted");
+    expect(body).to.have.property("skipped");
+    expect(body).to.have.property("failed");
+    expect(body.failed).to.be.an("array");
+  });
+}

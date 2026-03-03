@@ -176,30 +176,69 @@ describe('image-processor Lambda handler', () => {
     expect(mockWebp).toHaveBeenCalledWith({ quality: 82 })
   })
 
-  it('skips variants where the image is smaller than the target width', async () => {
+  it('generates variants up to source width without upscaling', async () => {
     const key = 'uploads/artist-123/listing-456/small.png'
     const event = createS3Event(BUCKET, key)
 
     const fakeImage = Buffer.from('small-image')
     mockSend.mockResolvedValueOnce({ Body: createS3Body(fakeImage) })
 
-    // Image is only 600px wide — should skip 800w and 1200w
+    // Image is 600px wide — generates 400w (400px) and 800w (600px, capped)
     mockMetadata.mockResolvedValue({ width: 600, height: 400 })
 
     const variant400 = Buffer.from('webp-400')
-    mockToBuffer.mockResolvedValueOnce(variant400)
+    const variant800 = Buffer.from('webp-800')
+    mockToBuffer
+      .mockResolvedValueOnce(variant400)
+      .mockResolvedValueOnce(variant800)
 
-    // Only 1 PutObject call (for 400w)
-    mockSend.mockResolvedValueOnce({})
+    mockSend
+      .mockResolvedValueOnce({}) // 400w
+      .mockResolvedValueOnce({}) // 800w
 
     const result = await handler(event, context)
 
     expect(result).toEqual({
       statusCode: 200,
       body: JSON.stringify({
-        message: 'Processed 1 variant(s) for uploads/artist-123/listing-456/small.png',
+        message: 'Processed 2 variant(s) for uploads/artist-123/listing-456/small.png',
         variants: [
           'uploads/artist-123/listing-456/small/400w.webp',
+          'uploads/artist-123/listing-456/small/800w.webp',
+        ],
+      }),
+    })
+
+    // 1 GetObject + 2 PutObject
+    expect(mockSend).toHaveBeenCalledTimes(3)
+    expect(mockResize).toHaveBeenCalledTimes(2)
+    expect(mockResize).toHaveBeenCalledWith(400, null, { fit: 'inside', withoutEnlargement: true })
+    expect(mockResize).toHaveBeenCalledWith(800, null, { fit: 'inside', withoutEnlargement: true })
+  })
+
+  it('generates a single variant at native width when image is smaller than smallest target', async () => {
+    const key = 'uploads/artist-123/listing-456/tiny.jpg'
+    const event = createS3Event(BUCKET, key)
+
+    const fakeImage = Buffer.from('tiny-image')
+    mockSend.mockResolvedValueOnce({ Body: createS3Body(fakeImage) })
+
+    // Image is only 200px wide — produces 400w variant at 200px (no upscale)
+    mockMetadata.mockResolvedValue({ width: 200, height: 150 })
+
+    const variant400 = Buffer.from('webp-400')
+    mockToBuffer.mockResolvedValueOnce(variant400)
+
+    mockSend.mockResolvedValueOnce({}) // 400w
+
+    const result = await handler(event, context)
+
+    expect(result).toEqual({
+      statusCode: 200,
+      body: JSON.stringify({
+        message: 'Processed 1 variant(s) for uploads/artist-123/listing-456/tiny.jpg',
+        variants: [
+          'uploads/artist-123/listing-456/tiny/400w.webp',
         ],
       }),
     })
@@ -208,31 +247,6 @@ describe('image-processor Lambda handler', () => {
     expect(mockSend).toHaveBeenCalledTimes(2)
     expect(mockResize).toHaveBeenCalledTimes(1)
     expect(mockResize).toHaveBeenCalledWith(400, null, { fit: 'inside', withoutEnlargement: true })
-  })
-
-  it('skips all variants when image is smaller than smallest target width', async () => {
-    const key = 'uploads/artist-123/listing-456/tiny.jpg'
-    const event = createS3Event(BUCKET, key)
-
-    const fakeImage = Buffer.from('tiny-image')
-    mockSend.mockResolvedValueOnce({ Body: createS3Body(fakeImage) })
-
-    // Image is only 200px wide — smaller than all targets
-    mockMetadata.mockResolvedValue({ width: 200, height: 150 })
-
-    const result = await handler(event, context)
-
-    expect(result).toEqual({
-      statusCode: 200,
-      body: JSON.stringify({
-        message: 'Processed 0 variant(s) for uploads/artist-123/listing-456/tiny.jpg',
-        variants: [],
-      }),
-    })
-
-    // Only 1 GetObject, no PutObject calls
-    expect(mockSend).toHaveBeenCalledTimes(1)
-    expect(mockResize).not.toHaveBeenCalled()
   })
 
   it('skips non-image files (e.g. .txt, .webp, .pdf)', async () => {
@@ -402,12 +416,16 @@ describe('image-processor Lambda handler', () => {
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce({})
 
-    // Second image: 500px wide (only 400w variant)
+    // Second image: 500px wide (400w + 800w variants; 800w and 1200w both cap at 500px so only 800w is produced)
     const fakeImage2 = Buffer.from('image-2')
     mockSend.mockResolvedValueOnce({ Body: createS3Body(fakeImage2) })
     mockMetadata.mockResolvedValueOnce({ width: 500, height: 400 })
-    mockToBuffer.mockResolvedValueOnce(Buffer.from('v2-400'))
-    mockSend.mockResolvedValueOnce({})
+    mockToBuffer
+      .mockResolvedValueOnce(Buffer.from('v2-400'))
+      .mockResolvedValueOnce(Buffer.from('v2-800'))
+    mockSend
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({})
 
     const result = await handler(event, context)
 
@@ -416,7 +434,7 @@ describe('image-processor Lambda handler', () => {
     const body = JSON.parse(result.body)
     expect(body.results).toHaveLength(2)
     expect(body.results[0].variants).toHaveLength(3)
-    expect(body.results[1].variants).toHaveLength(1)
+    expect(body.results[1].variants).toHaveLength(2)
   })
 
   it('strips file extension correctly for variant key naming', async () => {
@@ -426,16 +444,21 @@ describe('image-processor Lambda handler', () => {
     const fakeImage = Buffer.from('fake')
     mockSend.mockResolvedValueOnce({ Body: createS3Body(fakeImage) })
 
-    // Only generates 400w variant
+    // 500px wide — generates 400w and 800w (800w capped at 500px)
     mockMetadata.mockResolvedValue({ width: 500, height: 400 })
-    mockToBuffer.mockResolvedValueOnce(Buffer.from('webp'))
-    mockSend.mockResolvedValueOnce({})
+    mockToBuffer
+      .mockResolvedValueOnce(Buffer.from('webp-400'))
+      .mockResolvedValueOnce(Buffer.from('webp-800'))
+    mockSend
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({})
 
     const result = await handler(event, context)
     const body = JSON.parse(result.body)
 
     // Should strip only the final extension
     expect(body.variants[0]).toBe('uploads/artist-123/my.complex.name/400w.webp')
+    expect(body.variants[1]).toBe('uploads/artist-123/my.complex.name/800w.webp')
   })
 
   it('handles missing Body in S3 GetObject response', async () => {

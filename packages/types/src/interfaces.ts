@@ -537,6 +537,206 @@ export interface AdminRejectResponse {
   message: string
 }
 
+// ─── Admin Management Response Types ────────────────────────────────
+
+/**
+ * Application list item for GET /admin/applications
+ */
+export interface AdminApplicationListItem {
+  id: string
+  email: string
+  fullName: string
+  categories: CategoryType[]
+  status: ApplicationStatusType
+  submittedAt: string
+  reviewedBy: string | null
+  reviewedAt: string | null
+  reviewerName: string | null
+}
+
+/**
+ * Full application detail for GET /admin/applications/:id
+ */
+export interface AdminApplicationDetailResponse {
+  id: string
+  email: string
+  fullName: string
+  instagramUrl: string | null
+  websiteUrl: string | null
+  statement: string
+  exhibitionHistory: string | null
+  categories: CategoryType[]
+  status: ApplicationStatusType
+  submittedAt: string
+  reviewedBy: string | null
+  reviewedAt: string | null
+  reviewerName: string | null
+  reviewNotes: string | null
+}
+
+/**
+ * User list item for GET /admin/users
+ */
+export interface AdminUserListItem {
+  id: string
+  email: string
+  fullName: string
+  roles: UserRoleType[]
+  createdAt: string
+  lastActiveAt: string | null
+  hasArtistProfile: boolean
+}
+
+/**
+ * Full user detail for GET /admin/users/:id
+ */
+export interface AdminUserDetailResponse {
+  id: string
+  email: string
+  fullName: string
+  avatarUrl: string | null
+  roles: { role: UserRoleType; grantedAt: string; grantedBy: string | null }[]
+  createdAt: string
+  lastActiveAt: string | null
+  artistProfile: {
+    id: string
+    displayName: string
+    slug: string
+    status: ArtistStatusType
+  } | null
+  stats: {
+    orderCount: number
+    reviewCount: number
+    saveCount: number
+    followCount: number
+  }
+}
+
+/**
+ * Artist list item for GET /admin/artists
+ */
+export interface AdminArtistListItem {
+  id: string
+  userId: string
+  displayName: string
+  slug: string
+  status: ArtistStatusType
+  listingCount: number
+  isDemo: boolean
+  createdAt: string
+}
+
+/**
+ * Full artist detail for GET /admin/artists/:id
+ */
+export interface AdminArtistDetailResponse {
+  id: string
+  userId: string
+  displayName: string
+  slug: string
+  bio: string
+  location: string
+  websiteUrl: string | null
+  instagramUrl: string | null
+  originZip: string
+  status: ArtistStatusType
+  commissionsOpen: boolean
+  coverImageUrl: string | null
+  profileImageUrl: string | null
+  applicationSource: string | null
+  isDemo: boolean
+  hasStripeAccount: boolean
+  createdAt: string
+  updatedAt: string
+  user: { email: string; fullName: string; roles: UserRoleType[] }
+  categories: CategoryType[]
+  stats: {
+    totalListings: number
+    availableListings: number
+    soldListings: number
+    followerCount: number
+  }
+}
+
+/**
+ * Listing list item for GET /admin/listings
+ */
+export interface AdminListingListItem extends Listing {
+  primaryImage: ListingImage | null
+  artist: { displayName: string; slug: string }
+}
+
+/**
+ * Full listing detail for GET /admin/listings/:id
+ */
+export interface AdminListingDetailResponse extends Listing {
+  images: ListingImage[]
+  artist: { id: string; displayName: string; slug: string; status: ArtistStatusType }
+  orderCount: number
+  reviewCount: number
+}
+
+/**
+ * Response from POST /admin/users/:id/roles
+ */
+export interface AdminRoleGrantResponse {
+  message: string
+  role: {
+    userId: string
+    role: UserRoleType
+    grantedAt: string
+    grantedBy: string
+  }
+}
+
+/**
+ * Generic admin action response
+ */
+export interface AdminActionResponse {
+  message: string
+}
+
+/**
+ * Audit log entry for GET /admin/audit-log
+ */
+export interface AdminAuditLogEntry {
+  id: string
+  adminId: string
+  adminName: string
+  action: string
+  targetType: string
+  targetId: string
+  details: Record<string, unknown> | null
+  ipAddress: string | null
+  createdAt: string
+}
+
+/**
+ * Waitlist entry for GET /admin/waitlist
+ */
+export interface AdminWaitlistEntry {
+  id: string
+  email: string
+  createdAt: string
+}
+
+/**
+ * Response from POST /admin/listings/bulk-status
+ */
+export interface AdminBulkStatusResponse {
+  updated: number
+  failed: { id: string; error: string }[]
+}
+
+/**
+ * Response from POST /admin/users/bulk-role
+ */
+export interface AdminBulkRoleGrantResponse {
+  granted: number
+  skipped: number
+  failed: { id: string; error: string }[]
+}
+
 // ─── Listing Management API Response Types ────────────────────────────
 
 /**

@@ -329,6 +329,171 @@ export const listingImageReorderBody = z.object({
 })
 
 // ============================================================================
+// Admin management schemas
+// ============================================================================
+
+/** GET /admin/applications query params */
+export const adminApplicationsQuery = z.object({
+  status: z.enum(['pending', 'approved', 'rejected', 'withdrawn'] as const).optional(),
+  search: z.string().max(200).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** GET /admin/users query params */
+export const adminUsersQuery = z.object({
+  search: z.string().max(200).optional(),
+  role: z.enum(['buyer', 'artist', 'admin', 'curator', 'moderator'] as const).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** GET /admin/artists query params */
+export const adminArtistsQuery = z.object({
+  status: z.enum(['pending', 'approved', 'suspended'] as const).optional(),
+  search: z.string().max(200).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** GET /admin/listings query params */
+export const adminListingsQuery = z.object({
+  status: z.enum([...statusValues, 'hidden'] as [string, ...string[]]).optional(),
+  artistId: z.string().uuid().optional(),
+  category: z.enum(categoryValues).optional(),
+  priceMin: z.coerce.number().int().min(0).optional(),
+  priceMax: z.coerce.number().int().min(0).optional(),
+  search: z.string().max(200).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** POST /admin/users/:id/roles body */
+export const adminRoleGrantBody = z.object({
+  role: z.enum(['buyer', 'artist', 'admin', 'curator', 'moderator'] as const),
+})
+
+/** POST /admin/artists/:id/suspend body */
+export const adminSuspendBody = z.object({
+  reason: z.string().min(1, 'Reason is required').max(2000),
+})
+
+/** PUT /admin/artists/:id body */
+export const adminArtistUpdateBody = z.object({
+  displayName: z.string().min(1).max(200).optional(),
+  slug: slugParam.optional(),
+  bio: z.string().max(5000).optional(),
+  location: z.string().max(200).optional(),
+  websiteUrl: z.string().url().optional().or(z.literal('')),
+  instagramUrl: z.string().url().optional().or(z.literal('')),
+  profileImageUrl: z.string().url().nullable().optional(),
+  coverImageUrl: z.string().url().nullable().optional(),
+  originZip: z.string().max(10).optional(),
+  status: z.enum(['pending', 'approved', 'suspended'] as const).optional(),
+  isDemo: z.boolean().optional(),
+})
+
+/** PUT /admin/listings/:id body — extends listing update with status */
+export const adminListingUpdateBody = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().min(1).max(5000).optional(),
+  medium: z.string().min(1).max(200).optional(),
+  category: z.enum(categoryValues).optional(),
+  type: z.enum(listingTypeValues).optional(),
+  price: z.number().int().positive().optional(),
+  status: z.enum([...statusValues, 'hidden'] as [string, ...string[]]).optional(),
+  quantityTotal: z.number().int().min(1).optional(),
+  artworkLength: z.number().positive().nullable().optional(),
+  artworkWidth: z.number().positive().nullable().optional(),
+  artworkHeight: z.number().positive().nullable().optional(),
+  packedLength: z.number().positive().optional(),
+  packedWidth: z.number().positive().optional(),
+  packedHeight: z.number().positive().optional(),
+  packedWeight: z.number().positive().optional(),
+  editionNumber: z.number().int().positive().nullable().optional(),
+  editionTotal: z.number().int().positive().nullable().optional(),
+})
+
+/** POST /admin/listings/:id/hide body */
+export const adminListingHideBody = z.object({
+  reason: z.string().min(1, 'Reason is required').max(2000),
+})
+
+/** GET /admin/audit-log query params */
+export const adminAuditLogQuery = z.object({
+  adminId: z.string().uuid().optional(),
+  targetType: z.string().max(50).optional(),
+  targetId: z.string().uuid().optional(),
+  action: z.string().max(100).optional(),
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** GET /admin/waitlist query params */
+export const adminWaitlistQuery = z.object({
+  search: z.string().max(200).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** POST /admin/listings/bulk-status body */
+export const adminBulkListingStatusBody = z.object({
+  listingIds: z
+    .array(z.string().uuid())
+    .min(1, 'At least one listing ID is required')
+    .max(100, 'Maximum 100 listings per request'),
+  status: z.enum([...statusValues, 'hidden'] as [string, ...string[]]),
+  reason: z.string().min(1, 'Reason is required').max(2000),
+})
+
+/** POST /admin/users/bulk-role body */
+export const adminBulkRoleGrantBody = z.object({
+  userIds: z
+    .array(z.string().uuid())
+    .min(1, 'At least one user ID is required')
+    .max(100, 'Maximum 100 users per request'),
+  role: z.enum(['buyer', 'artist', 'admin', 'curator', 'moderator'] as const),
+})
+
+// ============================================================================
 // Inferred types (derive TypeScript types from schemas)
 // ============================================================================
 
@@ -352,3 +517,16 @@ export type MyListingsQuery = z.infer<typeof myListingsQuery>
 export type ListingAvailabilityBody = z.infer<typeof listingAvailabilityBody>
 export type ListingImageBody = z.infer<typeof listingImageBody>
 export type ListingImageReorderBody = z.infer<typeof listingImageReorderBody>
+export type AdminApplicationsQuery = z.infer<typeof adminApplicationsQuery>
+export type AdminUsersQuery = z.infer<typeof adminUsersQuery>
+export type AdminArtistsQuery = z.infer<typeof adminArtistsQuery>
+export type AdminListingsQuery = z.infer<typeof adminListingsQuery>
+export type AdminRoleGrantBody = z.infer<typeof adminRoleGrantBody>
+export type AdminSuspendBody = z.infer<typeof adminSuspendBody>
+export type AdminArtistUpdateBody = z.infer<typeof adminArtistUpdateBody>
+export type AdminListingUpdateBody = z.infer<typeof adminListingUpdateBody>
+export type AdminListingHideBody = z.infer<typeof adminListingHideBody>
+export type AdminAuditLogQuery = z.infer<typeof adminAuditLogQuery>
+export type AdminWaitlistQuery = z.infer<typeof adminWaitlistQuery>
+export type AdminBulkListingStatusBody = z.infer<typeof adminBulkListingStatusBody>
+export type AdminBulkRoleGrantBody = z.infer<typeof adminBulkRoleGrantBody>

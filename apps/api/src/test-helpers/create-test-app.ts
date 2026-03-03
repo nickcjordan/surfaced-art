@@ -9,7 +9,7 @@ import { createCategoryRoutes } from '../routes/categories.js'
 import { createWaitlistRoutes } from '../routes/waitlist.js'
 import { createApplicationRoutes } from '../routes/applications.js'
 import { createMeRoutes } from '../routes/me.js'
-import { createAdminRoutes } from '../routes/admin.js'
+import { createAdminRoutes } from '../routes/admin/index.js'
 
 /**
  * Create a Hono app instance with a test PrismaClient injected.
