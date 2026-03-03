@@ -269,8 +269,8 @@ describe('image-processor integration tests', () => {
     }
   })
 
-  it('does not upscale images smaller than all target widths', async () => {
-    // 300x200 image — smaller than 400px, so no variants should be generated
+  it('produces a single variant at native width for images smaller than all targets', async () => {
+    // 300x200 image — smaller than 400px target, but produces 400w variant at native 300px
     const s3Key = 'uploads/seed/artists/test/listings/tiny.jpg'
     _hoistedStore.set(s3Key, FIXTURE_JPEG_SMALL)
 
@@ -279,12 +279,23 @@ describe('image-processor integration tests', () => {
 
     expect(result.statusCode).toBe(200)
     const body = JSON.parse(result.body)
-    expect(body.variants).toHaveLength(0)
-    expect(_hoistedUploads.size).toBe(0)
+    expect(body.variants).toHaveLength(1)
+    expect(body.variants[0]).toBe(
+      'uploads/seed/artists/test/listings/tiny/400w.webp'
+    )
+    expect(_hoistedUploads.size).toBe(1)
+
+    // Verify the variant is at native width (300px, not upscaled to 400px)
+    const buffer = _hoistedUploads.get(body.variants[0])!
+    const metadata = await sharp(buffer).metadata()
+    expect(metadata.format).toBe('webp')
+    expect(metadata.width).toBe(300)
+    expect(metadata.height).toBe(200)
   })
 
-  it('generates only variants for widths smaller than the source', async () => {
-    // 600x900 portrait — should only generate 400w variant (600 > 400 but 600 <= 800)
+  it('caps larger variants at native width without upscaling', async () => {
+    // 600x900 portrait — generates 400w (400px) and 800w (capped at 600px)
+    // 1200w is skipped because it would duplicate the 800w output (both 600px)
     const s3Key = 'uploads/seed/artists/test/listings/portrait.jpg'
     _hoistedStore.set(s3Key, FIXTURE_JPEG_PORTRAIT)
 
@@ -293,18 +304,27 @@ describe('image-processor integration tests', () => {
 
     expect(result.statusCode).toBe(200)
     const body = JSON.parse(result.body)
-    expect(body.variants).toHaveLength(1)
-    expect(body.variants[0]).toBe(
-      'uploads/seed/artists/test/listings/portrait/400w.webp'
-    )
+    expect(body.variants).toHaveLength(2)
+    expect(body.variants).toEqual([
+      'uploads/seed/artists/test/listings/portrait/400w.webp',
+      'uploads/seed/artists/test/listings/portrait/800w.webp',
+    ])
 
     // Verify the 400w variant has correct dimensions (portrait aspect ratio)
-    const buffer = _hoistedUploads.get(body.variants[0])!
-    const metadata = await sharp(buffer).metadata()
-    expect(metadata.format).toBe('webp')
-    expect(metadata.width).toBe(400)
+    const buffer400 = _hoistedUploads.get(body.variants[0])!
+    const meta400 = await sharp(buffer400).metadata()
+    expect(meta400.format).toBe('webp')
+    expect(meta400.width).toBe(400)
     // 600x900 → 400w should be 400x600 (2:3 ratio)
-    expect(metadata.height).toBe(600)
+    expect(meta400.height).toBe(600)
+
+    // Verify the 800w variant is capped at native 600px width
+    const buffer800 = _hoistedUploads.get(body.variants[1])!
+    const meta800 = await sharp(buffer800).metadata()
+    expect(meta800.format).toBe('webp')
+    expect(meta800.width).toBe(600)
+    // 600x900 at native width should be 600x900
+    expect(meta800.height).toBe(900)
   })
 
   it('preserves the original image unchanged (no delete or overwrite)', async () => {
