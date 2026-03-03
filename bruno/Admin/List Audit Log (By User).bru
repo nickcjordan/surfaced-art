@@ -1,0 +1,30 @@
+meta {
+  name: List Audit Log (By User)
+  type: http
+  seq: 29
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/audit-log/user/{{sa_auditUserId}}?page=1&limit=20
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.data: isDefined
+  res.body.meta: isDefined
+}
+
+tests {
+  test("should return audit log filtered by user", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("data");
+    expect(body).to.have.property("meta");
+    expect(body.data).to.be.an("array");
+  });
+}

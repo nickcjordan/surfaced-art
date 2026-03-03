@@ -1,0 +1,38 @@
+meta {
+  name: Bulk Listing Status
+  type: http
+  seq: 33
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/listings/bulk-status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "listingIds": ["{{sa_adminListingId}}"],
+    "status": "hidden",
+    "reason": "Bulk hide via Bruno test"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.updated: isDefined
+  res.body.failed: isDefined
+}
+
+tests {
+  test("should bulk update listing status", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("updated");
+    expect(body).to.have.property("failed");
+    expect(body.failed).to.be.an("array");
+  });
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Delete Waitlist Entry
+  type: http
+  seq: 31
+}
+
+delete {
+  url: {{sa_baseUrl}}/admin/waitlist/{{sa_waitlistId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+}
+
+tests {
+  test("should delete waitlist entry", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("message");
+    expect(body.message).to.include("deleted");
+  });
+}
