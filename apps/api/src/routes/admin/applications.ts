@@ -1,15 +1,161 @@
 import { Hono } from 'hono'
-import type { PrismaClient } from '@surfaced-art/db'
+import type { PrismaClient, Prisma } from '@surfaced-art/db'
 import { logger, generateSlug } from '@surfaced-art/utils'
-import { adminReviewBody } from '@surfaced-art/types'
-import type { AdminApproveResponse, AdminRejectResponse } from '@surfaced-art/types'
+import { adminReviewBody, adminApplicationsQuery } from '@surfaced-art/types'
+import type {
+  AdminApproveResponse,
+  AdminRejectResponse,
+  AdminApplicationListItem,
+  AdminApplicationDetailResponse,
+  PaginatedResponse,
+} from '@surfaced-art/types'
 import { sendEmail, ArtistAcceptance, ArtistRejection } from '@surfaced-art/email'
 import type { AuthUser } from '../../middleware/auth'
 import { notFound, conflict, validationError, internalError } from '../../errors'
 import { createElement } from 'react'
 
+/**
+ * Look up a reviewer's display name by user ID.
+ * Returns null if no reviewer or user not found.
+ */
+async function getReviewerName(prisma: PrismaClient, reviewedBy: string | null): Promise<string | null> {
+  if (!reviewedBy) return null
+  const reviewer = await prisma.user.findUnique({
+    where: { id: reviewedBy },
+    select: { fullName: true },
+  })
+  return reviewer?.fullName ?? null
+}
+
 export function createAdminApplicationRoutes(prisma: PrismaClient) {
   const app = new Hono<{ Variables: { user: AuthUser } }>()
+
+  /**
+   * GET /admin/applications
+   * Paginated list of all applications with optional status/search filters.
+   */
+  app.get('/applications', async (c) => {
+    const start = Date.now()
+
+    const parsed = adminApplicationsQuery.safeParse({
+      status: c.req.query('status'),
+      search: c.req.query('search'),
+      page: c.req.query('page'),
+      limit: c.req.query('limit'),
+    })
+
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    const { status, search, page, limit } = parsed.data
+    const skip = (page - 1) * limit
+
+    const where: Prisma.ArtistApplicationWhereInput = {}
+
+    if (status) {
+      where.status = status
+    }
+
+    if (search) {
+      where.OR = [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+
+    const [applications, total] = await Promise.all([
+      prisma.artistApplication.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { submittedAt: 'desc' },
+      }),
+      prisma.artistApplication.count({ where }),
+    ])
+
+    // Resolve reviewer names for reviewed applications
+    const reviewerIds = [...new Set(
+      applications
+        .map((a) => a.reviewedBy)
+        .filter((id): id is string => id !== null),
+    )]
+    const reviewerNames = new Map<string, string>()
+    for (const id of reviewerIds) {
+      const name = await getReviewerName(prisma, id)
+      if (name) reviewerNames.set(id, name)
+    }
+
+    const data: AdminApplicationListItem[] = applications.map((a) => ({
+      id: a.id,
+      email: a.email,
+      fullName: a.fullName,
+      categories: a.categories,
+      status: a.status,
+      submittedAt: a.submittedAt.toISOString(),
+      reviewedBy: a.reviewedBy,
+      reviewedAt: a.reviewedAt?.toISOString() ?? null,
+      reviewerName: a.reviewedBy ? (reviewerNames.get(a.reviewedBy) ?? null) : null,
+    }))
+
+    const response: PaginatedResponse<AdminApplicationListItem> = {
+      data,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    }
+
+    logger.info('Admin applications listed', {
+      page,
+      limit,
+      total,
+      status: status ?? null,
+      durationMs: Date.now() - start,
+    })
+
+    return c.json(response)
+  })
+
+  /**
+   * GET /admin/applications/:id
+   * Full detail of a single application, including reviewer name.
+   */
+  app.get('/applications/:id', async (c) => {
+    const start = Date.now()
+    const { id } = c.req.param()
+
+    const application = await prisma.artistApplication.findUnique({
+      where: { id },
+    })
+
+    if (!application) {
+      return notFound(c, 'Application not found')
+    }
+
+    const reviewerName = await getReviewerName(prisma, application.reviewedBy)
+
+    const response: AdminApplicationDetailResponse = {
+      id: application.id,
+      email: application.email,
+      fullName: application.fullName,
+      instagramUrl: application.instagramUrl,
+      websiteUrl: application.websiteUrl,
+      statement: application.statement,
+      exhibitionHistory: application.exhibitionHistory,
+      categories: application.categories,
+      status: application.status,
+      submittedAt: application.submittedAt.toISOString(),
+      reviewedBy: application.reviewedBy,
+      reviewedAt: application.reviewedAt?.toISOString() ?? null,
+      reviewerName,
+      reviewNotes: application.reviewNotes,
+    }
+
+    logger.info('Admin application detail fetched', {
+      applicationId: id,
+      durationMs: Date.now() - start,
+    })
+
+    return c.json(response)
+  })
 
   /**
    * POST /admin/artists/:userId/approve
