@@ -104,6 +104,13 @@ variable "ses_domain" {
   default     = "surfacedart.com"
 }
 
+# Cache control
+variable "cache_disabled" {
+  description = "Disable API cache-control headers (set to true for dev)"
+  type        = string
+  default     = "false"
+}
+
 # Lambda variables
 variable "lambda_memory_size" {
   description = "Memory size for Lambda functions in MB"

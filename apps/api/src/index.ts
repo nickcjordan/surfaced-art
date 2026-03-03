@@ -7,6 +7,7 @@ import { logger } from '@surfaced-art/utils'
 
 import { securityHeaders } from './middleware/security-headers'
 import { rateLimiter } from './middleware/rate-limiter'
+import { cacheControl } from './middleware/cache-control'
 import { createHealthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
 import { createListingRoutes } from './routes/listings'
@@ -59,6 +60,19 @@ app.use('/me/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
 app.use('/admin/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
 app.use('/search', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
 app.use('/webhooks/*', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
+
+// Cache-control — public read endpoints
+app.use('/artists/*', cacheControl('public, max-age=300'))
+app.use('/artists', cacheControl('public, max-age=300'))
+app.use('/listings/*', cacheControl('public, max-age=300'))
+app.use('/listings', cacheControl('public, max-age=300'))
+app.use('/categories', cacheControl('public, max-age=3600'))
+app.use('/health/*', cacheControl('no-store'))
+app.use('/health', cacheControl('no-store'))
+
+// Cache-control — protected endpoints
+app.use('/me/*', cacheControl('private, no-cache'))
+app.use('/admin/*', cacheControl('private, no-cache'))
 
 // Mount routes — /artists/apply MUST be before /artists to avoid /:slug collision
 app.route('/health', createHealthRoutes(prisma))
