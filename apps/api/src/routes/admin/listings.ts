@@ -273,7 +273,7 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
         type: 'listing',
         id: id,
         category: listing.category,
-        artistSlug: (listing as unknown as { artist: { slug: string } }).artist.slug,
+        artistSlug: listing.artist.slug,
       })
 
       const response: AdminActionResponse = {
@@ -340,7 +340,7 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
         type: 'listing',
         id: id,
         category: listing.category,
-        artistSlug: (listing as unknown as { artist: { slug: string } }).artist.slug,
+        artistSlug: listing.artist.slug,
       })
 
       const response: AdminActionResponse = {
@@ -399,7 +399,7 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
         type: 'listing',
         id: id,
         category: listing.category,
-        artistSlug: (listing as unknown as { artist: { slug: string } }).artist.slug,
+        artistSlug: listing.artist.slug,
       })
 
       const response: AdminActionResponse = {

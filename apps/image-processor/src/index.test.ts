@@ -213,7 +213,8 @@ describe('image-processor Lambda handler', () => {
     expect(mockSend).toHaveBeenCalledTimes(3)
     expect(mockResize).toHaveBeenCalledTimes(2)
     expect(mockResize).toHaveBeenCalledWith(400, null, { fit: 'inside', withoutEnlargement: true })
-    expect(mockResize).toHaveBeenCalledWith(800, null, { fit: 'inside', withoutEnlargement: true })
+    // 800w variant: outputWidth = min(600, 800) = 600
+    expect(mockResize).toHaveBeenCalledWith(600, null, { fit: 'inside', withoutEnlargement: true })
   })
 
   it('generates a single variant at native width when image is smaller than smallest target', async () => {
@@ -246,7 +247,8 @@ describe('image-processor Lambda handler', () => {
     // 1 GetObject + 1 PutObject
     expect(mockSend).toHaveBeenCalledTimes(2)
     expect(mockResize).toHaveBeenCalledTimes(1)
-    expect(mockResize).toHaveBeenCalledWith(400, null, { fit: 'inside', withoutEnlargement: true })
+    // outputWidth = min(200, 400) = 200
+    expect(mockResize).toHaveBeenCalledWith(200, null, { fit: 'inside', withoutEnlargement: true })
   })
 
   it('skips non-image files (e.g. .txt, .webp, .pdf)', async () => {
@@ -416,7 +418,7 @@ describe('image-processor Lambda handler', () => {
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce({})
 
-    // Second image: 500px wide (400w + 800w variants; 800w and 1200w both cap at 500px so only 800w is produced)
+    // Second image: 500px wide (400w at 400px + 800w at 500px capped; 1200w skipped as duplicate)
     const fakeImage2 = Buffer.from('image-2')
     mockSend.mockResolvedValueOnce({ Body: createS3Body(fakeImage2) })
     mockMetadata.mockResolvedValueOnce({ width: 500, height: 400 })

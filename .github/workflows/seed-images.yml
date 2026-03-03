@@ -3,6 +3,14 @@ name: Seed Images — Notion to S3
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'Target environment'
+        required: false
+        type: choice
+        default: 'prod'
+        options:
+          - prod
+          - dev
       artist:
         description: 'Upload images for a single artist (leave empty for all)'
         required: false
@@ -52,13 +60,13 @@ jobs:
       - name: Upload images to S3
         env:
           NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
-          S3_MEDIA_BUCKET: surfaced-art-prod-media
+          S3_MEDIA_BUCKET: surfaced-art-${{ inputs.environment }}-media
         run: |
-          ARGS=""
+          ARGS=()
           if [ "${{ inputs.dry-run }}" = "true" ]; then
-            ARGS="$ARGS --dry-run"
+            ARGS+=("--dry-run")
           fi
           if [ -n "${{ inputs.artist }}" ]; then
-            ARGS="$ARGS --artist \"${{ inputs.artist }}\""
+            ARGS+=("--artist" "${{ inputs.artist }}")
           fi
-          npx tsx scripts/notion-to-s3.ts $ARGS
+          npx tsx scripts/notion-to-s3.ts "${ARGS[@]}"
