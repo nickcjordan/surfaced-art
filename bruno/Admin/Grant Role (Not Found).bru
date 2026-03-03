@@ -1,0 +1,33 @@
+meta {
+  name: Grant Role (Not Found)
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/users/00000000-0000-0000-0000-000000000000/roles
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "role": "artist"
+  }
+}
+
+assert {
+  res.status: eq 404
+  res.body.error.code: eq NOT_FOUND
+}
+
+tests {
+  test("should return 404 for non-existent user", function() {
+    const body = res.getBody();
+    expect(body.error.code).to.equal("NOT_FOUND");
+  });
+}

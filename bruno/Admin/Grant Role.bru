@@ -1,0 +1,39 @@
+meta {
+  name: Grant Role
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/users/{{sa_targetUserId}}/roles
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "role": "artist"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+  res.body.role: isDefined
+}
+
+tests {
+  test("should grant role successfully", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("message");
+    expect(body).to.have.property("role");
+    expect(body.role).to.have.property("userId");
+    expect(body.role).to.have.property("role");
+    expect(body.role).to.have.property("grantedAt");
+    expect(body.role).to.have.property("grantedBy");
+  });
+}

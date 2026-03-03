@@ -1,0 +1,34 @@
+meta {
+  name: Hide Listing
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/listings/{{sa_adminListingId}}/hide
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "reason": "Inappropriate content"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+}
+
+tests {
+  test("should hide listing successfully", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("message");
+    expect(body.message).to.include("hidden");
+  });
+}

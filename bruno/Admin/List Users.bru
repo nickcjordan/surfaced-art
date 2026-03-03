@@ -1,0 +1,59 @@
+meta {
+  name: List Users
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/users
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+params:query {
+  ~role: admin
+  ~search:
+  ~page: 1
+  ~limit: 20
+}
+
+assert {
+  res.status: eq 200
+  res.body.meta.page: isNumber
+  res.body.meta.total: isNumber
+}
+
+tests {
+  test("should return paginated users", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("data");
+    expect(body).to.have.property("meta");
+    expect(body.data).to.be.an("array");
+    expect(body.meta).to.have.property("page");
+    expect(body.meta).to.have.property("limit");
+    expect(body.meta).to.have.property("total");
+    expect(body.meta).to.have.property("totalPages");
+  });
+
+  test("each user should have required fields", function() {
+    const users = res.getBody().data;
+    if (users.length > 0) {
+      const user = users[0];
+      expect(user).to.have.property("id");
+      expect(user).to.have.property("email");
+      expect(user).to.have.property("fullName");
+      expect(user).to.have.property("roles");
+      expect(user).to.have.property("createdAt");
+      expect(user).to.have.property("hasArtistProfile");
+
+      // Store first user ID for detail request
+      if (user.id) {
+        bru.setVar("sa_targetUserId", user.id);
+      }
+    }
+  });
+}

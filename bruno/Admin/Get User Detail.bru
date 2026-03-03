@@ -1,0 +1,36 @@
+meta {
+  name: Get User Detail
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/users/{{sa_targetUserId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.email: isDefined
+  res.body.fullName: isDefined
+}
+
+tests {
+  test("should return full user detail", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id");
+    expect(body).to.have.property("email");
+    expect(body).to.have.property("fullName");
+    expect(body).to.have.property("roles");
+    expect(body).to.have.property("createdAt");
+    expect(body).to.have.property("stats");
+    expect(body.stats).to.have.property("orderCount");
+    expect(body.stats).to.have.property("reviewCount");
+  });
+}

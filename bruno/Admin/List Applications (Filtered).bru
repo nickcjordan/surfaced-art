@@ -1,0 +1,29 @@
+meta {
+  name: List Applications (Filtered)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/applications?status=approved
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.meta.page: isNumber
+}
+
+tests {
+  test("should return only approved applications", function() {
+    const apps = res.getBody().data;
+    apps.forEach(function(app) {
+      expect(app.status).to.equal("approved");
+    });
+  });
+}
