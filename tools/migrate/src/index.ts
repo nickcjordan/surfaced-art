@@ -9,7 +9,7 @@ const PRISMA_CLI = `${LAMBDA_ROOT}/node_modules/prisma/build/index.js`
 const PRISMA_CMD = `node ${PRISMA_CLI}`
 
 interface MigrateEvent {
-  command: 'migrate' | 'reset-schema' | 'force-reapply-baseline' | 'reset-baseline' | 'seed'
+  command: 'migrate' | 'force-reapply-baseline' | 'reset-baseline' | 'seed'
 }
 
 interface MigrateResult {
@@ -18,7 +18,7 @@ interface MigrateResult {
 }
 
 export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
-  const validCommands = ['migrate', 'reset-schema', 'force-reapply-baseline', 'reset-baseline', 'seed']
+  const validCommands = ['migrate', 'force-reapply-baseline', 'reset-baseline', 'seed']
   if (!validCommands.includes(event.command)) {
     return { success: false, error: `Unknown command: ${event.command}` }
   }
@@ -66,26 +66,6 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('Seed failed:', message)
-      return { success: false, error: message }
-    }
-  }
-
-  // reset-schema: drops the entire public schema and recreates it empty.
-  // Use once to wipe a database that has stale or partial schema state,
-  // then follow up with the migrate command to rebuild from scratch.
-  // WARNING: destroys all data. Remove this command after the one-time reset.
-  if (event.command === 'reset-schema') {
-    try {
-      const sql = `DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO PUBLIC;`
-      execSync(
-        `echo "${sql}" | ${PRISMA_CMD} db execute --stdin`,
-        { ...execOpts, shell: '/bin/sh' }
-      )
-      console.log('Schema reset complete — all data and schema objects dropped')
-      return { success: true }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err)
-      console.error('Schema reset failed:', message)
       return { success: false, error: message }
     }
   }
