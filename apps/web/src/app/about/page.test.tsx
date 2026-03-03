@@ -37,4 +37,12 @@ describe('About Page', () => {
     expect(metadata.description).toBeDefined()
     expect(typeof metadata.description).toBe('string')
   })
+
+  it('should have data-testid attributes on all major sections', () => {
+    render(<AboutPage />)
+    expect(screen.getByTestId('about-hero')).toBeInTheDocument()
+    expect(screen.getByTestId('about-gallery')).toBeInTheDocument()
+    expect(screen.getByTestId('about-artists')).toBeInTheDocument()
+    expect(screen.getByTestId('about-buyers')).toBeInTheDocument()
+  })
 })
