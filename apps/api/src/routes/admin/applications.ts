@@ -4,21 +4,18 @@ import { logger, generateSlug } from '@surfaced-art/utils'
 import { adminReviewBody } from '@surfaced-art/types'
 import type { AdminApproveResponse, AdminRejectResponse } from '@surfaced-art/types'
 import { sendEmail, ArtistAcceptance, ArtistRejection } from '@surfaced-art/email'
-import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
-import { notFound, conflict, validationError, internalError } from '../errors'
+import type { AuthUser } from '../../middleware/auth'
+import { notFound, conflict, validationError, internalError } from '../../errors'
 import { createElement } from 'react'
 
-export function createAdminRoutes(prisma: PrismaClient) {
-  const admin = new Hono<{ Variables: { user: AuthUser } }>()
-
-  admin.use('*', authMiddleware(prisma))
-  admin.use('*', requireRole('admin'))
+export function createAdminApplicationRoutes(prisma: PrismaClient) {
+  const app = new Hono<{ Variables: { user: AuthUser } }>()
 
   /**
    * POST /admin/artists/:userId/approve
    * Approve an artist application: update application status, create profile, grant role.
    */
-  admin.post('/artists/:userId/approve', async (c) => {
+  app.post('/artists/:userId/approve', async (c) => {
     const start = Date.now()
     const adminUser = c.get('user')
     const { userId } = c.req.param()
@@ -139,7 +136,7 @@ export function createAdminRoutes(prisma: PrismaClient) {
    * POST /admin/artists/:userId/reject
    * Reject an artist application: update application status and send notification.
    */
-  admin.post('/artists/:userId/reject', async (c) => {
+  app.post('/artists/:userId/reject', async (c) => {
     const start = Date.now()
     const adminUser = c.get('user')
     const { userId } = c.req.param()
@@ -214,7 +211,7 @@ export function createAdminRoutes(prisma: PrismaClient) {
     }
   })
 
-  return admin
+  return app
 }
 
 /**
