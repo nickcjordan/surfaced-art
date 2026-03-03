@@ -25,6 +25,39 @@ resource "aws_s3_bucket_versioning" "media" {
   }
 }
 
+# Lifecycle rules for storage cost management
+resource "aws_s3_bucket_lifecycle_configuration" "media" {
+  bucket = aws_s3_bucket.media.id
+
+  rule {
+    id     = "transition-noncurrent-to-glacier"
+    status = "Enabled"
+
+    noncurrent_version_transition {
+      noncurrent_days = 90
+      storage_class   = "GLACIER"
+    }
+  }
+
+  rule {
+    id     = "delete-noncurrent-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 365
+    }
+  }
+
+  rule {
+    id     = "abort-incomplete-multipart"
+    status = "Enabled"
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
 # Server-side encryption
 # trivy:ignore:AVD-AWS-0132 - CMK adds KMS cost, AES256 sufficient for Phase 1/2
 resource "aws_s3_bucket_server_side_encryption_configuration" "media" {
