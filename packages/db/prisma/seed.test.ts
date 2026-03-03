@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { validateSlug } from '@surfaced-art/utils'
 import { artistConfigs, CDN_BASE } from './seed-data'
 
@@ -162,9 +162,22 @@ describe('Seed Data Validation', () => {
   })
 
   describe('CDN URLs', () => {
-    it('should use CloudFront placeholder base URL', () => {
+    it('should default to prod CloudFront base URL', () => {
       expect(CDN_BASE).toMatch(/^https:\/\//)
       expect(CDN_BASE).toContain('cloudfront.net')
+    })
+
+    it('should respect SEED_CDN_BASE env var override', async () => {
+      const testCdnBase = 'https://d2agn4aoo0e7ji.cloudfront.net'
+      vi.stubEnv('SEED_CDN_BASE', testCdnBase)
+      vi.resetModules()
+      try {
+        // Re-import to force re-evaluation with the env var set
+        const cdn = (await import('./seed-data/cdn.js')) as { CDN_BASE: string }
+        expect(cdn.CDN_BASE).toBe(testCdnBase)
+      } finally {
+        vi.unstubAllEnvs()
+      }
     })
   })
 })

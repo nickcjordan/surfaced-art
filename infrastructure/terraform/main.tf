@@ -277,6 +277,7 @@ module "lambda_migrate" {
   lambda_role_arn       = module.iam.lambda_role_arn
   placeholder_image_uri = var.placeholder_image_uri
   database_url          = module.rds.connection_string
+  seed_cdn_base         = module.s3_cloudfront.cloudfront_url
 
   depends_on = [aws_ecr_repository_policy.migrate]
 }
