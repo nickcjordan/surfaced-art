@@ -12,6 +12,7 @@ import type {
 import { sendEmail, ArtistAcceptance, ArtistRejection } from '@surfaced-art/email'
 import type { AuthUser } from '../../middleware/auth'
 import { notFound, conflict, validationError, internalError } from '../../errors'
+import { logAdminAction } from '../../lib/audit'
 import { createElement } from 'react'
 
 /**
@@ -238,6 +239,15 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
         return newProfile
       })
 
+      // Audit log (fire-and-forget)
+      void logAdminAction(prisma, {
+        adminId: adminUser.id,
+        action: 'application_approve',
+        targetType: 'user',
+        targetId: targetUser.id,
+        details: { applicationId: application.id, slug: profile.slug },
+      })
+
       logger.info('Artist application approved', {
         userId: targetUser.id,
         profileId: profile.id,
@@ -321,6 +331,15 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
           reviewedAt: new Date(),
           reviewNotes: parsed.data.reviewNotes ?? null,
         },
+      })
+
+      // Audit log (fire-and-forget)
+      void logAdminAction(prisma, {
+        adminId: adminUser.id,
+        action: 'application_reject',
+        targetType: 'user',
+        targetId: targetUser.id,
+        details: { applicationId: application.id },
       })
 
       logger.info('Artist application rejected', {
