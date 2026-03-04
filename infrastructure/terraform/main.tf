@@ -258,6 +258,7 @@ module "lambda_api" {
   ses_configuration_set_name = module.ses.configuration_set_name
   stripe_secret_key          = var.stripe_secret_key
   stripe_webhook_secret      = var.stripe_webhook_secret
+  cache_disabled             = var.cache_disabled
 
   # Observability — log group managed centrally in observability.tf
   api_gateway_log_group_arn = aws_cloudwatch_log_group.api_gateway.arn

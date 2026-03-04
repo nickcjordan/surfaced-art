@@ -11,3 +11,6 @@ lambda_timeout     = 30
 
 # URLs
 frontend_url = "https://dev.surfacedart.com"
+
+# Cache
+cache_disabled = true

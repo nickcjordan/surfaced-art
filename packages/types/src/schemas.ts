@@ -164,13 +164,15 @@ export const listingIdParam = z.object({
 export function sanitizeText(input: string): string {
   return (
     input
-      // Decode HTML entities that could be used for injection
+      // Strip HTML tags first (catches already-decoded angle brackets)
+      .replace(/<[^>]*>/g, '')
+      // Decode HTML entities to plain text (safe now that tags are stripped)
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
       .replace(/&quot;/g, '"')
       .replace(/&#x27;/g, "'")
-      // Strip all HTML tags
+      .replace(/&amp;/g, '&')
+      // Strip tags again to catch any produced by entity decoding
       .replace(/<[^>]*>/g, '')
       // Collapse multiple spaces to single space
       .replace(/\s+/g, ' ')

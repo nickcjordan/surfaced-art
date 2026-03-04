@@ -115,6 +115,12 @@ variable "stripe_webhook_secret" {
   default     = ""
 }
 
+variable "cache_disabled" {
+  description = "Disable API cache-control headers (useful for dev)"
+  type        = bool
+  default     = false
+}
+
 variable "log_retention_days" {
   description = "CloudWatch log group retention in days"
   type        = number
