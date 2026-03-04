@@ -80,4 +80,28 @@ describe('ViewToggle', () => {
 
     expect(screen.getByTestId('my-toggle')).toBeInTheDocument()
   })
+
+  it('should render with segmented control container styling', () => {
+    render(<ViewToggle options={options} value="pieces" onChange={() => {}} id="test" />)
+
+    const tablist = screen.getByRole('tablist')
+    expect(tablist.className).toContain('bg-surface')
+    expect(tablist.className).toContain('rounded-lg')
+  })
+
+  it('should apply active styling to the selected segment', () => {
+    render(<ViewToggle options={options} value="pieces" onChange={() => {}} id="test" />)
+
+    const activeTab = screen.getByRole('tab', { name: 'Pieces' })
+    expect(activeTab.className).toContain('bg-background')
+    expect(activeTab.className).toContain('shadow-sm')
+  })
+
+  it('should not apply active styling to inactive segments', () => {
+    render(<ViewToggle options={options} value="pieces" onChange={() => {}} id="test" />)
+
+    const inactiveTab = screen.getByRole('tab', { name: 'Artists' })
+    expect(inactiveTab.className).not.toContain('bg-background')
+    expect(inactiveTab.className).toContain('text-muted-foreground')
+  })
 })
