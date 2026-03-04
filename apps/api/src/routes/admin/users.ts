@@ -1,13 +1,14 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
-import { adminUsersQuery, adminRoleGrantBody } from '@surfaced-art/types'
+import { adminUsersQuery, adminRoleGrantBody, UserRole } from '@surfaced-art/types'
 import type {
   AdminUserListItem,
   AdminUserDetailResponse,
   AdminRoleGrantResponse,
   AdminActionResponse,
   PaginatedResponse,
+  UserRoleType,
 } from '@surfaced-art/types'
 import type { AuthUser } from '../../middleware/auth'
 import { notFound, forbidden, conflict, validationError, badRequest, internalError } from '../../errors'
@@ -243,13 +244,12 @@ export function createAdminUserRoutes(prisma: PrismaClient) {
     const adminUser = c.get('user')
     const { id, role } = c.req.param()
 
-    // Validate role path param against known roles
-    const validRoles = ['buyer', 'artist', 'admin', 'curator', 'moderator'] as const
-    type ValidRole = typeof validRoles[number]
-    if (!validRoles.includes(role as ValidRole)) {
+    // Validate role path param against known roles (derived from shared enum)
+    const validRoles = Object.values(UserRole) as UserRoleType[]
+    if (!validRoles.includes(role as UserRoleType)) {
       return badRequest(c, `Invalid role: ${role}`)
     }
-    const validatedRole = role as ValidRole
+    const validatedRole = role as UserRoleType
 
     // Prevent removing own admin role
     if (id === adminUser.id && validatedRole === 'admin') {
