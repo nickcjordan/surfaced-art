@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma } from '@surfaced-art/db'
-import { logger } from '@surfaced-art/utils'
+import { logger, validateUuid } from '@surfaced-art/utils'
 import { adminAuditLogQuery } from '@surfaced-art/types'
 import type {
   AdminAuditLogEntry,
@@ -97,8 +97,7 @@ export function createAdminAuditRoutes(prisma: PrismaClient) {
     const { userId } = c.req.param()
 
     // Validate userId is a valid UUID before using in query
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    if (!uuidRegex.test(userId)) {
+    if (!validateUuid(userId)) {
       return notFound(c, 'User not found')
     }
 
