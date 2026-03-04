@@ -1,0 +1,29 @@
+{
+  "name": "@surfaced-art/recruit",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "fair": "tsx src/art-fair/cli.ts",
+    "enrich": "tsx src/enricher/cli.ts",
+    "reddit": "tsx src/reddit/cli.ts",
+    "etsy": "tsx src/etsy/cli.ts"
+  },
+  "dependencies": {
+    "@notionhq/client": "^5.11.1",
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
+  }
+}
