@@ -62,6 +62,9 @@ app.use('/search', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
 app.use('/webhooks/*', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
 
 // Cache-control — public read endpoints
+// /artists/apply has a GET that checks real-time status — exclude from public caching
+app.use('/artists/apply/*', cacheControl('private, no-cache'))
+app.use('/artists/apply', cacheControl('private, no-cache'))
 app.use('/artists/*', cacheControl('public, max-age=300'))
 app.use('/artists', cacheControl('public, max-age=300'))
 app.use('/listings/*', cacheControl('public, max-age=300'))
