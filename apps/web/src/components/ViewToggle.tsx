@@ -39,7 +39,7 @@ export function ViewToggle<T extends string>({
     <div
       role="tablist"
       data-testid={testId}
-      className={cn('flex gap-1', className)}
+      className={cn('inline-flex items-center rounded-lg bg-surface p-1 gap-0.5', className)}
     >
       {options.map((option) => {
         const isActive = option.value === value
@@ -54,10 +54,10 @@ export function ViewToggle<T extends string>({
               if (!isActive) onChange(option.value)
             }}
             className={cn(
-              'rounded-md px-3 py-1.5 text-sm transition-colors',
+              'rounded-md px-3 py-1.5 text-sm font-medium transition-all',
               isActive
-                ? 'bg-accent-primary text-white'
-                : 'border border-border text-muted-text hover:border-accent-primary hover:text-foreground'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
             {option.label}

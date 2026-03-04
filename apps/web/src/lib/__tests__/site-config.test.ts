@@ -22,8 +22,9 @@ describe('site-config', () => {
     expect(SITE_URL).toBe('https://dev.surfacedart.com')
   })
 
-  it('throws if NEXT_PUBLIC_SITE_URL is not set', async () => {
+  it('falls back to production URL when NEXT_PUBLIC_SITE_URL is not set', async () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', '')
-    await expect(import('../site-config')).rejects.toThrow('NEXT_PUBLIC_SITE_URL is required')
+    const { SITE_URL } = await import('../site-config')
+    expect(SITE_URL).toBe('https://surfacedart.com')
   })
 })

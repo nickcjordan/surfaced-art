@@ -83,6 +83,9 @@ export type {
   StripeOnboardingStatus,
   StripeOnboardingResponse,
   StripeStatusResponse,
+  SearchListingItem,
+  SearchArtistItem,
+  SearchResponse,
 } from './interfaces'
 
 // Validation schemas
@@ -90,6 +93,7 @@ export {
   slugParam,
   uuidParam,
   paginationQuery,
+  searchQuery,
   artistsQuery,
   listingsQuery,
   waitlistBody,
@@ -120,6 +124,7 @@ export {
   adminWaitlistQuery,
   adminBulkListingStatusBody,
   adminBulkRoleGrantBody,
+  type SearchQuery,
   type ArtistsQuery,
   type ListingsQuery,
   type WaitlistBody,

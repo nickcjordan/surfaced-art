@@ -15,10 +15,10 @@ const CDN_DOMAINS = (
   'https://dmfu4c7s6z2cc.cloudfront.net https://d2agn4aoo0e7ji.cloudfront.net'
 ).trim()
 
-if (!process.env.NEXT_PUBLIC_API_URL) {
-  throw new Error('NEXT_PUBLIC_API_URL is required')
-}
-const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL.trim()
+const API_ORIGIN = (
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://xl3aiyolr6.execute-api.us-east-1.amazonaws.com'
+).trim()
 
 const COGNITO_IDP = (
   process.env.NEXT_PUBLIC_COGNITO_IDP ??

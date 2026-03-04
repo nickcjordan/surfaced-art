@@ -1,0 +1,25 @@
+meta {
+  name: Search Art (Multi-word)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{sa_baseUrl}}/search?q=blue+vase
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("should return valid search response for multi-word query", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("query");
+    expect(body.query).to.equal("blue vase");
+    expect(body.listings).to.have.property("data");
+    expect(body.artists).to.have.property("data");
+  });
+}

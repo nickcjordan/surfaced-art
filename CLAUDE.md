@@ -348,6 +348,7 @@ Every major section of every page gets a `data-testid` attribute. These are the 
 | Artist Profile | `artist-hero`, `artist-name`, `artist-bio`, `artist-location`, `artist-categories`, `artist-social-links`, `process-section`, `cv-section`, `available-work`, `archive-section`, `listing-card` |
 | Listing Detail | `listing-title`, `listing-price`, `listing-images`, `listing-description`, `listing-dimensions`, `listing-medium`, `artist-card`, `edition-info` |
 | Category Browse | `category-header`, `category-content`, `listing-card`, `category-nav` |
+| Search | `search-header`, `search-results-listings`, `search-results-artists`, `search-prompt`, `search-toggle`, `search-input`, `search-form`, `mobile-search-form`, `mobile-search-input` |
 | Global | `site-header`, `site-footer`, `site-nav`, `category-link` |
 
 **Coexistence with React Testing Library:** Component/unit tests continue to use semantic role queries (`getByRole`, `getByText`). `data-testid` is for E2E/visual QA selectors only. Both approaches are correct for their context.

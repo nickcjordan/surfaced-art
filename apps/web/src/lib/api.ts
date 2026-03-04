@@ -26,14 +26,14 @@ import type {
   ProcessMediaListResponse,
   ProcessMediaResponse,
   ProfileUpdateResponse,
+  SearchResponse,
   StripeOnboardingResponse,
   StripeStatusResponse,
 } from '@surfaced-art/types'
 
-if (!process.env.NEXT_PUBLIC_API_URL) {
-  throw new Error('NEXT_PUBLIC_API_URL is required')
-}
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://xl3aiyolr6.execute-api.us-east-1.amazonaws.com'
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`
@@ -86,6 +86,18 @@ export async function getFeaturedArtists(params?: {
   if (params?.category) searchParams.set('category', params.category)
   const query = searchParams.toString()
   return apiFetch<FeaturedArtistItem[]>(`/artists${query ? `?${query}` : ''}`)
+}
+
+export async function searchArt(params: {
+  q: string
+  page?: number
+  limit?: number
+}): Promise<SearchResponse> {
+  const searchParams = new URLSearchParams()
+  searchParams.set('q', params.q)
+  if (params.page) searchParams.set('page', params.page.toString())
+  if (params.limit) searchParams.set('limit', params.limit.toString())
+  return apiFetch<SearchResponse>(`/search?${searchParams.toString()}`)
 }
 
 export async function getCategories(): Promise<CategoryWithCount[]> {
