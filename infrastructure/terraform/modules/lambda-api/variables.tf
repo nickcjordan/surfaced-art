@@ -117,8 +117,8 @@ variable "stripe_webhook_secret" {
 
 variable "cache_disabled" {
   description = "Disable API cache-control headers (useful for dev)"
-  type        = string
-  default     = "false"
+  type        = bool
+  default     = false
 }
 
 variable "log_retention_days" {

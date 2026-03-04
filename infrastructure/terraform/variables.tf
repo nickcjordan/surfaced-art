@@ -107,8 +107,8 @@ variable "ses_domain" {
 # Cache control
 variable "cache_disabled" {
   description = "Disable API cache-control headers (set to true for dev)"
-  type        = string
-  default     = "false"
+  type        = bool
+  default     = false
 }
 
 # Lambda variables
