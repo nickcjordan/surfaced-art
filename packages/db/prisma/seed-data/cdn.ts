@@ -7,7 +7,7 @@
 // CloudFront CDN base URL for seed images.
 // In deployed environments, SEED_CDN_BASE is set by Terraform to the
 // per-environment CloudFront distribution. Falls back to prod for local dev.
-export const CDN_BASE = process.env.SEED_CDN_BASE ?? 'https://dmfu4c7s6z2cc.cloudfront.net'
+export const CDN_BASE = process.env.SEED_CDN_BASE?.trim() || 'https://dmfu4c7s6z2cc.cloudfront.net'
 
 /** Default display width — largest variant the image processor generates. */
 export const CDN_DEFAULT_WIDTH = 1200
