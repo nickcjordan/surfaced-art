@@ -50,6 +50,24 @@ export const paginationQuery = z.object({
     .transform((v) => Math.min(v, 100)),
 })
 
+/** GET /search query params */
+export const searchQuery = z.object({
+  q: z
+    .string()
+    .min(1, 'Search query is required')
+    .max(200, 'Search query must be at most 200 characters')
+    .transform((v) => sanitizeText(v))
+    .pipe(z.string().min(1, 'Search query is required')),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
 /** GET /artists query params */
 export const artistsQuery = z.object({
   category: z.enum(categoryValues).optional(),
@@ -497,6 +515,7 @@ export const adminBulkRoleGrantBody = z.object({
 // Inferred types (derive TypeScript types from schemas)
 // ============================================================================
 
+export type SearchQuery = z.infer<typeof searchQuery>
 export type ArtistsQuery = z.infer<typeof artistsQuery>
 export type ListingsQuery = z.infer<typeof listingsQuery>
 export type WaitlistBody = z.infer<typeof waitlistBody>

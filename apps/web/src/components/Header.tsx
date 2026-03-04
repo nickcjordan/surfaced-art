@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Navigation } from './Navigation'
 import { MobileNav } from './MobileNav'
+import { SearchInput } from './SearchInput'
 import { ThemeToggle } from './ThemeToggle'
 import { AuthButton } from './AuthButton'
 import { Wordmark } from './Wordmark'
@@ -27,8 +28,11 @@ export function Header() {
             <Wordmark size="nav" />
           </Link>
 
-          {/* Right side: auth + theme toggle + mobile nav */}
+          {/* Right side: search + auth + theme toggle + mobile nav */}
           <div className="flex items-center gap-2">
+            <div className="hidden md:block">
+              <SearchInput />
+            </div>
             <div className="hidden md:block">
               <AuthButton />
             </div>

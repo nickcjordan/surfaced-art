@@ -147,6 +147,41 @@ test.describe('SEO Metadata — Category Page', () => {
   })
 })
 
+test.describe('SEO Metadata — Search Page', () => {
+  test('search page has correct meta tags and noindex', async ({ page }) => {
+    await page.goto('/search?q=ceramic')
+    await page.waitForLoadState('networkidle')
+
+    const title = await page.title()
+    expect(title.toLowerCase()).toContain('search')
+    expect(title.toLowerCase()).toContain('ceramic')
+
+    const description = await page
+      .locator('meta[name="description"]')
+      .getAttribute('content')
+    expect(description).toBeTruthy()
+
+    // Search pages should be noindex
+    const robots = await page
+      .locator('meta[name="robots"]')
+      .getAttribute('content')
+    expect(robots).toContain('noindex')
+
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image'
+    )
+  })
+
+  test('search page without query shows prompt state', async ({ page }) => {
+    await page.goto('/search')
+    await page.waitForLoadState('networkidle')
+
+    const title = await page.title()
+    expect(title.toLowerCase()).toContain('search')
+  })
+})
+
 test.describe('SEO Metadata — Integrity Checks', () => {
   const PAGES_TO_CHECK = [
     '/',

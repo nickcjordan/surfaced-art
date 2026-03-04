@@ -1,0 +1,21 @@
+meta {
+  name: Search Art (Empty Query)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{sa_baseUrl}}/search
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 400
+}
+
+tests {
+  test("should return 400 when q is missing", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

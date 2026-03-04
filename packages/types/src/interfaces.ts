@@ -829,6 +829,55 @@ export interface StripeStatusResponse {
   stripeAccountId: string | null
 }
 
+// ─── Search API Response Types ───────────────────────────────────────
+
+/**
+ * Lightweight listing item in search results.
+ * Serializable (no Date objects) for the server/client boundary.
+ */
+export interface SearchListingItem {
+  id: string
+  title: string
+  medium: string
+  category: CategoryType
+  price: number
+  status: ListingStatusType
+  primaryImageUrl: string | null
+  artistName: string
+  artistSlug: string
+  rank: number
+}
+
+/**
+ * Lightweight artist item in search results.
+ * Serializable (no Date objects) for the server/client boundary.
+ */
+export interface SearchArtistItem {
+  slug: string
+  displayName: string
+  location: string
+  profileImageUrl: string | null
+  coverImageUrl: string | null
+  categories: CategoryType[]
+  rank: number
+}
+
+/**
+ * Combined search response from GET /search?q=...
+ * Returns listings and artists as separate groups, each with their own total count.
+ */
+export interface SearchResponse {
+  listings: {
+    data: SearchListingItem[]
+    total: number
+  }
+  artists: {
+    data: SearchArtistItem[]
+    total: number
+  }
+  query: string
+}
+
 // ─── API Error Types ──────────────────────────────────────────────────
 
 /**

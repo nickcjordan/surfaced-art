@@ -1,0 +1,25 @@
+meta {
+  name: Search Art (No Results)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{sa_baseUrl}}/search?q=xyznonexistent
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("should return 200 with empty results", function() {
+    const body = res.getBody();
+    expect(body.listings.data).to.be.an("array").that.is.empty;
+    expect(body.listings.total).to.equal(0);
+    expect(body.artists.data).to.be.an("array").that.is.empty;
+    expect(body.artists.total).to.equal(0);
+  });
+}

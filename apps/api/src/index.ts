@@ -16,6 +16,7 @@ import { createApplicationRoutes } from './routes/applications'
 import { createUploadRoutes } from './routes/uploads'
 import { createMeRoutes } from './routes/me'
 import { createAdminRoutes } from './routes/admin'
+import { createSearchRoutes } from './routes/search'
 import { createWebhookRoutes } from './routes/webhooks'
 
 // FRONTEND_URL is required — drives CORS allowed origins.
@@ -56,6 +57,7 @@ app.use('/artists/apply', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
 app.use('/uploads/*', rateLimiter({ maxRequests: 10, windowMs: 60_000 }))
 app.use('/me/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
 app.use('/admin/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
+app.use('/search', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
 app.use('/webhooks/*', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
 
 // Mount routes — /artists/apply MUST be before /artists to avoid /:slug collision
@@ -64,6 +66,7 @@ app.route('/artists/apply', createApplicationRoutes(prisma))
 app.route('/artists', createArtistRoutes(prisma))
 app.route('/listings', createListingRoutes(prisma))
 app.route('/categories', createCategoryRoutes(prisma))
+app.route('/search', createSearchRoutes(prisma))
 app.route('/waitlist', createWaitlistRoutes(prisma))
 app.route('/uploads', createUploadRoutes(prisma))
 app.route('/me', createMeRoutes(prisma))
