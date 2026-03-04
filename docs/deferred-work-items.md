@@ -47,5 +47,5 @@ Items reviewed during the comprehensive issue audit and deliberately excluded fr
 - **`custom_accent_color`** on artist_profiles — marked as future in data model doc, for per-artist theme customization
 
 ## Not Specified in Any Phase
-- **Mux video integration** — process media management exists (#258) but uses image uploads only. Video upload via Mux is implicitly deferred. Can be issued when prioritized.
+- **Mux video integration** — media management process exists (#258) but uses image uploads only. Video upload via Mux is implicitly deferred. Can be issued when prioritized.
 - **Venue support** (Phases 5-8) — requires hundreds of active artists and real transaction volume first. Data model is already venue-ready (ADR-007).
