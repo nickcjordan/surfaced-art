@@ -27,21 +27,17 @@ resource "aws_s3_bucket_versioning" "media" {
 
 # Lifecycle rules for storage cost management
 resource "aws_s3_bucket_lifecycle_configuration" "media" {
-  bucket = aws_s3_bucket.media.id
+  bucket     = aws_s3_bucket.media.id
+  depends_on = [aws_s3_bucket_versioning.media]
 
   rule {
-    id     = "transition-noncurrent-to-glacier"
+    id     = "noncurrent-version-management"
     status = "Enabled"
 
     noncurrent_version_transition {
       noncurrent_days = 90
       storage_class   = "GLACIER"
     }
-  }
-
-  rule {
-    id     = "delete-noncurrent-versions"
-    status = "Enabled"
 
     noncurrent_version_expiration {
       noncurrent_days = 365
