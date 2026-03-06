@@ -29,7 +29,7 @@ export function SplitHero() {
   const image = pickHeroImage()
 
   return (
-    <section data-testid="hero" className="full-bleed">
+    <section data-testid="hero" className="full-bleed overflow-x-hidden">
       <div className="grid min-h-[60vh] grid-cols-1 lg:grid-cols-2">
         {/* Artwork image */}
         <div className="relative h-[50vh] lg:h-auto">

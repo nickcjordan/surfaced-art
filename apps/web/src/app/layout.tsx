@@ -63,7 +63,7 @@ export default function RootLayout({
               </Suspense>
               <ScrollToTop />
               <Header />
-              <main className="flex-1 overflow-x-hidden">
+              <main className="flex-1">
                 <Container className="py-8 md:py-12">
                   {children}
                 </Container>
