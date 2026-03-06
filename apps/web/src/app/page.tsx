@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getCategories, getListings, getFeaturedArtists, ApiError } from '@/lib/api'
+import { SplitHero } from '@/components/SplitHero'
 import { ArtistCard } from '@/components/ArtistCard'
 import { ListingCard } from '@/components/ListingCard'
 import { CategoryGrid } from '@/components/CategoryGrid'
@@ -62,17 +63,7 @@ export default async function Home() {
       }} />
 
       {/* Hero */}
-      <section data-testid="hero" className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-          A curated digital gallery
-          <br />
-          for real makers
-        </h1>
-        <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-text">
-          Every artist is vetted. Every piece is handmade. From ceramics to
-          woodworking — discover work that matters.
-        </p>
-      </section>
+      <SplitHero />
 
       {/* Featured Artists */}
       {artists.length > 0 && (
