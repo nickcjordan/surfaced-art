@@ -59,6 +59,14 @@ export function Footer() {
               </li>
               <li>
                 <Link
+                  href="/for-artists"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  For Artists
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/artists"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
