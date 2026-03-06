@@ -85,6 +85,8 @@ export default async function CategoryBrowsePage({ params }: Props) {
       price: listing.price,
       status: listing.status,
       primaryImageUrl: listing.primaryImage?.url ?? null,
+      primaryImageWidth: listing.primaryImage?.width ?? null,
+      primaryImageHeight: listing.primaryImage?.height ?? null,
       artistName: listing.artist.displayName,
     }))
   } catch (error) {

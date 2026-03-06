@@ -11,6 +11,8 @@ const mockListingResult = {
   price: 12500,
   status: 'available',
   primaryImageUrl: 'https://cdn.example.com/listing1-front.jpg',
+  primaryImageWidth: null,
+  primaryImageHeight: null,
   artistName: 'Abbey Peters',
   artistSlug: 'abbey-peters',
   rank: 0.075990885,

@@ -12,5 +12,8 @@ lambda_timeout     = 30
 # URLs
 frontend_url = "https://dev.surfacedart.com"
 
+# Seed
+seed_mode = "demo"
+
 # Cache
 cache_disabled = true

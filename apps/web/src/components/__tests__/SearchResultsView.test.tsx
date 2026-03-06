@@ -14,6 +14,8 @@ const mockListings: CategoryListingItem[] = [
     price: 12500,
     status: 'available',
     primaryImageUrl: null,
+    primaryImageWidth: null,
+    primaryImageHeight: null,
     artistName: 'Abbey Peters',
   },
 ]

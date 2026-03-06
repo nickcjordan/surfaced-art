@@ -282,6 +282,8 @@ model ListingImage {
   url            String   // CloudFront URL
   isProcessPhoto Boolean  @default(false) @map("is_process_photo")
   sortOrder      Int      @map("sort_order")
+  width          Int?     // Image pixel width (for aspect ratio)
+  height         Int?     // Image pixel height (for aspect ratio)
   createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations

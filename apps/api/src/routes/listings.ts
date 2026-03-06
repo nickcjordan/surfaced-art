@@ -139,6 +139,8 @@ export function createListingRoutes(prisma: PrismaClient) {
             url: listing.images[0].url,
             isProcessPhoto: listing.images[0].isProcessPhoto,
             sortOrder: listing.images[0].sortOrder,
+            width: listing.images[0].width,
+            height: listing.images[0].height,
             createdAt: listing.images[0].createdAt,
           }
         : null
@@ -230,6 +232,8 @@ export function createListingRoutes(prisma: PrismaClient) {
         url: img.url,
         isProcessPhoto: img.isProcessPhoto,
         sortOrder: img.sortOrder,
+        width: img.width,
+        height: img.height,
         createdAt: img.createdAt,
       })),
       artist: {

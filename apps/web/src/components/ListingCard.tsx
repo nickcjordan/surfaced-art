@@ -13,6 +13,8 @@ type ListingCardProps = {
     price: number
     status: ListingStatusType
     primaryImageUrl: string | null
+    primaryImageWidth?: number | null
+    primaryImageHeight?: number | null
   }
   artistName: string
   variant?: 'browse' | 'profile'
@@ -28,6 +30,13 @@ export function ListingCard({
   const isSold = listing.status === 'sold'
   const href = `/listing/${listing.id}`
 
+  // Use natural aspect ratio if dimensions are known, fall back to square
+  const hasNaturalRatio = listing.primaryImageWidth && listing.primaryImageHeight
+  const aspectStyle = hasNaturalRatio
+    ? { aspectRatio: `${listing.primaryImageWidth} / ${listing.primaryImageHeight}` }
+    : undefined
+  const aspectClass = hasNaturalRatio ? '' : 'aspect-square'
+
   return (
     <Link
       href={href}
@@ -38,7 +47,10 @@ export function ListingCard({
       )}
     >
       {/* Image container */}
-      <div className="relative aspect-square overflow-hidden rounded-t-md">
+      <div
+        className={cn('relative overflow-hidden rounded-t-md', aspectClass)}
+        style={aspectStyle}
+      >
         {listing.primaryImageUrl ? (
           <Image
             src={listing.primaryImageUrl}

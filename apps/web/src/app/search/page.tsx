@@ -87,6 +87,8 @@ export default async function SearchPage({ searchParams }: Props) {
       price: item.price,
       status: item.status,
       primaryImageUrl: item.primaryImageUrl,
+      primaryImageWidth: item.primaryImageWidth,
+      primaryImageHeight: item.primaryImageHeight,
       artistName: item.artistName,
     }))
 

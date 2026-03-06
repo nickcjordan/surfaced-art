@@ -341,6 +341,8 @@ export const listingAvailabilityBody = z.object({
 export const listingImageBody = z.object({
   url: z.string().url('Invalid URL'),
   isProcessPhoto: z.boolean().optional().default(false),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
 })
 
 /** PUT /me/listings/:id/images/reorder body */
