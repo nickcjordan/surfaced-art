@@ -124,8 +124,16 @@ export function findArtistWebsite(
  */
 export function findInstagramUrl(hrefs: string[]): string | null {
   for (const href of hrefs) {
-    if (href.toLowerCase().includes('instagram.com')) {
-      return href
+    try {
+      const url = new URL(href)
+      if (
+        url.hostname === 'instagram.com' ||
+        url.hostname.endsWith('.instagram.com')
+      ) {
+        return href
+      }
+    } catch {
+      // Not a valid URL, skip
     }
   }
   return null
