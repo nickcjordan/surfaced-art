@@ -299,6 +299,14 @@
     line-height: 1.4;
     letter-spacing: 0.01em;
   }
+
+  /* Full-bleed breakout — escapes Container's max-width constraint */
+  .full-bleed {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    margin-left: -50vw;
+  }
 }
 
 /* Skeleton pulse animation */
