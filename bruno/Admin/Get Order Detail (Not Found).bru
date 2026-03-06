@@ -1,0 +1,28 @@
+meta {
+  name: Get Order Detail (Not Found)
+  type: http
+  seq: 37
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/orders/00000000-0000-4000-8000-000000000000
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 404
+  res.body.error.code: eq NOT_FOUND
+}
+
+tests {
+  test("should return 404 for non-existent order", function() {
+    const body = res.getBody();
+    expect(body.error).to.have.property("code");
+    expect(body.error.code).to.equal("NOT_FOUND");
+  });
+}

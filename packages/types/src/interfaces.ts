@@ -884,6 +884,79 @@ export interface SearchResponse {
   query: string
 }
 
+// ─── Admin Order Response Types ──────────────────────────────────────
+
+/**
+ * Order list item for GET /admin/orders
+ */
+export interface AdminOrderListItem {
+  id: string
+  listingId: string
+  buyerId: string
+  artistId: string
+  artworkPrice: number
+  shippingCost: number
+  platformCommission: number
+  artistPayout: number
+  taxAmount: number
+  status: OrderStatusType
+  shippingCarrier: string | null
+  trackingNumber: string | null
+  shippedAt: string | null
+  deliveredAt: string | null
+  createdAt: string
+  updatedAt: string
+  buyer: { id: string; email: string; fullName: string }
+  artist: { id: string; displayName: string; slug: string }
+  listing: { id: string; title: string }
+}
+
+/**
+ * Full order detail for GET /admin/orders/:id
+ */
+export interface AdminOrderDetailResponse {
+  id: string
+  listingId: string
+  buyerId: string
+  artistId: string
+  stripePaymentIntentId: string
+  artworkPrice: number
+  shippingCost: number
+  platformCommission: number
+  artistPayout: number
+  taxAmount: number
+  status: OrderStatusType
+  shippingCarrier: string | null
+  trackingNumber: string | null
+  daysToFulfill: number | null
+  shippedAt: string | null
+  deliveredAt: string | null
+  payoutReleasedAt: string | null
+  createdAt: string
+  updatedAt: string
+  buyer: { id: string; email: string; fullName: string }
+  artist: { id: string; displayName: string; slug: string }
+  listing: { id: string; title: string; price: number }
+  review: {
+    id: string
+    overallRating: number
+    headline: string | null
+    createdAt: string
+  } | null
+}
+
+/**
+ * Response from POST /admin/orders/:id/refund
+ */
+export interface AdminOrderRefundResponse {
+  message: string
+  refund: {
+    stripeRefundId: string
+    amount: number
+    status: string
+  }
+}
+
 // ─── API Error Types ──────────────────────────────────────────────────
 
 /**

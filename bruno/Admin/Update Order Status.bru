@@ -1,0 +1,35 @@
+meta {
+  name: Update Order Status
+  type: http
+  seq: 39
+}
+
+put {
+  url: {{sa_baseUrl}}/admin/orders/{{sa_adminOrderId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "status": "shipped",
+    "reason": "Manually marked as shipped by admin"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+}
+
+tests {
+  test("should update order status successfully", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("message");
+    expect(body.message).to.include("status");
+  });
+}

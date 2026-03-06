@@ -1,0 +1,38 @@
+meta {
+  name: Refund Order
+  type: http
+  seq: 38
+}
+
+post {
+  url: {{sa_baseUrl}}/admin/orders/{{sa_adminOrderId}}/refund
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "reason": "Customer requested refund - item damaged in transit"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+  res.body.refund: isDefined
+}
+
+tests {
+  test("should initiate refund successfully", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("message");
+    expect(body).to.have.property("refund");
+    expect(body.refund).to.have.property("stripeRefundId");
+    expect(body.refund).to.have.property("amount");
+    expect(body.refund).to.have.property("status");
+  });
+}
