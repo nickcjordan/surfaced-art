@@ -29,7 +29,7 @@ export function SplitHero() {
   const image = pickHeroImage()
 
   return (
-    <section data-testid="hero" className="full-bleed">
+    <section data-testid="hero" className="full-bleed overflow-x-hidden">
       <div className="grid min-h-[60vh] grid-cols-1 lg:grid-cols-2">
         {/* Artwork image */}
         <div className="relative h-[50vh] lg:h-auto">
@@ -53,15 +53,15 @@ export function SplitHero() {
 
           <ul className="mt-8 space-y-3 text-muted-text">
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 block size-1.5 shrink-0 rounded-full bg-accent-primary" />
+              <span aria-hidden="true" className="mt-1.5 block size-1.5 shrink-0 rounded-full bg-accent-primary" />
               Every artist is vetted. Your work stands out, not competes.
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 block size-1.5 shrink-0 rounded-full bg-accent-primary" />
+              <span aria-hidden="true" className="mt-1.5 block size-1.5 shrink-0 rounded-full bg-accent-primary" />
               We handle the platform. You focus on creating.
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 block size-1.5 shrink-0 rounded-full bg-accent-primary" />
+              <span aria-hidden="true" className="mt-1.5 block size-1.5 shrink-0 rounded-full bg-accent-primary" />
               Your own gallery page — profile, process, and portfolio.
             </li>
           </ul>
