@@ -131,6 +131,12 @@ variable "lambda_timeout" {
   default     = 30
 }
 
+variable "api_reserved_concurrency" {
+  description = "Max concurrent API Lambda instances. Each holds 1 DB connection (with connection_limit=1). Keep well below RDS max_connections (~112 for db.t3.micro) to leave headroom for migrations."
+  type        = number
+  default     = 40
+}
+
 # Application URLs
 variable "frontend_url" {
   description = "Frontend application URL (for CORS and Cognito callbacks)"
