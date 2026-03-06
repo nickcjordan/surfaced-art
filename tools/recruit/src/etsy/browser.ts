@@ -84,11 +84,10 @@ export async function runBrowser(
       })
 
       const url = `${ETSY_API_BASE}/listings/active?${params.toString()}`
+      const authHeaders = { 'x-api-key': options.apiKey }
 
       try {
-        const result = await httpClient.get(
-          url + `&x-api-key=${options.apiKey}`
-        )
+        const result = await httpClient.get(url, authHeaders)
 
         if (!result.ok) {
           if (result.status === 401 || result.status === 403) {
@@ -152,8 +151,8 @@ export async function runBrowser(
 
   for (const shopId of shopIds) {
     try {
-      const url = `${ETSY_API_BASE}/shops/${shopId}?x-api-key=${options.apiKey}`
-      const result = await httpClient.get(url)
+      const url = `${ETSY_API_BASE}/shops/${shopId}`
+      const result = await httpClient.get(url, { 'x-api-key': options.apiKey })
 
       if (!result.ok) {
         if (options.verbose) {

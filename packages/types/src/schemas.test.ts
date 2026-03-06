@@ -254,6 +254,19 @@ describe('Shared Validation Schemas', () => {
     it('should strip HTML entities used for injection', () => {
       expect(sanitizeText('hello&lt;script&gt;')).not.toContain('<script>')
     })
+
+    it('should strip incomplete/split tag injection attempts', () => {
+      // "<scr<script>ipt>" → after tag strip → "<script>" → loop strips → ""
+      // Final angle bracket strip ensures no residual "<" or ">"
+      expect(sanitizeText('<scr<script>ipt>alert(1)</scr<script>ipt>')).not.toContain('<')
+      expect(sanitizeText('<scr<script>ipt>alert(1)</scr<script>ipt>')).not.toContain('>')
+    })
+
+    it('should strip stray angle brackets', () => {
+      // Lone < or > without forming a complete tag are stripped
+      expect(sanitizeText('5 > 3')).toBe('5 3')
+      expect(sanitizeText('2 < 4')).toBe('2 4')
+    })
   })
 
   describe('artistApplicationBody', () => {

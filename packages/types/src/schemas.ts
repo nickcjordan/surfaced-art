@@ -183,6 +183,10 @@ export function sanitizeText(input: string): string {
   // Final strip after all decoding rounds
   text = text.replace(/<[^<>]*>/g, '')
 
+  // Remove any remaining angle brackets that aren't part of complete tags
+  // (defense-in-depth against incomplete tag injection like "<scr<script>ipt>")
+  text = text.replace(/[<>]/g, '')
+
   return text.replace(/\s+/g, ' ').trim()
 }
 

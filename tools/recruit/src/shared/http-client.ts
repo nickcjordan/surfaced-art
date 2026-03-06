@@ -31,7 +31,7 @@ export class HttpClient {
     this.fetchFn = config.fetchFn ?? fetch
   }
 
-  async get(url: string): Promise<FetchResult> {
+  async get(url: string, headers?: Record<string, string>): Promise<FetchResult> {
     const domain = RateLimiter.domainOf(url)
     await this.rateLimiter.waitForSlot(domain)
 
@@ -51,23 +51,23 @@ export class HttpClient {
         )
 
         const response = await this.fetchFn(url, {
-          headers: { 'User-Agent': USER_AGENT },
+          headers: { 'User-Agent': USER_AGENT, ...headers },
           signal: controller.signal,
         })
 
         clearTimeout(timeout)
 
         const body = await response.text()
-        const headers: Record<string, string> = {}
+        const responseHeaders: Record<string, string> = {}
         response.headers.forEach((value, key) => {
-          headers[key] = value
+          responseHeaders[key] = value
         })
 
         const result: FetchResult = {
           ok: response.ok,
           status: response.status,
           body,
-          headers,
+          headers: responseHeaders,
         }
 
         // Don't retry on client errors (4xx) except 429
