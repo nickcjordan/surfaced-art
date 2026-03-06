@@ -198,7 +198,7 @@ export function ListingsTable() {
 
       {/* Listings list */}
       {listings.map((listing) => (
-        <Card key={listing.id} data-testid="listing-row">
+        <Card key={listing.id} data-testid="listing-row" className="py-0">
           <CardContent className="flex items-center gap-4 py-4">
             {/* Thumbnail */}
             {listing.primaryImage && (

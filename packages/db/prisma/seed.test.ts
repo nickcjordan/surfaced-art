@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { validateSlug } from '@surfaced-art/utils'
-import { artistConfigs, CDN_BASE } from './seed-data'
+import { artistConfigs, CDN_BASE, realArtistConfigs, demoArtistConfigs } from './seed-data'
 
 /**
  * Seed data validation tests.
@@ -157,6 +157,62 @@ describe('Seed Data Validation', () => {
     it('should have every artist with an explicit isDemo value', () => {
       for (const config of artistConfigs) {
         expect(typeof config.profile.isDemo).toBe('boolean')
+      }
+    })
+  })
+
+  describe('SEED_MODE filtering', () => {
+    it('should default to all artists when SEED_MODE is unset', () => {
+      // artistConfigs is evaluated at import time without SEED_MODE
+      expect(artistConfigs.length).toBe(
+        realArtistConfigs.length + demoArtistConfigs.length
+      )
+    })
+
+    it('should return only real artists when SEED_MODE=real', async () => {
+      vi.stubEnv('SEED_MODE', 'real')
+      vi.resetModules()
+      try {
+        const mod = await import('./seed-data')
+        expect(mod.artistConfigs.length).toBe(realArtistConfigs.length)
+        expect(mod.artistConfigs.every((c) => !c.profile.isDemo)).toBe(true)
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+
+    it('should return only demo artists when SEED_MODE=demo', async () => {
+      vi.stubEnv('SEED_MODE', 'demo')
+      vi.resetModules()
+      try {
+        const mod = await import('./seed-data')
+        expect(mod.artistConfigs.length).toBe(demoArtistConfigs.length)
+        expect(mod.artistConfigs.every((c) => c.profile.isDemo)).toBe(true)
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+
+    it('should return all artists when SEED_MODE=all', async () => {
+      vi.stubEnv('SEED_MODE', 'all')
+      vi.resetModules()
+      try {
+        const mod = await import('./seed-data')
+        expect(mod.artistConfigs.length).toBe(
+          realArtistConfigs.length + demoArtistConfigs.length
+        )
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+
+    it('should throw for invalid SEED_MODE values', async () => {
+      vi.stubEnv('SEED_MODE', 'invalid')
+      vi.resetModules()
+      try {
+        await expect(import('./seed-data')).rejects.toThrow('Invalid SEED_MODE')
+      } finally {
+        vi.unstubAllEnvs()
       }
     })
   })

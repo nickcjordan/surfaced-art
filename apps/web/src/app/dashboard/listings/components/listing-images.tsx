@@ -14,6 +14,23 @@ function getCloudfrontDomain(): string {
   return process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN || ''
 }
 
+/** Read pixel dimensions from an image file in the browser. */
+function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new window.Image()
+    img.onload = () => {
+      resolve({ width: img.naturalWidth, height: img.naturalHeight })
+      URL.revokeObjectURL(url)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Failed to read image dimensions'))
+    }
+    img.src = url
+  })
+}
+
 interface ListingImagesProps {
   listingId: string
   images: MyListingImageResponse[]
@@ -52,9 +69,13 @@ export function ListingImages({ listingId, images, onImagesChange }: ListingImag
       }
       const cloudFrontUrl = `https://${cloudfrontDomain}/${presigned.key}`
 
+      // Read image dimensions from file before sending to API
+      const dimensions = await getImageDimensions(file)
+
       const newImage = await addListingImage(token, listingId, {
         url: cloudFrontUrl,
         isProcessPhoto: false,
+        ...dimensions,
       })
 
       onImagesChange([...images, newImage])

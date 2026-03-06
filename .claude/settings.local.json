@@ -28,7 +28,10 @@
       "WebFetch(domain:abbey-peters.com)",
       "WebFetch(domain:morrison-david.com)",
       "WebFetch(domain:karinayanesceramics.squarespace.com)",
-      "Bash(MSYS_NO_PATHCONV=1 aws logs:*)"
+      "Bash(MSYS_NO_PATHCONV=1 aws logs:*)",
+      "WebSearch",
+      "Bash(npx tsx --env-file=.env.dev -e \":*)",
+      "Bash(npx tsx --env-file=packages/db/.env.dev -e \":*)"
     ]
   }
 }

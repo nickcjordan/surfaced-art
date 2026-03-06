@@ -54,6 +54,7 @@ resource "aws_lambda_function" "migrate" {
       DATABASE_URL        = var.database_url
       NODE_EXTRA_CA_CERTS = "/var/runtime/ca-cert.pem"
       SEED_CDN_BASE       = var.seed_cdn_base
+      SEED_MODE           = var.seed_mode
     }
   }
 

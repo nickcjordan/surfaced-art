@@ -104,6 +104,13 @@ variable "ses_domain" {
   default     = "surfacedart.com"
 }
 
+# Seed mode
+variable "seed_mode" {
+  description = "Which artists to seed: 'real' (production), 'demo' (dev/staging), or 'all'"
+  type        = string
+  default     = "all"
+}
+
 # Cache control
 variable "cache_disabled" {
   description = "Disable API cache-control headers (set to true for dev)"

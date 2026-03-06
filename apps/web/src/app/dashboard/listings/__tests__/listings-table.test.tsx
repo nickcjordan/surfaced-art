@@ -48,6 +48,8 @@ const mockListings: MyListingListItem[] = [
       url: 'https://cdn.example.com/img1.jpg',
       isProcessPhoto: false,
       sortOrder: 0,
+      width: null,
+      height: null,
       createdAt: '2025-06-01T00:00:00.000Z',
     },
   },

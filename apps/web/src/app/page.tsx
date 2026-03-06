@@ -4,6 +4,7 @@ import { getCategories, getListings, getFeaturedArtists, ApiError } from '@/lib/
 import { SplitHero } from '@/components/SplitHero'
 import { ArtistCard } from '@/components/ArtistCard'
 import { ListingCard } from '@/components/ListingCard'
+import { MasonryGrid } from '@/components/MasonryGrid'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { JsonLd } from '@/components/JsonLd'
@@ -95,7 +96,7 @@ export default async function Home() {
               Browse all
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+          <MasonryGrid columns={[2, 2, 3, 3]}>
             {listings.map((listing) => (
               <ListingCard
                 key={listing.id}
@@ -107,11 +108,13 @@ export default async function Home() {
                   price: listing.price,
                   status: listing.status,
                   primaryImageUrl: listing.primaryImage?.url ?? null,
+                  primaryImageWidth: listing.primaryImage?.width ?? null,
+                  primaryImageHeight: listing.primaryImage?.height ?? null,
                 }}
                 artistName={listing.artist.displayName}
               />
             ))}
-          </div>
+          </MasonryGrid>
         </section>
       )}
 

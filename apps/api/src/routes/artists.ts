@@ -175,6 +175,8 @@ export function createArtistRoutes(prisma: PrismaClient) {
           url: img.url,
           isProcessPhoto: img.isProcessPhoto,
           sortOrder: img.sortOrder,
+          width: img.width,
+          height: img.height,
           createdAt: img.createdAt,
         })),
       })),

@@ -48,6 +48,8 @@ const mockImages: MyListingImageResponse[] = [
     url: 'https://cdn.example.com/image1.jpg',
     isProcessPhoto: false,
     sortOrder: 0,
+    width: null,
+    height: null,
     createdAt: '2025-06-01T00:00:00.000Z',
   },
   {
@@ -55,6 +57,8 @@ const mockImages: MyListingImageResponse[] = [
     url: 'https://cdn.example.com/image2.jpg',
     isProcessPhoto: true,
     sortOrder: 1,
+    width: null,
+    height: null,
     createdAt: '2025-06-02T00:00:00.000Z',
   },
 ]

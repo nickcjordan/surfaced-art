@@ -20,12 +20,13 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
-  console.log('Start seeding...')
+  const mode = process.env.SEED_MODE || 'all'
+  console.log(`Start seeding... (SEED_MODE=${mode}, ${artistConfigs.length} artists)`)
 
   for (const config of artistConfigs) {
     const result = await prisma.$transaction(async (tx) => {
       return seedArtist(tx, config)
-    })
+    }, { timeout: 30000 })
     console.log(`  Seeded artist: ${result.profile.displayName} (${result.profile.slug})`)
   }
 

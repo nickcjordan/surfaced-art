@@ -279,6 +279,7 @@ module "lambda_migrate" {
   placeholder_image_uri = var.placeholder_image_uri
   database_url          = module.rds.connection_string
   seed_cdn_base         = module.s3_cloudfront.cloudfront_url
+  seed_mode             = var.seed_mode
 
   depends_on = [aws_ecr_repository_policy.migrate]
 }

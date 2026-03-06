@@ -150,6 +150,8 @@ export interface ListingImage {
   url: string // CloudFront URL
   isProcessPhoto: boolean // Behind-the-scenes photo
   sortOrder: number
+  width: number | null // Image pixel width (for aspect ratio)
+  height: number | null // Image pixel height (for aspect ratio)
   createdAt: Date
 }
 
@@ -748,6 +750,8 @@ export interface MyListingImageResponse {
   url: string
   isProcessPhoto: boolean
   sortOrder: number
+  width: number | null
+  height: number | null
   createdAt: string
 }
 
@@ -843,6 +847,8 @@ export interface SearchListingItem {
   price: number
   status: ListingStatusType
   primaryImageUrl: string | null
+  primaryImageWidth: number | null
+  primaryImageHeight: number | null
   artistName: string
   artistSlug: string
   rank: number

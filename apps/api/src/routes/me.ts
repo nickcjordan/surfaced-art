@@ -46,12 +46,14 @@ function toNumberOrNull(val: unknown): number | null {
   return toNumber(val)
 }
 
-function formatListingImage(img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }): MyListingImageResponse {
+function formatListingImage(img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; width: number | null; height: number | null; createdAt: Date }): MyListingImageResponse {
   return {
     id: img.id,
     url: img.url,
     isProcessPhoto: img.isProcessPhoto,
     sortOrder: img.sortOrder,
+    width: img.width,
+    height: img.height,
     createdAt: img.createdAt.toISOString(),
   }
 }
@@ -64,7 +66,7 @@ function formatListingResponse(listing: {
   packedLength: unknown; packedWidth: unknown; packedHeight: unknown; packedWeight: unknown;
   editionNumber: number | null; editionTotal: number | null;
   reservedUntil: Date | null; createdAt: Date; updatedAt: Date;
-  images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }[];
+  images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; width: number | null; height: number | null; createdAt: Date }[];
 }): MyListingResponse {
   return {
     id: listing.id,
@@ -99,7 +101,7 @@ function formatListingListItem(listing: {
   price: number; status: string; isDocumented: boolean;
   quantityTotal: number; quantityRemaining: number;
   createdAt: Date; updatedAt: Date;
-  images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }[];
+  images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; width: number | null; height: number | null; createdAt: Date }[];
 }): MyListingListItem {
   const firstImage = listing.images[0]
   const primaryImage = firstImage ? formatListingImage(firstImage) : null
@@ -1191,6 +1193,8 @@ export function createMeRoutes(prisma: PrismaClient) {
         url: parsed.data.url,
         isProcessPhoto: parsed.data.isProcessPhoto,
         sortOrder: imageCount,
+        width: parsed.data.width ?? null,
+        height: parsed.data.height ?? null,
       },
     })
 
@@ -1361,7 +1365,7 @@ export function createMeRoutes(prisma: PrismaClient) {
     logger.info('Listing images reordered', { artistId: artist.id, listingId })
 
     return c.json({
-      images: reordered.map((img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }) => formatListingImage(img)),
+      images: reordered.map((img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; width: number | null; height: number | null; createdAt: Date }) => formatListingImage(img)),
     })
   })
 

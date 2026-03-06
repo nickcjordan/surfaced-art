@@ -35,6 +35,8 @@ const mockListingForList = {
       url: 'https://cdn.example.com/listing1-front.jpg',
       isProcessPhoto: false,
       sortOrder: 0,
+      width: null,
+      height: null,
       createdAt: new Date('2025-02-01T00:00:00Z'),
     },
   ],
@@ -57,6 +59,8 @@ const mockListingForDetail = {
       url: 'https://cdn.example.com/listing1-front.jpg',
       isProcessPhoto: false,
       sortOrder: 0,
+      width: null,
+      height: null,
       createdAt: new Date('2025-02-01T00:00:00Z'),
     },
     {
@@ -65,6 +69,8 @@ const mockListingForDetail = {
       url: 'https://cdn.example.com/listing1-back.jpg',
       isProcessPhoto: false,
       sortOrder: 1,
+      width: null,
+      height: null,
       createdAt: new Date('2025-02-01T00:00:00Z'),
     },
     {
@@ -73,6 +79,8 @@ const mockListingForDetail = {
       url: 'https://cdn.example.com/listing1-process.jpg',
       isProcessPhoto: true,
       sortOrder: 2,
+      width: null,
+      height: null,
       createdAt: new Date('2025-02-01T00:00:00Z'),
     },
   ],
@@ -169,6 +177,8 @@ describe('GET /listings', () => {
         url: 'https://cdn.example.com/listing1-front.jpg',
         isProcessPhoto: false,
         sortOrder: 0,
+        width: null,
+        height: null,
         createdAt: '2025-02-01T00:00:00.000Z',
       })
 

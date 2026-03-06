@@ -44,6 +44,8 @@ export function createSearchRoutes(prisma: PrismaClient) {
           l.price,
           l.status,
           (SELECT url FROM listing_images li WHERE li.listing_id = l.id ORDER BY li.sort_order ASC LIMIT 1) AS "primaryImageUrl",
+          (SELECT width FROM listing_images li WHERE li.listing_id = l.id ORDER BY li.sort_order ASC LIMIT 1) AS "primaryImageWidth",
+          (SELECT height FROM listing_images li WHERE li.listing_id = l.id ORDER BY li.sort_order ASC LIMIT 1) AS "primaryImageHeight",
           ap.display_name AS "artistName",
           ap.slug AS "artistSlug",
           ts_rank(l.search_vector, plainto_tsquery('english', ${q})) AS rank,
