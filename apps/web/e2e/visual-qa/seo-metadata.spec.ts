@@ -182,6 +182,35 @@ test.describe('SEO Metadata — Search Page', () => {
   })
 })
 
+test.describe('SEO Metadata — For Artists Page', () => {
+  test('for-artists page has correct meta tags', async ({ page }) => {
+    await page.goto('/for-artists')
+    await page.waitForLoadState('networkidle')
+
+    const title = await page.title()
+    expect(title.toLowerCase()).toContain('for artists')
+
+    const description = await page
+      .locator('meta[name="description"]')
+      .getAttribute('content')
+    expect(description).toBeTruthy()
+    expect(description!.length).toBeGreaterThan(50)
+
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+      'content',
+      /.+/
+    )
+
+    // Verify JSON-LD WebPage schema
+    const jsonLdEl = page.locator('script[type="application/ld+json"]')
+    await expect(jsonLdEl.first()).toBeAttached()
+    const jsonLd = await jsonLdEl.first().textContent()
+    expect(jsonLd).toBeTruthy()
+    const structured = JSON.parse(jsonLd!)
+    expect(structured['@type']).toBe('WebPage')
+  })
+})
+
 test.describe('SEO Metadata — Integrity Checks', () => {
   const PAGES_TO_CHECK = [
     '/',
