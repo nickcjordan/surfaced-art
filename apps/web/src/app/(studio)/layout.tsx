@@ -7,7 +7,7 @@ export default function StudioLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
-      {children}
+      <main className="flex-1">{children}</main>
       <StudioFooter />
     </div>
   )
