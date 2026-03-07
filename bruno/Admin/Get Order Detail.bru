@@ -1,0 +1,46 @@
+meta {
+  name: Get Order Detail
+  type: http
+  seq: 36
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/orders/{{sa_adminOrderId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.status: isDefined
+  res.body.artworkPrice: isNumber
+}
+
+tests {
+  test("should return full order detail", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id");
+    expect(body).to.have.property("listingId");
+    expect(body).to.have.property("buyerId");
+    expect(body).to.have.property("artistId");
+    expect(body).to.have.property("stripePaymentIntentId");
+    expect(body).to.have.property("artworkPrice");
+    expect(body).to.have.property("shippingCost");
+    expect(body).to.have.property("platformCommission");
+    expect(body).to.have.property("artistPayout");
+    expect(body).to.have.property("taxAmount");
+    expect(body).to.have.property("status");
+    expect(body).to.have.property("buyer");
+    expect(body.buyer).to.have.property("email");
+    expect(body).to.have.property("artist");
+    expect(body.artist).to.have.property("displayName");
+    expect(body).to.have.property("listing");
+    expect(body.listing).to.have.property("title");
+    expect(body.listing).to.have.property("price");
+  });
+}

@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod'
-import { Category, CvEntryType, ListingStatus, ListingType } from './enums'
+import { Category, CvEntryType, ListingStatus, ListingType, OrderStatus } from './enums'
 
 // ============================================================================
 // Helpers
@@ -506,6 +506,37 @@ export const adminWaitlistQuery = z.object({
     .transform((v) => Math.min(v, 100)),
 })
 
+/** GET /admin/orders query params */
+const orderStatusValues = Object.values(OrderStatus) as [string, ...string[]]
+
+export const adminOrdersQuery = z.object({
+  status: z.enum(orderStatusValues).optional(),
+  buyerId: z.string().uuid().optional(),
+  artistId: z.string().uuid().optional(),
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** POST /admin/orders/:id/refund body */
+export const adminOrderRefundBody = z.object({
+  reason: z.string().min(1, 'Reason is required').max(2000),
+  amount: z.number().int().positive('Amount must be positive').optional(),
+})
+
+/** PUT /admin/orders/:id/status body */
+export const adminOrderStatusUpdateBody = z.object({
+  status: z.enum(orderStatusValues),
+  reason: z.string().min(1, 'Reason is required').max(2000),
+})
+
 /** POST /admin/listings/bulk-status body */
 export const adminBulkListingStatusBody = z.object({
   listingIds: z
@@ -561,5 +592,8 @@ export type AdminListingUpdateBody = z.infer<typeof adminListingUpdateBody>
 export type AdminListingHideBody = z.infer<typeof adminListingHideBody>
 export type AdminAuditLogQuery = z.infer<typeof adminAuditLogQuery>
 export type AdminWaitlistQuery = z.infer<typeof adminWaitlistQuery>
+export type AdminOrdersQuery = z.infer<typeof adminOrdersQuery>
+export type AdminOrderRefundBody = z.infer<typeof adminOrderRefundBody>
+export type AdminOrderStatusUpdateBody = z.infer<typeof adminOrderStatusUpdateBody>
 export type AdminBulkListingStatusBody = z.infer<typeof adminBulkListingStatusBody>
 export type AdminBulkRoleGrantBody = z.infer<typeof adminBulkRoleGrantBody>
