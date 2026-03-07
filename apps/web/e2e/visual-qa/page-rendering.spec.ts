@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test'
 const SEED_ARTIST = { slug: 'abbey-peters', displayName: 'Abbey Peters' }
 
 // Two categories: one known-populated, one that may be empty — covers both data shapes
-const CATEGORIES = ['ceramics', 'drawing_painting']
+const CATEGORIES = ['ceramics', 'drawing-painting']
 
 test.describe('Page Rendering — Homepage', () => {
   test('homepage renders with all sections', async ({ page }) => {

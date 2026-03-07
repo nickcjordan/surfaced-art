@@ -6,12 +6,9 @@ import { CategoryBrowseView, type CategoryListingItem } from '@/components/Categ
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { SITE_URL } from '@/lib/site-config'
-import { Category } from '@surfaced-art/types'
-import type { CategoryType } from '@surfaced-art/types'
+import { urlSlugToCategory, categoryToUrlSlug } from '@/lib/category-slugs'
 
 export const revalidate = 60
-
-const validCategories = new Set(Object.values(Category))
 
 // Return empty array so no category pages are pre-rendered at build time.
 // Pages render on first visitor request and are cached via ISR (revalidate = 60).
@@ -25,22 +22,24 @@ type Props = {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { category } = await params
-  if (!validCategories.has(category as CategoryType)) {
+  const { category: urlSlug } = await params
+  const categorySlug = urlSlugToCategory(urlSlug)
+  if (!categorySlug) {
     return { title: 'Category — Surfaced Art' }
   }
-  const label = categoryLabels[category as CategoryType]
+  const label = categoryLabels[categorySlug]
+  const canonicalSlug = categoryToUrlSlug(categorySlug)
   return {
     title: `${label} — Surfaced Art`,
     description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
     alternates: {
-      canonical: `/category/${category}`,
+      canonical: `/category/${canonicalSlug}`,
     },
     openGraph: {
       title: `${label} — Surfaced Art`,
       description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
       type: 'website',
-      url: `${SITE_URL}/category/${category}`,
+      url: `${SITE_URL}/category/${canonicalSlug}`,
       images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     },
     twitter: {
@@ -50,13 +49,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CategoryBrowsePage({ params }: Props) {
-  const { category } = await params
+  const { category: urlSlug } = await params
+  const categorySlug = urlSlugToCategory(urlSlug)
 
-  if (!validCategories.has(category as CategoryType)) {
+  if (!categorySlug) {
     notFound()
   }
 
-  const categorySlug = category as CategoryType
   const label = categoryLabels[categorySlug]
 
   let listings: CategoryListingItem[] = []
@@ -98,6 +97,8 @@ export default async function CategoryBrowsePage({ params }: Props) {
     }
   }
 
+  const canonicalSlug = categoryToUrlSlug(categorySlug)
+
   return (
     <div className="space-y-8">
       <JsonLd data={{
@@ -105,7 +106,7 @@ export default async function CategoryBrowsePage({ params }: Props) {
         '@type': 'CollectionPage',
         name: `${label} — Surfaced Art`,
         description: `Browse handmade ${label.toLowerCase()} from vetted artists on Surfaced Art.`,
-        url: `${SITE_URL}/category/${categorySlug}`,
+        url: `${SITE_URL}/category/${canonicalSlug}`,
       }} />
       <Breadcrumbs items={[
         { label: 'Home', href: '/' },

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { CATEGORIES } from '@/lib/categories'
+import { categoryToUrlSlug } from '@/lib/category-slugs'
+import type { CategoryType } from '@surfaced-art/types'
 
 export async function POST(request: Request) {
   const secret = process.env.REVALIDATION_SECRET
@@ -35,20 +37,23 @@ export async function POST(request: Request) {
     revalidatePath('/')
     revalidated.push(`/artist/${body.slug}`, '/')
     for (const cat of CATEGORIES) {
-      revalidatePath(`/category/${cat.slug}`)
-      revalidated.push(`/category/${cat.slug}`)
+      const urlSlug = categoryToUrlSlug(cat.slug)
+      revalidatePath(`/category/${urlSlug}`)
+      revalidated.push(`/category/${urlSlug}`)
     }
   } else if (body.type === 'listing' && body.id) {
     revalidatePath(`/listing/${body.id}`)
     revalidatePath('/')
     revalidated.push(`/listing/${body.id}`, '/')
     if (body.category) {
-      revalidatePath(`/category/${body.category}`)
-      revalidated.push(`/category/${body.category}`)
+      const urlSlug = categoryToUrlSlug(body.category as CategoryType)
+      revalidatePath(`/category/${urlSlug}`)
+      revalidated.push(`/category/${urlSlug}`)
     } else {
       for (const cat of CATEGORIES) {
-        revalidatePath(`/category/${cat.slug}`)
-        revalidated.push(`/category/${cat.slug}`)
+        const urlSlug = categoryToUrlSlug(cat.slug)
+        revalidatePath(`/category/${urlSlug}`)
+        revalidated.push(`/category/${urlSlug}`)
       }
     }
   } else if (body.type === 'all') {

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { CategoryType } from '@surfaced-art/types'
 import { CATEGORIES } from '@/lib/categories'
+import { categoryToUrlSlug } from '@/lib/category-slugs'
 import { cn } from '@/lib/utils'
 
 type CategoryFilterBarProps = {
@@ -22,7 +23,7 @@ export function CategoryFilterBar({
   'data-testid': testId = 'category-nav',
   className,
 }: CategoryFilterBarProps) {
-  const buildHref = hrefBuilder ?? ((slug: CategoryType) => `${basePath}/${slug}`)
+  const buildHref = hrefBuilder ?? ((slug: CategoryType) => `${basePath}/${categoryToUrlSlug(slug)}`)
 
   const pillBase = 'rounded-md px-3 py-1.5 text-sm transition-colors'
   const activeClasses = 'bg-accent-primary text-white'

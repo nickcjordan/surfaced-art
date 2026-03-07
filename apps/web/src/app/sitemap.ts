@@ -37,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     ...CATEGORIES.map((cat) => ({
-      url: `${SITE_URL}/category/${cat.slug}`,
+      url: `${SITE_URL}${cat.href}`,
       changeFrequency: 'daily' as const,
       priority: 0.8,
     })),

@@ -27,7 +27,7 @@ describe('CategoryFilterBar', () => {
     render(<CategoryFilterBar activeCategory="ceramics" />)
 
     const link = screen.getByRole('link', { name: 'Drawing & Painting' })
-    expect(link).toHaveAttribute('href', '/category/drawing_painting')
+    expect(link).toHaveAttribute('href', '/category/drawing-painting')
   })
 
   it('should use custom hrefBuilder when provided', () => {

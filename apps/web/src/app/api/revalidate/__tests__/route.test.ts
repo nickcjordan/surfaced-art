@@ -101,7 +101,7 @@ describe('POST /api/revalidate', () => {
       expect(body.revalidated).toContain('/')
       // Should include all category pages
       for (const cat of CATEGORIES) {
-        expect(body.revalidated).toContain(`/category/${cat.slug}`)
+        expect(body.revalidated).toContain(cat.href)
       }
       const categoryPaths = body.revalidated.filter((p: string) => p.startsWith('/category/'))
       expect(categoryPaths).toHaveLength(CATEGORIES.length)
@@ -125,7 +125,7 @@ describe('POST /api/revalidate', () => {
       expect(body.revalidated).toContain('/')
       expect(body.revalidated).toContain('/category/ceramics')
       // Should NOT include other category pages
-      expect(body.revalidated).not.toContain('/category/drawing_painting')
+      expect(body.revalidated).not.toContain('/category/drawing-painting')
     })
 
     it('should revalidate all category pages when category is not specified', async () => {
@@ -136,7 +136,7 @@ describe('POST /api/revalidate', () => {
       const body = await response.json()
       const categoryPaths = body.revalidated.filter((p: string) => p.startsWith('/category/'))
       expect(categoryPaths).toEqual(
-        expect.arrayContaining(CATEGORIES.map((cat) => `/category/${cat.slug}`))
+        expect.arrayContaining(CATEGORIES.map((cat) => cat.href))
       )
       expect(categoryPaths).toHaveLength(CATEGORIES.length)
     })

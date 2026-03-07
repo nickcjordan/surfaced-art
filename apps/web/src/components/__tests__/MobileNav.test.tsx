@@ -34,7 +34,7 @@ describe('MobileNav', () => {
   })
 
   it('should highlight the active category', async () => {
-    mockPathname = '/category/drawing_painting'
+    mockPathname = '/category/drawing-painting'
     render(<MobileNav />)
     await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
 
@@ -44,7 +44,7 @@ describe('MobileNav', () => {
   })
 
   it('should not highlight inactive categories', async () => {
-    mockPathname = '/category/drawing_painting'
+    mockPathname = '/category/drawing-painting'
     render(<MobileNav />)
     await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
 

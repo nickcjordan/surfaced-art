@@ -49,7 +49,7 @@ describe('Navigation', () => {
   })
 
   it('should highlight the active category when on a category page', () => {
-    mockPathname = '/category/drawing_painting'
+    mockPathname = '/category/drawing-painting'
     render(<Navigation />)
 
     const activeLink = screen.getByRole('link', { name: 'Drawing & Painting' })
