@@ -40,6 +40,9 @@ export function MasonryGrid({
   const [columnCount, setColumnCount] = useState(getColumnCount)
 
   useEffect(() => {
+    // Reflow immediately on mount — SSR initializes columnCount to 1
+    setColumnCount(getColumnCount())
+
     const handleResize = () => {
       setColumnCount(getColumnCount())
     }
