@@ -120,7 +120,7 @@ export default async function ArtistProfilePage({ params }: Props) {
           href={`/studio/${slug}`}
           className="text-sm text-muted-text transition-colors hover:text-foreground shrink-0 ml-4"
         >
-          Visit {artist.displayName}&apos;s Studio →
+          Visit {artist.displayName.split(' ')[0]}&apos;s Studio →
         </Link>
       </div>
 
