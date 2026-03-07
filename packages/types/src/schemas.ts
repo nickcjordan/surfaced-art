@@ -531,9 +531,16 @@ export const adminOrderRefundBody = z.object({
   amount: z.number().int().positive('Amount must be positive').optional(),
 })
 
+// 'pending' is the initial state — no status can transition *to* pending,
+// so it is excluded from the update body to surface invalid requests at the
+// schema layer rather than with a confusing transition-guard error.
+const orderStatusUpdateValues = orderStatusValues.filter(
+  (s) => s !== 'pending',
+) as [string, ...string[]]
+
 /** PUT /admin/orders/:id/status body */
 export const adminOrderStatusUpdateBody = z.object({
-  status: z.enum(orderStatusValues),
+  status: z.enum(orderStatusUpdateValues),
   reason: z.string().min(1, 'Reason is required').max(2000),
 })
 

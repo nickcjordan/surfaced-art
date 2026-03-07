@@ -228,10 +228,14 @@ async function main(): Promise<void> {
       uploadKey = deriveUploadKey(row.s3Key, extension)
     }
 
-    // Check idempotency — skip if already uploaded (unless --overwrite)
-    if (!overwrite) {
-      const exists = await s3KeyExists(s3, uploadKey)
-      if (exists) {
+    // Check idempotency — always check existence in dry-run so the preview
+    // accurately distinguishes new uploads from genuine overwrites.
+    // In real mode, skip the check when --overwrite is set.
+    const shouldCheckExistence = dryRun || !overwrite
+    let existsInS3 = false
+    if (shouldCheckExistence) {
+      existsInS3 = await s3KeyExists(s3, uploadKey)
+      if (existsInS3 && !overwrite) {
         console.log(`  ⊘ Exists: ${row.imageName} → ${uploadKey}`)
         skipped++
         continue
@@ -239,7 +243,7 @@ async function main(): Promise<void> {
     }
 
     if (dryRun) {
-      const label = overwrite ? 'Would overwrite' : 'Would upload (new)'
+      const label = existsInS3 ? 'Would overwrite' : 'Would upload (new)'
       console.log(`  → ${label}: ${row.imageName} → ${uploadKey}`)
       continue
     }

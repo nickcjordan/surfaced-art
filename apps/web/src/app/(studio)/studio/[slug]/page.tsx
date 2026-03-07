@@ -56,6 +56,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             ? [{ url: artist.profileImageUrl, width: 400, height: 400 }]
             : [],
       },
+      twitter: {
+        card: 'summary_large_image',
+        title: artist.displayName,
+        description,
+        images: artist.coverImageUrl
+          ? [artist.coverImageUrl]
+          : artist.profileImageUrl
+            ? [artist.profileImageUrl]
+            : [],
+      },
     }
   } catch {
     return { title: 'Artist Studio' }

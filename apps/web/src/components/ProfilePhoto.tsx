@@ -28,7 +28,7 @@ export function ProfilePhoto({
       className={cn(
         'relative shrink-0 overflow-hidden rounded-full bg-surface',
         sizeClasses[size],
-        bordered && size === 'xl' ? 'ring-3 ring-background' : bordered && 'ring-2 ring-background',
+        bordered && size === 'xl' ? 'ring-[3px] ring-background' : bordered && 'ring-2 ring-background',
         className
       )}
     >
