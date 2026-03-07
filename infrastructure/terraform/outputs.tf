@@ -73,3 +73,13 @@ output "cloudwatch_dashboard_url" {
   description = "CloudWatch dashboard URL for platform health monitoring"
   value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.platform.dashboard_name}"
 }
+
+output "cloudwatch_image_processor_logs_dashboard_url" {
+  description = "CloudWatch dashboard URL for image processor Lambda logs"
+  value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.image_processor_logs.dashboard_name}"
+}
+
+output "cloudwatch_api_logs_dashboard_url" {
+  description = "CloudWatch dashboard URL for API Lambda and API Gateway logs"
+  value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.api_logs.dashboard_name}"
+}
