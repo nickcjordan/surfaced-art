@@ -17,7 +17,7 @@ type ListingCardProps = {
     primaryImageHeight?: number | null
   }
   artistName: string
-  variant?: 'browse' | 'profile'
+  variant?: 'browse' | 'profile' | 'studio'
   className?: string
 }
 
@@ -59,7 +59,7 @@ export function ListingCard({
             unoptimized
             className={cn(
               'object-cover rounded-sm transition-transform duration-300 ease-in-out',
-              variant === 'profile' && 'group-hover:scale-[1.02]'
+              (variant === 'profile' || variant === 'studio') && 'group-hover:scale-[1.02]'
             )}
           />
         ) : (
@@ -92,18 +92,25 @@ export function ListingCard({
         <h3 className="font-serif text-foreground text-sm truncate">
           {listing.title}
         </h3>
-        <p className="text-muted-text text-sm truncate">
-          {artistName}
-        </p>
-        <p className="text-muted-text text-xs truncate">{listing.medium}</p>
-        <div className="flex items-center justify-between mt-1">
-          <span className="text-sm font-semibold text-foreground">
-            {formatCurrency(listing.price)}
-          </span>
-          {isSold && (
-            <span className="text-muted-text text-xs font-medium">Sold</span>
-          )}
-        </div>
+        {variant !== 'studio' && (
+          <>
+            <p className="text-muted-text text-sm truncate">
+              {artistName}
+            </p>
+            <p className="text-muted-text text-xs truncate">{listing.medium}</p>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-sm font-semibold text-foreground">
+                {formatCurrency(listing.price)}
+              </span>
+              {isSold && (
+                <span className="text-muted-text text-xs font-medium">Sold</span>
+              )}
+            </div>
+          </>
+        )}
+        {variant === 'studio' && isSold && (
+          <span className="text-muted-text text-xs font-medium">Sold</span>
+        )}
       </div>
     </Link>
   )

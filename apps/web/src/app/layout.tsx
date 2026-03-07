@@ -4,11 +4,6 @@ import { DM_Serif_Display, DM_Sans } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '@/lib/auth'
 import { AnalyticsProvider, PostHogPageView } from '@/lib/analytics'
-import { Header } from '@/components/Header'
-import { ScrollToTop } from '@/components/ScrollToTop'
-import { Footer } from '@/components/Footer'
-import { CookieConsent } from '@/components/CookieConsent'
-import { Container } from '@/components/ui/container'
 import { SITE_URL } from '@/lib/site-config'
 import './globals.css'
 
@@ -61,15 +56,7 @@ export default function RootLayout({
               <Suspense fallback={null}>
                 <PostHogPageView />
               </Suspense>
-              <ScrollToTop />
-              <Header />
-              <main className="flex-1">
-                <Container className="py-8 md:py-12">
-                  {children}
-                </Container>
-              </main>
-              <Footer />
-              <CookieConsent />
+              {children}
             </AnalyticsProvider>
           </AuthProvider>
         </ThemeProvider>
