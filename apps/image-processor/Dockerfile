@@ -10,8 +10,11 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 # Install sharp with native binaries for the Lambda runtime (Amazon Linux).
 # Use a temporary package.json to avoid workspace resolution issues from
 # the monorepo root, then remove it so we can copy the real one.
+#
+# IMPORTANT: This version must match apps/image-processor/package.json.
+# When upgrading sharp, update both files together.
 RUN echo '{"private":true}' > package.json && \
-    npm install sharp@^0.33.0 && \
+    npm install sharp@0.34.5 && \
     rm -f package.json package-lock.json
 
 # Root package.json provides "type": "module" so the Lambda Node 20

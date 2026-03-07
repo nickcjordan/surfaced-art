@@ -446,3 +446,98 @@ resource "aws_cloudwatch_dashboard" "platform" {
     ]
   })
 }
+
+# -----------------------------------------------------------------------------
+# CloudWatch Logs Dashboards
+# -----------------------------------------------------------------------------
+# Dedicated log-viewer dashboards for debugging. Each shows raw log events via
+# Logs Insights queries so you can tail activity and spot errors quickly.
+# Time range is controlled by the dashboard's time picker.
+
+resource "aws_cloudwatch_dashboard" "image_processor_logs" {
+  dashboard_name = "${var.project_name}-${var.environment}-image-processor-logs"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "log"
+        x      = 0
+        y      = 0
+        width  = 24
+        height = 14
+        properties = {
+          title         = "All Log Events"
+          logGroupNames = [aws_cloudwatch_log_group.image_processor_lambda.name]
+          query         = "fields @timestamp, @message, @logStream\n| sort @timestamp desc\n| limit 500"
+          region        = var.aws_region
+          view          = "table"
+        }
+      },
+      {
+        type   = "log"
+        x      = 0
+        y      = 14
+        width  = 24
+        height = 10
+        properties = {
+          title         = "Errors & Failures"
+          logGroupNames = [aws_cloudwatch_log_group.image_processor_lambda.name]
+          query         = "fields @timestamp, @message\n| filter @message like /(?i)(error|failed|exception|timeout)/\n| sort @timestamp desc\n| limit 200"
+          region        = var.aws_region
+          view          = "table"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_cloudwatch_dashboard" "api_logs" {
+  dashboard_name = "${var.project_name}-${var.environment}-api-logs"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "log"
+        x      = 0
+        y      = 0
+        width  = 24
+        height = 14
+        properties = {
+          title         = "API Lambda — All Log Events"
+          logGroupNames = [aws_cloudwatch_log_group.api_lambda.name]
+          query         = "fields @timestamp, @message, @logStream\n| sort @timestamp desc\n| limit 500"
+          region        = var.aws_region
+          view          = "table"
+        }
+      },
+      {
+        type   = "log"
+        x      = 0
+        y      = 14
+        width  = 24
+        height = 10
+        properties = {
+          title         = "API Lambda — Errors & Warnings"
+          logGroupNames = [aws_cloudwatch_log_group.api_lambda.name]
+          query         = "fields @timestamp, @message\n| filter @message like /(?i)(error|warn|exception|unhandled)/\n| sort @timestamp desc\n| limit 200"
+          region        = var.aws_region
+          view          = "table"
+        }
+      },
+      {
+        type   = "log"
+        x      = 0
+        y      = 24
+        width  = 24
+        height = 12
+        properties = {
+          title         = "API Gateway — Access Logs"
+          logGroupNames = [aws_cloudwatch_log_group.api_gateway.name]
+          query         = "fields @timestamp, httpMethod, routeKey, status, responseLatency, ip\n| sort @timestamp desc\n| limit 500"
+          region        = var.aws_region
+          view          = "table"
+        }
+      }
+    ]
+  })
+}
