@@ -70,11 +70,17 @@ export function createAdminImpersonationRoutes(prisma: PrismaClient) {
 
     const dashboard = user.artistProfile ? await fetchDashboard(prisma, userId) : null
 
-    void logAdminAction(prisma, {
+    logAdminAction(prisma, {
       adminId: adminUser.id,
       action: 'user.impersonate',
       targetType: 'user',
       targetId: userId,
+    }).catch((auditErr) => {
+      logger.error('Failed to write impersonation audit log', {
+        adminId: adminUser.id,
+        targetUserId: userId,
+        error: auditErr instanceof Error ? auditErr.message : String(auditErr),
+      })
     })
 
     logger.info('Admin impersonated user', {
@@ -106,12 +112,18 @@ export function createAdminImpersonationRoutes(prisma: PrismaClient) {
       return notFound(c, 'Artist profile not found')
     }
 
-    void logAdminAction(prisma, {
+    logAdminAction(prisma, {
       adminId: adminUser.id,
       action: 'user.impersonate',
       targetType: 'user',
       targetId: userId,
       details: { endpoint: 'dashboard' },
+    }).catch((auditErr) => {
+      logger.error('Failed to write impersonation audit log', {
+        adminId: adminUser.id,
+        targetUserId: userId,
+        error: auditErr instanceof Error ? auditErr.message : String(auditErr),
+      })
     })
 
     logger.info('Admin viewed user dashboard', {
@@ -150,12 +162,18 @@ export function createAdminImpersonationRoutes(prisma: PrismaClient) {
       return notFound(c, 'Artist profile not found')
     }
 
-    void logAdminAction(prisma, {
+    logAdminAction(prisma, {
       adminId: adminUser.id,
       action: 'user.impersonate',
       targetType: 'user',
       targetId: userId,
       details: { endpoint: 'listings' },
+    }).catch((auditErr) => {
+      logger.error('Failed to write impersonation audit log', {
+        adminId: adminUser.id,
+        targetUserId: userId,
+        error: auditErr instanceof Error ? auditErr.message : String(auditErr),
+      })
     })
 
     logger.info('Admin viewed user listings', {
