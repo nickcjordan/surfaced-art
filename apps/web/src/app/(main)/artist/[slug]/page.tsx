@@ -111,10 +111,18 @@ export default async function ArtistProfilePage({ params }: Props) {
         ...(artist.profileImageUrl && { image: artist.profileImageUrl }),
         ...(sameAs.length > 0 && { sameAs }),
       }} />
-      <Breadcrumbs items={[
-        { label: 'Home', href: '/' },
-        { label: artist.displayName },
-      ]} />
+      <div className="flex items-center justify-between">
+        <Breadcrumbs items={[
+          { label: 'Home', href: '/' },
+          { label: artist.displayName },
+        ]} />
+        <Link
+          href={`/studio/${slug}`}
+          className="text-sm text-muted-text transition-colors hover:text-foreground shrink-0 ml-4"
+        >
+          Visit {artist.displayName}&apos;s Studio →
+        </Link>
+      </div>
 
       {/* Hero */}
       <section data-testid="artist-hero">
