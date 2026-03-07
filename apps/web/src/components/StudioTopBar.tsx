@@ -15,7 +15,7 @@ export function StudioTopBar({ artistName, artistSlug }: StudioTopBarProps) {
         </span>
         <Link
           href={`/artist/${artistSlug}`}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground shrink-0 ml-4"
+          className="flex items-center gap-1.5 text-sm text-muted-text transition-colors hover:text-foreground shrink-0 ml-4"
         >
           <ShoppingBag className="size-4" aria-hidden="true" />
           <span className="hidden sm:inline">Shop on Surfaced Art</span>

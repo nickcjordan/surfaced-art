@@ -93,6 +93,18 @@ export default async function StudioPage({ params }: Props) {
 
   const sameAs = [artist.instagramUrl, artist.websiteUrl].filter(Boolean)
 
+  const toListingCardProp = (listing: (typeof artist.listings)[number]) => ({
+    id: listing.id,
+    title: listing.title,
+    medium: listing.medium,
+    category: listing.category,
+    price: listing.price,
+    status: listing.status,
+    primaryImageUrl: listing.images[0]?.url ?? null,
+    primaryImageWidth: listing.images[0]?.width ?? null,
+    primaryImageHeight: listing.images[0]?.height ?? null,
+  })
+
   return (
     <>
       <JsonLd data={{
@@ -281,17 +293,7 @@ export default async function StudioPage({ params }: Props) {
               {availableListings.map((listing) => (
                 <ListingCard
                   key={listing.id}
-                  listing={{
-                    id: listing.id,
-                    title: listing.title,
-                    medium: listing.medium,
-                    category: listing.category,
-                    price: listing.price,
-                    status: listing.status,
-                    primaryImageUrl: listing.images[0]?.url ?? null,
-                    primaryImageWidth: listing.images[0]?.width ?? null,
-                    primaryImageHeight: listing.images[0]?.height ?? null,
-                  }}
+                  listing={toListingCardProp(listing)}
                   artistName={artist.displayName}
                   variant="studio"
                 />
@@ -308,17 +310,7 @@ export default async function StudioPage({ params }: Props) {
               {soldListings.map((listing) => (
                 <ListingCard
                   key={listing.id}
-                  listing={{
-                    id: listing.id,
-                    title: listing.title,
-                    medium: listing.medium,
-                    category: listing.category,
-                    price: listing.price,
-                    status: listing.status,
-                    primaryImageUrl: listing.images[0]?.url ?? null,
-                    primaryImageWidth: listing.images[0]?.width ?? null,
-                    primaryImageHeight: listing.images[0]?.height ?? null,
-                  }}
+                  listing={toListingCardProp(listing)}
                   artistName={artist.displayName}
                   variant="studio"
                 />
