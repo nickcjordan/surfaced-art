@@ -45,6 +45,9 @@ jobs:
           fi
 
       # --- Trivy filesystem scan ---
+      # Skip node_modules/@prisma: @prisma/dev pins hono@4.11.4 (exact, not a range).
+      # Our direct hono is 4.12.5 (patched). We can't override an exact pin in an
+      # upstream package — only Prisma can fix this. Tracked upstream, not our code.
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -55,12 +58,13 @@ jobs:
           exit-code: '0'
           output: 'trivy-fs-output.txt'
           skip-files: 'package-lock.json'
+          skip-dirs: 'node_modules/@prisma'
 
       - name: Check Trivy FS results
         id: trivy-fs
         run: |
           set +e
-          trivy fs --exit-code 1 --severity CRITICAL,HIGH --quiet --skip-files package-lock.json . > /dev/null 2>&1
+          trivy fs --exit-code 1 --severity CRITICAL,HIGH --quiet --skip-files package-lock.json --skip-dirs node_modules/@prisma . > /dev/null 2>&1
           EXIT_CODE=$?
           set -e
           if [ "$EXIT_CODE" -eq 0 ]; then
