@@ -51,4 +51,9 @@ describe('Header', () => {
     const menuButton = screen.getByRole('button', { name: 'Menu' })
     expect(menuButton).toBeInTheDocument()
   })
+
+  it('should render a search toggle button', () => {
+    render(<Header />)
+    expect(screen.getByTestId('search-toggle')).toBeInTheDocument()
+  })
 })

@@ -5,6 +5,7 @@ const sizeClasses = {
   sm: 'size-10',
   md: 'size-12',
   lg: 'size-[120px]',
+  xl: 'size-[160px]',
 } as const
 
 type ProfilePhotoProps = {
@@ -27,7 +28,7 @@ export function ProfilePhoto({
       className={cn(
         'relative shrink-0 overflow-hidden rounded-full bg-surface',
         sizeClasses[size],
-        bordered && 'ring-2 ring-background',
+        bordered && size === 'xl' ? 'ring-3 ring-background' : bordered && 'ring-2 ring-background',
         className
       )}
     >

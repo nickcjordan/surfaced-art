@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { getArtistProfile, ApiError } from '@/lib/api'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ListingCard } from '@/components/ListingCard'
+import { MasonryGrid } from '@/components/MasonryGrid'
 import { Badge } from '@/components/ui/badge'
 import { categoryLabels } from '@/lib/category-labels'
 import { JsonLd } from '@/components/JsonLd'
@@ -131,14 +132,15 @@ export default async function ArtistProfilePage({ params }: Props) {
           ) : (
             <div className="size-full bg-border" />
           )}
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
         </div>
 
         {/* Profile info */}
-        <div className="relative -mt-12 flex flex-col items-start gap-4 px-2 sm:flex-row sm:items-end sm:gap-6">
+        <div className="relative -mt-16 flex flex-col items-start gap-4 px-2 sm:flex-row sm:items-end sm:gap-6">
           <ProfilePhoto
             src={artist.profileImageUrl}
             alt={artist.displayName}
-            size="lg"
+            size="xl"
             bordered
           />
           <div className="flex-1">
@@ -281,7 +283,7 @@ export default async function ArtistProfilePage({ params }: Props) {
       <section data-testid="available-work">
         <h2 className="mb-6 font-serif text-2xl text-foreground">Available Work</h2>
         {availableListings.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+          <MasonryGrid columns={[2, 2, 3, 3]}>
             {availableListings.map((listing) => (
               <ListingCard
                 key={listing.id}
@@ -293,12 +295,14 @@ export default async function ArtistProfilePage({ params }: Props) {
                   price: listing.price,
                   status: listing.status,
                   primaryImageUrl: listing.images[0]?.url ?? null,
+                  primaryImageWidth: listing.images[0]?.width ?? null,
+                  primaryImageHeight: listing.images[0]?.height ?? null,
                 }}
                 artistName={artist.displayName}
                 variant="profile"
               />
             ))}
-          </div>
+          </MasonryGrid>
         ) : (
           <p className="text-sm text-muted-text">
             No pieces currently available. Check back soon.
@@ -310,7 +314,7 @@ export default async function ArtistProfilePage({ params }: Props) {
       {soldListings.length > 0 && (
         <section data-testid="archive-section">
           <h2 className="mb-6 font-serif text-2xl text-foreground">Collection Archive</h2>
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 opacity-75">
+          <MasonryGrid columns={[2, 2, 3, 3]} className="opacity-75">
             {soldListings.map((listing) => (
               <ListingCard
                 key={listing.id}
@@ -322,12 +326,14 @@ export default async function ArtistProfilePage({ params }: Props) {
                   price: listing.price,
                   status: listing.status,
                   primaryImageUrl: listing.images[0]?.url ?? null,
+                  primaryImageWidth: listing.images[0]?.width ?? null,
+                  primaryImageHeight: listing.images[0]?.height ?? null,
                 }}
                 artistName={artist.displayName}
                 variant="profile"
               />
             ))}
-          </div>
+          </MasonryGrid>
         </section>
       )}
 

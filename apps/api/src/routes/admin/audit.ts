@@ -1,13 +1,13 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma } from '@surfaced-art/db'
-import { logger } from '@surfaced-art/utils'
+import { logger, validateUuid } from '@surfaced-art/utils'
 import { adminAuditLogQuery } from '@surfaced-art/types'
 import type {
   AdminAuditLogEntry,
   PaginatedResponse,
 } from '@surfaced-art/types'
 import type { AuthUser } from '../../middleware/auth'
-import { validationError } from '../../errors'
+import { validationError, notFound } from '../../errors'
 
 export function createAdminAuditRoutes(prisma: PrismaClient) {
   const app = new Hono<{ Variables: { user: AuthUser } }>()
@@ -95,6 +95,11 @@ export function createAdminAuditRoutes(prisma: PrismaClient) {
   app.get('/user/:userId', async (c) => {
     const start = Date.now()
     const { userId } = c.req.param()
+
+    // Validate userId is a valid UUID before using in query
+    if (!validateUuid(userId)) {
+      return notFound(c, 'User not found')
+    }
 
     const parsed = adminAuditLogQuery.safeParse({
       page: c.req.query('page'),

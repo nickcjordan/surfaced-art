@@ -87,10 +87,12 @@ describe('security headers config', () => {
     expect(csp.value).toMatch(/connect-src[^;]*us\.i\.posthog\.com/)
   })
 
-  it('should throw if NEXT_PUBLIC_API_URL is not set', async () => {
+  it('should use default API URL when NEXT_PUBLIC_API_URL is not set', async () => {
     vi.unstubAllEnvs()
     vi.stubEnv('NEXT_PUBLIC_API_URL', '')
-    await expect(import('../security-headers')).rejects.toThrow('NEXT_PUBLIC_API_URL is required')
+    const headers = await loadHeaders()
+    const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).toMatch(/connect-src[^;]*execute-api\.us-east-1\.amazonaws\.com/)
   })
 })
 

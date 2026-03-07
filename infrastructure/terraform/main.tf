@@ -241,11 +241,12 @@ module "lambda_api" {
   vpc_id                = data.aws_vpc.default.id
   vpc_cidr              = data.aws_vpc.default.cidr_block
   subnet_ids            = data.aws_subnets.default.ids
-  memory_size           = var.lambda_memory_size
-  timeout               = var.lambda_timeout
-  lambda_role_arn       = module.iam.lambda_role_arn
-  frontend_url          = var.frontend_url
-  placeholder_image_uri = var.placeholder_image_uri
+  memory_size                  = var.lambda_memory_size
+  timeout                      = var.lambda_timeout
+  lambda_role_arn              = module.iam.lambda_role_arn
+  frontend_url                 = var.frontend_url
+  placeholder_image_uri        = var.placeholder_image_uri
+  reserved_concurrent_executions = var.api_reserved_concurrency
 
   # Environment variables for Lambda
   database_url               = module.rds.connection_string
@@ -258,6 +259,7 @@ module "lambda_api" {
   ses_configuration_set_name = module.ses.configuration_set_name
   stripe_secret_key          = var.stripe_secret_key
   stripe_webhook_secret      = var.stripe_webhook_secret
+  cache_disabled             = var.cache_disabled
 
   # Observability — log group managed centrally in observability.tf
   api_gateway_log_group_arn = aws_cloudwatch_log_group.api_gateway.arn
@@ -277,6 +279,8 @@ module "lambda_migrate" {
   lambda_role_arn       = module.iam.lambda_role_arn
   placeholder_image_uri = var.placeholder_image_uri
   database_url          = module.rds.connection_string
+  seed_cdn_base         = module.s3_cloudfront.cloudfront_url
+  seed_mode             = var.seed_mode
 
   depends_on = [aws_ecr_repository_policy.migrate]
 }

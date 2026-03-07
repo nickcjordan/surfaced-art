@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsup",
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -16,14 +16,14 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1000.0",
     "@aws-sdk/s3-presigned-post": "^3.1000.0",
-    "@hono/node-server": "^1.14.0",
+    "@hono/node-server": "^1.19.10",
     "@hono/zod-validator": "^0.7.6",
     "@surfaced-art/db": "^0.0.1",
     "@surfaced-art/email": "^0.0.1",
     "@surfaced-art/types": "^0.0.1",
     "@surfaced-art/utils": "^0.0.1",
     "aws-jwt-verify": "^5.1.1",
-    "hono": "^4.12.3",
+    "hono": "^4.12.4",
     "stripe": "^20.4.0",
     "zod": "^4.3.6"
   },

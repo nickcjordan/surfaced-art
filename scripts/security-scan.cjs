@@ -13,7 +13,7 @@
  * Output: JSON results to .security-reports/ directory
  */
 
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -241,7 +241,7 @@ async function fetchPrBotComments() {
       if (!prsRes.ok) { console.error(`GitHub API error fetching PRs: ${prsRes.status}`); return null; }
       prs = await prsRes.json();
     } else {
-      const result = execSync(`gh api repos/${owner}/${repo}/pulls --paginate`, { encoding: 'utf-8' });
+      const result = execFileSync('gh', ['api', `repos/${owner}/${repo}/pulls`, '--paginate'], { encoding: 'utf-8' });
       prs = JSON.parse(result);
     }
 
@@ -260,8 +260,8 @@ async function fetchPrBotComments() {
         if (commentsRes.ok) comments = await commentsRes.json();
       } else {
         try {
-          reviews = JSON.parse(execSync(`gh api repos/${owner}/${repo}/pulls/${prNumber}/reviews`, { encoding: 'utf-8' }));
-          comments = JSON.parse(execSync(`gh api repos/${owner}/${repo}/pulls/${prNumber}/comments`, { encoding: 'utf-8' }));
+          reviews = JSON.parse(execFileSync('gh', ['api', `repos/${owner}/${repo}/pulls/${prNumber}/reviews`], { encoding: 'utf-8' }));
+          comments = JSON.parse(execFileSync('gh', ['api', `repos/${owner}/${repo}/pulls/${prNumber}/comments`], { encoding: 'utf-8' }));
         } catch { continue; }
       }
 

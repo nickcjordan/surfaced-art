@@ -4,6 +4,7 @@ import { useId, useState } from 'react'
 import type { CategoryType, FeaturedArtistItem, ListingStatusType } from '@surfaced-art/types'
 import { ViewToggle, getTabId, getPanelId } from '@/components/ViewToggle'
 import { CardGrid } from '@/components/CardGrid'
+import { MasonryGrid } from '@/components/MasonryGrid'
 import { EmptyState } from '@/components/EmptyState'
 import { ListingCard } from '@/components/ListingCard'
 import { ArtistCard } from '@/components/ArtistCard'
@@ -24,6 +25,8 @@ export type CategoryListingItem = {
   price: number
   status: ListingStatusType
   primaryImageUrl: string | null
+  primaryImageWidth: number | null
+  primaryImageHeight: number | null
   artistName: string
 }
 
@@ -83,7 +86,7 @@ export function CategoryBrowseView({
               action={{ label: '← Back to gallery', href: '/' }}
             />
           ) : listings.length > 0 ? (
-            <CardGrid variant="listings">
+            <MasonryGrid>
               {listings.map((listing) => (
                 <ListingCard
                   key={listing.id}
@@ -95,11 +98,13 @@ export function CategoryBrowseView({
                     price: listing.price,
                     status: listing.status,
                     primaryImageUrl: listing.primaryImageUrl,
+                    primaryImageWidth: listing.primaryImageWidth,
+                    primaryImageHeight: listing.primaryImageHeight,
                   }}
                   artistName={listing.artistName}
                 />
               ))}
-            </CardGrid>
+            </MasonryGrid>
           ) : (
             <EmptyState
               title="No pieces in this category yet"

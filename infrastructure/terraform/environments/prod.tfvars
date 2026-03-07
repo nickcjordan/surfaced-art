@@ -9,5 +9,8 @@ db_instance_class = "db.t3.micro"
 lambda_memory_size = 256
 lambda_timeout     = 30
 
+# Seed
+seed_mode = "real"
+
 # URLs
 frontend_url = "https://surfacedart.com"

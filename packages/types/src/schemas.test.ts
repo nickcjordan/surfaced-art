@@ -11,6 +11,7 @@ import {
   sanitizeText,
   artistApplicationBody,
   checkEmailQuery,
+  searchQuery,
   adminApplicationsQuery,
   adminUsersQuery,
   adminArtistsQuery,
@@ -252,6 +253,19 @@ describe('Shared Validation Schemas', () => {
 
     it('should strip HTML entities used for injection', () => {
       expect(sanitizeText('hello&lt;script&gt;')).not.toContain('<script>')
+    })
+
+    it('should strip incomplete/split tag injection attempts', () => {
+      // "<scr<script>ipt>" → after tag strip → "<script>" → loop strips → ""
+      // Final angle bracket strip ensures no residual "<" or ">"
+      expect(sanitizeText('<scr<script>ipt>alert(1)</scr<script>ipt>')).not.toContain('<')
+      expect(sanitizeText('<scr<script>ipt>alert(1)</scr<script>ipt>')).not.toContain('>')
+    })
+
+    it('should strip stray angle brackets', () => {
+      // Lone < or > without forming a complete tag are stripped
+      expect(sanitizeText('5 > 3')).toBe('5 3')
+      expect(sanitizeText('2 < 4')).toBe('2 4')
     })
   })
 
@@ -927,6 +941,81 @@ describe('Shared Validation Schemas', () => {
         listingIds: ['550e8400-e29b-41d4-a716-446655440000'],
         status: 'hidden',
       }).success).toBe(false)
+    })
+  })
+
+  describe('searchQuery', () => {
+    it('should accept valid search query', () => {
+      const result = searchQuery.safeParse({ q: 'ceramic vase' })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.q).toBe('ceramic vase')
+      }
+    })
+
+    it('should require q parameter', () => {
+      const result = searchQuery.safeParse({})
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject empty q string', () => {
+      const result = searchQuery.safeParse({ q: '' })
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject q longer than 200 characters', () => {
+      const result = searchQuery.safeParse({ q: 'x'.repeat(201) })
+      expect(result.success).toBe(false)
+    })
+
+    it('should strip HTML tags from q via sanitizeText', () => {
+      const result = searchQuery.safeParse({ q: '<b>ceramic</b> vase' })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.q).toBe('ceramic vase')
+      }
+    })
+
+    it('should default page to 1', () => {
+      const result = searchQuery.safeParse({ q: 'test' })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.page).toBe(1)
+      }
+    })
+
+    it('should default limit to 20', () => {
+      const result = searchQuery.safeParse({ q: 'test' })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.limit).toBe(20)
+      }
+    })
+
+    it('should cap limit at 100', () => {
+      const result = searchQuery.safeParse({ q: 'test', limit: '200' })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.limit).toBe(100)
+      }
+    })
+
+    it('should coerce string page and limit', () => {
+      const result = searchQuery.safeParse({ q: 'test', page: '3', limit: '50' })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.page).toBe(3)
+        expect(result.data.limit).toBe(50)
+      }
+    })
+
+    it('should reject page less than 1', () => {
+      expect(searchQuery.safeParse({ q: 'test', page: '0' }).success).toBe(false)
+    })
+
+    it('should reject whitespace-only q after sanitization', () => {
+      const result = searchQuery.safeParse({ q: '   ' })
+      expect(result.success).toBe(false)
     })
   })
 

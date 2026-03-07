@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '@/lib/auth'
 import { AnalyticsProvider, PostHogPageView } from '@/lib/analytics'
 import { Header } from '@/components/Header'
+import { ScrollToTop } from '@/components/ScrollToTop'
 import { Footer } from '@/components/Footer'
 import { CookieConsent } from '@/components/CookieConsent'
 import { Container } from '@/components/ui/container'
@@ -60,6 +61,7 @@ export default function RootLayout({
               <Suspense fallback={null}>
                 <PostHogPageView />
               </Suspense>
+              <ScrollToTop />
               <Header />
               <main className="flex-1">
                 <Container className="py-8 md:py-12">

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getCategories, getListings, getFeaturedArtists, ApiError } from '@/lib/api'
+import { SplitHero } from '@/components/SplitHero'
 import { ArtistCard } from '@/components/ArtistCard'
 import { ListingCard } from '@/components/ListingCard'
+import { MasonryGrid } from '@/components/MasonryGrid'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { JsonLd } from '@/components/JsonLd'
@@ -62,17 +64,7 @@ export default async function Home() {
       }} />
 
       {/* Hero */}
-      <section data-testid="hero" className="flex min-h-[40vh] flex-col items-center justify-center text-center">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-          A curated digital gallery
-          <br />
-          for real makers
-        </h1>
-        <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-text">
-          Every artist is vetted. Every piece is handmade. From ceramics to
-          woodworking — discover work that matters.
-        </p>
-      </section>
+      <SplitHero />
 
       {/* Featured Artists */}
       {artists.length > 0 && (
@@ -104,7 +96,7 @@ export default async function Home() {
               Browse all
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+          <MasonryGrid columns={[2, 2, 3, 3]}>
             {listings.map((listing) => (
               <ListingCard
                 key={listing.id}
@@ -116,11 +108,13 @@ export default async function Home() {
                   price: listing.price,
                   status: listing.status,
                   primaryImageUrl: listing.primaryImage?.url ?? null,
+                  primaryImageWidth: listing.primaryImage?.width ?? null,
+                  primaryImageHeight: listing.primaryImage?.height ?? null,
                 }}
                 artistName={listing.artist.displayName}
               />
             ))}
-          </div>
+          </MasonryGrid>
         </section>
       )}
 

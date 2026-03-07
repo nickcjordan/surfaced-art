@@ -83,6 +83,7 @@ Created when a user is accepted as an artist. This is a rich entity with its own
 | cover_image_url | string | Nullable. Banner image on artist profile page |
 | profile_image_url | string | Nullable. Headshot or representative image |
 | application_source | string | Nullable. How the artist was recruited — e.g. advisor_network, instagram_outreach, artist_referral |
+| is_demo | boolean | Default false. Marks demo/seed artist profiles used for platform development and testing |
 | created_at | timestamp |  |
 | updated_at | timestamp |  |
 
@@ -153,7 +154,7 @@ The core platform entity. Covers standard one-of-a-kind pieces, limited edition 
 | medium | string | e.g. stoneware, oil on canvas, silver |
 | category | enum | ceramics | painting | print | jewelry | illustration | photography | woodworking | fibers | mixed_media |
 | price | integer | In cents. Artist-set price. Platform takes 30% at sale |
-| status | enum | available | reserved_system | reserved_artist | sold |
+| status | enum | available | reserved_system | reserved_artist | sold | hidden |
 | is_documented | boolean | Default false. Set to true when at least one process photo exists on the listing |
 | quantity_total | integer | Default 1. For prints and editions — the total number produced |
 | quantity_remaining | integer | Default 1. Decrements on each completed sale. When 0, status moves to sold |
@@ -354,6 +355,54 @@ Pre-launch email capture. Visitors can submit their email to be notified when th
 | --- |
 | UNIQUE (email) — prevents duplicate signups |
 
+### admin_audit_log
+
+Records every admin action for accountability and compliance. Each row captures who did what to which entity, with optional structured details.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | uuid | Primary key |
+| admin_id | uuid | FK → users.id. The admin who performed the action |
+| action | string | e.g. approve_application, reject_application, suspend_artist |
+| target_type | string | e.g. artist_application, artist_profile, user |
+| target_id | uuid | The ID of the entity the action was performed on |
+| details | jsonb | Nullable. Structured metadata about the action (e.g., rejection reason) |
+| ip_address | string | Nullable. IP address of the admin at the time of the action |
+| created_at | timestamp |  |
+
+| Constraints & Indexes |
+| --- |
+| INDEX on admin_id — for querying actions by a specific admin |
+| INDEX on (target_type, target_id) — for querying all actions on a specific entity |
+| INDEX on action — for filtering by action type |
+| INDEX on created_at — for time-range queries and audit reports |
+
+### artist_applications
+
+Submitted by prospective artists seeking to join the platform. Reviewed by admins/curators. Approval triggers artist role assignment and profile creation.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | uuid | Primary key |
+| email | string | Unique. Applicant's email address |
+| full_name | string | Applicant's full name |
+| instagram_url | string | Nullable |
+| website_url | string | Nullable |
+| statement | text | Artist statement explaining their work and practice |
+| exhibition_history | text | Nullable. Free-text exhibition history |
+| categories | enum[] | Array of CategoryType values indicating art categories |
+| status | enum | pending | approved | rejected | withdrawn |
+| reviewed_by | uuid | Nullable. ID of the admin/curator who reviewed the application |
+| reviewed_at | timestamp | Nullable. When the review decision was made |
+| review_notes | text | Nullable. Internal notes from the reviewer |
+| submitted_at | timestamp | When the application was submitted |
+| updated_at | timestamp |  |
+
+| Constraints & Indexes |
+| --- |
+| UNIQUE (email) — one application per email address |
+| INDEX on status — for filtering applications by review status |
+
 ## 3. Relationship Map
 
 | From | To | Relationship |
@@ -371,6 +420,9 @@ Pre-launch email capture. Visitors can submit their email to be notified when th
 | orders | reviews | One-to-one. One review per completed order |
 | users | saves | Many-to-many through saves table |
 | users | follows | Many-to-many through follows table |
+| users | admin_audit_log | One-to-many. An admin user has many audit log entries |
+| waitlist | — | Standalone table. No foreign key relationships |
+| artist_applications | — | Standalone table. reviewed_by semantically references users but has no formal FK |
 
 ## 4. Enum Reference
 
@@ -391,6 +443,7 @@ Pre-launch email capture. Visitors can submit their email to be notified when th
 - reserved_system — locked during an active checkout session. Time-boxed (15 minutes). Reverts to available if reserved_until passes without purchase completion
 - reserved_artist — manually toggled by the artist. No expiry. Used for in-person holds or private arrangements
 - sold — purchase completed. Piece moves to archive section of artist profile
+- hidden — artist has hidden the listing from public view. Not purchasable. Can be unhidden to return to available
 
 **listings.category / artist_categories.category**
 - ceramics
@@ -413,6 +466,12 @@ Pre-launch email capture. Visitors can submit their email to be notified when th
 - in_progress — artist is actively working and posting updates
 - completed — artist has marked work complete and shipped
 - cancelled — cancelled before completion
+
+**artist_applications.status**
+- pending — submitted, awaiting review
+- approved — accepted. Artist role granted and profile created
+- rejected — not accepted at this time
+- withdrawn — applicant withdrew their application
 
 **orders.status**
 - pending — checkout initiated, payment not yet captured

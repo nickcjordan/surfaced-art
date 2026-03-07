@@ -13,6 +13,8 @@ const mockListings: CategoryListingItem[] = [
     price: 12500,
     status: 'available',
     primaryImageUrl: null,
+    primaryImageWidth: null,
+    primaryImageHeight: null,
     artistName: 'Abbey Peters',
   },
   {
@@ -23,6 +25,8 @@ const mockListings: CategoryListingItem[] = [
     price: 8500,
     status: 'available',
     primaryImageUrl: null,
+    primaryImageWidth: null,
+    primaryImageHeight: null,
     artistName: 'Abbey Peters',
   },
 ]
@@ -36,6 +40,8 @@ const mockListingsWithSold: CategoryListingItem[] = [
     price: 12500,
     status: 'available',
     primaryImageUrl: null,
+    primaryImageWidth: null,
+    primaryImageHeight: null,
     artistName: 'Abbey Peters',
   },
   {
@@ -46,6 +52,8 @@ const mockListingsWithSold: CategoryListingItem[] = [
     price: 9500,
     status: 'sold',
     primaryImageUrl: null,
+    primaryImageWidth: null,
+    primaryImageHeight: null,
     artistName: 'Abbey Peters',
   },
 ]

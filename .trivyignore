@@ -1,0 +1,8 @@
+# @prisma/dev (dev-only tooling) pins hono@4.11.4 and @hono/node-server@1.19.9.
+# These get hoisted to root node_modules. Our direct deps are patched (hono@4.12.5,
+# @hono/node-server@1.19.11). Only Prisma can update their internal pins.
+CVE-2026-24473
+CVE-2026-24771
+CVE-2026-29085
+CVE-2026-29086
+CVE-2026-29045

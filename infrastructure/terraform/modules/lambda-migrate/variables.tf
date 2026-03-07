@@ -50,3 +50,14 @@ variable "timeout" {
   type        = number
   default     = 120
 }
+
+variable "seed_cdn_base" {
+  description = "CloudFront CDN base URL for seed image URLs (e.g. https://xxx.cloudfront.net)"
+  type        = string
+}
+
+variable "seed_mode" {
+  description = "Which artists to seed: 'real' (production), 'demo' (dev/staging), or 'all'"
+  type        = string
+  default     = "all"
+}

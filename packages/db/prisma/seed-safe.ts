@@ -84,12 +84,13 @@ async function main() {
     process.exit(1)
   }
 
-  console.log('Safety check passed. Starting seed...')
+  const mode = process.env.SEED_MODE || 'all'
+  console.log(`Safety check passed. Starting seed... (SEED_MODE=${mode}, ${artistConfigs.length} artists)`)
 
   for (const config of artistConfigs) {
     const result = await prisma.$transaction(async (tx) => {
       return seedArtist(tx, config)
-    })
+    }, { timeout: 30000 })
     console.log(`  Seeded artist: ${result.profile.displayName} (${result.profile.slug})`)
   }
 

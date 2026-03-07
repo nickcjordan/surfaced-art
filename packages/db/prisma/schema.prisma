@@ -162,6 +162,7 @@ model ArtistProfile {
   profileImageUrl String?          @map("profile_image_url")
   applicationSource String?        @map("application_source")
   isDemo          Boolean          @default(false) @map("is_demo")
+  searchVector    Unsupported("tsvector")? @map("search_vector")
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
 
@@ -255,6 +256,7 @@ model Listing {
   editionTotal      Int?              @map("edition_total")
   // System reservation - checked on read
   reservedUntil     DateTime?         @map("reserved_until")
+  searchVector      Unsupported("tsvector")? @map("search_vector")
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
 
@@ -280,6 +282,8 @@ model ListingImage {
   url            String   // CloudFront URL
   isProcessPhoto Boolean  @default(false) @map("is_process_photo")
   sortOrder      Int      @map("sort_order")
+  width          Int?     // Image pixel width (for aspect ratio)
+  height         Int?     // Image pixel height (for aspect ratio)
   createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations

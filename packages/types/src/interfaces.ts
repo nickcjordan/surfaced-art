@@ -150,6 +150,8 @@ export interface ListingImage {
   url: string // CloudFront URL
   isProcessPhoto: boolean // Behind-the-scenes photo
   sortOrder: number
+  width: number | null // Image pixel width (for aspect ratio)
+  height: number | null // Image pixel height (for aspect ratio)
   createdAt: Date
 }
 
@@ -748,6 +750,8 @@ export interface MyListingImageResponse {
   url: string
   isProcessPhoto: boolean
   sortOrder: number
+  width: number | null
+  height: number | null
   createdAt: string
 }
 
@@ -827,6 +831,130 @@ export interface StripeOnboardingResponse {
 export interface StripeStatusResponse {
   status: StripeOnboardingStatus
   stripeAccountId: string | null
+}
+
+// ─── Search API Response Types ───────────────────────────────────────
+
+/**
+ * Lightweight listing item in search results.
+ * Serializable (no Date objects) for the server/client boundary.
+ */
+export interface SearchListingItem {
+  id: string
+  title: string
+  medium: string
+  category: CategoryType
+  price: number
+  status: ListingStatusType
+  primaryImageUrl: string | null
+  primaryImageWidth: number | null
+  primaryImageHeight: number | null
+  artistName: string
+  artistSlug: string
+  rank: number
+}
+
+/**
+ * Lightweight artist item in search results.
+ * Serializable (no Date objects) for the server/client boundary.
+ */
+export interface SearchArtistItem {
+  slug: string
+  displayName: string
+  location: string
+  profileImageUrl: string | null
+  coverImageUrl: string | null
+  categories: CategoryType[]
+  rank: number
+}
+
+/**
+ * Combined search response from GET /search?q=...
+ * Returns listings and artists as separate groups, each with their own total count.
+ */
+export interface SearchResponse {
+  listings: {
+    data: SearchListingItem[]
+    total: number
+  }
+  artists: {
+    data: SearchArtistItem[]
+    total: number
+  }
+  query: string
+}
+
+// ─── Admin Order Response Types ──────────────────────────────────────
+
+/**
+ * Order list item for GET /admin/orders
+ */
+export interface AdminOrderListItem {
+  id: string
+  listingId: string
+  buyerId: string
+  artistId: string
+  artworkPrice: number
+  shippingCost: number
+  platformCommission: number
+  artistPayout: number
+  taxAmount: number
+  status: OrderStatusType
+  shippingCarrier: string | null
+  trackingNumber: string | null
+  shippedAt: string | null
+  deliveredAt: string | null
+  createdAt: string
+  updatedAt: string
+  buyer: { id: string; email: string; fullName: string }
+  artist: { id: string; displayName: string; slug: string }
+  listing: { id: string; title: string }
+}
+
+/**
+ * Full order detail for GET /admin/orders/:id
+ */
+export interface AdminOrderDetailResponse {
+  id: string
+  listingId: string
+  buyerId: string
+  artistId: string
+  stripePaymentIntentId: string
+  artworkPrice: number
+  shippingCost: number
+  platformCommission: number
+  artistPayout: number
+  taxAmount: number
+  status: OrderStatusType
+  shippingCarrier: string | null
+  trackingNumber: string | null
+  daysToFulfill: number | null
+  shippedAt: string | null
+  deliveredAt: string | null
+  payoutReleasedAt: string | null
+  createdAt: string
+  updatedAt: string
+  buyer: { id: string; email: string; fullName: string }
+  artist: { id: string; displayName: string; slug: string }
+  listing: { id: string; title: string; price: number }
+  review: {
+    id: string
+    overallRating: number
+    headline: string | null
+    createdAt: string
+  } | null
+}
+
+/**
+ * Response from POST /admin/orders/:id/refund
+ */
+export interface AdminOrderRefundResponse {
+  message: string
+  refund: {
+    stripeRefundId: string
+    amount: number
+    status: string
+  }
 }
 
 // ─── API Error Types ──────────────────────────────────────────────────

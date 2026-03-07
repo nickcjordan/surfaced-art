@@ -2,13 +2,16 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { CATEGORIES } from '@/lib/categories'
+import { cn } from '@/lib/utils'
 
 /**
  * Mobile navigation with hamburger button and slide-out drawer.
  * Only visible on screens smaller than md breakpoint.
  */
 export function MobileNav() {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
 
   const open = useCallback(() => setIsOpen(true), [])
@@ -116,20 +119,43 @@ export function MobileNav() {
           </button>
         </div>
 
+        {/* Mobile search */}
+        <div className="px-6 pb-4">
+          <form action="/search" method="GET" data-testid="mobile-search-form">
+            <input
+              name="q"
+              type="search"
+              placeholder="Search art..."
+              autoComplete="off"
+              data-testid="mobile-search-input"
+              className="h-10 w-full rounded-md border border-border bg-transparent px-3.5 py-2.5 text-base text-foreground placeholder:text-muted-foreground outline-none focus-visible:border-accent-primary focus-visible:ring-accent-primary/50 focus-visible:ring-[3px] transition-[border-color] duration-200"
+            />
+          </form>
+        </div>
+
         {/* Category links */}
         <nav data-testid="mobile-nav" aria-label="Mobile category navigation" className="px-6">
           <ul className="space-y-1">
-            {CATEGORIES.map((category) => (
-              <li key={category.slug}>
-                <Link
-                  href={category.href}
-                  onClick={close}
-                  className="block py-3 text-base tracking-wide text-muted-foreground transition-colors hover:text-foreground border-b border-border/50"
-                >
-                  {category.label}
-                </Link>
-              </li>
-            ))}
+            {CATEGORIES.map((category) => {
+              const isActive = pathname === category.href
+              return (
+                <li key={category.slug}>
+                  <Link
+                    href={category.href}
+                    onClick={close}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={cn(
+                      'block py-3 text-base tracking-wide transition-colors border-b border-border/50',
+                      isActive
+                        ? 'text-accent-primary font-medium'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {category.label}
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </nav>
       </div>

@@ -1,16 +1,17 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
-import { adminUsersQuery, adminRoleGrantBody } from '@surfaced-art/types'
+import { adminUsersQuery, adminRoleGrantBody, UserRole } from '@surfaced-art/types'
 import type {
   AdminUserListItem,
   AdminUserDetailResponse,
   AdminRoleGrantResponse,
   AdminActionResponse,
   PaginatedResponse,
+  UserRoleType,
 } from '@surfaced-art/types'
 import type { AuthUser } from '../../middleware/auth'
-import { notFound, forbidden, conflict, validationError, internalError } from '../../errors'
+import { notFound, forbidden, conflict, validationError, badRequest, internalError } from '../../errors'
 import { logAdminAction } from '../../lib/audit'
 
 export function createAdminUserRoutes(prisma: PrismaClient) {
@@ -243,8 +244,15 @@ export function createAdminUserRoutes(prisma: PrismaClient) {
     const adminUser = c.get('user')
     const { id, role } = c.req.param()
 
+    // Validate role path param against known roles (derived from shared enum)
+    const validRoles = Object.values(UserRole) as UserRoleType[]
+    if (!validRoles.includes(role as UserRoleType)) {
+      return badRequest(c, `Invalid role: ${role}`)
+    }
+    const validatedRole = role as UserRoleType
+
     // Prevent removing own admin role
-    if (id === adminUser.id && role === 'admin') {
+    if (id === adminUser.id && validatedRole === 'admin') {
       return forbidden(c, 'Cannot remove your own admin role')
     }
 
@@ -256,14 +264,14 @@ export function createAdminUserRoutes(prisma: PrismaClient) {
 
       // Check if role exists
       const existing = await prisma.userRole.findUnique({
-        where: { userId_role: { userId: id, role: role as Prisma.UserRoleWhereUniqueInput['userId_role'] extends { role: infer R } ? R : never } },
+        where: { userId_role: { userId: id, role: validatedRole } },
       })
       if (!existing) {
         return notFound(c, `User does not have ${role} role`)
       }
 
       await prisma.userRole.delete({
-        where: { userId_role: { userId: id, role: role as Prisma.UserRoleWhereUniqueInput['userId_role'] extends { role: infer R } ? R : never } },
+        where: { userId_role: { userId: id, role: validatedRole } },
       })
 
       // Audit log (fire-and-forget)

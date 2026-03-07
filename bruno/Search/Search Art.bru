@@ -1,0 +1,38 @@
+meta {
+  name: Search Art
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{sa_baseUrl}}/search?q={{sa_searchQuery}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("should return listings and artists objects", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("listings");
+    expect(body).to.have.property("artists");
+    expect(body).to.have.property("query");
+    expect(body.listings).to.have.property("data");
+    expect(body.listings).to.have.property("total");
+    expect(body.artists).to.have.property("data");
+    expect(body.artists).to.have.property("total");
+  });
+
+  test("listings data should be an array", function() {
+    const body = res.getBody();
+    expect(body.listings.data).to.be.an("array");
+  });
+
+  test("artists data should be an array", function() {
+    const body = res.getBody();
+    expect(body.artists.data).to.be.an("array");
+  });
+}

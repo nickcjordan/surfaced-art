@@ -7,6 +7,7 @@ import { logger } from '@surfaced-art/utils'
 
 import { securityHeaders } from './middleware/security-headers'
 import { rateLimiter } from './middleware/rate-limiter'
+import { cacheControl } from './middleware/cache-control'
 import { createHealthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
 import { createListingRoutes } from './routes/listings'
@@ -16,6 +17,7 @@ import { createApplicationRoutes } from './routes/applications'
 import { createUploadRoutes } from './routes/uploads'
 import { createMeRoutes } from './routes/me'
 import { createAdminRoutes } from './routes/admin'
+import { createSearchRoutes } from './routes/search'
 import { createWebhookRoutes } from './routes/webhooks'
 
 // FRONTEND_URL is required — drives CORS allowed origins.
@@ -56,7 +58,24 @@ app.use('/artists/apply', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
 app.use('/uploads/*', rateLimiter({ maxRequests: 10, windowMs: 60_000 }))
 app.use('/me/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
 app.use('/admin/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
+app.use('/search', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
 app.use('/webhooks/*', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
+
+// Cache-control — public read endpoints
+// /artists/apply has a GET that checks real-time status — exclude from public caching
+app.use('/artists/apply/*', cacheControl('private, no-cache'))
+app.use('/artists/apply', cacheControl('private, no-cache'))
+app.use('/artists/*', cacheControl('public, max-age=300'))
+app.use('/artists', cacheControl('public, max-age=300'))
+app.use('/listings/*', cacheControl('public, max-age=300'))
+app.use('/listings', cacheControl('public, max-age=300'))
+app.use('/categories', cacheControl('public, max-age=3600'))
+app.use('/health/*', cacheControl('no-store'))
+app.use('/health', cacheControl('no-store'))
+
+// Cache-control — protected endpoints
+app.use('/me/*', cacheControl('private, no-cache'))
+app.use('/admin/*', cacheControl('private, no-cache'))
 
 // Mount routes — /artists/apply MUST be before /artists to avoid /:slug collision
 app.route('/health', createHealthRoutes(prisma))
@@ -64,6 +83,7 @@ app.route('/artists/apply', createApplicationRoutes(prisma))
 app.route('/artists', createArtistRoutes(prisma))
 app.route('/listings', createListingRoutes(prisma))
 app.route('/categories', createCategoryRoutes(prisma))
+app.route('/search', createSearchRoutes(prisma))
 app.route('/waitlist', createWaitlistRoutes(prisma))
 app.route('/uploads', createUploadRoutes(prisma))
 app.route('/me', createMeRoutes(prisma))

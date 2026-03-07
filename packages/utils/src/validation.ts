@@ -8,8 +8,10 @@
  * @returns true if valid email format
  */
 export function validateEmail(email: string): boolean {
-  // RFC 5322 compliant email regex (simplified)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  // Simple email validation — local@domain.tld
+  // Uses {1,254} length cap and non-overlapping character classes to avoid ReDoS
+  if (email.length > 254) return false
+  const emailRegex = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/
   return emailRegex.test(email)
 }
 

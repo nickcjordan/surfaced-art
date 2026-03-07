@@ -97,7 +97,7 @@ describe('ListingForm', () => {
     })
 
     it('should submit form with dollars converted to cents', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="create" />)
 
       // Fill required fields
@@ -131,7 +131,7 @@ describe('ListingForm', () => {
     })
 
     it('should redirect to listings page on successful create', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="create" />)
 
       await user.type(screen.getByLabelText(/title/i), 'Test Vase')
@@ -153,7 +153,7 @@ describe('ListingForm', () => {
     })
 
     it('should show validation error for missing required fields', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="create" />)
 
       // Submit without filling anything
@@ -167,7 +167,7 @@ describe('ListingForm', () => {
     })
 
     it('should include optional artwork dimensions when provided', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="create" />)
 
       await user.type(screen.getByLabelText(/title/i), 'Test Piece')
@@ -196,7 +196,7 @@ describe('ListingForm', () => {
     })
 
     it('should include edition info when provided', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="create" />)
 
       await user.type(screen.getByLabelText(/title/i), 'Limited Print')
@@ -224,7 +224,7 @@ describe('ListingForm', () => {
 
     it('should show server error on API failure', async () => {
       mockCreateMyListing.mockRejectedValue(new Error('Server error'))
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="create" />)
 
       await user.type(screen.getByLabelText(/title/i), 'Test')
@@ -249,7 +249,7 @@ describe('ListingForm', () => {
 
     it('should disable submit button while submitting', async () => {
       mockCreateMyListing.mockReturnValue(new Promise(() => {}))
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="create" />)
 
       await user.type(screen.getByLabelText(/title/i), 'Test')
@@ -272,7 +272,7 @@ describe('ListingForm', () => {
     })
 
     it('should set quantity when provided', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="create" />)
 
       await user.type(screen.getByLabelText(/title/i), 'Batch Item')
@@ -348,7 +348,7 @@ describe('ListingForm', () => {
     })
 
     it('should call updateMyListing on submit', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="edit" listingId={LISTING_ID} />)
 
       await waitFor(() => {
@@ -374,7 +374,7 @@ describe('ListingForm', () => {
     })
 
     it('should redirect to listings page on successful update', async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup({ delay: null })
       render(<ListingForm mode="edit" listingId={LISTING_ID} />)
 
       await waitFor(() => {

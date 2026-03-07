@@ -111,6 +111,8 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
             url: listing.images[0].url,
             isProcessPhoto: listing.images[0].isProcessPhoto,
             sortOrder: listing.images[0].sortOrder,
+            width: listing.images[0].width,
+            height: listing.images[0].height,
             createdAt: listing.images[0].createdAt,
           }
         : null
@@ -210,6 +212,8 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
         url: img.url,
         isProcessPhoto: img.isProcessPhoto,
         sortOrder: img.sortOrder,
+        width: img.width,
+        height: img.height,
         createdAt: img.createdAt,
       })),
       artist: {
@@ -273,7 +277,7 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
         type: 'listing',
         id: id,
         category: listing.category,
-        artistSlug: (listing as unknown as { artist: { slug: string } }).artist.slug,
+        artistSlug: listing.artist.slug,
       })
 
       const response: AdminActionResponse = {
@@ -340,7 +344,7 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
         type: 'listing',
         id: id,
         category: listing.category,
-        artistSlug: (listing as unknown as { artist: { slug: string } }).artist.slug,
+        artistSlug: listing.artist.slug,
       })
 
       const response: AdminActionResponse = {
@@ -399,7 +403,7 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
         type: 'listing',
         id: id,
         category: listing.category,
-        artistSlug: (listing as unknown as { artist: { slug: string } }).artist.slug,
+        artistSlug: listing.artist.slug,
       })
 
       const response: AdminActionResponse = {

@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { CategoryType as PrismaCategoryType } from '@surfaced-art/db'
-import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, DashboardResponse, MyListingImageResponse, MyListingListItem, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileCompletionField, ProfileUpdateResponse, StripeOnboardingResponse, StripeStatusResponse } from '@surfaced-art/types'
+import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, MyListingImageResponse, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileUpdateResponse, StripeOnboardingResponse, StripeStatusResponse } from '@surfaced-art/types'
+import { fetchDashboard, fetchUserListings } from '../lib/artist-queries'
 import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingAvailabilityBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
@@ -46,12 +47,14 @@ function toNumberOrNull(val: unknown): number | null {
   return toNumber(val)
 }
 
-function formatListingImage(img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }): MyListingImageResponse {
+function formatListingImage(img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; width: number | null; height: number | null; createdAt: Date }): MyListingImageResponse {
   return {
     id: img.id,
     url: img.url,
     isProcessPhoto: img.isProcessPhoto,
     sortOrder: img.sortOrder,
+    width: img.width,
+    height: img.height,
     createdAt: img.createdAt.toISOString(),
   }
 }
@@ -64,7 +67,7 @@ function formatListingResponse(listing: {
   packedLength: unknown; packedWidth: unknown; packedHeight: unknown; packedWeight: unknown;
   editionNumber: number | null; editionTotal: number | null;
   reservedUntil: Date | null; createdAt: Date; updatedAt: Date;
-  images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }[];
+  images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; width: number | null; height: number | null; createdAt: Date }[];
 }): MyListingResponse {
   return {
     id: listing.id,
@@ -94,31 +97,7 @@ function formatListingResponse(listing: {
   }
 }
 
-function formatListingListItem(listing: {
-  id: string; type: string; title: string; medium: string; category: string;
-  price: number; status: string; isDocumented: boolean;
-  quantityTotal: number; quantityRemaining: number;
-  createdAt: Date; updatedAt: Date;
-  images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }[];
-}): MyListingListItem {
-  const firstImage = listing.images[0]
-  const primaryImage = firstImage ? formatListingImage(firstImage) : null
-  return {
-    id: listing.id,
-    type: listing.type as MyListingListItem['type'],
-    title: listing.title,
-    medium: listing.medium,
-    category: listing.category as MyListingListItem['category'],
-    price: listing.price,
-    status: listing.status as MyListingListItem['status'],
-    isDocumented: listing.isDocumented,
-    quantityTotal: listing.quantityTotal,
-    quantityRemaining: listing.quantityRemaining,
-    createdAt: listing.createdAt.toISOString(),
-    updatedAt: listing.updatedAt.toISOString(),
-    primaryImage,
-  }
-}
+
 
 export function createMeRoutes(prisma: PrismaClient) {
   const me = new Hono<{ Variables: { user: AuthUser } }>()
@@ -135,66 +114,15 @@ export function createMeRoutes(prisma: PrismaClient) {
     const start = Date.now()
     const user = c.get('user')
 
-    const artist = await prisma.artistProfile.findUnique({
-      where: { userId: user.id },
-      include: {
-        categories: true,
-        cvEntries: true,
-      },
-    })
+    const response = await fetchDashboard(prisma, user.id)
 
-    if (!artist) {
+    if (!response) {
       return notFound(c, 'Artist profile not found')
     }
 
-    const [totalListings, availableListings, soldListings] = await Promise.all([
-      prisma.listing.count({ where: { artistId: artist.id } }),
-      prisma.listing.count({ where: { artistId: artist.id, status: 'available' } }),
-      prisma.listing.count({ where: { artistId: artist.id, status: 'sold' } }),
-    ])
-
-    const fields: ProfileCompletionField[] = [
-      { label: 'Bio', complete: artist.bio.trim().length > 0 },
-      { label: 'Location', complete: artist.location.trim().length > 0 },
-      { label: 'Profile image', complete: artist.profileImageUrl !== null },
-      { label: 'Cover image', complete: artist.coverImageUrl !== null },
-      { label: 'At least 1 category', complete: artist.categories.length > 0 },
-      { label: 'At least 1 CV entry', complete: artist.cvEntries.length > 0 },
-    ]
-
-    const completedCount = fields.filter((f) => f.complete).length
-    const percentage = Math.round((completedCount / fields.length) * 100)
-
-    const response: DashboardResponse = {
-      profile: {
-        id: artist.id,
-        displayName: artist.displayName,
-        slug: artist.slug,
-        bio: artist.bio,
-        location: artist.location,
-        websiteUrl: artist.websiteUrl,
-        instagramUrl: artist.instagramUrl,
-        profileImageUrl: artist.profileImageUrl,
-        coverImageUrl: artist.coverImageUrl,
-        status: artist.status,
-        stripeAccountId: artist.stripeAccountId,
-        categories: artist.categories.map((c) => c.category),
-      },
-      completion: {
-        percentage,
-        fields,
-      },
-      stats: {
-        totalListings,
-        availableListings,
-        soldListings,
-        totalViews: 0, // Placeholder until analytics
-      },
-    }
-
     logger.info('Dashboard data fetched', {
-      artistId: artist.id,
-      completionPct: percentage,
+      artistId: response.profile.id,
+      completionPct: response.completion.percentage,
       durationMs: Date.now() - start,
     })
 
@@ -845,40 +773,13 @@ export function createMeRoutes(prisma: PrismaClient) {
 
     const { page, limit, status, category } = queryParsed.data
 
-    const artist = await prisma.artistProfile.findUnique({
-      where: { userId: user.id },
-    })
+    const result = await fetchUserListings(prisma, user.id, { page, limit, status, category })
 
-    if (!artist) {
+    if (!result) {
       return notFound(c, 'Artist profile not found')
     }
 
-    const where: Record<string, unknown> = { artistId: artist.id }
-    if (status) where.status = status
-    if (category) where.category = category
-
-    const [total, listings] = await Promise.all([
-      prisma.listing.count({ where }),
-      prisma.listing.findMany({
-        where,
-        include: { images: { orderBy: { sortOrder: 'asc' } } },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-    ])
-
-    const data: MyListingListItem[] = listings.map((listing) => formatListingListItem(listing))
-
-    return c.json({
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit) || 1,
-      },
-    })
+    return c.json({ data: result.data, meta: result.meta })
   })
 
   /**
@@ -1191,6 +1092,8 @@ export function createMeRoutes(prisma: PrismaClient) {
         url: parsed.data.url,
         isProcessPhoto: parsed.data.isProcessPhoto,
         sortOrder: imageCount,
+        width: parsed.data.width ?? null,
+        height: parsed.data.height ?? null,
       },
     })
 
@@ -1361,7 +1264,7 @@ export function createMeRoutes(prisma: PrismaClient) {
     logger.info('Listing images reordered', { artistId: artist.id, listingId })
 
     return c.json({
-      images: reordered.map((img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; createdAt: Date }) => formatListingImage(img)),
+      images: reordered.map((img: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; width: number | null; height: number | null; createdAt: Date }) => formatListingImage(img)),
     })
   })
 

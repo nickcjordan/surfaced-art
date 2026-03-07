@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod'
-import { Category, CvEntryType, ListingStatus, ListingType } from './enums'
+import { Category, CvEntryType, ListingStatus, ListingType, OrderStatus } from './enums'
 
 // ============================================================================
 // Helpers
@@ -40,6 +40,24 @@ export const uuidParam = z.string().uuid('Invalid UUID format')
 
 /** Shared pagination query params */
 export const paginationQuery = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** GET /search query params */
+export const searchQuery = z.object({
+  q: z
+    .string()
+    .min(1, 'Search query is required')
+    .max(200, 'Search query must be at most 200 characters')
+    .transform((v) => sanitizeText(v))
+    .pipe(z.string().min(1, 'Search query is required')),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce
     .number()
@@ -144,20 +162,32 @@ export const listingIdParam = z.object({
  * Use on any user-supplied text (bios, descriptions, titles) before storage.
  */
 export function sanitizeText(input: string): string {
-  return (
-    input
-      // Decode HTML entities that could be used for injection
+  let text = input
+
+  // Loop: strip HTML tags then decode entities until stable.
+  // Using [^<>] in the tag regex avoids polynomial backtracking on
+  // inputs with many '<' characters. Looping until stable handles
+  // nested or double-encoded injection attempts.
+  let prev = ''
+  while (prev !== text) {
+    prev = text
+    text = text
+      .replace(/<[^<>]*>/g, '')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
       .replace(/&quot;/g, '"')
       .replace(/&#x27;/g, "'")
-      // Strip all HTML tags
-      .replace(/<[^>]*>/g, '')
-      // Collapse multiple spaces to single space
-      .replace(/\s+/g, ' ')
-      .trim()
-  )
+      .replace(/&amp;/g, '&')
+  }
+
+  // Final strip after all decoding rounds
+  text = text.replace(/<[^<>]*>/g, '')
+
+  // Remove any remaining angle brackets that aren't part of complete tags
+  // (defense-in-depth against incomplete tag injection like "<scr<script>ipt>")
+  text = text.replace(/[<>]/g, '')
+
+  return text.replace(/\s+/g, ' ').trim()
 }
 
 /** PUT /me/profile body — all fields optional for partial update */
@@ -321,6 +351,8 @@ export const listingAvailabilityBody = z.object({
 export const listingImageBody = z.object({
   url: z.string().url('Invalid URL'),
   isProcessPhoto: z.boolean().optional().default(false),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
 })
 
 /** PUT /me/listings/:id/images/reorder body */
@@ -474,6 +506,37 @@ export const adminWaitlistQuery = z.object({
     .transform((v) => Math.min(v, 100)),
 })
 
+/** GET /admin/orders query params */
+const orderStatusValues = Object.values(OrderStatus) as [string, ...string[]]
+
+export const adminOrdersQuery = z.object({
+  status: z.enum(orderStatusValues).optional(),
+  buyerId: z.string().uuid().optional(),
+  artistId: z.string().uuid().optional(),
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .default(20)
+    .transform((v) => Math.min(v, 100)),
+})
+
+/** POST /admin/orders/:id/refund body */
+export const adminOrderRefundBody = z.object({
+  reason: z.string().min(1, 'Reason is required').max(2000),
+  amount: z.number().int().positive('Amount must be positive').optional(),
+})
+
+/** PUT /admin/orders/:id/status body */
+export const adminOrderStatusUpdateBody = z.object({
+  status: z.enum(orderStatusValues),
+  reason: z.string().min(1, 'Reason is required').max(2000),
+})
+
 /** POST /admin/listings/bulk-status body */
 export const adminBulkListingStatusBody = z.object({
   listingIds: z
@@ -497,6 +560,7 @@ export const adminBulkRoleGrantBody = z.object({
 // Inferred types (derive TypeScript types from schemas)
 // ============================================================================
 
+export type SearchQuery = z.infer<typeof searchQuery>
 export type ArtistsQuery = z.infer<typeof artistsQuery>
 export type ListingsQuery = z.infer<typeof listingsQuery>
 export type WaitlistBody = z.infer<typeof waitlistBody>
@@ -528,5 +592,8 @@ export type AdminListingUpdateBody = z.infer<typeof adminListingUpdateBody>
 export type AdminListingHideBody = z.infer<typeof adminListingHideBody>
 export type AdminAuditLogQuery = z.infer<typeof adminAuditLogQuery>
 export type AdminWaitlistQuery = z.infer<typeof adminWaitlistQuery>
+export type AdminOrdersQuery = z.infer<typeof adminOrdersQuery>
+export type AdminOrderRefundBody = z.infer<typeof adminOrderRefundBody>
+export type AdminOrderStatusUpdateBody = z.infer<typeof adminOrderStatusUpdateBody>
 export type AdminBulkListingStatusBody = z.infer<typeof adminBulkListingStatusBody>
 export type AdminBulkRoleGrantBody = z.infer<typeof adminBulkRoleGrantBody>

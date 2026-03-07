@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getListings, getCategories, getFeaturedArtists, ApiError } from '@/lib/api'
 import { categoryLabels } from '@/lib/category-labels'
-import { CategoryFilterBar } from '@/components/CategoryFilterBar'
 import { CategoryBrowseView, type CategoryListingItem } from '@/components/CategoryBrowseView'
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
@@ -86,6 +85,8 @@ export default async function CategoryBrowsePage({ params }: Props) {
       price: listing.price,
       status: listing.status,
       primaryImageUrl: listing.primaryImage?.url ?? null,
+      primaryImageWidth: listing.primaryImage?.width ?? null,
+      primaryImageHeight: listing.primaryImage?.height ?? null,
       artistName: listing.artist.displayName,
     }))
   } catch (error) {
@@ -110,10 +111,6 @@ export default async function CategoryBrowsePage({ params }: Props) {
         { label: 'Home', href: '/' },
         { label },
       ]} />
-      <CategoryFilterBar
-        activeCategory={categorySlug}
-        basePath="/category"
-      />
       <CategoryBrowseView
         categoryLabel={label}
         listings={listings}

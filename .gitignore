@@ -172,6 +172,9 @@ Thumbs.db
 # Vercel
 .vercel
 
+# Claude Code worktrees (local dev artifacts)
+.claude/worktrees/
+
 # Security scan reports (generated locally)
 .security-reports/
 

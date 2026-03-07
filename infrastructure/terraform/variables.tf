@@ -104,6 +104,20 @@ variable "ses_domain" {
   default     = "surfacedart.com"
 }
 
+# Seed mode
+variable "seed_mode" {
+  description = "Which artists to seed: 'real' (production), 'demo' (dev/staging), or 'all'"
+  type        = string
+  default     = "all"
+}
+
+# Cache control
+variable "cache_disabled" {
+  description = "Disable API cache-control headers (set to true for dev)"
+  type        = bool
+  default     = false
+}
+
 # Lambda variables
 variable "lambda_memory_size" {
   description = "Memory size for Lambda functions in MB"
@@ -115,6 +129,12 @@ variable "lambda_timeout" {
   description = "Timeout for Lambda functions in seconds"
   type        = number
   default     = 30
+}
+
+variable "api_reserved_concurrency" {
+  description = "Max concurrent API Lambda instances. Each holds 1 DB connection (with connection_limit=1). Keep well below RDS max_connections (~112 for db.t3.micro) to leave headroom for migrations."
+  type        = number
+  default     = 40
 }
 
 # Application URLs

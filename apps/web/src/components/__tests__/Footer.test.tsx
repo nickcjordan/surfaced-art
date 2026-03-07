@@ -45,6 +45,12 @@ describe('Footer', () => {
     expect(screen.getByText('Follow')).toBeInTheDocument()
   })
 
+  it('should render the For Artists link', () => {
+    render(<Footer />)
+    const link = screen.getByRole('link', { name: 'For Artists' })
+    expect(link).toHaveAttribute('href', '/for-artists')
+  })
+
   it('should render copyright text', () => {
     render(<Footer />)
     expect(

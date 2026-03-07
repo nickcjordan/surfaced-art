@@ -1,0 +1,65 @@
+meta {
+  name: List Orders
+  type: http
+  seq: 35
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/orders
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+params:query {
+  ~status: paid
+  ~buyerId:
+  ~artistId:
+  ~dateFrom:
+  ~dateTo:
+  ~page: 1
+  ~limit: 20
+}
+
+assert {
+  res.status: eq 200
+  res.body.meta.page: isNumber
+  res.body.meta.total: isNumber
+}
+
+tests {
+  test("should return paginated orders", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("data");
+    expect(body).to.have.property("meta");
+    expect(body.data).to.be.an("array");
+    expect(body.meta).to.have.property("page");
+    expect(body.meta).to.have.property("limit");
+    expect(body.meta).to.have.property("total");
+    expect(body.meta).to.have.property("totalPages");
+  });
+
+  test("each order should have required fields", function() {
+    const orders = res.getBody().data;
+    if (orders.length > 0) {
+      const order = orders[0];
+      expect(order).to.have.property("id");
+      expect(order).to.have.property("status");
+      expect(order).to.have.property("artworkPrice");
+      expect(order).to.have.property("buyer");
+      expect(order.buyer).to.have.property("email");
+      expect(order).to.have.property("artist");
+      expect(order.artist).to.have.property("displayName");
+      expect(order).to.have.property("listing");
+      expect(order.listing).to.have.property("title");
+
+      // Store first order ID for detail request
+      if (order.id) {
+        bru.setVar("sa_adminOrderId", order.id);
+      }
+    }
+  });
+}
