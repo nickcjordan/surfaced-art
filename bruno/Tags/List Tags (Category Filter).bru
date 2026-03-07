@@ -1,0 +1,25 @@
+meta {
+  name: List Tags (Category Filter)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{sa_baseUrl}}/tags?category=ceramics
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("should return only tags for the specified category", function() {
+    const tags = res.getBody();
+    expect(tags).to.be.an("array");
+    tags.forEach(function(tag) {
+      expect(tag.category).to.equal("ceramics");
+    });
+  });
+}

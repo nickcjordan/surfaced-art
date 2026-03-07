@@ -1,0 +1,27 @@
+meta {
+  name: Get My Tags
+  type: http
+  seq: 30
+}
+
+get {
+  url: {{sa_baseUrl}}/me/tags
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.tags: isDefined
+}
+
+tests {
+  test("should return tags array", function() {
+    const body = res.getBody();
+    expect(body.tags).to.be.an("array");
+  });
+}

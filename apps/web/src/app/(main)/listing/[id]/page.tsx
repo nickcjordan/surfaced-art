@@ -168,6 +168,20 @@ export default async function ListingDetailPage({ params }: Props) {
             )}
           </dl>
 
+          {/* Tags */}
+          {listing.tags.length > 0 && (
+            <div data-testid="listing-tags" className="flex flex-wrap gap-1.5">
+              {listing.tags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="inline-block rounded-full bg-surface px-2.5 py-0.5 text-xs text-muted-foreground"
+                >
+                  {tag.label}
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* Documented badge */}
           {listing.isDocumented && (
             <Badge>Documented Work</Badge>

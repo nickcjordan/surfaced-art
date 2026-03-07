@@ -1,0 +1,33 @@
+meta {
+  name: Update My Tags
+  type: http
+  seq: 31
+}
+
+put {
+  url: {{sa_baseUrl}}/me/tags
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+body:json {
+  {
+    "tagIds": []
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.tags: isDefined
+}
+
+tests {
+  test("should return 200 with updated tags", function() {
+    const body = res.getBody();
+    expect(body.tags).to.be.an("array");
+  });
+}

@@ -311,6 +311,7 @@ export interface ListingWithImages extends Listing {
  */
 export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 'stripeAccountId' | 'originZip' | 'applicationSource'> {
   categories: CategoryType[]
+  tags: Tag[]
   cvEntries: ArtistCvEntry[]
   processMedia: ArtistProcessMedia[]
   listings: ListingWithImages[]
@@ -375,6 +376,7 @@ export interface ListingListItem extends Listing {
  */
 export interface ListingDetailResponse extends Listing {
   images: ListingImage[]
+  tags: Tag[]
   artist: ArtistSummaryWithCategories
 }
 
@@ -500,6 +502,14 @@ export interface ProfileUpdateResponse {
  */
 export interface CategoriesUpdateResponse {
   categories: CategoryType[]
+}
+
+/**
+ * Response from PUT /me/tags or PUT /me/listings/:id/tags.
+ * Returns the updated tag list (full Tag objects).
+ */
+export interface TagsUpdateResponse {
+  tags: Tag[]
 }
 
 // ─── CV Entry API Response Types ──────────────────────────────────────
@@ -814,6 +824,7 @@ export interface MyListingResponse {
   createdAt: string
   updatedAt: string
   images: MyListingImageResponse[]
+  tags: Tag[]
 }
 
 /**

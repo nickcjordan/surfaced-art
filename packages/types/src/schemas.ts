@@ -207,6 +207,20 @@ export const categoriesUpdateBody = z.object({
     .min(1, 'Select at least one category'),
 })
 
+/** PUT /me/tags body — replace-all semantics */
+export const tagsUpdateBody = z.object({
+  tagIds: z
+    .array(z.string().uuid('Invalid UUID format'))
+    .max(50, 'Maximum 50 tags per artist'),
+})
+
+/** PUT /me/listings/:id/tags body — replace-all semantics */
+export const listingTagsUpdateBody = z.object({
+  tagIds: z
+    .array(z.string().uuid('Invalid UUID format'))
+    .max(20, 'Maximum 20 tags per listing'),
+})
+
 /** POST /me/cv-entries or PUT /me/cv-entries/:id body */
 export const cvEntryBody = z.object({
   type: z.enum(cvEntryTypeValues),
@@ -576,6 +590,8 @@ export type CheckEmailQuery = z.infer<typeof checkEmailQuery>
 export type PresignedUrlBody = z.infer<typeof presignedUrlBody>
 export type ProfileUpdateBody = z.infer<typeof profileUpdateBody>
 export type CategoriesUpdateBody = z.infer<typeof categoriesUpdateBody>
+export type TagsUpdateBody = z.infer<typeof tagsUpdateBody>
+export type ListingTagsUpdateBody = z.infer<typeof listingTagsUpdateBody>
 export type CvEntryBody = z.infer<typeof cvEntryBody>
 export type CvEntryReorderBody = z.infer<typeof cvEntryReorderBody>
 export type ProcessMediaPhotoBody = z.infer<typeof processMediaPhotoBody>
