@@ -90,10 +90,10 @@ describe('triggerRevalidation', () => {
   })
 
   it('should include category in listing payload when provided', () => {
-    triggerRevalidation({ type: 'listing', id: 'listing-123', category: 'painting' })
+    triggerRevalidation({ type: 'listing', id: 'listing-123', category: 'drawing_painting' })
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(body.category).toBe('painting')
+    expect(body.category).toBe('drawing_painting')
   })
 
   it('should omit category from listing payload when not provided', () => {

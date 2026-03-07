@@ -25,14 +25,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
   description:
-    'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+    'Discover handmade art from vetted artists. Ceramics, drawing & painting, printmaking & photography, and mixed media & 3D.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
     description:
-      'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+      'Discover handmade art from vetted artists. Ceramics, drawing & painting, printmaking & photography, and mixed media & 3D.',
     type: 'website',
     url: SITE_URL,
   },

@@ -23,9 +23,9 @@ describe('Navigation', () => {
     expect(screen.getByRole('navigation')).toBeInTheDocument()
   })
 
-  it('should render all 9 category links', () => {
+  it('should render all 4 category links', () => {
     render(<Navigation />)
-    expect(screen.getAllByRole('link')).toHaveLength(9)
+    expect(screen.getAllByRole('link')).toHaveLength(4)
   })
 
   it('should link each category to the correct path', () => {
@@ -42,17 +42,17 @@ describe('Navigation', () => {
     expect(links[0]).toHaveTextContent('Ceramics')
   })
 
-  it('should render Mixed Media as the last category', () => {
+  it('should render Mixed Media & 3D as the last category', () => {
     render(<Navigation />)
     const links = screen.getAllByRole('link')
-    expect(links[links.length - 1]).toHaveTextContent('Mixed Media')
+    expect(links[links.length - 1]).toHaveTextContent('Mixed Media & 3D')
   })
 
   it('should highlight the active category when on a category page', () => {
-    mockPathname = '/category/painting'
+    mockPathname = '/category/drawing_painting'
     render(<Navigation />)
 
-    const activeLink = screen.getByRole('link', { name: 'Painting' })
+    const activeLink = screen.getByRole('link', { name: 'Drawing & Painting' })
     expect(activeLink.className).toContain('text-foreground')
     expect(activeLink.className).toContain('border-accent-primary')
   })
@@ -80,7 +80,7 @@ describe('Navigation', () => {
     mockPathname = '/category/ceramics'
     render(<Navigation />)
 
-    const inactiveLink = screen.getByRole('link', { name: 'Painting' })
+    const inactiveLink = screen.getByRole('link', { name: 'Drawing & Painting' })
     expect(inactiveLink).not.toHaveAttribute('aria-current')
   })
 })

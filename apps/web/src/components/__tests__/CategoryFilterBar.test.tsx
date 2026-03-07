@@ -4,7 +4,7 @@ import { CategoryFilterBar } from '../CategoryFilterBar'
 import { CATEGORIES } from '@/lib/categories'
 
 describe('CategoryFilterBar', () => {
-  it('should render all 9 category pills', () => {
+  it('should render all 4 category pills', () => {
     render(<CategoryFilterBar activeCategory="ceramics" />)
 
     for (const cat of CATEGORIES) {
@@ -18,7 +18,7 @@ describe('CategoryFilterBar', () => {
     const activeLink = screen.getByRole('link', { name: 'Ceramics' })
     expect(activeLink.className).toContain('bg-accent-primary')
 
-    const inactiveLink = screen.getByRole('link', { name: 'Painting' })
+    const inactiveLink = screen.getByRole('link', { name: 'Drawing & Painting' })
     expect(inactiveLink.className).toContain('border')
     expect(inactiveLink.className).not.toContain('bg-accent-primary')
   })
@@ -26,8 +26,8 @@ describe('CategoryFilterBar', () => {
   it('should generate default hrefs from basePath', () => {
     render(<CategoryFilterBar activeCategory="ceramics" />)
 
-    const link = screen.getByRole('link', { name: 'Painting' })
-    expect(link).toHaveAttribute('href', '/category/painting')
+    const link = screen.getByRole('link', { name: 'Drawing & Painting' })
+    expect(link).toHaveAttribute('href', '/category/drawing_painting')
   })
 
   it('should use custom hrefBuilder when provided', () => {
@@ -38,8 +38,8 @@ describe('CategoryFilterBar', () => {
       />
     )
 
-    const link = screen.getByRole('link', { name: 'Painting' })
-    expect(link).toHaveAttribute('href', '/art?category=painting')
+    const link = screen.getByRole('link', { name: 'Drawing & Painting' })
+    expect(link).toHaveAttribute('href', '/art?category=drawing_painting')
   })
 
   it('should render "All" pill when showAll is true', () => {

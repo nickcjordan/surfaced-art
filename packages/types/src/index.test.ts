@@ -66,18 +66,25 @@ describe('Enums', () => {
   describe('Category', () => {
     it('should have all expected category values', () => {
       expect(Category.CERAMICS).toBe('ceramics')
-      expect(Category.PAINTING).toBe('painting')
-      expect(Category.PRINT).toBe('print')
-      expect(Category.JEWELRY).toBe('jewelry')
-      expect(Category.ILLUSTRATION).toBe('illustration')
-      expect(Category.PHOTOGRAPHY).toBe('photography')
-      expect(Category.WOODWORKING).toBe('woodworking')
-      expect(Category.FIBERS).toBe('fibers')
-      expect(Category.MIXED_MEDIA).toBe('mixed_media')
+      expect(Category.DRAWING_PAINTING).toBe('drawing_painting')
+      expect(Category.PRINTMAKING_PHOTOGRAPHY).toBe('printmaking_photography')
+      expect(Category.MIXED_MEDIA_3D).toBe('mixed_media_3d')
     })
 
-    it('should have exactly 9 categories', () => {
-      expect(Object.keys(Category)).toHaveLength(9)
+    it('should have exactly 4 categories', () => {
+      expect(Object.keys(Category)).toHaveLength(4)
+    })
+
+    it('should not have any old 9-category values', () => {
+      const values = Object.values(Category) as string[]
+      expect(values).not.toContain('painting')
+      expect(values).not.toContain('print')
+      expect(values).not.toContain('jewelry')
+      expect(values).not.toContain('illustration')
+      expect(values).not.toContain('photography')
+      expect(values).not.toContain('woodworking')
+      expect(values).not.toContain('fibers')
+      expect(values).not.toContain('mixed_media')
     })
   })
 

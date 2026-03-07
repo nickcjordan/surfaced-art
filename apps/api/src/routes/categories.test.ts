@@ -35,23 +35,23 @@ describe('GET /categories', () => {
       mockPrisma = createMockPrisma({
         listingGroupBy: [
           { category: 'ceramics', _count: { id: 5 } },
-          { category: 'painting', _count: { id: 3 } },
-          { category: 'photography', _count: { id: 1 } },
+          { category: 'drawing_painting', _count: { id: 3 } },
+          { category: 'printmaking_photography', _count: { id: 1 } },
         ],
         artistCategoryGroupBy: [
           { category: 'ceramics', _count: { id: 2 } },
-          { category: 'painting', _count: { id: 1 } },
+          { category: 'drawing_painting', _count: { id: 1 } },
         ],
       })
       app = createTestApp(mockPrisma)
     })
 
-    it('should return all 9 categories', async () => {
+    it('should return all 4 categories', async () => {
       const res = await app.request('/categories')
       expect(res.status).toBe(200)
 
       const body = await res.json()
-      expect(body).toHaveLength(9)
+      expect(body).toHaveLength(4)
     })
 
     it('should include correct listing counts for categories with listings', async () => {
@@ -61,11 +61,11 @@ describe('GET /categories', () => {
       const ceramics = body.find((c: { category: string }) => c.category === 'ceramics')
       expect(ceramics.count).toBe(5)
 
-      const painting = body.find((c: { category: string }) => c.category === 'painting')
-      expect(painting.count).toBe(3)
+      const drawingPainting = body.find((c: { category: string }) => c.category === 'drawing_painting')
+      expect(drawingPainting.count).toBe(3)
 
-      const photography = body.find((c: { category: string }) => c.category === 'photography')
-      expect(photography.count).toBe(1)
+      const printmakingPhotography = body.find((c: { category: string }) => c.category === 'printmaking_photography')
+      expect(printmakingPhotography.count).toBe(1)
     })
 
     it('should include correct artist counts', async () => {
@@ -75,19 +75,16 @@ describe('GET /categories', () => {
       const ceramics = body.find((c: { category: string }) => c.category === 'ceramics')
       expect(ceramics.artistCount).toBe(2)
 
-      const painting = body.find((c: { category: string }) => c.category === 'painting')
-      expect(painting.artistCount).toBe(1)
+      const drawingPainting = body.find((c: { category: string }) => c.category === 'drawing_painting')
+      expect(drawingPainting.artistCount).toBe(1)
     })
 
     it('should return count=0 and artistCount=0 for categories with no data', async () => {
       const res = await app.request('/categories')
       const body = await res.json()
 
-      const jewelry = body.find((c: { category: string }) => c.category === 'jewelry')
-      expect(jewelry).toEqual({ category: 'jewelry', count: 0, artistCount: 0 })
-
-      const woodworking = body.find((c: { category: string }) => c.category === 'woodworking')
-      expect(woodworking).toEqual({ category: 'woodworking', count: 0, artistCount: 0 })
+      const mixedMedia3d = body.find((c: { category: string }) => c.category === 'mixed_media_3d')
+      expect(mixedMedia3d).toEqual({ category: 'mixed_media_3d', count: 0, artistCount: 0 })
     })
 
     it('should return categories in enum definition order', async () => {
@@ -172,12 +169,12 @@ describe('GET /categories', () => {
       app = createTestApp(mockPrisma)
     })
 
-    it('should still return all 9 categories with count=0 and artistCount=0', async () => {
+    it('should still return all 4 categories with count=0 and artistCount=0', async () => {
       const res = await app.request('/categories')
       expect(res.status).toBe(200)
 
       const body = await res.json()
-      expect(body).toHaveLength(9)
+      expect(body).toHaveLength(4)
       for (const item of body) {
         expect(item.count).toBe(0)
         expect(item.artistCount).toBe(0)

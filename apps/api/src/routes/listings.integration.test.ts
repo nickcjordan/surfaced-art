@@ -94,7 +94,7 @@ describe('Listings API — integration', () => {
 
     it('should include artist categories', async () => {
       const artist = await createTestArtist(prisma, {
-        categories: ['ceramics', 'painting'],
+        categories: ['ceramics', 'drawing_painting'],
       })
       const listing = await createTestListing(prisma, { artistId: artist.id })
 
@@ -102,7 +102,7 @@ describe('Listings API — integration', () => {
       const body = await res.json()
 
       expect(body.artist.categories).toEqual(
-        expect.arrayContaining(['ceramics', 'painting'])
+        expect.arrayContaining(['ceramics', 'drawing_painting'])
       )
     })
 
@@ -180,7 +180,7 @@ describe('Listings API — integration', () => {
       })
       await createTestListing(prisma, {
         artistId: artist.id,
-        category: 'painting',
+        category: 'drawing_painting',
       })
 
       const res = await app.request('/listings?category=ceramics')

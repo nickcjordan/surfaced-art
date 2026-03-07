@@ -24,7 +24,7 @@ describe('MobileNav', () => {
     expect(screen.getByRole('button', { name: 'Menu' })).toBeInTheDocument()
   })
 
-  it('should render all 9 category links when opened', async () => {
+  it('should render all 4 category links when opened', async () => {
     render(<MobileNav />)
     await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
 
@@ -34,17 +34,17 @@ describe('MobileNav', () => {
   })
 
   it('should highlight the active category', async () => {
-    mockPathname = '/category/painting'
+    mockPathname = '/category/drawing_painting'
     render(<MobileNav />)
     await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
 
-    const activeLink = screen.getByRole('link', { name: 'Painting' })
+    const activeLink = screen.getByRole('link', { name: 'Drawing & Painting' })
     expect(activeLink.className).toContain('text-accent-primary')
     expect(activeLink.className).toContain('font-medium')
   })
 
   it('should not highlight inactive categories', async () => {
-    mockPathname = '/category/painting'
+    mockPathname = '/category/drawing_painting'
     render(<MobileNav />)
     await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
 
@@ -67,7 +67,7 @@ describe('MobileNav', () => {
     render(<MobileNav />)
     await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
 
-    const inactiveLink = screen.getByRole('link', { name: 'Painting' })
+    const inactiveLink = screen.getByRole('link', { name: 'Drawing & Painting' })
     expect(inactiveLink).not.toHaveAttribute('aria-current')
   })
 })

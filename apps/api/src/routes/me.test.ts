@@ -935,13 +935,13 @@ describe('PUT /me/categories', () => {
   describe('replace-all behavior', () => {
     it('should call deleteMany and createMany in a transaction', async () => {
       const categoryResults = [
-        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'painting' },
+        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'drawing_painting' },
         { id: 'cat-new-2', artistId: 'artist-uuid-123', category: 'ceramics' },
       ]
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['painting', 'ceramics'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['drawing_painting', 'ceramics'] }, 'valid-token')
       expect(res.status).toBe(200)
 
       // Transaction was used
@@ -957,7 +957,7 @@ describe('PUT /me/categories', () => {
       expect(createCall.data).toHaveLength(2)
       expect(createCall.data).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ artistId: 'artist-uuid-123', category: 'painting' }),
+          expect.objectContaining({ artistId: 'artist-uuid-123', category: 'drawing_painting' }),
           expect.objectContaining({ artistId: 'artist-uuid-123', category: 'ceramics' }),
         ])
       )
@@ -965,19 +965,18 @@ describe('PUT /me/categories', () => {
 
     it('should accept a single category', async () => {
       const categoryResults = [
-        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'jewelry' },
+        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'mixed_media_3d' },
       ]
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['jewelry'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['mixed_media_3d'] }, 'valid-token')
       expect(res.status).toBe(200)
     })
 
-    it('should accept all 9 categories', async () => {
+    it('should accept all 4 categories', async () => {
       const allCategories = [
-        'ceramics', 'painting', 'print', 'jewelry', 'illustration',
-        'photography', 'woodworking', 'fibers', 'mixed_media',
+        'ceramics', 'drawing_painting', 'printmaking_photography', 'mixed_media_3d',
       ]
       const categoryResults = allCategories.map((c) => ({
         id: `cat-${c}`,
@@ -1009,17 +1008,17 @@ describe('PUT /me/categories', () => {
   describe('response shape', () => {
     it('should return categories array', async () => {
       const categoryResults = [
-        { id: 'cat-1', artistId: 'artist-uuid-123', category: 'painting' },
+        { id: 'cat-1', artistId: 'artist-uuid-123', category: 'drawing_painting' },
         { id: 'cat-2', artistId: 'artist-uuid-123', category: 'ceramics' },
       ]
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['painting', 'ceramics'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['drawing_painting', 'ceramics'] }, 'valid-token')
       const body = await res.json()
 
       expect(body).toHaveProperty('categories')
-      expect(body.categories).toEqual(['painting', 'ceramics'])
+      expect(body.categories).toEqual(['drawing_painting', 'ceramics'])
     })
   })
 })

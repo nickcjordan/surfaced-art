@@ -64,7 +64,7 @@ const mockArtistProfile = {
   coverImageUrl: 'https://example.com/cover.jpg',
   status: 'active',
   stripeAccountId: 'acct_123',
-  categories: [{ category: 'painting' }],
+  categories: [{ category: 'drawing_painting' }],
   cvEntries: [{ id: 'cv-1' }],
 }
 
@@ -73,7 +73,7 @@ const mockListing = {
   type: 'original',
   title: 'Test Painting',
   medium: 'Oil on canvas',
-  category: 'painting',
+  category: 'drawing_painting',
   price: 15000,
   status: 'available',
   isDocumented: false,
@@ -369,14 +369,14 @@ describe('GET /admin/impersonate/:userId/listings', () => {
   it('should support status and category query filters', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await impersonateListings(app, TARGET_USER_ID, 'status=available&category=painting', 'valid-token')
+    await impersonateListings(app, TARGET_USER_ID, 'status=available&category=drawing_painting', 'valid-token')
 
     expect(prisma.listing.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           artistId: TARGET_ARTIST_ID,
           status: 'available',
-          category: 'painting',
+          category: 'drawing_painting',
         }),
       }),
     )

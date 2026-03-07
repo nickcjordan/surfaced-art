@@ -27,23 +27,18 @@ describe('GET /categories — integration', () => {
     await cleanupDatabase(prisma)
   })
 
-  it('should return all 9 categories even with no listings', async () => {
+  it('should return all 4 categories even with no listings', async () => {
     const res = await app.request('/categories')
     expect(res.status).toBe(200)
 
     const body = await res.json()
-    expect(body).toHaveLength(9)
+    expect(body).toHaveLength(4)
 
     const categoryNames = body.map((c: { category: string }) => c.category)
     expect(categoryNames).toContain('ceramics')
-    expect(categoryNames).toContain('painting')
-    expect(categoryNames).toContain('print')
-    expect(categoryNames).toContain('jewelry')
-    expect(categoryNames).toContain('illustration')
-    expect(categoryNames).toContain('photography')
-    expect(categoryNames).toContain('woodworking')
-    expect(categoryNames).toContain('fibers')
-    expect(categoryNames).toContain('mixed_media')
+    expect(categoryNames).toContain('drawing_painting')
+    expect(categoryNames).toContain('printmaking_photography')
+    expect(categoryNames).toContain('mixed_media_3d')
   })
 
   it('should return count=0 for categories with no listings', async () => {
@@ -90,26 +85,26 @@ describe('GET /categories — integration', () => {
   it('should not count listings from suspended artists', async () => {
     const suspended = await createTestArtist(prisma, {
       status: 'suspended',
-      categories: ['painting'],
+      categories: ['drawing_painting'],
     })
 
     await createTestListing(prisma, {
       artistId: suspended.id,
-      category: 'painting',
+      category: 'drawing_painting',
       status: 'available',
     })
 
     const res = await app.request('/categories')
     const body = await res.json()
 
-    const painting = body.find((c: { category: string }) => c.category === 'painting')
+    const painting = body.find((c: { category: string }) => c.category === 'drawing_painting')
     expect(painting.count).toBe(0)
   })
 
   it('should count expired system reservations as available', async () => {
     const artist = await createTestArtist(prisma, {
       status: 'approved',
-      categories: ['jewelry'],
+      categories: ['mixed_media_3d'],
     })
 
     // Create a listing with expired reservation (treated as available)
@@ -119,7 +114,7 @@ describe('GET /categories — integration', () => {
         title: 'Expired reservation listing',
         description: 'Test',
         medium: 'Gold',
-        category: 'jewelry',
+        category: 'mixed_media_3d',
         price: 50000,
         status: 'reserved_system',
         reservedUntil: new Date('2020-01-01'),
@@ -133,7 +128,7 @@ describe('GET /categories — integration', () => {
     const res = await app.request('/categories')
     const body = await res.json()
 
-    const jewelry = body.find((c: { category: string }) => c.category === 'jewelry')
+    const jewelry = body.find((c: { category: string }) => c.category === 'mixed_media_3d')
     expect(jewelry.count).toBe(1)
   })
 

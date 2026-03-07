@@ -10,14 +10,14 @@ export const revalidate = 60
 export const metadata: Metadata = {
   title: 'Artists — Surfaced Art',
   description:
-    'Browse all vetted artists on Surfaced Art. Discover ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+    'Browse all vetted artists on Surfaced Art. Discover ceramics, drawing & painting, printmaking & photography, and mixed media & 3D.',
   alternates: {
     canonical: `${SITE_URL}/artists`,
   },
   openGraph: {
     title: 'Artists — Surfaced Art',
     description:
-      'Browse all vetted artists on Surfaced Art. Discover ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+      'Browse all vetted artists on Surfaced Art. Discover ceramics, drawing & painting, printmaking & photography, and mixed media & 3D.',
     type: 'website',
     url: `${SITE_URL}/artists`,
   },

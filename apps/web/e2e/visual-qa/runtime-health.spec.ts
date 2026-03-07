@@ -12,7 +12,7 @@ const PAGES = [
   { name: 'homepage', path: '/' },
   { name: 'artist-abbey-peters', path: '/artist/abbey-peters' },
   { name: 'category-ceramics', path: '/category/ceramics' },
-  { name: 'category-painting', path: '/category/painting' },
+  { name: 'category-drawing-painting', path: '/category/drawing_painting' },
 ]
 
 test.describe('Runtime Health — Console Errors', () => {

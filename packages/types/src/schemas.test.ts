@@ -154,7 +154,7 @@ describe('Shared Validation Schemas', () => {
   describe('listingsQuery', () => {
     it('should accept valid query with all params', () => {
       const result = listingsQuery.safeParse({
-        category: 'painting',
+        category: 'drawing_painting',
         status: 'available',
         page: '2',
         limit: '10',
@@ -297,7 +297,7 @@ describe('Shared Validation Schemas', () => {
     it('should accept multiple categories', () => {
       const result = artistApplicationBody.safeParse({
         ...validData,
-        categories: ['ceramics', 'painting', 'mixed_media'],
+        categories: ['ceramics', 'drawing_painting', 'mixed_media_3d'],
       })
       expect(result.success).toBe(true)
     })

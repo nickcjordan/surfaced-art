@@ -49,18 +49,13 @@ describe('ApplicationForm', () => {
     expect(screen.getByTestId('apply-submit')).toBeInTheDocument()
   })
 
-  it('should render all 9 category toggle buttons', () => {
+  it('should render all 4 category toggle buttons', () => {
     render(<ApplicationForm />)
 
     expect(screen.getByTestId('apply-category-ceramics')).toBeInTheDocument()
-    expect(screen.getByTestId('apply-category-painting')).toBeInTheDocument()
-    expect(screen.getByTestId('apply-category-print')).toBeInTheDocument()
-    expect(screen.getByTestId('apply-category-jewelry')).toBeInTheDocument()
-    expect(screen.getByTestId('apply-category-illustration')).toBeInTheDocument()
-    expect(screen.getByTestId('apply-category-photography')).toBeInTheDocument()
-    expect(screen.getByTestId('apply-category-woodworking')).toBeInTheDocument()
-    expect(screen.getByTestId('apply-category-fibers')).toBeInTheDocument()
-    expect(screen.getByTestId('apply-category-mixed_media')).toBeInTheDocument()
+    expect(screen.getByTestId('apply-category-drawing_painting')).toBeInTheDocument()
+    expect(screen.getByTestId('apply-category-printmaking_photography')).toBeInTheDocument()
+    expect(screen.getByTestId('apply-category-mixed_media_3d')).toBeInTheDocument()
   })
 
   it('should toggle category selection on click', async () => {
