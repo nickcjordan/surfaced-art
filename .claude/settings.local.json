@@ -38,8 +38,7 @@
       "WebFetch(domain:dmfu4c7s6z2cc.cloudfront.net)",
       "WebFetch(domain:d2agn4aoo0e7ji.cloudfront.net)",
       "Bash(git mv:*)",
-      "Bash(mkdir:*)",
-      "Bash(git add .claude/settings.local.json apps/web/src/app/\\\\\\(main\\\\\\)/layout.tsx apps/web/src/app/\\\\\\(studio\\\\\\)/ apps/web/src/components/StudioFooter.tsx apps/web/src/components/StudioTopBar.tsx)"
+      "Bash(mkdir:*)"
     ],
     "additionalDirectories": [
       "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio"
