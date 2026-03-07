@@ -16,14 +16,14 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1004.0",
     "@aws-sdk/s3-presigned-post": "^3.1004.0",
-    "@hono/node-server": "^1.19.10",
+    "@hono/node-server": "^1.19.11",
     "@hono/zod-validator": "^0.7.6",
     "@surfaced-art/db": "^0.0.1",
     "@surfaced-art/email": "^0.0.1",
     "@surfaced-art/types": "^0.0.1",
     "@surfaced-art/utils": "^0.0.1",
     "aws-jwt-verify": "^5.1.1",
-    "hono": "^4.12.4",
+    "hono": "^4.12.5",
     "stripe": "^20.4.0",
     "zod": "^4.3.6"
   },
