@@ -1,16 +1,14 @@
-import { Category } from '@surfaced-art/types'
 import type { CategoryType } from '@surfaced-art/types'
 
 /**
  * Human-readable labels for all category enum values.
- * Converts snake_case to Title Case (e.g., mixed_media -> "Mixed Media").
+ * Explicit mapping because auto-generation from snake_case produces
+ * incorrect labels for compound categories (e.g., "Mixed Media 3d"
+ * instead of "Mixed Media & 3D").
  */
-export const categoryLabels = Object.fromEntries(
-  Object.values(Category).map((c) => [
-    c,
-    c
-      .split('_')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' '),
-  ])
-) as Record<CategoryType, string>
+export const categoryLabels: Record<CategoryType, string> = {
+  ceramics: 'Ceramics',
+  drawing_painting: 'Drawing & Painting',
+  printmaking_photography: 'Printmaking & Photography',
+  mixed_media_3d: 'Mixed Media & 3D',
+}

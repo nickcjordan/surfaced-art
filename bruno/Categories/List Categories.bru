@@ -15,10 +15,10 @@ assert {
 }
 
 tests {
-  test("should return all 9 categories", function() {
+  test("should return all 4 categories", function() {
     const categories = res.getBody();
     expect(categories).to.be.an("array");
-    expect(categories.length).to.equal(9);
+    expect(categories.length).to.equal(4);
   });
 
   test("each category should have category name and count", function() {
@@ -33,9 +33,8 @@ tests {
 
   test("should include all expected category values", function() {
     const expected = [
-      "ceramics", "painting", "print", "jewelry",
-      "illustration", "photography", "woodworking",
-      "fibers", "mixed_media"
+      "ceramics", "drawing_painting",
+      "printmaking_photography", "mixed_media_3d"
     ];
     const names = res.getBody().map(function(c) { return c.category; });
     expected.forEach(function(cat) {

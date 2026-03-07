@@ -23,7 +23,7 @@ export const abbeyConfig: ArtistSeedConfig = {
     applicationSource: 'advisor_network',
     isDemo: false,
   },
-  categories: ['ceramics', 'mixed_media'],
+  categories: ['ceramics', 'mixed_media_3d'],
   cvEntries: [
     // Education
     { type: 'education', title: 'MFA, Ceramics (Sculpture Secondary)', institution: 'University of Iowa', year: 2024, sortOrder: 1 },

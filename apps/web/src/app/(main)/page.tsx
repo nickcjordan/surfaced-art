@@ -15,11 +15,11 @@ export const revalidate = 60
 export const metadata: Metadata = {
   title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
   description:
-    'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+    'Discover handmade art from vetted artists. Ceramics, drawing & painting, printmaking & photography, and mixed media & 3D.',
   openGraph: {
     title: 'Surfaced Art — A Curated Digital Gallery for Real Makers',
     description:
-      'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+      'Discover handmade art from vetted artists. Ceramics, drawing & painting, printmaking & photography, and mixed media & 3D.',
     type: 'website',
     url: SITE_URL,
   },
@@ -53,7 +53,7 @@ export default async function Home() {
         '@type': 'WebSite',
         name: 'Surfaced Art',
         url: SITE_URL,
-        description: 'Discover handmade art from vetted artists. Ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, and mixed media.',
+        description: 'Discover handmade art from vetted artists. Ceramics, drawing & painting, printmaking & photography, and mixed media & 3D.',
       }} />
       <JsonLd data={{
         '@context': 'https://schema.org',

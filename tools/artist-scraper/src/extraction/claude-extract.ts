@@ -234,7 +234,7 @@ async function suggestCategoriesWithClaude(
     max_tokens: 256,
     system: `You are classifying an artist into platform categories.
 
-Available categories: ceramics, painting, print, jewelry, illustration, photography, woodworking, fibers, mixed_media
+Available categories: ceramics, drawing_painting, printmaking_photography, mixed_media_3d
 
 Return a JSON array of 1-3 category strings that best describe this artist's work. Return ONLY the JSON array.`,
     messages: [
@@ -254,8 +254,7 @@ Return a JSON array of 1-3 category strings that best describe this artist's wor
   try {
     const parsed = JSON.parse(jsonMatch[0]) as string[]
     const validCategories: CategoryType[] = [
-      'ceramics', 'painting', 'print', 'jewelry', 'illustration',
-      'photography', 'woodworking', 'fibers', 'mixed_media',
+      'ceramics', 'drawing_painting', 'printmaking_photography', 'mixed_media_3d',
     ]
     return parsed.filter((c) => validCategories.includes(c as CategoryType)) as CategoryType[]
   } catch {

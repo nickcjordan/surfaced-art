@@ -39,7 +39,7 @@ const mockApplications = [
     websiteUrl: 'https://janeart.com',
     statement: 'I create beautiful ceramics that tell stories.',
     exhibitionHistory: 'Gallery X 2023, Museum Y 2022',
-    categories: ['ceramics', 'mixed_media'],
+    categories: ['ceramics', 'mixed_media_3d'],
     status: 'pending',
     reviewedBy: null,
     reviewedAt: null,
@@ -55,7 +55,7 @@ const mockApplications = [
     websiteUrl: null,
     statement: 'Bold abstract paintings exploring emotion through color.',
     exhibitionHistory: null,
-    categories: ['painting'],
+    categories: ['drawing_painting'],
     status: 'approved',
     reviewedBy: REVIEWER_USER_ID,
     reviewedAt: new Date('2025-01-20T14:00:00Z'),
@@ -290,7 +290,7 @@ describe('GET /admin/applications/:id', () => {
     expect(body.email).toBe('artist1@example.com')
     expect(body.fullName).toBe('Jane Artist')
     expect(body.statement).toBeDefined()
-    expect(body.categories).toEqual(['ceramics', 'mixed_media'])
+    expect(body.categories).toEqual(['ceramics', 'mixed_media_3d'])
     expect(body.reviewerName).toBeNull()
   })
 

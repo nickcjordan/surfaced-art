@@ -18,7 +18,7 @@ const validApplication = {
   statement:
     'I create handmade ceramics that explore the intersection of form and function in everyday life.',
   exhibitionHistory: 'Solo show at Local Gallery, 2024',
-  categories: ['ceramics', 'mixed_media'],
+  categories: ['ceramics', 'mixed_media_3d'],
 }
 
 const minimalApplication = {

@@ -32,7 +32,7 @@ describe('GET /artists/:slug — integration', () => {
       const artist = await createTestArtist(prisma, {
         displayName: 'Abbey Peters',
         slug: 'abbey-peters',
-        categories: ['ceramics', 'mixed_media'],
+        categories: ['ceramics', 'mixed_media_3d'],
       })
 
       // Add CV entries
@@ -83,7 +83,7 @@ describe('GET /artists/:slug — integration', () => {
       expect(body.slug).toBe('abbey-peters')
       expect(body.bio).toBeTruthy()
       expect(body.categories).toEqual(
-        expect.arrayContaining(['ceramics', 'mixed_media'])
+        expect.arrayContaining(['ceramics', 'mixed_media_3d'])
       )
       expect(body.cvEntries).toHaveLength(2)
       expect(body.processMedia).toHaveLength(1)

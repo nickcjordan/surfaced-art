@@ -60,19 +60,13 @@ export const ListingType = {
 export type ListingTypeType = (typeof ListingType)[keyof typeof ListingType]
 
 /**
- * Art categories
- * Platform launches with 9 categories
+ * Art categories — 4 broad categories
  */
 export const Category = {
   CERAMICS: 'ceramics',
-  PAINTING: 'painting',
-  PRINT: 'print',
-  JEWELRY: 'jewelry',
-  ILLUSTRATION: 'illustration',
-  PHOTOGRAPHY: 'photography',
-  WOODWORKING: 'woodworking',
-  FIBERS: 'fibers',
-  MIXED_MEDIA: 'mixed_media',
+  DRAWING_PAINTING: 'drawing_painting',
+  PRINTMAKING_PHOTOGRAPHY: 'printmaking_photography',
+  MIXED_MEDIA_3D: 'mixed_media_3d',
 } as const
 
 export type CategoryType = (typeof Category)[keyof typeof Category]

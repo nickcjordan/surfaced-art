@@ -41,7 +41,7 @@ describe('Artists Page', () => {
         location: 'Brooklyn, NY',
         profileImageUrl: null,
         coverImageUrl: null,
-        categories: ['painting'],
+        categories: ['drawing_painting'],
       },
     ])
     const Component = await ArtistsPage()

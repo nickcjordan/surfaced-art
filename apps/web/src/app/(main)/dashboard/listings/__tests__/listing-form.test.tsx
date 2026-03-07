@@ -202,7 +202,7 @@ describe('ListingForm', () => {
       await user.type(screen.getByLabelText(/title/i), 'Limited Print')
       await user.type(screen.getByLabelText(/description/i), 'Edition print')
       await user.type(screen.getByLabelText(/medium/i), 'Ink on paper')
-      await user.selectOptions(screen.getByLabelText(/category/i), 'print')
+      await user.selectOptions(screen.getByLabelText(/category/i), 'printmaking_photography')
       await user.selectOptions(screen.getByLabelText(/type/i), 'standard')
       await user.type(screen.getByLabelText(/price/i), '75')
       await user.type(screen.getByLabelText(/packed length/i), '20')

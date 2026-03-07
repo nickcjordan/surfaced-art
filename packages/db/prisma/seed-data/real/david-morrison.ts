@@ -23,7 +23,7 @@ export const davidConfig: ArtistSeedConfig = {
     applicationSource: 'advisor_network',
     isDemo: false,
   },
-  categories: ['ceramics', 'mixed_media'],
+  categories: ['ceramics', 'mixed_media_3d'],
   cvEntries: [
     // Education
     { type: 'education', title: 'MFA, Art', institution: 'University of Oklahoma', year: 2025, sortOrder: 1 },

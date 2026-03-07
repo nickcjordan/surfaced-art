@@ -60,7 +60,7 @@ const mockDashboardData: DashboardResponse = {
     coverImageUrl: 'https://cdn.example.com/cover.jpg',
     status: 'approved',
     stripeAccountId: null,
-    categories: ['ceramics', 'painting'],
+    categories: ['ceramics', 'drawing_painting'],
   },
   completion: {
     percentage: 100,
@@ -91,7 +91,7 @@ beforeEach(() => {
     status: 'approved',
   })
   mockUpdateCategories.mockResolvedValue({
-    categories: ['ceramics', 'painting'],
+    categories: ['ceramics', 'drawing_painting'],
   })
 })
 
@@ -254,7 +254,7 @@ describe('ProfileForm', () => {
   })
 
   describe('category section', () => {
-    it('should render all 9 category buttons', async () => {
+    it('should render all 4 category buttons', async () => {
       render(<ProfileForm />)
 
       await waitFor(() => {
@@ -262,14 +262,9 @@ describe('ProfileForm', () => {
       })
 
       expect(screen.getByRole('button', { name: /ceramics/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /painting/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /print/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /jewelry/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /illustration/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /photography/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /woodworking/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /fibers/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /mixed media/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /drawing & painting/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /printmaking & photography/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /mixed media & 3d/i })).toBeInTheDocument()
     })
 
     it('should pre-select categories from dashboard data', async () => {
@@ -279,11 +274,11 @@ describe('ProfileForm', () => {
         expect(screen.getByTestId('profile-categories')).toBeInTheDocument()
       })
 
-      // ceramics and painting should be visually selected (have aria-pressed=true)
+      // ceramics and drawing_painting should be visually selected (have aria-pressed=true)
       expect(screen.getByRole('button', { name: /ceramics/i })).toHaveAttribute('aria-pressed', 'true')
-      expect(screen.getByRole('button', { name: /painting/i })).toHaveAttribute('aria-pressed', 'true')
-      // jewelry should not be selected
-      expect(screen.getByRole('button', { name: /jewelry/i })).toHaveAttribute('aria-pressed', 'false')
+      expect(screen.getByRole('button', { name: /drawing & painting/i })).toHaveAttribute('aria-pressed', 'true')
+      // mixed_media_3d should not be selected
+      expect(screen.getByRole('button', { name: /mixed media & 3d/i })).toHaveAttribute('aria-pressed', 'false')
     })
 
     it('should toggle category selection on click', async () => {
@@ -294,11 +289,11 @@ describe('ProfileForm', () => {
         expect(screen.getByTestId('profile-categories')).toBeInTheDocument()
       })
 
-      const jewelryButton = screen.getByRole('button', { name: /jewelry/i })
-      expect(jewelryButton).toHaveAttribute('aria-pressed', 'false')
+      const mixedMediaButton = screen.getByRole('button', { name: /mixed media & 3d/i })
+      expect(mixedMediaButton).toHaveAttribute('aria-pressed', 'false')
 
-      await user.click(jewelryButton)
-      expect(jewelryButton).toHaveAttribute('aria-pressed', 'true')
+      await user.click(mixedMediaButton)
+      expect(mixedMediaButton).toHaveAttribute('aria-pressed', 'true')
     })
 
     it('should call updateCategories when categories are saved', async () => {
@@ -309,14 +304,14 @@ describe('ProfileForm', () => {
         expect(screen.getByTestId('profile-categories')).toBeInTheDocument()
       })
 
-      // Add jewelry to the existing ceramics + painting
-      await user.click(screen.getByRole('button', { name: /jewelry/i }))
+      // Add mixed_media_3d to the existing ceramics + drawing_painting
+      await user.click(screen.getByRole('button', { name: /mixed media & 3d/i }))
       await user.click(screen.getByTestId('profile-save'))
 
       await waitFor(() => {
         expect(mockUpdateCategories).toHaveBeenCalledWith(
           'mock-token',
-          expect.arrayContaining(['ceramics', 'painting', 'jewelry'])
+          expect.arrayContaining(['ceramics', 'drawing_painting', 'mixed_media_3d'])
         )
       })
     })
@@ -351,9 +346,9 @@ describe('ProfileForm', () => {
         expect(screen.getByTestId('profile-categories')).toBeInTheDocument()
       })
 
-      // Deselect both ceramics and painting
+      // Deselect both ceramics and drawing_painting
       await user.click(screen.getByRole('button', { name: /ceramics/i }))
-      await user.click(screen.getByRole('button', { name: /painting/i }))
+      await user.click(screen.getByRole('button', { name: /drawing & painting/i }))
 
       await user.click(screen.getByTestId('profile-save'))
 

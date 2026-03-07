@@ -59,7 +59,7 @@ const mockArtistProfile = {
     fullName: 'Jane Artist',
     roles: [{ role: 'buyer' }, { role: 'artist' }],
   },
-  categories: [{ category: 'ceramics' }, { category: 'mixed_media' }],
+  categories: [{ category: 'ceramics' }, { category: 'mixed_media_3d' }],
   _count: { listings: 5, followers: 10 },
 }
 
@@ -279,7 +279,7 @@ describe('GET /admin/artists/:id', () => {
     expect(body.hasStripeAccount).toBe(true)
     expect(body.isDemo).toBe(false)
     expect(body.user.email).toBe('jane@example.com')
-    expect(body.categories).toEqual(['ceramics', 'mixed_media'])
+    expect(body.categories).toEqual(['ceramics', 'mixed_media_3d'])
     expect(body.stats).toEqual({
       totalListings: 5,
       availableListings: 5,

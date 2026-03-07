@@ -88,7 +88,7 @@ const mockListingForDetail = {
     ...mockListingForList.artist,
     categories: [
       { id: 'cat-1', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'ceramics' },
-      { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media' },
+      { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media_3d' },
     ],
   },
 }
@@ -413,7 +413,7 @@ describe('GET /listings/:id', () => {
       const res = await app.request('/listings/550e8400-e29b-41d4-a716-446655440010')
       const data = await res.json()
 
-      expect(data.artist.categories).toEqual(['ceramics', 'mixed_media'])
+      expect(data.artist.categories).toEqual(['ceramics', 'mixed_media_3d'])
     })
 
     it('should include artist summary fields', async () => {

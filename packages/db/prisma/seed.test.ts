@@ -53,9 +53,9 @@ describe('Seed Data Validation', () => {
   })
 
   describe('artist categories', () => {
-    it('should have at least 2 category assignments per artist', () => {
+    it('should have at least 1 category assignment per artist', () => {
       for (const config of artistConfigs) {
-        expect(config.categories.length).toBeGreaterThanOrEqual(2)
+        expect(config.categories.length).toBeGreaterThanOrEqual(1)
       }
     })
   })

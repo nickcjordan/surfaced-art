@@ -30,7 +30,7 @@ type CreateTestArtistOptions = {
   displayName?: string
   slug?: string
   status?: 'pending' | 'approved' | 'suspended'
-  categories?: Array<'ceramics' | 'painting' | 'print' | 'jewelry' | 'illustration' | 'photography' | 'woodworking' | 'fibers' | 'mixed_media'>
+  categories?: Array<'ceramics' | 'drawing_painting' | 'printmaking_photography' | 'mixed_media_3d'>
 }
 
 /**
@@ -84,7 +84,7 @@ export async function createTestArtist(
 type CreateTestListingOptions = {
   artistId?: string
   title?: string
-  category?: 'ceramics' | 'painting' | 'print' | 'jewelry' | 'illustration' | 'photography' | 'woodworking' | 'fibers' | 'mixed_media'
+  category?: 'ceramics' | 'drawing_painting' | 'printmaking_photography' | 'mixed_media_3d'
   price?: number
   status?: 'available' | 'reserved_system' | 'reserved_artist' | 'sold'
   withImages?: number
@@ -175,7 +175,7 @@ type CreateTestApplicationOptions = {
   websiteUrl?: string
   statement?: string
   exhibitionHistory?: string
-  categories?: Array<'ceramics' | 'painting' | 'print' | 'jewelry' | 'illustration' | 'photography' | 'woodworking' | 'fibers' | 'mixed_media'>
+  categories?: Array<'ceramics' | 'drawing_painting' | 'printmaking_photography' | 'mixed_media_3d'>
   status?: 'pending' | 'approved' | 'rejected' | 'withdrawn'
 }
 

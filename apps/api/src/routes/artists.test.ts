@@ -23,7 +23,7 @@ const mockApprovedArtist = {
   updatedAt: new Date('2025-01-01T00:00:00Z'),
   categories: [
     { id: 'cat-1', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'ceramics' },
-    { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media' },
+    { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media_3d' },
   ],
   cvEntries: [
     {
@@ -186,7 +186,7 @@ describe('GET /artists/:slug', () => {
       const res = await app.request('/artists/abbey-peters')
       const data = await res.json()
 
-      expect(data.categories).toEqual(['ceramics', 'mixed_media'])
+      expect(data.categories).toEqual(['ceramics', 'mixed_media_3d'])
     })
 
     it('should include CV entries sorted by sort_order', async () => {
@@ -337,7 +337,7 @@ const mockArtistListData = [
     coverImageUrl: 'https://cdn.example.com/cover1.jpg',
     categories: [
       { id: 'cat-1', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'ceramics' },
-      { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media' },
+      { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media_3d' },
     ],
   },
   {
@@ -347,7 +347,7 @@ const mockArtistListData = [
     profileImageUrl: 'https://cdn.example.com/profile2.jpg',
     coverImageUrl: null,
     categories: [
-      { id: 'cat-3', artistId: '550e8400-e29b-41d4-a716-446655440003', category: 'painting' },
+      { id: 'cat-3', artistId: '550e8400-e29b-41d4-a716-446655440003', category: 'drawing_painting' },
     ],
   },
 ]
@@ -381,8 +381,8 @@ describe('GET /artists', () => {
       const res = await app.request('/artists')
       const data = await res.json()
 
-      expect(data[0].categories).toEqual(['ceramics', 'mixed_media'])
-      expect(data[1].categories).toEqual(['painting'])
+      expect(data[0].categories).toEqual(['ceramics', 'mixed_media_3d'])
+      expect(data[1].categories).toEqual(['drawing_painting'])
     })
 
     it('should include coverImageUrl and profileImageUrl', async () => {
