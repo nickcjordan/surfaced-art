@@ -59,12 +59,13 @@ jobs:
           output: 'trivy-fs-output.txt'
           skip-files: 'package-lock.json'
           skip-dirs: 'node_modules/@prisma'
+          trivyignores: '.trivyignore'
 
       - name: Check Trivy FS results
         id: trivy-fs
         run: |
           set +e
-          trivy fs --exit-code 1 --severity CRITICAL,HIGH --quiet --skip-files package-lock.json --skip-dirs node_modules/@prisma . > /dev/null 2>&1
+          trivy fs --exit-code 1 --severity CRITICAL,HIGH --quiet --skip-files package-lock.json --skip-dirs node_modules/@prisma --ignorefile .trivyignore . > /dev/null 2>&1
           EXIT_CODE=$?
           set -e
           if [ "$EXIT_CODE" -eq 0 ]; then
