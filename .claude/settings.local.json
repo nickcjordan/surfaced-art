@@ -31,7 +31,18 @@
       "Bash(MSYS_NO_PATHCONV=1 aws logs:*)",
       "WebSearch",
       "Bash(npx tsx --env-file=.env.dev -e \":*)",
-      "Bash(npx tsx --env-file=packages/db/.env.dev -e \":*)"
+      "Bash(npx tsx --env-file=packages/db/.env.dev -e \":*)",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "Bash(node -e \"console.log\\(require\\(''./node_modules/@prisma/dev/node_modules/hono/package.json''\\).version\\)\")",
+      "WebFetch(domain:dmfu4c7s6z2cc.cloudfront.net)",
+      "WebFetch(domain:d2agn4aoo0e7ji.cloudfront.net)",
+      "Bash(git mv:*)",
+      "Bash(mkdir:*)",
+      "Bash(git add .claude/settings.local.json apps/web/src/app/\\\\\\(main\\\\\\)/layout.tsx apps/web/src/app/\\\\\\(studio\\\\\\)/ apps/web/src/components/StudioFooter.tsx apps/web/src/components/StudioTopBar.tsx)"
+    ],
+    "additionalDirectories": [
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio"
     ]
   }
 }
