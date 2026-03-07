@@ -15,7 +15,7 @@ output "port" {
 
 output "connection_string" {
   description = "PostgreSQL connection string"
-  value       = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.main.endpoint}/${var.db_name}"
+  value       = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.main.endpoint}/${var.db_name}?connection_limit=1"
   sensitive   = true
 }
 

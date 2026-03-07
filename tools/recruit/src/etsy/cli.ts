@@ -173,6 +173,9 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  console.error('Unexpected error:', err)
+  const message = err instanceof Error ? err.message : String(err)
+  // Redact API keys from error output to avoid logging secrets
+  const safe = message.replace(/x-api-key=[^&\s]+/gi, 'x-api-key=REDACTED')
+  console.error('Unexpected error:', safe)
   process.exit(1)
 })

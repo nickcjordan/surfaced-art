@@ -92,7 +92,7 @@ export function findArtistWebsite(
   hrefs: string[],
   fairDomain: string
 ): string | null {
-  const excludePatterns = [
+  const excludedDomains = [
     fairDomain.toLowerCase(),
     'instagram.com',
     'facebook.com',
@@ -104,16 +104,23 @@ export function findArtistWebsite(
     'etsy.com',
     'amazon.com',
     'linkedin.com',
-    'mailto:',
-    'tel:',
-    '#',
   ]
 
   for (const href of hrefs) {
     const lower = href.toLowerCase()
     if (!lower.startsWith('http')) continue
-    if (excludePatterns.some((p) => lower.includes(p))) continue
-    return href
+
+    try {
+      const url = new URL(href)
+      const hostname = url.hostname.toLowerCase()
+      const isExcluded = excludedDomains.some(
+        (domain) => hostname === domain || hostname.endsWith('.' + domain)
+      )
+      if (isExcluded) continue
+      return href
+    } catch {
+      // Not a valid URL, skip
+    }
   }
 
   return null
@@ -124,8 +131,16 @@ export function findArtistWebsite(
  */
 export function findInstagramUrl(hrefs: string[]): string | null {
   for (const href of hrefs) {
-    if (href.toLowerCase().includes('instagram.com')) {
-      return href
+    try {
+      const url = new URL(href)
+      if (
+        url.hostname === 'instagram.com' ||
+        url.hostname.endsWith('.instagram.com')
+      ) {
+        return href
+      }
+    } catch {
+      // Not a valid URL, skip
     }
   }
   return null

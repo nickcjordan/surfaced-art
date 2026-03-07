@@ -162,22 +162,32 @@ export const listingIdParam = z.object({
  * Use on any user-supplied text (bios, descriptions, titles) before storage.
  */
 export function sanitizeText(input: string): string {
-  return (
-    input
-      // Strip HTML tags first (catches already-decoded angle brackets)
-      .replace(/<[^>]*>/g, '')
-      // Decode HTML entities to plain text (safe now that tags are stripped)
+  let text = input
+
+  // Loop: strip HTML tags then decode entities until stable.
+  // Using [^<>] in the tag regex avoids polynomial backtracking on
+  // inputs with many '<' characters. Looping until stable handles
+  // nested or double-encoded injection attempts.
+  let prev = ''
+  while (prev !== text) {
+    prev = text
+    text = text
+      .replace(/<[^<>]*>/g, '')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#x27;/g, "'")
       .replace(/&amp;/g, '&')
-      // Strip tags again to catch any produced by entity decoding
-      .replace(/<[^>]*>/g, '')
-      // Collapse multiple spaces to single space
-      .replace(/\s+/g, ' ')
-      .trim()
-  )
+  }
+
+  // Final strip after all decoding rounds
+  text = text.replace(/<[^<>]*>/g, '')
+
+  // Remove any remaining angle brackets that aren't part of complete tags
+  // (defense-in-depth against incomplete tag injection like "<scr<script>ipt>")
+  text = text.replace(/[<>]/g, '')
+
+  return text.replace(/\s+/g, ' ').trim()
 }
 
 /** PUT /me/profile body — all fields optional for partial update */

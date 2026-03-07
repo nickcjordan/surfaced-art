@@ -128,6 +128,17 @@ describe('findArtistWebsite', () => {
   it('returns null when no valid website found', () => {
     expect(findArtistWebsite([], 'artfair.com')).toBeNull()
   })
+
+  it('excludes subdomains of excluded domains', () => {
+    const hrefs = ['https://www.instagram.com/jane', 'https://m.facebook.com/jane']
+    expect(findArtistWebsite(hrefs, 'artfair.com')).toBeNull()
+  })
+
+  it('does not exclude domains that merely contain an excluded domain name', () => {
+    // "not-instagram.com" should NOT be excluded — it's a different domain
+    const hrefs = ['https://not-instagram.com/gallery']
+    expect(findArtistWebsite(hrefs, 'artfair.com')).toBe('https://not-instagram.com/gallery')
+  })
 })
 
 describe('findInstagramUrl', () => {

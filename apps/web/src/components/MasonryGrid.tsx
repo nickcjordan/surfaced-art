@@ -13,8 +13,9 @@ type MasonryGridProps = {
 
 /**
  * JS-assisted masonry grid that distributes children into columns
- * based on each child's rendered height. Items flow left-to-right
- * in source order, placed into whichever column is currently shortest.
+ * using round-robin assignment. Items flow left-to-right in source
+ * order, cycling through columns sequentially. This works well when
+ * items have similar heights (e.g. known aspect ratios).
  *
  * Falls back to a single column on the server (SSR) and reflows
  * on mount + resize.

@@ -9,6 +9,7 @@ import { createAdminAuditRoutes } from './audit'
 import { createAdminPlatformRoutes } from './platform'
 import { createAdminBulkRoutes } from './bulk'
 import { createAdminOrderRoutes } from './orders'
+import { createAdminImpersonationRoutes } from './impersonation'
 
 export function createAdminRoutes(prisma: PrismaClient) {
   const admin = new Hono<{ Variables: { user: AuthUser } }>()
@@ -24,6 +25,7 @@ export function createAdminRoutes(prisma: PrismaClient) {
   admin.route('/', createAdminPlatformRoutes(prisma))
   admin.route('/orders', createAdminOrderRoutes(prisma))
   admin.route('/', createAdminBulkRoutes(prisma))
+  admin.route('/impersonate', createAdminImpersonationRoutes(prisma))
 
   return admin
 }

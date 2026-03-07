@@ -235,7 +235,7 @@ export function createAdminOrderRoutes(prisma: PrismaClient) {
       const isFullRefund = amount === undefined
 
       const stripe = getStripeClient()
-      const refundParams: { payment_intent: string; amount?: number; reason: string } = {
+      const refundParams: { payment_intent: string; amount?: number; reason: 'requested_by_customer' } = {
         payment_intent: order.stripePaymentIntentId,
         reason: 'requested_by_customer',
       }
@@ -322,7 +322,7 @@ export function createAdminOrderRoutes(prisma: PrismaClient) {
         return badRequest(c, `Invalid status transition: ${oldStatus} → ${newStatus}`)
       }
 
-      const updateData: Prisma.OrderUpdateInput = { status: newStatus }
+      const updateData: Prisma.OrderUpdateInput = { status: newStatus as Prisma.OrderUpdateInput['status'] }
 
       if (newStatus === 'shipped' && !order.shippedAt) {
         updateData.shippedAt = new Date()
