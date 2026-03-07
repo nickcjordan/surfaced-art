@@ -8,7 +8,7 @@ type StudioTopBarProps = {
 
 export function StudioTopBar({ artistName, artistSlug }: StudioTopBarProps) {
   return (
-    <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border">
+    <header data-testid="studio-top-bar" className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="mx-auto max-w-6xl px-6 flex items-center justify-between h-14">
         <span className="font-serif text-foreground tracking-wide text-base truncate">
           {artistName}
