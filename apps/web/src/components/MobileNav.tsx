@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useSyncExternalStore } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { CATEGORIES } from '@/lib/categories'
@@ -13,6 +14,7 @@ import { cn } from '@/lib/utils'
 export function MobileNav() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
 
   const open = useCallback(() => setIsOpen(true), [])
   const close = useCallback(() => setIsOpen(false), [])
@@ -74,91 +76,97 @@ export function MobileNav() {
         </svg>
       </button>
 
-      {/* Backdrop overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm"
-          onClick={close}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Slide-out drawer */}
-      <div
-        className={`fixed top-0 right-0 z-50 h-full w-72 bg-background shadow-xl dark:shadow-none dark:border-l dark:border-border transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-        role="dialog"
-        aria-modal={isOpen}
-        aria-hidden={!isOpen}
-        aria-label="Navigation menu"
-        inert={!isOpen ? true : undefined}
-      >
-        {/* Close button */}
-        <div className="flex items-center justify-end p-6">
-          <button
-            type="button"
-            onClick={close}
-            aria-label="Close menu"
-            className="p-2 text-foreground hover:text-muted-foreground transition-colors"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+      {/* Backdrop + drawer rendered via portal to escape header's backdrop-filter containing block */}
+      {mounted && createPortal(
+        <>
+          {/* Backdrop overlay */}
+          {isOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm"
+              onClick={close}
               aria-hidden="true"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile search */}
-        <div className="px-6 pb-4">
-          <form action="/search" method="GET" data-testid="mobile-search-form">
-            <input
-              name="q"
-              type="search"
-              placeholder="Search art..."
-              autoComplete="off"
-              data-testid="mobile-search-input"
-              className="h-10 w-full rounded-md border border-border bg-transparent px-3.5 py-2.5 text-base text-foreground placeholder:text-muted-foreground outline-none focus-visible:border-accent-primary focus-visible:ring-accent-primary/50 focus-visible:ring-[3px] transition-[border-color] duration-200"
             />
-          </form>
-        </div>
+          )}
 
-        {/* Category links */}
-        <nav data-testid="mobile-nav" aria-label="Mobile category navigation" className="px-6">
-          <ul className="space-y-1">
-            {CATEGORIES.map((category) => {
-              const isActive = pathname === category.href
-              return (
-                <li key={category.slug}>
-                  <Link
-                    href={category.href}
-                    onClick={close}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={cn(
-                      'block py-3 text-base tracking-wide transition-colors border-b border-border/50',
-                      isActive
-                        ? 'text-accent-primary font-medium'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {category.label}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-      </div>
+          {/* Slide-out drawer */}
+          <div
+            className={`fixed top-0 right-0 z-50 h-full w-72 bg-background shadow-xl dark:shadow-none dark:border-l dark:border-border transform transition-transform duration-300 ease-in-out ${
+              isOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
+            role="dialog"
+            aria-modal={isOpen}
+            aria-hidden={!isOpen}
+            aria-label="Navigation menu"
+            inert={!isOpen ? true : undefined}
+          >
+            {/* Close button */}
+            <div className="flex items-center justify-end p-6">
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Close menu"
+                className="p-2 text-foreground hover:text-muted-foreground transition-colors"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Mobile search */}
+            <div className="px-6 pb-4">
+              <form action="/search" method="GET" data-testid="mobile-search-form">
+                <input
+                  name="q"
+                  type="search"
+                  placeholder="Search art..."
+                  autoComplete="off"
+                  data-testid="mobile-search-input"
+                  className="h-10 w-full rounded-md border border-border bg-transparent px-3.5 py-2.5 text-base text-foreground placeholder:text-muted-foreground outline-none focus-visible:border-accent-primary focus-visible:ring-accent-primary/50 focus-visible:ring-[3px] transition-[border-color] duration-200"
+                />
+              </form>
+            </div>
+
+            {/* Category links */}
+            <nav data-testid="mobile-nav" aria-label="Mobile category navigation" className="px-6">
+              <ul className="space-y-1">
+                {CATEGORIES.map((category) => {
+                  const isActive = pathname === category.href
+                  return (
+                    <li key={category.slug}>
+                      <Link
+                        href={category.href}
+                        onClick={close}
+                        aria-current={isActive ? 'page' : undefined}
+                        className={cn(
+                          'block py-3 text-base tracking-wide transition-colors border-b border-border/50',
+                          isActive
+                            ? 'text-accent-primary font-medium'
+                            : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        {category.label}
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </nav>
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   )
 }
