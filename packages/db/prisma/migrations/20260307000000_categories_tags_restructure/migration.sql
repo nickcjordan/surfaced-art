@@ -51,18 +51,24 @@ ALTER TABLE "listings" ALTER COLUMN "category" TYPE "CategoryType_new" USING (
   END
 )::"CategoryType_new";
 
-ALTER TABLE "artist_applications" ALTER COLUMN "categories" TYPE "CategoryType_new"[] USING (
-  ARRAY(
-    SELECT DISTINCT (CASE
-      WHEN cat::text = 'ceramics' THEN 'ceramics'
-      WHEN cat::text IN ('painting', 'illustration') THEN 'drawing_painting'
-      WHEN cat::text IN ('print', 'photography') THEN 'printmaking_photography'
-      WHEN cat::text IN ('jewelry', 'woodworking', 'fibers', 'mixed_media') THEN 'mixed_media_3d'
-      ELSE cat::text
-    END)::"CategoryType_new"
-    FROM unnest("categories") AS cat
-  )
-);
+-- artist_applications: PostgreSQL doesn't allow subqueries in USING, so
+-- first cast the column to text[], UPDATE with mapped values, then cast to new enum[].
+ALTER TABLE "artist_applications" ALTER COLUMN "categories" TYPE text[] USING ("categories"::text[]);
+
+UPDATE "artist_applications"
+SET "categories" = (
+  SELECT array_agg(DISTINCT CASE
+    WHEN cat = 'ceramics' THEN 'ceramics'
+    WHEN cat IN ('painting', 'illustration') THEN 'drawing_painting'
+    WHEN cat IN ('print', 'photography') THEN 'printmaking_photography'
+    WHEN cat IN ('jewelry', 'woodworking', 'fibers', 'mixed_media') THEN 'mixed_media_3d'
+    ELSE cat
+  END)
+  FROM unnest("categories") AS cat
+)
+WHERE array_length("categories", 1) > 0;
+
+ALTER TABLE "artist_applications" ALTER COLUMN "categories" TYPE "CategoryType_new"[] USING ("categories"::"CategoryType_new"[]);
 
 -- Step 4: Drop old enum and rename new one
 DROP TYPE "CategoryType";
