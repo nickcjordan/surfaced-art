@@ -9,7 +9,8 @@ const PRISMA_CLI = `${LAMBDA_ROOT}/node_modules/prisma/build/index.js`
 const PRISMA_CMD = `node ${PRISMA_CLI}`
 
 interface MigrateEvent {
-  command: 'migrate' | 'force-reapply-baseline' | 'reset-baseline' | 'seed'
+  command: 'migrate' | 'force-reapply-baseline' | 'reset-baseline' | 'resolve-rolled-back' | 'seed'
+  migration?: string
 }
 
 interface MigrateResult {
@@ -18,7 +19,7 @@ interface MigrateResult {
 }
 
 export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
-  const validCommands = ['migrate', 'force-reapply-baseline', 'reset-baseline', 'seed']
+  const validCommands = ['migrate', 'force-reapply-baseline', 'reset-baseline', 'resolve-rolled-back', 'seed']
   if (!validCommands.includes(event.command)) {
     return { success: false, error: `Unknown command: ${event.command}` }
   }
@@ -104,6 +105,27 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('Reset baseline failed:', message)
+      return { success: false, error: message }
+    }
+  }
+
+  // resolve-rolled-back: marks a failed migration as rolled back so
+  // migrate deploy can re-apply it with corrected SQL. Requires the
+  // migration name in event.migration.
+  if (event.command === 'resolve-rolled-back') {
+    if (!event.migration) {
+      return { success: false, error: 'resolve-rolled-back requires a "migration" field with the migration name' }
+    }
+    try {
+      const output = execSync(
+        `${PRISMA_CMD} migrate resolve --rolled-back ${event.migration}`,
+        execOpts
+      )
+      console.log('Migration marked as rolled back:', output)
+      return { success: true }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('Resolve rolled-back failed:', message)
       return { success: false, error: message }
     }
   }
