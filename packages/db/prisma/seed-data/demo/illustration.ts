@@ -154,7 +154,7 @@ const isaiahConfig: ArtistSeedConfig = {
       title: 'Motown Session',
       description: 'Three-color screenprint of musicians in a recording studio, inspired by the artist\'s visits to the Motown Museum. Printed in black, gold, and deep blue on heavyweight cream paper. Edition of twenty-five.',
       medium: 'screenprint on cotton rag, edition of 25',
-      category: 'print',
+      category: 'printmaking_photography',
       price: 8500,
       status: 'available',
       isDocumented: false,
