@@ -157,6 +157,50 @@ describe('migrate handler', () => {
     })
   })
 
+  // --- resolve-rolled-back ---
+
+  it('should run resolve-rolled-back with provided migration name', async () => {
+    mockedExecSync.mockReturnValue('')
+
+    const result = await handler({
+      command: 'resolve-rolled-back',
+      migration: '20260307000000_categories_tags_restructure',
+    })
+
+    expect(result).toEqual({ success: true })
+    expect(mockedExecSync).toHaveBeenCalledTimes(1)
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'migrate resolve --rolled-back 20260307000000_categories_tags_restructure'
+      ),
+      expect.objectContaining({ encoding: 'utf-8' })
+    )
+  })
+
+  it('should return error when resolve-rolled-back is missing migration name', async () => {
+    const result = await handler({ command: 'resolve-rolled-back' })
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('requires a "migration" field')
+    expect(mockedExecSync).not.toHaveBeenCalled()
+  })
+
+  it('should return error when resolve-rolled-back fails', async () => {
+    mockedExecSync.mockImplementationOnce(() => {
+      throw new Error('resolve failed: migration not found')
+    })
+
+    const result = await handler({
+      command: 'resolve-rolled-back',
+      migration: '20260307000000_categories_tags_restructure',
+    })
+
+    expect(result).toEqual({
+      success: false,
+      error: 'resolve failed: migration not found',
+    })
+  })
+
   // --- seed ---
 
   it('should run seed command via tsx when seed script exists', async () => {
