@@ -6,12 +6,16 @@ import { CATEGORIES } from '@/lib/categories'
 import { cn } from '@/lib/utils'
 import { Container } from './ui/container'
 
+type NavigationProps = {
+  condensed?: boolean
+}
+
 /**
  * Desktop category navigation bar.
- * Renders all 9 art categories as horizontal links with active state.
+ * Renders all 4 art categories as horizontal links with active state.
  * Hidden on mobile (use MobileNav instead).
  */
-export function Navigation() {
+export function Navigation({ condensed = false }: NavigationProps) {
   const pathname = usePathname()
 
   return (
@@ -31,7 +35,8 @@ export function Navigation() {
                   href={category.href}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    'inline-block whitespace-nowrap text-sm tracking-wide transition-colors py-3',
+                    'inline-block whitespace-nowrap text-sm tracking-wide transition-all duration-300',
+                    condensed ? 'py-1.5' : 'py-2.5',
                     isActive
                       ? 'text-foreground border-b-2 border-accent-primary'
                       : 'text-muted-foreground hover:text-foreground'
