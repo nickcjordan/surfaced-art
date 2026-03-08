@@ -23,10 +23,18 @@ vi.mock('next/navigation', () => ({
 const mockCreateMyListing = vi.fn()
 const mockUpdateMyListing = vi.fn()
 const mockGetMyListing = vi.fn()
+const mockGetTagVocabulary = vi.fn()
+const mockGetMyTags = vi.fn()
+const mockUpdateListingTags = vi.fn()
+const mockGetDashboard = vi.fn()
 vi.mock('@/lib/api', () => ({
   createMyListing: (...args: unknown[]) => mockCreateMyListing(...args),
   updateMyListing: (...args: unknown[]) => mockUpdateMyListing(...args),
   getMyListing: (...args: unknown[]) => mockGetMyListing(...args),
+  getTagVocabulary: (...args: unknown[]) => mockGetTagVocabulary(...args),
+  getMyTags: (...args: unknown[]) => mockGetMyTags(...args),
+  updateListingTags: (...args: unknown[]) => mockUpdateListingTags(...args),
+  getDashboard: (...args: unknown[]) => mockGetDashboard(...args),
 }))
 
 import { ListingForm } from '../components/listing-form'
@@ -58,6 +66,7 @@ const mockListingResponse: MyListingResponse = {
   createdAt: '2025-06-01T00:00:00.000Z',
   updatedAt: '2025-06-01T00:00:00.000Z',
   images: [],
+  tags: [],
 }
 
 const createdResponse: MyListingResponse = {
@@ -72,6 +81,14 @@ describe('ListingForm', () => {
     mockCreateMyListing.mockResolvedValue(createdResponse)
     mockUpdateMyListing.mockResolvedValue(mockListingResponse)
     mockGetMyListing.mockResolvedValue(mockListingResponse)
+    mockGetTagVocabulary.mockResolvedValue([])
+    mockGetMyTags.mockResolvedValue({ tags: [] })
+    mockUpdateListingTags.mockResolvedValue({ tags: [] })
+    mockGetDashboard.mockResolvedValue({
+      profile: { categories: ['ceramics'] },
+      completion: { percentage: 100, fields: [] },
+      stats: { totalListings: 0, availableListings: 0, soldListings: 0, totalViews: 0 },
+    })
   })
 
   describe('Create mode', () => {

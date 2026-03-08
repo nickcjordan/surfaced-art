@@ -18,11 +18,17 @@ const mockGetDashboard = vi.fn()
 const mockUpdateProfile = vi.fn()
 const mockUpdateCategories = vi.fn()
 const mockGetPresignedUrl = vi.fn()
+const mockGetTagVocabulary = vi.fn()
+const mockGetMyTags = vi.fn()
+const mockUpdateMyTags = vi.fn()
 vi.mock('@/lib/api', () => ({
   getDashboard: (...args: unknown[]) => mockGetDashboard(...args),
   updateProfile: (...args: unknown[]) => mockUpdateProfile(...args),
   updateCategories: (...args: unknown[]) => mockUpdateCategories(...args),
   getPresignedUrl: (...args: unknown[]) => mockGetPresignedUrl(...args),
+  getTagVocabulary: (...args: unknown[]) => mockGetTagVocabulary(...args),
+  getMyTags: (...args: unknown[]) => mockGetMyTags(...args),
+  updateMyTags: (...args: unknown[]) => mockUpdateMyTags(...args),
   ApiError: class ApiError extends Error {
     constructor(public status: number, message: string) {
       super(message)
@@ -93,6 +99,12 @@ beforeEach(() => {
   mockUpdateCategories.mockResolvedValue({
     categories: ['ceramics', 'drawing_painting'],
   })
+  mockGetTagVocabulary.mockResolvedValue([
+    { id: 'tag-1', slug: 'wheel-thrown', label: 'Wheel Thrown', category: 'ceramics', sortOrder: 0 },
+    { id: 'tag-2', slug: 'abstract', label: 'Abstract', category: null, sortOrder: 0 },
+  ])
+  mockGetMyTags.mockResolvedValue({ tags: [] })
+  mockUpdateMyTags.mockResolvedValue({ tags: [] })
 })
 
 describe('ProfileForm', () => {

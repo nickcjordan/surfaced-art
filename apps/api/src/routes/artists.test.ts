@@ -25,6 +25,20 @@ const mockApprovedArtist = {
     { id: 'cat-1', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'ceramics' },
     { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media_3d' },
   ],
+  tags: [
+    {
+      id: 'at-1',
+      artistId: '550e8400-e29b-41d4-a716-446655440000',
+      tagId: 'tag-1',
+      tag: { id: 'tag-1', slug: 'wheel-thrown', label: 'Wheel Thrown', category: 'ceramics', sortOrder: 0 },
+    },
+    {
+      id: 'at-2',
+      artistId: '550e8400-e29b-41d4-a716-446655440000',
+      tagId: 'tag-2',
+      tag: { id: 'tag-2', slug: 'functional', label: 'Functional', category: null, sortOrder: 1 },
+    },
+  ],
   cvEntries: [
     {
       id: 'cv-1',
@@ -189,6 +203,16 @@ describe('GET /artists/:slug', () => {
       expect(data.categories).toEqual(['ceramics', 'mixed_media_3d'])
     })
 
+    it('should include tags as flat Tag objects', async () => {
+      const res = await app.request('/artists/abbey-peters')
+      const data = await res.json()
+
+      expect(data.tags).toEqual([
+        { id: 'tag-1', slug: 'wheel-thrown', label: 'Wheel Thrown', category: 'ceramics', sortOrder: 0 },
+        { id: 'tag-2', slug: 'functional', label: 'Functional', category: null, sortOrder: 1 },
+      ])
+    })
+
     it('should include CV entries sorted by sort_order', async () => {
       const res = await app.request('/artists/abbey-peters')
       const data = await res.json()
@@ -268,6 +292,10 @@ describe('GET /artists/:slug', () => {
         where: { slug: 'abbey-peters' },
         include: {
           categories: true,
+          tags: {
+            include: { tag: true },
+            orderBy: { tag: { sortOrder: 'asc' } },
+          },
           cvEntries: { orderBy: { sortOrder: 'asc' } },
           processMedia: { orderBy: { sortOrder: 'asc' } },
           listings: {

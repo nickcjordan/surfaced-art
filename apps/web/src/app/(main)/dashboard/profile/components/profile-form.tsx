@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth'
-import { getDashboard, updateProfile, updateCategories } from '@/lib/api'
-import type { CategoryType, DashboardResponse } from '@surfaced-art/types'
+import { getDashboard, updateProfile, updateCategories, getTagVocabulary, getMyTags, updateMyTags } from '@/lib/api'
+import type { CategoryType, DashboardResponse, Tag } from '@surfaced-art/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ImageUpload } from './image-upload'
+import { TagPicker } from '@/components/TagPicker'
 import { CATEGORIES } from '@/lib/categories'
 
 interface FormData {
@@ -40,6 +41,9 @@ export function ProfileForm() {
   const [initialData, setInitialData] = useState<FormData | null>(null)
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>([])
   const [initialCategories, setInitialCategories] = useState<CategoryType[]>([])
+  const [tagVocabulary, setTagVocabulary] = useState<Tag[]>([])
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const [initialTagIds, setInitialTagIds] = useState<string[]>([])
   const [fetchError, setFetchError] = useState<string | null>(null)
 
   const fetchProfile = useCallback(async () => {
@@ -51,7 +55,11 @@ export function ProfileForm() {
         return
       }
 
-      const dashboard: DashboardResponse = await getDashboard(token)
+      const [dashboard, vocabulary, myTags] = await Promise.all([
+        getDashboard(token),
+        getTagVocabulary(),
+        getMyTags(token),
+      ]) as [DashboardResponse, Tag[], { tags: Tag[] }]
       const profile = dashboard.profile
 
       const data: FormData = {
@@ -67,6 +75,10 @@ export function ProfileForm() {
       setInitialData(data)
       setSelectedCategories(profile.categories)
       setInitialCategories(profile.categories)
+      setTagVocabulary(vocabulary)
+      const tagIds = myTags.tags.map((t) => t.id)
+      setSelectedTagIds(tagIds)
+      setInitialTagIds(tagIds)
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : 'Failed to load profile')
     } finally {
@@ -106,6 +118,13 @@ export function ProfileForm() {
     return sorted.some((c, i) => c !== sortedInitial[i])
   }
 
+  function tagsChanged(): boolean {
+    if (selectedTagIds.length !== initialTagIds.length) return true
+    const sorted = [...selectedTagIds].sort()
+    const sortedInitial = [...initialTagIds].sort()
+    return sorted.some((id, i) => id !== sortedInitial[i])
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
@@ -129,8 +148,9 @@ export function ProfileForm() {
     if (formData.coverImageUrl !== initialData.coverImageUrl) changes.coverImageUrl = formData.coverImageUrl
 
     const hasCategoryChanges = categoriesChanged()
+    const hasTagChanges = tagsChanged()
 
-    if (Object.keys(changes).length === 0 && !hasCategoryChanges) {
+    if (Object.keys(changes).length === 0 && !hasCategoryChanges && !hasTagChanges) {
       setFormState('success')
       return
     }
@@ -168,6 +188,14 @@ export function ProfileForm() {
         const result = await updateCategories(token, selectedCategories)
         setSelectedCategories(result.categories)
         setInitialCategories(result.categories)
+      }
+
+      // Save tags if changed
+      if (hasTagChanges) {
+        const result = await updateMyTags(token, selectedTagIds)
+        const newTagIds = result.tags.map((t) => t.id)
+        setSelectedTagIds(newTagIds)
+        setInitialTagIds(newTagIds)
       }
 
       setFormState('success')
@@ -261,6 +289,30 @@ export function ProfileForm() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Tags */}
+      {tagVocabulary.length > 0 && selectedCategories.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Tags</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TagPicker
+              tags={tagVocabulary}
+              selectedTagIds={selectedTagIds}
+              artistCategories={selectedCategories}
+              onChange={(ids) => {
+                setSelectedTagIds(ids)
+                if (formState === 'success' || formState === 'error') {
+                  setFormState('idle')
+                  setServerError(null)
+                }
+              }}
+              disabled={formState === 'submitting'}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* About */}
       <Card>

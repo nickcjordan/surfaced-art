@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { CategoryType as PrismaCategoryType } from '@surfaced-art/db'
-import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, MyListingImageResponse, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileUpdateResponse, StripeOnboardingResponse, StripeStatusResponse } from '@surfaced-art/types'
+import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, MyListingImageResponse, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileUpdateResponse, StripeOnboardingResponse, StripeStatusResponse, TagsUpdateResponse, Tag } from '@surfaced-art/types'
 import { fetchDashboard, fetchUserListings } from '../lib/artist-queries'
-import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingAvailabilityBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText } from '@surfaced-art/types'
+import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingAvailabilityBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingTagsUpdateBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText, tagsUpdateBody } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
 import { notFound, badRequest, validationError, conflict, internalError } from '../errors'
@@ -68,6 +68,7 @@ function formatListingResponse(listing: {
   editionNumber: number | null; editionTotal: number | null;
   reservedUntil: Date | null; createdAt: Date; updatedAt: Date;
   images: { id: string; url: string; isProcessPhoto: boolean; sortOrder: number; width: number | null; height: number | null; createdAt: Date }[];
+  tags?: { tag: { id: string; slug: string; label: string; category: string | null; sortOrder: number } }[];
 }): MyListingResponse {
   return {
     id: listing.id,
@@ -94,6 +95,13 @@ function formatListingResponse(listing: {
     createdAt: listing.createdAt.toISOString(),
     updatedAt: listing.updatedAt.toISOString(),
     images: listing.images.map(formatListingImage),
+    tags: (listing.tags ?? []).map((lt): Tag => ({
+      id: lt.tag.id,
+      slug: lt.tag.slug,
+      label: lt.tag.label,
+      category: lt.tag.category as Tag['category'],
+      sortOrder: lt.tag.sortOrder,
+    })),
   }
 }
 
@@ -277,6 +285,186 @@ export function createMeRoutes(prisma: PrismaClient) {
     logger.info('Artist categories updated', {
       artistId: artist.id,
       categories: uniqueCategories,
+    })
+
+    return c.json(response)
+  })
+
+  /**
+   * GET /me/tags
+   * List the authenticated artist's tags with full tag objects.
+   */
+  me.get('/tags', async (c) => {
+    const user = c.get('user')
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    const artistTags = await prisma.artistTag.findMany({
+      where: { artistId: artist.id },
+      include: { tag: true },
+      orderBy: { tag: { sortOrder: 'asc' } },
+    })
+
+    const response: TagsUpdateResponse = {
+      tags: artistTags.map((at) => ({
+        id: at.tag.id,
+        slug: at.tag.slug,
+        label: at.tag.label,
+        category: at.tag.category,
+        sortOrder: at.tag.sortOrder,
+      })),
+    }
+
+    return c.json(response)
+  })
+
+  /**
+   * PUT /me/tags
+   * Replace the authenticated artist's tag assignments.
+   * Uses replace-all semantics: deletes existing, inserts new in a transaction.
+   */
+  me.put('/tags', async (c) => {
+    const user = c.get('user')
+
+    const body = await c.req.json().catch(() => null)
+    if (body === null) {
+      return badRequest(c, 'Invalid JSON payload')
+    }
+
+    const parsed = tagsUpdateBody.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    // Deduplicate tag IDs
+    const uniqueTagIds = [...new Set(parsed.data.tagIds)]
+
+    const updatedTags = await prisma.$transaction(async (tx) => {
+      await tx.artistTag.deleteMany({
+        where: { artistId: artist.id },
+      })
+
+      if (uniqueTagIds.length > 0) {
+        await tx.artistTag.createMany({
+          data: uniqueTagIds.map((tagId) => ({
+            artistId: artist.id,
+            tagId,
+          })),
+        })
+      }
+
+      return tx.artistTag.findMany({
+        where: { artistId: artist.id },
+        include: { tag: true },
+        orderBy: { tag: { sortOrder: 'asc' } },
+      })
+    })
+
+    const response: TagsUpdateResponse = {
+      tags: updatedTags.map((at) => ({
+        id: at.tag.id,
+        slug: at.tag.slug,
+        label: at.tag.label,
+        category: at.tag.category,
+        sortOrder: at.tag.sortOrder,
+      })),
+    }
+
+    logger.info('Artist tags updated', {
+      artistId: artist.id,
+      tagCount: uniqueTagIds.length,
+    })
+
+    return c.json(response)
+  })
+
+  /**
+   * PUT /me/listings/:id/tags
+   * Replace a listing's tag assignments.
+   * Uses replace-all semantics: deletes existing, inserts new in a transaction.
+   */
+  me.put('/listings/:id/tags', async (c) => {
+    const user = c.get('user')
+    const listingId = c.req.param('id')
+
+    const reqBody = await c.req.json().catch(() => null)
+    if (reqBody === null) {
+      return badRequest(c, 'Invalid JSON payload')
+    }
+
+    const parsed = listingTagsUpdateBody.safeParse(reqBody)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    const artist = await prisma.artistProfile.findUnique({
+      where: { userId: user.id },
+    })
+
+    if (!artist) {
+      return notFound(c, 'Artist profile not found')
+    }
+
+    // Verify listing belongs to the artist
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId, artistId: artist.id },
+    })
+
+    if (!listing) {
+      return notFound(c, 'Listing not found')
+    }
+
+    // Deduplicate tag IDs
+    const uniqueTagIds = [...new Set(parsed.data.tagIds)]
+
+    const updatedTags = await prisma.$transaction(async (tx) => {
+      await tx.listingTag.deleteMany({
+        where: { listingId },
+      })
+
+      if (uniqueTagIds.length > 0) {
+        await tx.listingTag.createMany({
+          data: uniqueTagIds.map((tagId) => ({
+            listingId,
+            tagId,
+          })),
+        })
+      }
+
+      return tx.listingTag.findMany({
+        where: { listingId },
+        include: { tag: true },
+        orderBy: { tag: { sortOrder: 'asc' } },
+      })
+    })
+
+    const response: TagsUpdateResponse = {
+      tags: updatedTags.map((lt) => ({
+        id: lt.tag.id,
+        slug: lt.tag.slug,
+        label: lt.tag.label,
+        category: lt.tag.category,
+        sortOrder: lt.tag.sortOrder,
+      })),
+    }
+
+    logger.info('Listing tags updated', {
+      listingId,
+      tagCount: uniqueTagIds.length,
     })
 
     return c.json(response)
@@ -831,7 +1019,10 @@ export function createMeRoutes(prisma: PrismaClient) {
         editionNumber: rest.editionNumber ?? null,
         editionTotal: rest.editionTotal ?? null,
       },
-      include: { images: { orderBy: { sortOrder: 'asc' } } },
+      include: {
+        images: { orderBy: { sortOrder: 'asc' } },
+        tags: { include: { tag: true }, orderBy: { tag: { sortOrder: 'asc' } } },
+      },
     })
 
     logger.info('Listing created', { artistId: artist.id, listingId: created.id })
@@ -859,7 +1050,10 @@ export function createMeRoutes(prisma: PrismaClient) {
 
     const listing = await prisma.listing.findUnique({
       where: { id: listingId },
-      include: { images: { orderBy: { sortOrder: 'asc' } } },
+      include: {
+        images: { orderBy: { sortOrder: 'asc' } },
+        tags: { include: { tag: true }, orderBy: { tag: { sortOrder: 'asc' } } },
+      },
     })
 
     if (!listing) {
@@ -878,7 +1072,10 @@ export function createMeRoutes(prisma: PrismaClient) {
       const updated = await prisma.listing.update({
         where: { id: listingId },
         data: { status: 'available', reservedUntil: null },
-        include: { images: { orderBy: { sortOrder: 'asc' } } },
+        include: {
+          images: { orderBy: { sortOrder: 'asc' } },
+          tags: { include: { tag: true }, orderBy: { tag: { sortOrder: 'asc' } } },
+        },
       })
       return c.json(formatListingResponse(updated))
     }
@@ -955,7 +1152,10 @@ export function createMeRoutes(prisma: PrismaClient) {
     const updated = await prisma.listing.update({
       where: { id: listingId },
       data: updateData,
-      include: { images: { orderBy: { sortOrder: 'asc' } } },
+      include: {
+        images: { orderBy: { sortOrder: 'asc' } },
+        tags: { include: { tag: true }, orderBy: { tag: { sortOrder: 'asc' } } },
+      },
     })
 
     logger.info('Listing updated', { artistId: artist.id, listingId, fieldsUpdated: Object.keys(updateData) })
@@ -1325,7 +1525,10 @@ export function createMeRoutes(prisma: PrismaClient) {
     const updated = await prisma.listing.update({
       where: { id: listingId },
       data: { status: parsed.data.status },
-      include: { images: { orderBy: { sortOrder: 'asc' } } },
+      include: {
+        images: { orderBy: { sortOrder: 'asc' } },
+        tags: { include: { tag: true }, orderBy: { tag: { sortOrder: 'asc' } } },
+      },
     })
 
     logger.info('Listing availability toggled', { artistId: artist.id, listingId, status: parsed.data.status })

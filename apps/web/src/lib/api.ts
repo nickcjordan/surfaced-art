@@ -29,6 +29,8 @@ import type {
   SearchResponse,
   StripeOnboardingResponse,
   StripeStatusResponse,
+  Tag,
+  TagsUpdateResponse,
 } from '@surfaced-art/types'
 
 const API_BASE_URL =
@@ -431,4 +433,43 @@ export async function getStripeStatus(
   return apiFetch<StripeStatusResponse>('/me/stripe/status', {
     headers: { Authorization: `Bearer ${token}` },
   })
+}
+
+// ─── Tags ─────────────────────────────────────────────────────────────
+
+export async function getTagVocabulary(category?: string): Promise<Tag[]> {
+  const query = category ? `?category=${encodeURIComponent(category)}` : ''
+  return apiFetch<Tag[]>(`/tags${query}`)
+}
+
+export async function getMyTags(token: string): Promise<TagsUpdateResponse> {
+  return apiFetch<TagsUpdateResponse>('/me/tags', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function updateMyTags(
+  token: string,
+  tagIds: string[],
+): Promise<TagsUpdateResponse> {
+  return apiFetch<TagsUpdateResponse>('/me/tags', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ tagIds }),
+  })
+}
+
+export async function updateListingTags(
+  token: string,
+  listingId: string,
+  tagIds: string[],
+): Promise<TagsUpdateResponse> {
+  return apiFetch<TagsUpdateResponse>(
+    `/me/listings/${encodeURIComponent(listingId)}/tags`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ tagIds }),
+    },
+  )
 }

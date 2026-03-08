@@ -1,0 +1,34 @@
+meta {
+  name: List Tags
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{sa_baseUrl}}/tags
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("should return an array of tags", function() {
+    const tags = res.getBody();
+    expect(tags).to.be.an("array");
+  });
+
+  test("each tag should have required fields", function() {
+    const tags = res.getBody();
+    if (tags.length > 0) {
+      tags.forEach(function(tag) {
+        expect(tag).to.have.property("id");
+        expect(tag).to.have.property("slug");
+        expect(tag).to.have.property("label");
+        expect(tag).to.have.property("sortOrder");
+      });
+    }
+  });
+}

@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { createMyListing, updateMyListing, getMyListing } from '@/lib/api'
+import { createMyListing, updateMyListing, getMyListing, getTagVocabulary, getMyTags, updateListingTags, getDashboard } from '@/lib/api'
 import { dollarsToCents } from '@surfaced-art/utils'
-import type { CategoryType, ListingTypeType, MyListingImageResponse } from '@surfaced-art/types'
+import type { CategoryType, ListingTypeType, MyListingImageResponse, Tag } from '@surfaced-art/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CATEGORIES } from '@/lib/categories'
+import { TagPicker } from '@/components/TagPicker'
 import { ListingImages } from './listing-images'
 
 interface FormData {
@@ -69,6 +70,9 @@ export function ListingForm({ mode, listingId }: ListingFormProps) {
   const [serverError, setServerError] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [images, setImages] = useState<MyListingImageResponse[]>([])
+  const [tagVocabulary, setTagVocabulary] = useState<Tag[]>([])
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const [artistCategories, setArtistCategories] = useState<CategoryType[]>([])
 
   const fetchListing = useCallback(async () => {
     if (mode !== 'edit' || !listingId) return
@@ -83,9 +87,16 @@ export function ListingForm({ mode, listingId }: ListingFormProps) {
         return
       }
 
-      const listing = await getMyListing(token, listingId)
+      const [listing, vocabulary, dashboard] = await Promise.all([
+        getMyListing(token, listingId),
+        getTagVocabulary(),
+        getDashboard(token),
+      ])
 
       setImages(listing.images)
+      setTagVocabulary(vocabulary)
+      setSelectedTagIds(listing.tags.map((t) => t.id))
+      setArtistCategories(dashboard.profile.categories)
       setFormData({
         title: listing.title,
         description: listing.description,
@@ -111,11 +122,33 @@ export function ListingForm({ mode, listingId }: ListingFormProps) {
     }
   }, [getIdToken, listingId, mode])
 
+  // Create mode: load tag vocabulary and pre-populate from artist tags
+  const initCreateTags = useCallback(async () => {
+    if (mode !== 'create') return
+    try {
+      const token = await getIdToken()
+      if (!token) return
+
+      const [vocabulary, myTags, dashboard] = await Promise.all([
+        getTagVocabulary(),
+        getMyTags(token),
+        getDashboard(token),
+      ])
+      setTagVocabulary(vocabulary)
+      setSelectedTagIds(myTags.tags.map((t) => t.id))
+      setArtistCategories(dashboard.profile.categories)
+    } catch {
+      // Non-critical — tags are optional, form can still work without them
+    }
+  }, [getIdToken, mode])
+
   useEffect(() => {
     if (mode === 'edit') {
       fetchListing()
+    } else {
+      initCreateTags()
     }
-  }, [fetchListing, mode])
+  }, [fetchListing, initCreateTags, mode])
 
   function updateField<K extends keyof FormData>(field: K, value: FormData[K]) {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -204,10 +237,18 @@ export function ListingForm({ mode, listingId }: ListingFormProps) {
 
       const payload = buildPayload()
 
+      let targetListingId: string
       if (mode === 'create') {
-        await createMyListing(token, payload as Parameters<typeof createMyListing>[1])
+        const created = await createMyListing(token, payload as Parameters<typeof createMyListing>[1])
+        targetListingId = created.id
       } else {
         await updateMyListing(token, listingId!, payload as Parameters<typeof updateMyListing>[2])
+        targetListingId = listingId!
+      }
+
+      // Save tags for the listing
+      if (selectedTagIds.length > 0) {
+        await updateListingTags(token, targetListingId, selectedTagIds)
       }
 
       router.push('/dashboard/listings')
@@ -326,6 +367,24 @@ export function ListingForm({ mode, listingId }: ListingFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Tags */}
+      {tagVocabulary.length > 0 && artistCategories.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Tags</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TagPicker
+              tags={tagVocabulary}
+              selectedTagIds={selectedTagIds}
+              artistCategories={artistCategories}
+              onChange={setSelectedTagIds}
+              disabled={formState === 'submitting'}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pricing & Quantity */}
       <Card>
