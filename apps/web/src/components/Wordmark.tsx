@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 
 const sizeClasses = {
   nav: 'text-xl',
+  'nav-condensed': 'text-base',
   hero: 'text-[32px]',
 } as const
 
