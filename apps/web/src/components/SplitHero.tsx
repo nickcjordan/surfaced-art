@@ -2,27 +2,36 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
-const HERO_IMAGES = [
+function getCloudfrontDomain(): string {
+  return process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN || ''
+}
+
+const HERO_IMAGE_PATHS = [
   {
-    src: 'https://dmfu4c7s6z2cc.cloudfront.net/uploads/seed/artists/abbey-peters/cover/1200w.webp',
-    alt: 'Ceramics studio of Abbey Peters with handmade stoneware',
+    path: 'uploads/seed/artists/elena-cordova/cover/1200w.webp',
+    alt: 'Oil paintings by Elena Cordova inspired by the desert landscape',
   },
   {
-    src: 'https://dmfu4c7s6z2cc.cloudfront.net/uploads/seed/artists/david-morrison/cover/1200w.webp',
-    alt: 'Woodworking studio of David Morrison',
+    path: 'uploads/seed/artists/james-okafor/cover/1200w.webp',
+    alt: 'Bold acrylic paintings by James Okafor',
   },
   {
-    src: 'https://dmfu4c7s6z2cc.cloudfront.net/uploads/seed/artists/karina-yanes/cover/1200w.webp',
-    alt: 'Artwork by Karina Yanes',
+    path: 'uploads/seed/artists/tomoko-ishida/cover/1200w.webp',
+    alt: 'Silver gelatin photography by Tomoko Ishida',
   },
   {
-    src: 'https://dmfu4c7s6z2cc.cloudfront.net/uploads/seed/artists/abbey-peters/process/studio/1200w.webp',
-    alt: 'Abbey Peters working in her ceramics studio',
+    path: 'uploads/seed/artists/amara-osei/process/studio/1200w.webp',
+    alt: 'Amara Osei working in her jewelry studio',
   },
 ]
 
 function pickHeroImage() {
-  return HERO_IMAGES[Math.floor(Math.random() * HERO_IMAGES.length)]
+  const entry = HERO_IMAGE_PATHS[Math.floor(Math.random() * HERO_IMAGE_PATHS.length)]
+  const domain = getCloudfrontDomain()
+  return {
+    src: domain ? `https://${domain}/${entry.path}` : `/${entry.path}`,
+    alt: entry.alt,
+  }
 }
 
 export function SplitHero() {
