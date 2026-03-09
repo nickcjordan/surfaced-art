@@ -414,25 +414,30 @@ jobs:
           ECR_REPOSITORY_URL: ${{ needs.terraform.outputs.image_processor_ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "Checking image-processor container has required files..."
+          echo "Checking image-processor container..."
           docker run --rm --entrypoint="" \
             $ECR_REPOSITORY_URL:$IMAGE_TAG \
-            sh -c '
-              ok=true
-              for f in /var/task/index.js; do
-                if test -f "$f"; then
-                  echo "OK   $f"
-                else
-                  echo "MISSING $f" >&2; ok=false
-                fi
-              done
-              if test -d /var/task/node_modules/sharp; then
-                echo "OK   Sharp native binaries"
-              else
-                echo "MISSING Sharp native binaries" >&2; ok=false
-              fi
-              $ok && echo "All required files present." || { echo "Validation failed" >&2; exit 1; }
-            '
+            node --input-type=module -e "
+              import sharp from 'sharp';
+              import fs from 'fs';
+
+              // Verify bundle exists
+              if (!fs.existsSync('/var/task/index.js')) {
+                throw new Error('MISSING /var/task/index.js');
+              }
+              console.log('OK   /var/task/index.js');
+
+              // Smoke-test Sharp: create a tiny image, convert to WebP, verify
+              const buf = await sharp({
+                create: { width: 8, height: 8, channels: 3, background: '#ff0000' }
+              }).webp().toBuffer();
+              const meta = await sharp(buf).metadata();
+              if (meta.format !== 'webp' || meta.width !== 8) {
+                throw new Error('Sharp smoke test: unexpected output');
+              }
+              console.log('OK   Sharp smoke test passed (loaded, created, converted WebP)');
+              console.log('     Sharp version:', JSON.stringify(sharp.versions));
+            "
 
       - name: Push image-processor Docker image
         env:
