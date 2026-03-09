@@ -1,0 +1,26 @@
+name: Auto-merge to dev
+
+# Automatically enable squash auto-merge on PRs targeting dev.
+# GitHub will merge once all required status checks pass.
+# This means feature→dev PRs never need manual merging.
+
+on:
+  pull_request:
+    branches: [dev]
+    types: [opened, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    name: Enable auto-merge
+    runs-on: ubuntu-latest
+    # Skip Dependabot PRs (handled by dependabot-auto-merge.yml)
+    if: github.actor != 'dependabot[bot]'
+    steps:
+      - name: Enable squash auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr merge ${{ github.event.pull_request.number }} --squash --auto --repo ${{ github.repository }}
