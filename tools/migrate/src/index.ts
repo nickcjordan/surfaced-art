@@ -116,6 +116,10 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
     if (!event.migration) {
       return { success: false, error: 'resolve-rolled-back requires a "migration" field with the migration name' }
     }
+    // Validate migration name to prevent command injection (alphanumeric + underscores only)
+    if (!/^[\w]+$/.test(event.migration)) {
+      return { success: false, error: `Invalid migration name: ${event.migration}. Only alphanumeric characters and underscores are allowed.` }
+    }
     try {
       const output = execSync(
         `${PRISMA_CMD} migrate resolve --rolled-back ${event.migration}`,
