@@ -45,14 +45,9 @@ enum ListingTypeType {
 
 enum CategoryType {
   ceramics
-  painting
-  print
-  jewelry
-  illustration
-  photography
-  woodworking
-  fibers
-  mixed_media
+  drawing_painting
+  printmaking_photography
+  mixed_media_3d
 }
 
 enum CommissionStatusType {
@@ -169,6 +164,7 @@ model ArtistProfile {
   // Relations
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   categories      ArtistCategory[]
+  tags            ArtistTag[]
   cvEntries       ArtistCvEntry[]
   processMedia    ArtistProcessMedia[]
   listings        Listing[]
@@ -191,6 +187,50 @@ model ArtistCategory {
 
   @@unique([artistId, category])
   @@map("artist_categories")
+}
+
+/// Platform-controlled tag vocabulary for categorizing art
+model Tag {
+  id        String        @id @default(uuid()) @db.Uuid
+  slug      String        @unique
+  label     String
+  category  CategoryType? // null = cross-cutting style tag
+  sortOrder Int           @map("sort_order")
+
+  // Relations
+  artists   ArtistTag[]
+  listings  ListingTag[]
+
+  @@index([category])
+  @@map("tags")
+}
+
+/// Tag assignment for an artist
+model ArtistTag {
+  id       String        @id @default(uuid()) @db.Uuid
+  artistId String        @map("artist_id") @db.Uuid
+  tagId    String        @map("tag_id") @db.Uuid
+
+  // Relations
+  artist   ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  tag      Tag           @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, tagId])
+  @@map("artist_tags")
+}
+
+/// Tag assignment for a listing
+model ListingTag {
+  id        String  @id @default(uuid()) @db.Uuid
+  listingId String  @map("listing_id") @db.Uuid
+  tagId     String  @map("tag_id") @db.Uuid
+
+  // Relations
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, tagId])
+  @@map("listing_tags")
 }
 
 /// CV entry for artist profile
@@ -263,6 +303,7 @@ model Listing {
   // Relations
   artist            ArtistProfile     @relation(fields: [artistId], references: [id], onDelete: Cascade)
   images            ListingImage[]
+  tags              ListingTag[]
   commission        Commission?
   orders            Order[]
   reviews           Review[]

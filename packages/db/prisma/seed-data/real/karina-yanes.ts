@@ -23,7 +23,7 @@ export const karinaConfig: ArtistSeedConfig = {
     applicationSource: 'advisor_network',
     isDemo: false,
   },
-  categories: ['ceramics', 'mixed_media'],
+  categories: ['ceramics', 'mixed_media_3d'],
   cvEntries: [
     // Education
     { type: 'education', title: 'MFA, Studio Art (Ceramics)', institution: 'University of Florida, Gainesville, FL', year: 2025, sortOrder: 1 },

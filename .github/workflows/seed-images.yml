@@ -20,6 +20,11 @@ on:
         required: false
         type: boolean
         default: false
+      overwrite:
+        description: 'Re-upload images that already exist in S3 (re-triggers image processor Lambda)'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: seed-images
@@ -68,5 +73,8 @@ jobs:
           fi
           if [ -n "${{ inputs.artist }}" ]; then
             ARGS+=("--artist" "${{ inputs.artist }}")
+          fi
+          if [ "${{ inputs.overwrite }}" = "true" ]; then
+            ARGS+=("--overwrite")
           fi
           npx tsx scripts/notion-to-s3.ts "${ARGS[@]}"

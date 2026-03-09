@@ -17,6 +17,7 @@ import { createApplicationRoutes } from './routes/applications'
 import { createUploadRoutes } from './routes/uploads'
 import { createMeRoutes } from './routes/me'
 import { createAdminRoutes } from './routes/admin'
+import { createTagRoutes } from './routes/tags'
 import { createSearchRoutes } from './routes/search'
 import { createWebhookRoutes } from './routes/webhooks'
 
@@ -70,6 +71,7 @@ app.use('/artists', cacheControl('public, max-age=300'))
 app.use('/listings/*', cacheControl('public, max-age=300'))
 app.use('/listings', cacheControl('public, max-age=300'))
 app.use('/categories', cacheControl('public, max-age=3600'))
+app.use('/tags', cacheControl('public, max-age=3600'))
 app.use('/health/*', cacheControl('no-store'))
 app.use('/health', cacheControl('no-store'))
 
@@ -83,6 +85,7 @@ app.route('/artists/apply', createApplicationRoutes(prisma))
 app.route('/artists', createArtistRoutes(prisma))
 app.route('/listings', createListingRoutes(prisma))
 app.route('/categories', createCategoryRoutes(prisma))
+app.route('/tags', createTagRoutes(prisma))
 app.route('/search', createSearchRoutes(prisma))
 app.route('/waitlist', createWaitlistRoutes(prisma))
 app.route('/uploads', createUploadRoutes(prisma))

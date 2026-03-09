@@ -55,7 +55,7 @@ function createMockPrisma(overrides?: {
   const adminRoles = overrides?.adminRoles ?? ['admin']
   const listingsFound = overrides?.listingsFound ?? [
     { id: LISTING_ID_1, category: 'ceramics', artist: { slug: 'artist-1' } },
-    { id: LISTING_ID_2, category: 'painting', artist: { slug: 'artist-2' } },
+    { id: LISTING_ID_2, category: 'drawing_painting', artist: { slug: 'artist-2' } },
   ]
   const usersFound = overrides?.usersFound ?? [
     { id: USER_ID_1 },

@@ -25,7 +25,7 @@ const mockArtistResult = {
   location: 'Portland, OR',
   profileImageUrl: 'https://cdn.example.com/profile.jpg',
   coverImageUrl: 'https://cdn.example.com/cover.jpg',
-  categories: ['ceramics', 'mixed_media'],
+  categories: ['ceramics', 'mixed_media_3d'],
   rank: 0.06079271,
   totalCount: BigInt(1),
 }
@@ -84,7 +84,7 @@ describe('GET /search', () => {
       expect(body.artists.total).toBe(1)
       expect(body.artists.data[0].slug).toBe('abbey-peters')
       expect(body.artists.data[0].displayName).toBe('Abbey Peters')
-      expect(body.artists.data[0].categories).toEqual(['ceramics', 'mixed_media'])
+      expect(body.artists.data[0].categories).toEqual(['ceramics', 'mixed_media_3d'])
       expect(typeof body.artists.data[0].rank).toBe('number')
     })
 

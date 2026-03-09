@@ -76,6 +76,36 @@ export interface ArtistCategory {
 }
 
 /**
+ * Platform-controlled tag for categorizing art
+ * Tags are scoped to a category (or cross-cutting for style tags with null category)
+ */
+export interface Tag {
+  id: string // UUID
+  slug: string // Unique identifier
+  label: string // Human-readable display label
+  category: CategoryType | null // null = cross-cutting style tag
+  sortOrder: number
+}
+
+/**
+ * Tag assignment for an artist
+ */
+export interface ArtistTag {
+  id: string // UUID
+  artistId: string // FK -> artist_profiles.id
+  tagId: string // FK -> tags.id
+}
+
+/**
+ * Tag assignment for a listing
+ */
+export interface ListingTag {
+  id: string // UUID
+  listingId: string // FK -> listings.id
+  tagId: string // FK -> tags.id
+}
+
+/**
  * CV entry for artist profile
  * Exhibition history, awards, education, press, residencies
  */
@@ -281,6 +311,7 @@ export interface ListingWithImages extends Listing {
  */
 export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 'stripeAccountId' | 'originZip' | 'applicationSource'> {
   categories: CategoryType[]
+  tags: Tag[]
   cvEntries: ArtistCvEntry[]
   processMedia: ArtistProcessMedia[]
   listings: ListingWithImages[]
@@ -345,6 +376,7 @@ export interface ListingListItem extends Listing {
  */
 export interface ListingDetailResponse extends Listing {
   images: ListingImage[]
+  tags: Tag[]
   artist: ArtistSummaryWithCategories
 }
 
@@ -470,6 +502,14 @@ export interface ProfileUpdateResponse {
  */
 export interface CategoriesUpdateResponse {
   categories: CategoryType[]
+}
+
+/**
+ * Response from PUT /me/tags or PUT /me/listings/:id/tags.
+ * Returns the updated tag list (full Tag objects).
+ */
+export interface TagsUpdateResponse {
+  tags: Tag[]
 }
 
 // ─── CV Entry API Response Types ──────────────────────────────────────
@@ -784,6 +824,7 @@ export interface MyListingResponse {
   createdAt: string
   updatedAt: string
   images: MyListingImageResponse[]
+  tags: Tag[]
 }
 
 /**

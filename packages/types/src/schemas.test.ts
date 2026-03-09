@@ -25,6 +25,8 @@ import {
   adminWaitlistQuery,
   adminBulkListingStatusBody,
   adminBulkRoleGrantBody,
+  tagsUpdateBody,
+  listingTagsUpdateBody,
 } from './schemas'
 
 describe('Shared Validation Schemas', () => {
@@ -154,7 +156,7 @@ describe('Shared Validation Schemas', () => {
   describe('listingsQuery', () => {
     it('should accept valid query with all params', () => {
       const result = listingsQuery.safeParse({
-        category: 'painting',
+        category: 'drawing_painting',
         status: 'available',
         page: '2',
         limit: '10',
@@ -297,7 +299,7 @@ describe('Shared Validation Schemas', () => {
     it('should accept multiple categories', () => {
       const result = artistApplicationBody.safeParse({
         ...validData,
-        categories: ['ceramics', 'painting', 'mixed_media'],
+        categories: ['ceramics', 'drawing_painting', 'mixed_media_3d'],
       })
       expect(result.success).toBe(true)
     })
@@ -1060,6 +1062,68 @@ describe('Shared Validation Schemas', () => {
         userIds: ['550e8400-e29b-41d4-a716-446655440000'],
         role: 'superadmin',
       }).success).toBe(false)
+    })
+  })
+
+  describe('tagsUpdateBody', () => {
+    it('should accept valid array of UUIDs', () => {
+      const result = tagsUpdateBody.safeParse({
+        tagIds: ['550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440001'],
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept empty array (remove all tags)', () => {
+      const result = tagsUpdateBody.safeParse({ tagIds: [] })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject invalid UUIDs', () => {
+      expect(tagsUpdateBody.safeParse({ tagIds: ['not-a-uuid'] }).success).toBe(false)
+    })
+
+    it('should reject missing tagIds', () => {
+      expect(tagsUpdateBody.safeParse({}).success).toBe(false)
+    })
+
+    it('should reject non-array tagIds', () => {
+      expect(tagsUpdateBody.safeParse({ tagIds: '550e8400-e29b-41d4-a716-446655440000' }).success).toBe(false)
+    })
+
+    it('should reject more than 50 tags', () => {
+      const ids = Array.from({ length: 51 }, (_, i) =>
+        `550e8400-e29b-41d4-a716-${String(i).padStart(12, '0')}`,
+      )
+      expect(tagsUpdateBody.safeParse({ tagIds: ids }).success).toBe(false)
+    })
+  })
+
+  describe('listingTagsUpdateBody', () => {
+    it('should accept valid array of UUIDs', () => {
+      const result = listingTagsUpdateBody.safeParse({
+        tagIds: ['550e8400-e29b-41d4-a716-446655440000'],
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept empty array (remove all tags)', () => {
+      const result = listingTagsUpdateBody.safeParse({ tagIds: [] })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject invalid UUIDs', () => {
+      expect(listingTagsUpdateBody.safeParse({ tagIds: ['bad'] }).success).toBe(false)
+    })
+
+    it('should reject missing tagIds', () => {
+      expect(listingTagsUpdateBody.safeParse({}).success).toBe(false)
+    })
+
+    it('should reject more than 20 tags per listing', () => {
+      const ids = Array.from({ length: 21 }, (_, i) =>
+        `550e8400-e29b-41d4-a716-${String(i).padStart(12, '0')}`,
+      )
+      expect(listingTagsUpdateBody.safeParse({ tagIds: ids }).success).toBe(false)
     })
   })
 })

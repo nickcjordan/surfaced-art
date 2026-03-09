@@ -222,8 +222,12 @@ export function createAdminOrderRoutes(prisma: PrismaClient) {
         return notFound(c, 'Order not found')
       }
 
-      if (order.status === 'refunded') {
-        return badRequest(c, 'Order has already been refunded')
+      const REFUNDABLE_STATUSES = new Set(['paid', 'shipped', 'delivered', 'disputed'])
+      if (!REFUNDABLE_STATUSES.has(order.status)) {
+        if (order.status === 'refunded') {
+          return badRequest(c, 'Order has already been refunded')
+        }
+        return badRequest(c, `Cannot refund an order with status '${order.status}'`)
       }
 
       const totalAmount = order.artworkPrice + order.shippingCost + order.taxAmount
@@ -252,7 +256,7 @@ export function createAdminOrderRoutes(prisma: PrismaClient) {
         })
       }
 
-      void logAdminAction(prisma, {
+      logAdminAction(prisma, {
         adminId: adminUser.id,
         action: 'order_refund',
         targetType: 'order',
@@ -263,6 +267,11 @@ export function createAdminOrderRoutes(prisma: PrismaClient) {
           isFullRefund,
           stripeRefundId: stripeRefund.id,
         },
+      }).catch((auditErr) => {
+        logger.error('Failed to write audit log for order_refund', {
+          orderId: id,
+          error: auditErr instanceof Error ? auditErr.message : String(auditErr),
+        })
       })
 
       const response: AdminOrderRefundResponse = {
@@ -336,12 +345,17 @@ export function createAdminOrderRoutes(prisma: PrismaClient) {
         data: updateData,
       })
 
-      void logAdminAction(prisma, {
+      logAdminAction(prisma, {
         adminId: adminUser.id,
         action: 'order_status_update',
         targetType: 'order',
         targetId: id,
         details: { oldStatus, newStatus, reason },
+      }).catch((auditErr) => {
+        logger.error('Failed to write audit log for order_status_update', {
+          orderId: id,
+          error: auditErr instanceof Error ? auditErr.message : String(auditErr),
+        })
       })
 
       const response: AdminActionResponse = {

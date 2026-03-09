@@ -62,6 +62,8 @@ function createMockPrisma(overrides?: {
   listingCounts?: [number, number, number]
   updatedProfile?: unknown
   categoryResults?: unknown[]
+  tagResults?: unknown[]
+  allTags?: unknown[]
   cvEntries?: unknown[]
   createdCvEntry?: unknown
   updatedCvEntry?: unknown
@@ -73,6 +75,7 @@ function createMockPrisma(overrides?: {
   updatedListing?: unknown
   listingImages?: unknown[]
   createdListingImage?: unknown
+  listingTagResults?: unknown[]
   orderCount?: number
 }) {
   const roles = overrides?.roles ?? ['artist']
@@ -97,6 +100,19 @@ function createMockPrisma(overrides?: {
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
       createMany: vi.fn().mockResolvedValue({ count: overrides?.categoryResults?.length ?? 0 }),
       findMany: vi.fn().mockResolvedValue(overrides?.categoryResults ?? []),
+    },
+    artistTag: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      createMany: vi.fn().mockResolvedValue({ count: overrides?.tagResults?.length ?? 0 }),
+      findMany: vi.fn().mockResolvedValue(overrides?.tagResults ?? []),
+    },
+    tag: {
+      findMany: vi.fn().mockResolvedValue(overrides?.allTags ?? []),
+    },
+    listingTag: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      createMany: vi.fn().mockResolvedValue({ count: overrides?.listingTagResults?.length ?? 0 }),
+      findMany: vi.fn().mockResolvedValue(overrides?.listingTagResults ?? []),
     },
     artistCvEntry: {
       findMany: vi.fn().mockResolvedValue(overrides?.cvEntries ?? []),
@@ -935,13 +951,13 @@ describe('PUT /me/categories', () => {
   describe('replace-all behavior', () => {
     it('should call deleteMany and createMany in a transaction', async () => {
       const categoryResults = [
-        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'painting' },
+        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'drawing_painting' },
         { id: 'cat-new-2', artistId: 'artist-uuid-123', category: 'ceramics' },
       ]
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['painting', 'ceramics'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['drawing_painting', 'ceramics'] }, 'valid-token')
       expect(res.status).toBe(200)
 
       // Transaction was used
@@ -957,7 +973,7 @@ describe('PUT /me/categories', () => {
       expect(createCall.data).toHaveLength(2)
       expect(createCall.data).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ artistId: 'artist-uuid-123', category: 'painting' }),
+          expect.objectContaining({ artistId: 'artist-uuid-123', category: 'drawing_painting' }),
           expect.objectContaining({ artistId: 'artist-uuid-123', category: 'ceramics' }),
         ])
       )
@@ -965,19 +981,18 @@ describe('PUT /me/categories', () => {
 
     it('should accept a single category', async () => {
       const categoryResults = [
-        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'jewelry' },
+        { id: 'cat-new-1', artistId: 'artist-uuid-123', category: 'mixed_media_3d' },
       ]
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['jewelry'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['mixed_media_3d'] }, 'valid-token')
       expect(res.status).toBe(200)
     })
 
-    it('should accept all 9 categories', async () => {
+    it('should accept all 4 categories', async () => {
       const allCategories = [
-        'ceramics', 'painting', 'print', 'jewelry', 'illustration',
-        'photography', 'woodworking', 'fibers', 'mixed_media',
+        'ceramics', 'drawing_painting', 'printmaking_photography', 'mixed_media_3d',
       ]
       const categoryResults = allCategories.map((c) => ({
         id: `cat-${c}`,
@@ -1009,17 +1024,17 @@ describe('PUT /me/categories', () => {
   describe('response shape', () => {
     it('should return categories array', async () => {
       const categoryResults = [
-        { id: 'cat-1', artistId: 'artist-uuid-123', category: 'painting' },
+        { id: 'cat-1', artistId: 'artist-uuid-123', category: 'drawing_painting' },
         { id: 'cat-2', artistId: 'artist-uuid-123', category: 'ceramics' },
       ]
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['painting', 'ceramics'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['drawing_painting', 'ceramics'] }, 'valid-token')
       const body = await res.json()
 
       expect(body).toHaveProperty('categories')
-      expect(body.categories).toEqual(['painting', 'ceramics'])
+      expect(body.categories).toEqual(['drawing_painting', 'ceramics'])
     })
   })
 })
@@ -1902,6 +1917,7 @@ const mockListingDb = {
   createdAt: new Date('2025-06-01'),
   updatedAt: new Date('2025-06-01'),
   images: [mockListingImage],
+  tags: [],
 }
 
 const mockListingDb2 = {
@@ -1912,6 +1928,7 @@ const mockListingDb2 = {
   price: 8500,
   status: 'sold',
   images: [],
+  tags: [],
 }
 
 const validListingCreateBody = {
@@ -2569,7 +2586,10 @@ describe('GET /me/listings/:id', () => {
     expect(prisma.listing.update).toHaveBeenCalledWith({
       where: { id: LISTING_ID_1 },
       data: { status: 'available', reservedUntil: null },
-      include: { images: { orderBy: { sortOrder: 'asc' } } },
+      include: {
+        images: { orderBy: { sortOrder: 'asc' } },
+        tags: { include: { tag: true }, orderBy: { tag: { sortOrder: 'asc' } } },
+      },
     })
   })
 })
@@ -3476,7 +3496,10 @@ describe('PUT /me/listings/:id/availability', () => {
     expect(prisma.listing.update).toHaveBeenCalledWith({
       where: { id: LISTING_ID_1 },
       data: { status: 'reserved_artist' },
-      include: { images: { orderBy: { sortOrder: 'asc' } } },
+      include: {
+        images: { orderBy: { sortOrder: 'asc' } },
+        tags: { include: { tag: true }, orderBy: { tag: { sortOrder: 'asc' } } },
+      },
     })
   })
 
@@ -3858,5 +3881,264 @@ describe('GET /me/stripe/status', () => {
 
     const body = await res.json()
     expect(body.error.code).toBe('INTERNAL_ERROR')
+  })
+})
+
+// ─── Tag management helpers ─────────────────────────────────────────
+
+function getTags(
+  app: ReturnType<typeof createTestApp>,
+  token?: string,
+) {
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/tags', { method: 'GET', headers })
+}
+
+function putTags(
+  app: ReturnType<typeof createTestApp>,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request('/me/tags', {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+function putListingTags(
+  app: ReturnType<typeof createTestApp>,
+  listingId: string,
+  body: Record<string, unknown>,
+  token?: string,
+) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return app.request(`/me/listings/${listingId}/tags`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  })
+}
+
+// ─── GET /me/tags ───────────────────────────────────────────────────
+
+describe('GET /me/tags', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await getTags(app)
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await getTags(app, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return artist tags with full tag objects', async () => {
+    const tagResults = [
+      { id: 'at-1', artistId: 'artist-uuid-123', tagId: 'tag-1', tag: { id: 'tag-1', slug: 'oil', label: 'Oil', category: 'drawing_painting', sortOrder: 1 } },
+      { id: 'at-2', artistId: 'artist-uuid-123', tagId: 'tag-2', tag: { id: 'tag-2', slug: 'abstract', label: 'Abstract', category: null, sortOrder: 1 } },
+    ]
+    const prisma = createMockPrisma({ tagResults })
+    const app = createTestApp(prisma)
+
+    const res = await getTags(app, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.tags).toHaveLength(2)
+    expect(body.tags[0].slug).toBe('oil')
+    expect(body.tags[1].slug).toBe('abstract')
+  })
+})
+
+// ─── PUT /me/tags ───────────────────────────────────────────────────
+
+describe('PUT /me/tags', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putTags(app, { tagIds: [] })
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 403 for buyer-only role', async () => {
+    const prisma = createMockPrisma({ roles: ['buyer'] })
+    const app = createTestApp(prisma)
+
+    const res = await putTags(app, { tagIds: [] }, 'valid-token')
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await putTags(app, { tagIds: [] }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 400 for invalid tag IDs', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putTags(app, { tagIds: ['not-a-uuid'] }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 when tagIds is missing', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putTags(app, {}, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should replace all tags in a transaction', async () => {
+    const tagResults = [
+      { id: 'at-1', artistId: 'artist-uuid-123', tagId: 'tag-1', tag: { id: 'tag-1', slug: 'oil', label: 'Oil', category: 'drawing_painting', sortOrder: 1 } },
+    ]
+    const prisma = createMockPrisma({ tagResults })
+    const app = createTestApp(prisma)
+
+    const res = await putTags(app, { tagIds: ['550e8400-e29b-41d4-a716-446655440000'] }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    expect(prisma.$transaction).toHaveBeenCalled()
+    expect((prisma.artistTag as unknown as { deleteMany: ReturnType<typeof vi.fn> }).deleteMany).toHaveBeenCalled()
+  })
+
+  it('should accept empty tagIds to remove all tags', async () => {
+    const prisma = createMockPrisma({ tagResults: [] })
+    const app = createTestApp(prisma)
+
+    const res = await putTags(app, { tagIds: [] }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.tags).toEqual([])
+  })
+
+  it('should deduplicate tag IDs', async () => {
+    const tagResults = [
+      { id: 'at-1', artistId: 'artist-uuid-123', tagId: 'tag-1', tag: { id: 'tag-1', slug: 'oil', label: 'Oil', category: 'drawing_painting', sortOrder: 1 } },
+    ]
+    const prisma = createMockPrisma({ tagResults })
+    const app = createTestApp(prisma)
+
+    const tagId = '550e8400-e29b-41d4-a716-446655440000'
+    const res = await putTags(app, { tagIds: [tagId, tagId] }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const createCall = ((prisma.artistTag as unknown as { createMany: ReturnType<typeof vi.fn> }).createMany).mock.calls[0][0]
+    expect(createCall.data).toHaveLength(1)
+  })
+})
+
+// ─── PUT /me/listings/:id/tags ──────────────────────────────────────
+
+describe('PUT /me/listings/:id/tags', () => {
+  const listingId = '550e8400-e29b-41d4-a716-446655440000'
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setVerifier(createMockVerifier() as never)
+  })
+
+  afterEach(() => {
+    resetVerifier()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await putListingTags(app, listingId, { tagIds: [] })
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 404 when artist profile does not exist', async () => {
+    const prisma = createMockPrisma({ artistProfile: null })
+    const app = createTestApp(prisma)
+
+    const res = await putListingTags(app, listingId, { tagIds: [] }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 when listing does not belong to artist', async () => {
+    const prisma = createMockPrisma({
+      listings: [],
+    })
+    // Override listing findUnique to return null
+    ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+    const app = createTestApp(prisma)
+
+    const res = await putListingTags(app, listingId, { tagIds: [] }, 'valid-token')
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 400 for invalid tag IDs', async () => {
+    const listing = { id: listingId, artistId: 'artist-uuid-123' }
+    const prisma = createMockPrisma({ listings: [listing] })
+    const app = createTestApp(prisma)
+
+    const res = await putListingTags(app, listingId, { tagIds: ['bad'] }, 'valid-token')
+    expect(res.status).toBe(400)
+  })
+
+  it('should replace listing tags in a transaction', async () => {
+    const listing = { id: listingId, artistId: 'artist-uuid-123' }
+    const listingTagResults = [
+      { id: 'lt-1', listingId, tagId: 'tag-1', tag: { id: 'tag-1', slug: 'oil', label: 'Oil', category: 'drawing_painting', sortOrder: 1 } },
+    ]
+    const prisma = createMockPrisma({ listings: [listing], listingTagResults })
+    const app = createTestApp(prisma)
+
+    const res = await putListingTags(app, listingId, { tagIds: ['550e8400-e29b-41d4-a716-446655440001'] }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    expect(prisma.$transaction).toHaveBeenCalled()
+    const body = await res.json()
+    expect(body.tags).toHaveLength(1)
+  })
+
+  it('should accept empty tagIds to remove all listing tags', async () => {
+    const listing = { id: listingId, artistId: 'artist-uuid-123' }
+    const prisma = createMockPrisma({ listings: [listing], listingTagResults: [] })
+    const app = createTestApp(prisma)
+
+    const res = await putListingTags(app, listingId, { tagIds: [] }, 'valid-token')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.tags).toEqual([])
   })
 })

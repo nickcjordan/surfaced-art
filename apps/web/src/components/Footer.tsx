@@ -101,11 +101,25 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="mt-16 border-t border-border pt-8">
+        {/* Copyright and legal links */}
+        <div className="mt-16 border-t border-border pt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
           <p className="text-xs text-muted-foreground/60 text-center">
             &copy; {currentYear} Surfaced Art. All rights reserved.
           </p>
+          <nav className="flex gap-4">
+            <Link
+              href="/privacy"
+              className="text-xs text-muted-foreground/60 transition-colors hover:text-foreground"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms"
+              className="text-xs text-muted-foreground/60 transition-colors hover:text-foreground"
+            >
+              Terms of Service
+            </Link>
+          </nav>
         </div>
       </Container>
     </footer>

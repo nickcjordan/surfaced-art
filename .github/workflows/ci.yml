@@ -21,11 +21,6 @@ jobs:
   quality-gates:
     name: Quality Gates
     runs-on: ubuntu-latest
-    env:
-      # Required by next.config.ts at build time — placeholder values are fine for CI
-      NEXT_PUBLIC_SITE_URL: https://surfacedart.com
-      NEXT_PUBLIC_API_URL: https://api.surfacedart.com
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -40,6 +35,10 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://surfacedart.com
+          NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com/prod
+          NEXT_PUBLIC_CDN_DOMAINS: https://dmfu4c7s6z2cc.cloudfront.net
         run: npm run build
 
       - name: Type Check

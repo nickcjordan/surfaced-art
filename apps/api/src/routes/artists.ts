@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma, CategoryType } from '@surfaced-art/db'
-import { artistsQuery, artistSlugParam, type ArtistProfileResponse, type FeaturedArtistItem } from '@surfaced-art/types'
+import { artistsQuery, artistSlugParam, type ArtistProfileResponse, type FeaturedArtistItem, type Tag } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
 import { notFound, validationError } from '../errors'
 
@@ -86,6 +86,10 @@ export function createArtistRoutes(prisma: PrismaClient) {
       where: { slug },
       include: {
         categories: true,
+        tags: {
+          include: { tag: true },
+          orderBy: { tag: { sortOrder: 'asc' } },
+        },
         cvEntries: {
           orderBy: { sortOrder: 'asc' },
         },
@@ -123,6 +127,13 @@ export function createArtistRoutes(prisma: PrismaClient) {
       createdAt: artist.createdAt,
       updatedAt: artist.updatedAt,
       categories: artist.categories.map((c) => c.category),
+      tags: artist.tags.map((at): Tag => ({
+        id: at.tag.id,
+        slug: at.tag.slug,
+        label: at.tag.label,
+        category: at.tag.category,
+        sortOrder: at.tag.sortOrder,
+      })),
       cvEntries: artist.cvEntries.map((entry) => ({
         id: entry.id,
         artistId: entry.artistId,

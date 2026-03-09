@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { PrismaClient, Prisma, Listing, ListingImage, ArtistProfile, ArtistCategory } from '@surfaced-art/db'
+import type { PrismaClient, Prisma, Listing, ListingImage, ArtistProfile, ArtistCategory, ListingTag as PrismaListingTag, Tag as PrismaTag } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
 import {
   listingsQuery,
@@ -7,6 +7,7 @@ import {
   type ListingListItem,
   type ListingDetailResponse,
   type PaginatedResponse,
+  type Tag,
 } from '@surfaced-art/types'
 import { notFound, badRequest, validationError } from '../errors'
 
@@ -192,6 +193,7 @@ export function createListingRoutes(prisma: PrismaClient) {
 
     type ListingDetailPayload = Listing & {
       images: ListingImage[]
+      tags: (PrismaListingTag & { tag: PrismaTag })[]
       artist: Pick<ArtistProfile, 'displayName' | 'slug' | 'profileImageUrl' | 'location' | 'status'> & {
         categories: ArtistCategory[]
       }
@@ -202,6 +204,10 @@ export function createListingRoutes(prisma: PrismaClient) {
       include: {
         images: {
           orderBy: { sortOrder: 'asc' },
+        },
+        tags: {
+          include: { tag: true },
+          orderBy: { tag: { sortOrder: 'asc' } },
         },
         artist: {
           select: {
@@ -235,6 +241,13 @@ export function createListingRoutes(prisma: PrismaClient) {
         width: img.width,
         height: img.height,
         createdAt: img.createdAt,
+      })),
+      tags: listing.tags.map((lt): Tag => ({
+        id: lt.tag.id,
+        slug: lt.tag.slug,
+        label: lt.tag.label,
+        category: lt.tag.category,
+        sortOrder: lt.tag.sortOrder,
       })),
       artist: {
         displayName: listing.artist.displayName,

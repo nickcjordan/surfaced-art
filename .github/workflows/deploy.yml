@@ -46,6 +46,7 @@ jobs:
         env:
           NEXT_PUBLIC_SITE_URL: https://surfacedart.com
           NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com/prod
+          NEXT_PUBLIC_CDN_DOMAINS: https://dmfu4c7s6z2cc.cloudfront.net
         run: npm run build
 
       - name: Type Check
@@ -118,10 +119,12 @@ jobs:
 
       # Bootstrap: create ECR repos before Lambdas so we can push images.
       # Lambda (package_type=Image) requires a private ECR image; public ECR URIs are invalid.
-      - name: Bootstrap ECR Repositories
+      - name: Plan Bootstrap ECR
+        id: bootstrap_plan
         working-directory: infrastructure/terraform
         run: |
-          terraform apply -auto-approve -input=false \
+          set +e
+          terraform plan -detailed-exitcode -input=false \
             -target=aws_ecr_repository.api \
             -target=aws_ecr_lifecycle_policy.api \
             -target=aws_ecr_repository_policy.api \
@@ -138,7 +141,17 @@ jobs:
             -var="alert_email_address=${{ secrets.TF_VAR_alert_email_address }}" \
             -var="stripe_secret_key=${{ secrets.TF_VAR_stripe_secret_key }}" \
             -var="stripe_webhook_secret=${{ secrets.TF_VAR_stripe_webhook_secret }}" \
-            -var="placeholder_image_uri=${{ env.LAMBDA_BOOTSTRAP_IMAGE }}"
+            -var="placeholder_image_uri=${{ env.LAMBDA_BOOTSTRAP_IMAGE }}" \
+            -out=bootstrap.tfplan
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -eq 1 ]; then echo "Terraform plan failed"; exit 1; fi
+          echo "has_changes=$( [ $EXIT_CODE -eq 2 ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+
+      - name: Apply Bootstrap ECR
+        if: steps.bootstrap_plan.outputs.has_changes == 'true'
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve -input=false bootstrap.tfplan
 
       - name: Login to Amazon ECR (bootstrap)
         uses: aws-actions/amazon-ecr-login@v2
@@ -196,10 +209,12 @@ jobs:
             echo "placeholder_uri=$API_ECR_URL:bootstrap" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Terraform Apply
+      - name: Terraform Plan
+        id: plan
         working-directory: infrastructure/terraform
         run: |
-          terraform apply -auto-approve -input=false \
+          set +e
+          terraform plan -detailed-exitcode -input=false \
             -var-file="environments/prod.tfvars" \
             -var="db_password=${{ secrets.TF_VAR_db_password }}" \
             -var="google_client_id=${{ secrets.TF_VAR_google_client_id }}" \
@@ -207,7 +222,17 @@ jobs:
             -var="alert_email_address=${{ secrets.TF_VAR_alert_email_address }}" \
             -var="stripe_secret_key=${{ secrets.TF_VAR_stripe_secret_key }}" \
             -var="stripe_webhook_secret=${{ secrets.TF_VAR_stripe_webhook_secret }}" \
-            -var="placeholder_image_uri=${{ steps.bootstrap.outputs.placeholder_uri }}"
+            -var="placeholder_image_uri=${{ steps.bootstrap.outputs.placeholder_uri }}" \
+            -out=tfplan
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -eq 1 ]; then echo "Terraform plan failed"; exit 1; fi
+          echo "has_changes=$( [ $EXIT_CODE -eq 2 ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+
+      - name: Terraform Apply
+        if: steps.plan.outputs.has_changes == 'true'
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve -input=false tfplan
 
       - name: Get Terraform Outputs
         id: output

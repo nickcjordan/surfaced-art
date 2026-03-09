@@ -11,9 +11,10 @@
  *   - S3_MEDIA_BUCKET env var (defaults to surfaced-art-prod-media)
  *
  * Usage:
- *   npx tsx scripts/notion-to-s3.ts                     # upload all done images
- *   npx tsx scripts/notion-to-s3.ts --dry-run            # preview without uploading
- *   npx tsx scripts/notion-to-s3.ts --artist "Elena Cordova"  # single artist
+ *   npx tsx scripts/notion-to-s3.ts                          # upload all done images
+ *   npx tsx scripts/notion-to-s3.ts --dry-run                # preview without uploading
+ *   npx tsx scripts/notion-to-s3.ts --artist "Elena Cordova" # single artist
+ *   npx tsx scripts/notion-to-s3.ts --overwrite              # re-upload even if already in S3
  *
  * Environment variables:
  *   NOTION_API_TOKEN       (required) Notion integration token
@@ -54,24 +55,28 @@ const AWS_REGION = process.env.AWS_REGION ?? 'us-east-1'
 
 interface CliArgs {
   dryRun: boolean
+  overwrite: boolean
   artist: string | null
 }
 
 function parseArgs(): CliArgs {
   const args = process.argv.slice(2)
   let dryRun = false
+  let overwrite = false
   let artist: string | null = null
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--dry-run') {
       dryRun = true
+    } else if (args[i] === '--overwrite') {
+      overwrite = true
     } else if (args[i] === '--artist' && args[i + 1]) {
       artist = args[i + 1]!
       i++
     }
   }
 
-  return { dryRun, artist }
+  return { dryRun, overwrite, artist }
 }
 
 // ---------------------------------------------------------------------------
@@ -172,7 +177,7 @@ async function downloadImage(url: string): Promise<Buffer> {
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  const { dryRun, artist } = parseArgs()
+  const { dryRun, overwrite, artist } = parseArgs()
 
   // Validate NOTION_API_TOKEN
   const notionToken = process.env.NOTION_API_TOKEN
@@ -193,6 +198,7 @@ async function main(): Promise<void> {
   console.log(`Data src: ${NOTION_DATA_SOURCE_ID}`)
   if (artist) console.log(`Artist:   ${artist}`)
   if (dryRun) console.log(`Mode:     DRY RUN (no uploads)`)
+  if (overwrite) console.log(`Mode:     OVERWRITE (re-uploading existing images)`)
   console.log('')
 
   // 1. Fetch completed rows from Notion
@@ -222,16 +228,23 @@ async function main(): Promise<void> {
       uploadKey = deriveUploadKey(row.s3Key, extension)
     }
 
-    // Check idempotency — skip if already uploaded
-    const exists = await s3KeyExists(s3, uploadKey)
-    if (exists) {
-      console.log(`  ⊘ Exists: ${row.imageName} → ${uploadKey}`)
-      skipped++
-      continue
+    // Check idempotency — always check existence in dry-run so the preview
+    // accurately distinguishes new uploads from genuine overwrites.
+    // In real mode, skip the check when --overwrite is set.
+    const shouldCheckExistence = dryRun || !overwrite
+    let existsInS3 = false
+    if (shouldCheckExistence) {
+      existsInS3 = await s3KeyExists(s3, uploadKey)
+      if (existsInS3 && !overwrite) {
+        console.log(`  ⊘ Exists: ${row.imageName} → ${uploadKey}`)
+        skipped++
+        continue
+      }
     }
 
     if (dryRun) {
-      console.log(`  → Would upload (new): ${row.imageName} → ${uploadKey}`)
+      const label = existsInS3 ? 'Would overwrite' : 'Would upload (new)'
+      console.log(`  → ${label}: ${row.imageName} → ${uploadKey}`)
       continue
     }
 

@@ -22,6 +22,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${SITE_URL}/privacy`,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/terms`,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
       url: `${SITE_URL}/artists`,
       changeFrequency: 'daily',
       priority: 0.9,
@@ -43,11 +53,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       getListings({ status: 'available', limit: 200 }),
     ])
 
-    artistPages = artists.map((artist) => ({
-      url: `${SITE_URL}/artist/${artist.slug}`,
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }))
+    artistPages = artists.flatMap((artist) => [
+      {
+        url: `${SITE_URL}/artist/${artist.slug}`,
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      },
+      {
+        url: `${SITE_URL}/studio/${artist.slug}`,
+        changeFrequency: 'weekly' as const,
+        priority: 0.9,
+      },
+    ])
 
     listingPages = listingsResponse.data.map((listing) => ({
       url: `${SITE_URL}/listing/${listing.id}`,

@@ -38,7 +38,7 @@ describe('Integration Test Smoke Test', () => {
     const artist = await createTestArtist(prisma, {
       displayName: 'Test Artist',
       slug: 'test-artist',
-      categories: ['ceramics', 'painting'],
+      categories: ['ceramics', 'drawing_painting'],
     })
 
     expect(artist.id).toBeDefined()
@@ -48,7 +48,7 @@ describe('Integration Test Smoke Test', () => {
     expect(artist.categories).toHaveLength(2)
     expect(artist.categories.map((c) => c.category).sort()).toEqual([
       'ceramics',
-      'painting',
+      'drawing_painting',
     ])
   })
 

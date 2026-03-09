@@ -125,7 +125,7 @@ describe('POST /api/revalidate', () => {
       expect(body.revalidated).toContain('/')
       expect(body.revalidated).toContain('/category/ceramics')
       // Should NOT include other category pages
-      expect(body.revalidated).not.toContain('/category/painting')
+      expect(body.revalidated).not.toContain('/category/drawing_painting')
     })
 
     it('should revalidate all category pages when category is not specified', async () => {

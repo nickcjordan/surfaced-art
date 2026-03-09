@@ -40,12 +40,14 @@ export function MasonryGrid({
   const [columnCount, setColumnCount] = useState(getColumnCount)
 
   useEffect(() => {
-    const handleResize = () => {
+    // ResizeObserver fires immediately when observation begins (correcting the
+    // SSR column count of 1 on mount) and again on every resize thereafter.
+    // setState is called in the callback, satisfying react-hooks rules.
+    const observer = new ResizeObserver(() => {
       setColumnCount(getColumnCount())
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    })
+    observer.observe(document.documentElement)
+    return () => observer.disconnect()
   }, [getColumnCount])
 
   // Distribute children into columns using round-robin

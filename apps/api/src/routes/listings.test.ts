@@ -84,11 +84,19 @@ const mockListingForDetail = {
       createdAt: new Date('2025-02-01T00:00:00Z'),
     },
   ],
+  tags: [
+    {
+      id: 'lt-1',
+      listingId: '550e8400-e29b-41d4-a716-446655440010',
+      tagId: 'tag-1',
+      tag: { id: 'tag-1', slug: 'wheel-thrown', label: 'Wheel Thrown', category: 'ceramics', sortOrder: 0 },
+    },
+  ],
   artist: {
     ...mockListingForList.artist,
     categories: [
       { id: 'cat-1', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'ceramics' },
-      { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media' },
+      { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media_3d' },
     ],
   },
 }
@@ -409,11 +417,20 @@ describe('GET /listings/:id', () => {
       expect(data.images[2].isProcessPhoto).toBe(true)
     })
 
+    it('should include tags as flat Tag objects', async () => {
+      const res = await app.request('/listings/550e8400-e29b-41d4-a716-446655440010')
+      const data = await res.json()
+
+      expect(data.tags).toEqual([
+        { id: 'tag-1', slug: 'wheel-thrown', label: 'Wheel Thrown', category: 'ceramics', sortOrder: 0 },
+      ])
+    })
+
     it('should include artist categories as flat string array', async () => {
       const res = await app.request('/listings/550e8400-e29b-41d4-a716-446655440010')
       const data = await res.json()
 
-      expect(data.artist.categories).toEqual(['ceramics', 'mixed_media'])
+      expect(data.artist.categories).toEqual(['ceramics', 'mixed_media_3d'])
     })
 
     it('should include artist summary fields', async () => {
@@ -443,6 +460,10 @@ describe('GET /listings/:id', () => {
         where: { id: '550e8400-e29b-41d4-a716-446655440010' },
         include: {
           images: { orderBy: { sortOrder: 'asc' } },
+          tags: {
+            include: { tag: true },
+            orderBy: { tag: { sortOrder: 'asc' } },
+          },
           artist: {
             select: {
               displayName: true,
