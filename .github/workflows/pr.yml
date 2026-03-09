@@ -26,6 +26,7 @@ jobs:
       # Required by next.config.ts at build time — placeholder values are fine for CI
       NEXT_PUBLIC_SITE_URL: https://surfacedart.com
       NEXT_PUBLIC_API_URL: https://api.surfacedart.com
+      NEXT_PUBLIC_CDN_DOMAINS: https://dmfu4c7s6z2cc.cloudfront.net
 
     steps:
       - name: Checkout
