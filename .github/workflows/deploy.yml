@@ -256,13 +256,13 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download API artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: api-dist
           path: apps/api/dist/
 
       - name: Download migrate artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: migrate-dist
           path: tools/migrate/dist/
@@ -395,7 +395,7 @@ jobs:
       # --- Image Processor Lambda ---
 
       - name: Download image-processor artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: image-processor-dist
           path: apps/image-processor/dist/
