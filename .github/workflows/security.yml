@@ -2,7 +2,7 @@ name: Security Scan
 
 on:
   pull_request:
-    branches: [main]
+    branches: [dev, main]
   schedule:
     # Run weekly on Sundays at midnight
     - cron: '0 0 * * 0'
