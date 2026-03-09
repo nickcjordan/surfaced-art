@@ -233,15 +233,17 @@ When starting work on an issue:
 
 1. **Write tests first** (TDD approach using Vitest)
 2. **Implement code** to make tests pass
-3. **Run quality gates**:
+3. **Sync dependencies** — if any `package.json` was modified (new deps, version bumps, workspace changes), run `npm install` to update `package-lock.json` and commit the lockfile. Verify with `npm ci` (must succeed without errors).
+4. **Run quality gates locally** — all five must pass before committing:
    ```bash
+   npm ci              # Verify lockfile is in sync (catches what CI catches)
    npm run test        # Vitest test suite
    npm run lint        # ESLint
    npm run typecheck   # tsc --noEmit
    npm run build       # Turborepo build
    ```
-4. **Commit to dev branch** with conventional commit message
-5. **Run regression tests** before pushing
+5. **Commit to feature branch** with conventional commit message
+6. **Never push code that hasn't passed all local quality gates** — CI failures should never be the first time you discover a problem
 
 ### Branch Strategy
 
@@ -516,6 +518,7 @@ If any of these arise, pause and present the user with:
 
 ## Quality Checklist Before Each Commit
 
+- [ ] Lockfile in sync (`npm ci` succeeds — if any `package.json` changed, run `npm install` first)
 - [ ] Tests pass (`npm run test`)
 - [ ] No lint errors (`npm run lint`)
 - [ ] No type errors (`npm run typecheck`)
