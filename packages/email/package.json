@@ -20,7 +20,7 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@aws-sdk/client-ses": "^3.1000.0",
+    "@aws-sdk/client-ses": "^3.1004.0",
     "@react-email/components": "^1.0.8",
     "@react-email/render": "^2.0.4",
     "@surfaced-art/utils": "^0.0.1"
