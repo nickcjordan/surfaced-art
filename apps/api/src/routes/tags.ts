@@ -1,6 +1,9 @@
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
+import { CategoryType } from '@surfaced-art/db'
 import type { Tag } from '@surfaced-art/types'
+
+const validCategories = new Set(Object.values(CategoryType))
 
 export function createTagRoutes(prisma: PrismaClient) {
   const tags = new Hono()
@@ -15,6 +18,9 @@ export function createTagRoutes(prisma: PrismaClient) {
 
     const where: Record<string, string> = {}
     if (category) {
+      if (!validCategories.has(category as CategoryType)) {
+        return c.json({ error: `Invalid category: ${category}` }, 400)
+      }
       where.category = category
     }
 

@@ -6,6 +6,12 @@ vi.mock('@surfaced-art/db', () => ({
     artistProfile: { findUnique: vi.fn(), findFirst: vi.fn().mockResolvedValue({ id: 'test-id' }) },
     listing: { findMany: vi.fn().mockResolvedValue([]), count: vi.fn().mockResolvedValue(0), findUnique: vi.fn() },
   },
+  CategoryType: {
+    ceramics: 'ceramics',
+    drawing_painting: 'drawing_painting',
+    printmaking_photography: 'printmaking_photography',
+    mixed_media_3d: 'mixed_media_3d',
+  },
 }))
 
 vi.stubEnv('FRONTEND_URL', 'https://surfacedart.com')

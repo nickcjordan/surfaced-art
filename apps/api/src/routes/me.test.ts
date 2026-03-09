@@ -4026,7 +4026,8 @@ describe('PUT /me/tags', () => {
     const tagResults = [
       { id: 'at-1', artistId: 'artist-uuid-123', tagId: 'tag-1', tag: { id: 'tag-1', slug: 'oil', label: 'Oil', category: 'drawing_painting', sortOrder: 1 } },
     ]
-    const prisma = createMockPrisma({ tagResults })
+    const allTags = [{ id: '550e8400-e29b-41d4-a716-446655440000' }]
+    const prisma = createMockPrisma({ tagResults, allTags })
     const app = createTestApp(prisma)
 
     const res = await putTags(app, { tagIds: ['550e8400-e29b-41d4-a716-446655440000'] }, 'valid-token')
@@ -4051,10 +4052,11 @@ describe('PUT /me/tags', () => {
     const tagResults = [
       { id: 'at-1', artistId: 'artist-uuid-123', tagId: 'tag-1', tag: { id: 'tag-1', slug: 'oil', label: 'Oil', category: 'drawing_painting', sortOrder: 1 } },
     ]
-    const prisma = createMockPrisma({ tagResults })
+    const tagId = '550e8400-e29b-41d4-a716-446655440000'
+    const allTags = [{ id: tagId }]
+    const prisma = createMockPrisma({ tagResults, allTags })
     const app = createTestApp(prisma)
 
-    const tagId = '550e8400-e29b-41d4-a716-446655440000'
     const res = await putTags(app, { tagIds: [tagId, tagId] }, 'valid-token')
     expect(res.status).toBe(200)
 
@@ -4116,13 +4118,15 @@ describe('PUT /me/listings/:id/tags', () => {
 
   it('should replace listing tags in a transaction', async () => {
     const listing = { id: listingId, artistId: 'artist-uuid-123' }
+    const tagId = '550e8400-e29b-41d4-a716-446655440001'
     const listingTagResults = [
       { id: 'lt-1', listingId, tagId: 'tag-1', tag: { id: 'tag-1', slug: 'oil', label: 'Oil', category: 'drawing_painting', sortOrder: 1 } },
     ]
-    const prisma = createMockPrisma({ listings: [listing], listingTagResults })
+    const allTags = [{ id: tagId }]
+    const prisma = createMockPrisma({ listings: [listing], listingTagResults, allTags })
     const app = createTestApp(prisma)
 
-    const res = await putListingTags(app, listingId, { tagIds: ['550e8400-e29b-41d4-a716-446655440001'] }, 'valid-token')
+    const res = await putListingTags(app, listingId, { tagIds: [tagId] }, 'valid-token')
     expect(res.status).toBe(200)
 
     expect(prisma.$transaction).toHaveBeenCalled()
