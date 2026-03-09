@@ -2,8 +2,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
-function getCloudfrontDomain(): string {
-  return process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN || ''
+function getCdnBase(): string {
+  const domains = process.env.NEXT_PUBLIC_CDN_DOMAINS || ''
+  return domains.split(/\s+/)[0] || ''
 }
 
 const HERO_IMAGE_PATHS = [
@@ -27,9 +28,9 @@ const HERO_IMAGE_PATHS = [
 
 function pickHeroImage() {
   const entry = HERO_IMAGE_PATHS[Math.floor(Math.random() * HERO_IMAGE_PATHS.length)]
-  const domain = getCloudfrontDomain()
+  const cdnBase = getCdnBase()
   return {
-    src: domain ? `https://${domain}/${entry.path}` : `/${entry.path}`,
+    src: cdnBase ? `${cdnBase}/${entry.path}` : `/${entry.path}`,
     alt: entry.alt,
   }
 }

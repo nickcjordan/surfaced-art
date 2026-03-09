@@ -4,11 +4,11 @@ import { SplitHero } from '../SplitHero'
 
 describe('SplitHero', () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN = 'test.cloudfront.net'
+    process.env.NEXT_PUBLIC_CDN_DOMAINS = 'https://test.cloudfront.net'
   })
 
   afterEach(() => {
-    delete process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN
+    delete process.env.NEXT_PUBLIC_CDN_DOMAINS
     vi.restoreAllMocks()
   })
 
