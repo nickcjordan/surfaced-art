@@ -15,6 +15,12 @@ vi.mock('@surfaced-art/db', () => ({
       findUnique: vi.fn(),
     },
   },
+  CategoryType: {
+    ceramics: 'ceramics',
+    drawing_painting: 'drawing_painting',
+    printmaking_photography: 'printmaking_photography',
+    mixed_media_3d: 'mixed_media_3d',
+  },
 }))
 
 const { app } = await import('./index')
