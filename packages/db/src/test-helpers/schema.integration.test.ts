@@ -59,14 +59,9 @@ describe('Database Schema & Constraints — integration', () => {
     it('should accept all valid CategoryType values', async () => {
       const validCategories = [
         'ceramics',
-        'painting',
-        'print',
-        'jewelry',
-        'illustration',
-        'photography',
-        'woodworking',
-        'fibers',
-        'mixed_media',
+        'drawing_painting',
+        'printmaking_photography',
+        'mixed_media_3d',
       ]
       const artist = await createTestArtist(prisma)
 
