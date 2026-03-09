@@ -30,6 +30,17 @@ describe('CORS configuration', () => {
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://surfacedart.com')
   })
 
+  it('should allow requests from the www variant of FRONTEND_URL', async () => {
+    const res = await app.request('/health', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://www.surfacedart.com',
+        'Access-Control-Request-Method': 'GET',
+      },
+    })
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://www.surfacedart.com')
+  })
+
   it('should allow requests from localhost:3000', async () => {
     const res = await app.request('/health', {
       method: 'OPTIONS',

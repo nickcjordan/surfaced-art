@@ -22,12 +22,14 @@ import { createSearchRoutes } from './routes/search'
 import { createWebhookRoutes } from './routes/webhooks'
 
 // FRONTEND_URL is required — drives CORS allowed origins.
-// www redirect is handled at DNS/CDN level, not here.
+// Both bare domain and www variant are allowed.
 const FRONTEND_URL = process.env.FRONTEND_URL
 if (!FRONTEND_URL) {
   throw new Error('FRONTEND_URL is required')
 }
-const allowedOrigins = [FRONTEND_URL, 'http://localhost:3000']
+// Support both bare domain and www variant (e.g. surfacedart.com + www.surfacedart.com)
+const wwwVariant = FRONTEND_URL.replace('https://', 'https://www.')
+const allowedOrigins = [FRONTEND_URL, wwwVariant, 'http://localhost:3000']
 
 // Create Hono app
 const app = new Hono()
