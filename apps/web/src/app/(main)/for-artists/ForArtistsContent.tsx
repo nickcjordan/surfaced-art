@@ -514,7 +514,7 @@ export default function ForArtistsContent() {
       {/* ============================================================ */}
       {/*  HERO                                                        */}
       {/* ============================================================ */}
-      <section id="v14-hero" data-testid="for-artists-hero" className="full-bleed overflow-hidden relative overflow-hidden">
+      <section id="v14-hero" data-testid="for-artists-hero" className="full-bleed overflow-hidden relative">
         <div className="absolute inset-0" style={{ background: 'var(--surface)' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(155deg, var(--surface) 50%, color-mix(in srgb, var(--accent-primary) 5%, var(--surface)) 50%)' }} />
         <CanvasDotOverlay />
@@ -952,7 +952,7 @@ export default function ForArtistsContent() {
               &ldquo;I was selling through DMs for two years. This is the first time my work has a real home online.&rdquo;
             </p>
             <footer className="mt-5">
-              <p className="text-sm font-medium" style={{ color: 'color-mix(in srgb, var(--primary-foreground) 80%, transparent)' }}>Artist Name, Ceramics</p>
+              <p className="text-sm font-medium" style={{ color: 'color-mix(in srgb, var(--primary-foreground) 80%, transparent)' }}>&mdash; Surfaced Art Creator</p>
             </footer>
           </blockquote>
         </Container>
