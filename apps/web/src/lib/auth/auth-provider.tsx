@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react'
 import * as cognito from './cognito'
 import type { AuthTokens } from './cognito'
+import type { CognitoUser } from 'amazon-cognito-identity-js'
 import { AUTH_COOKIE_NAME } from './constants'
 
 export interface AuthUser {
@@ -11,13 +12,17 @@ export interface AuthUser {
   name: string
 }
 
+export type PendingChallenge = 'NEW_PASSWORD_REQUIRED' | 'MFA_REQUIRED' | null
+
 export interface AuthContextValue {
   /** Current authenticated user, or null if not signed in */
   user: AuthUser | null
   /** True while the initial session check is in progress */
   loading: boolean
-  /** Sign in with email and password */
-  signIn: (email: string, password: string) => Promise<void>
+  /** Active auth challenge requiring user input, or null */
+  pendingChallenge: PendingChallenge
+  /** Sign in with email and password. Returns true if auth completed, false if a challenge is pending. */
+  signIn: (email: string, password: string) => Promise<boolean>
   /** Sign up with email, password, and full name */
   signUp: (email: string, password: string, fullName: string) => Promise<{ userConfirmed: boolean }>
   /** Confirm email verification code after sign-up */
@@ -30,6 +35,10 @@ export interface AuthContextValue {
   forgotPassword: (email: string) => Promise<void>
   /** Confirm new password with verification code */
   confirmPassword: (email: string, code: string, newPassword: string) => Promise<void>
+  /** Complete the NEW_PASSWORD_REQUIRED challenge */
+  completeNewPassword: (newPassword: string) => Promise<void>
+  /** Complete an MFA challenge with a verification code */
+  completeMfa: (code: string) => Promise<void>
   /** Get current ID token for API calls, or null if not signed in */
   getIdToken: () => Promise<string | null>
 }
@@ -71,6 +80,8 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const [pendingChallenge, setPendingChallenge] = useState<PendingChallenge>(null)
+  const [challengeUser, setChallengeUser] = useState<CognitoUser | null>(null)
 
   // Check for existing session on mount
   useEffect(() => {
@@ -97,10 +108,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => { cancelled = true }
   }, [])
 
-  const handleSignIn = useCallback(async (email: string, password: string) => {
-    const tokens = await cognito.signIn(email, password)
-    setUser(extractUserFromTokens(tokens))
-    setAuthCookie()
+  const handleSignIn = useCallback(async (email: string, password: string): Promise<boolean> => {
+    const result = await cognito.signIn(email, password)
+
+    switch (result.type) {
+      case 'success':
+        setUser(extractUserFromTokens(result.tokens))
+        setAuthCookie()
+        setPendingChallenge(null)
+        setChallengeUser(null)
+        return true
+      case 'newPasswordRequired':
+        setChallengeUser(result.cognitoUser)
+        setPendingChallenge('NEW_PASSWORD_REQUIRED')
+        return false
+      case 'mfaRequired':
+        setChallengeUser(result.cognitoUser)
+        setPendingChallenge('MFA_REQUIRED')
+        return false
+    }
   }, [])
 
   const handleSignUp = useCallback(async (email: string, password: string, fullName: string) => {
@@ -130,6 +156,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await cognito.confirmPassword(email, code, newPassword)
   }, [])
 
+  const handleCompleteNewPassword = useCallback(async (newPassword: string) => {
+    if (!challengeUser) {
+      throw new Error('No pending new password challenge')
+    }
+    const tokens = await cognito.completeNewPassword(challengeUser, newPassword)
+    setUser(extractUserFromTokens(tokens))
+    setAuthCookie()
+    setPendingChallenge(null)
+    setChallengeUser(null)
+  }, [challengeUser])
+
+  const handleCompleteMfa = useCallback(async (code: string) => {
+    if (!challengeUser) {
+      throw new Error('No pending MFA challenge')
+    }
+    const tokens = await cognito.completeMfaChallenge(challengeUser, code)
+    setUser(extractUserFromTokens(tokens))
+    setAuthCookie()
+    setPendingChallenge(null)
+    setChallengeUser(null)
+  }, [challengeUser])
+
   const getIdToken = useCallback(async (): Promise<string | null> => {
     const tokens = await cognito.getCurrentSession()
     return tokens?.idToken ?? null
@@ -138,6 +186,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value = useMemo<AuthContextValue>(() => ({
     user,
     loading,
+    pendingChallenge,
     signIn: handleSignIn,
     signUp: handleSignUp,
     confirmSignUp: handleConfirmSignUp,
@@ -145,8 +194,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signOut: handleSignOut,
     forgotPassword: handleForgotPassword,
     confirmPassword: handleConfirmPassword,
+    completeNewPassword: handleCompleteNewPassword,
+    completeMfa: handleCompleteMfa,
     getIdToken,
-  }), [user, loading, handleSignIn, handleSignUp, handleConfirmSignUp, handleResendCode, handleSignOut, handleForgotPassword, handleConfirmPassword, getIdToken])
+  }), [user, loading, pendingChallenge, handleSignIn, handleSignUp, handleConfirmSignUp, handleResendCode, handleSignOut, handleForgotPassword, handleConfirmPassword, handleCompleteNewPassword, handleCompleteMfa, getIdToken])
 
   return (
     <AuthContext.Provider value={value}>
