@@ -38,7 +38,7 @@
     "@notionhq/client": "^5.11.1",
     "@typescript-eslint/eslint-plugin": "^8.57.0",
     "@typescript-eslint/parser": "^8.57.0",
-    "eslint": "^9.0.0",
+    "eslint": "^10.0.3",
     "prettier": "^3.5.0",
     "turbo": "^2.8.14",
     "typescript-eslint": "^8.57.0",
