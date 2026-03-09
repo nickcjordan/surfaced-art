@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { validateSlug } from '@surfaced-art/utils'
 import { artistConfigs, CDN_BASE, realArtistConfigs, demoArtistConfigs } from './seed-data'
+import { artworkToImageDimensions } from './seed-logic.js'
 
 /**
  * Seed data validation tests.
@@ -213,6 +214,49 @@ describe('Seed Data Validation', () => {
         await expect(import('./seed-data')).rejects.toThrow('Invalid SEED_MODE')
       } finally {
         vi.unstubAllEnvs()
+      }
+    })
+  })
+
+  describe('listing image dimensions', () => {
+    it('should derive image pixel dimensions from artwork physical proportions', () => {
+      // Landscape painting: 36" tall × 48" wide → landscape image
+      const landscape = artworkToImageDimensions(36, 48)
+      expect(landscape.width).toBe(1200)
+      expect(landscape.height).toBe(900)
+
+      // Portrait painting: 48" tall × 36" wide → portrait image
+      const portrait = artworkToImageDimensions(48, 36)
+      expect(portrait.width).toBe(900)
+      expect(portrait.height).toBe(1200)
+
+      // Square artwork: 24" × 24" → square image
+      const square = artworkToImageDimensions(24, 24)
+      expect(square.width).toBe(1200)
+      expect(square.height).toBe(1200)
+    })
+
+    it('should return integer pixel values', () => {
+      // 7" × 5" → ratio 7:5 → height=1200, width=857 (rounded)
+      const result = artworkToImageDimensions(7, 5)
+      expect(Number.isInteger(result.width)).toBe(true)
+      expect(Number.isInteger(result.height)).toBe(true)
+      expect(result.width).toBe(857)
+      expect(result.height).toBe(1200)
+    })
+
+    it('should scale to maxPixels parameter when provided', () => {
+      const result = artworkToImageDimensions(36, 48, 800)
+      expect(result.width).toBe(800)
+      expect(result.height).toBe(600)
+    })
+
+    it('should handle all seed listings (artworkLength and artworkWidth > 0)', () => {
+      for (const config of artistConfigs) {
+        for (const listing of config.listings) {
+          expect(listing.artworkLength).toBeGreaterThan(0)
+          expect(listing.artworkWidth).toBeGreaterThan(0)
+        }
       }
     })
   })
