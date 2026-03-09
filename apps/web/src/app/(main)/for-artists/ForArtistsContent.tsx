@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { Container } from '@/components/ui/container'
+import { CanvasDotOverlay } from '@/components/ui/canvas-texture'
 
 /* ================================================================== */
 /*  ANIMATION PRIMITIVES                                               */
@@ -104,13 +105,54 @@ function MorphingBlob({ className = '', color = 'var(--accent-primary)' }: { cla
   )
 }
 
-function BrushstrokeDivider({ flip = false, color = 'var(--accent-primary)', className = '', opacity = 1 }: { flip?: boolean; color?: string; className?: string; opacity?: number }) {
+/**
+ * WavySection — a single continuous element with wavy top/bottom edges.
+ * Uses CSS clip-path with an inline SVG clipPath (objectBoundingBox units)
+ * so the background color, wavy edges, and optional dot texture are all
+ * one element. No separate dividers, no color seams.
+ *
+ * Extra vertical padding (pt-12/pb-12) compensates for the clipped wave area.
+ */
+function WavySection({
+  children,
+  color = 'var(--surface)',
+  texture = false,
+  className = '',
+  id,
+  dataTestId,
+}: {
+  children: ReactNode
+  color?: string
+  texture?: boolean
+  className?: string
+  id?: string
+  dataTestId?: string
+}) {
+  const rawId = useId()
+  const clipId = `wavy-${rawId.replace(/:/g, '')}`
+
   return (
-    <div className={`pointer-events-none w-full overflow-hidden leading-[0] ${flip ? 'rotate-180' : ''} ${className}`} aria-hidden="true">
-      <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="block h-8 w-full md:h-12 lg:h-14">
-        <path d="M0,30 C120,45 200,15 360,28 C520,41 580,10 720,25 C860,40 950,12 1080,30 C1210,48 1320,18 1440,32 L1440,60 L0,60 Z" fill={color} opacity={0.08 * opacity} />
-        <path d="M0,35 C180,50 280,20 440,33 C600,46 700,15 860,30 C1020,45 1150,20 1440,38 L1440,60 L0,60 Z" fill={color} opacity={0.05 * opacity} />
+    <div className="full-bleed relative z-10 -my-4 md:-my-6 lg:-my-8">
+      {/* Hidden SVG defining the clip path in 0–1 coordinate space */}
+      <svg className="absolute" style={{ width: 0, height: 0 }} aria-hidden="true">
+        <defs>
+          <clipPath id={clipId} clipPathUnits="objectBoundingBox">
+            <path d="M0,0.06 C0.07,0.03 0.12,0.08 0.2,0.04 C0.28,0.005 0.33,0.07 0.42,0.035 C0.50,0.005 0.55,0.065 0.62,0.04 C0.70,0.01 0.76,0.07 0.83,0.035 C0.90,0.005 0.94,0.055 1,0.06 L1,0.94 C0.94,0.945 0.90,0.995 0.83,0.965 C0.76,0.93 0.70,0.99 0.62,0.96 C0.55,0.935 0.50,0.995 0.42,0.965 C0.33,0.93 0.28,0.995 0.2,0.96 C0.12,0.92 0.07,0.97 0,0.94 Z" />
+          </clipPath>
+        </defs>
       </svg>
+      <section
+        id={id}
+        data-testid={dataTestId}
+        className={`relative overflow-hidden ${className}`}
+        style={{
+          background: color,
+          clipPath: `url(#${clipId})`,
+        }}
+      >
+        {texture && <CanvasDotOverlay />}
+        {children}
+      </section>
     </div>
   )
 }
@@ -206,28 +248,56 @@ function HighlightMarker({ children, color = 'var(--accent-primary)' }: { childr
   )
 }
 
+const LIVING_PALETTE_COLORS = [
+  'var(--accent-primary)',
+  'var(--accent-secondary)',
+  'color-mix(in srgb, var(--accent-primary) 60%, var(--foreground))',
+  'color-mix(in srgb, var(--accent-secondary) 40%, var(--background))',
+  'color-mix(in srgb, var(--accent-primary) 30%, var(--accent-secondary))',
+  'color-mix(in srgb, var(--accent-secondary) 70%, var(--foreground))',
+  'color-mix(in srgb, var(--accent-primary) 50%, var(--background))',
+  'color-mix(in srgb, var(--accent-primary) 80%, var(--accent-secondary))',
+]
+
+const LIVING_PALETTE_PATHS = [
+  'M32,6C42,6,54,14,56,26C58,38,50,54,38,58C26,62,10,54,6,42C2,30,8,14,20,8C26,5,28,6,32,6Z',
+  'M28,4C38,2,50,10,54,22C58,34,52,50,40,54C28,58,12,50,6,38C0,26,6,14,16,8C20,5,24,4,28,4Z',
+  'M22,4C30,2,40,8,44,18C48,28,44,42,34,46C24,50,10,44,5,34C0,24,4,12,12,6C16,3,18,4,22,4Z',
+  'M30,4C40,4,52,12,55,24C58,36,48,52,36,56C24,60,8,52,4,40C0,28,10,12,22,6C26,4,28,4,30,4Z',
+  'M24,3C34,1,46,10,48,22C50,34,42,48,30,50C18,52,4,42,2,30C0,18,8,8,16,4C20,2,22,3,24,3Z',
+  'M30,5C40,3,52,12,56,24C60,36,54,50,42,56C30,60,14,54,6,42C0,30,4,14,16,7C22,4,26,5,30,5Z',
+]
+
 function LivingPalette({ className = '' }: { className?: string }) {
-  const blobs = [
-    { color: 'var(--accent-primary)', size: 64, path: 'M32,6C42,6,54,14,56,26C58,38,50,54,38,58C26,62,10,54,6,42C2,30,8,14,20,8C26,5,28,6,32,6Z' },
-    { color: 'var(--accent-secondary)', size: 56, path: 'M28,4C38,2,50,10,54,22C58,34,52,50,40,54C28,58,12,50,6,38C0,26,6,14,16,8C20,5,24,4,28,4Z' },
-    { color: 'color-mix(in srgb, var(--accent-primary) 60%, var(--foreground))', size: 44, path: 'M22,4C30,2,40,8,44,18C48,28,44,42,34,46C24,50,10,44,5,34C0,24,4,12,12,6C16,3,18,4,22,4Z' },
-    { color: 'color-mix(in srgb, var(--accent-secondary) 40%, var(--background))', size: 56, path: 'M30,4C40,4,52,12,55,24C58,36,48,52,36,56C24,60,8,52,4,40C0,28,10,12,22,6C26,4,28,4,30,4Z' },
-    { color: 'color-mix(in srgb, var(--accent-primary) 30%, var(--accent-secondary))', size: 48, path: 'M24,3C34,1,46,10,48,22C50,34,42,48,30,50C18,52,4,42,2,30C0,18,8,8,16,4C20,2,22,3,24,3Z' },
-  ]
+  const count = 10
   return (
     <div className={`flex items-center gap-2 md:gap-3 ${className}`} aria-hidden="true">
-      {blobs.map((blob, i) => (
-        <svg
-          key={i}
-          width={blob.size}
-          height={blob.size}
-          viewBox={`-4 -4 ${blob.size + 8} ${blob.size + 8}`}
-          className="md:scale-110"
-          style={{ opacity: 0.7, animation: `breathe ${4 + i * 0.8}s ease-in-out infinite`, animationDelay: `${i * 0.5}s` }}
-        >
-          <path d={blob.path} fill={blob.color} />
-        </svg>
-      ))}
+      {Array.from({ length: count }, (_, i) => {
+        const size = 32
+        const pathIndex = i % LIVING_PALETTE_PATHS.length
+        const colorIndex = i % LIVING_PALETTE_COLORS.length
+        const filled = i % 2 === 0
+        return (
+          <svg
+            key={i}
+            width={size}
+            height={size}
+            viewBox="-4 -4 70 70"
+            style={{
+              opacity: 0.7,
+              animation: `breathe-medium ${4 + i * 0.8}s ease-in-out infinite`,
+              animationDelay: `${i * 0.5}s`,
+            }}
+          >
+            <path
+              d={LIVING_PALETTE_PATHS[pathIndex]}
+              fill={filled ? LIVING_PALETTE_COLORS[colorIndex] : 'none'}
+              stroke={LIVING_PALETTE_COLORS[colorIndex]}
+              strokeWidth={filled ? 0 : 2}
+            />
+          </svg>
+        )
+      })}
     </div>
   )
 }
@@ -447,6 +517,7 @@ export default function ForArtistsContent() {
       <section id="v14-hero" data-testid="for-artists-hero" className="full-bleed overflow-hidden relative overflow-hidden">
         <div className="absolute inset-0" style={{ background: 'var(--surface)' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(155deg, var(--surface) 50%, color-mix(in srgb, var(--accent-primary) 5%, var(--surface)) 50%)' }} />
+        <CanvasDotOverlay />
         <WatercolorWash opacity1={0.08} opacity2={0.06} />
 
         <MorphingBlob className="absolute -right-16 bottom-4 h-80 w-80 md:-right-8 md:bottom-0 md:h-[28rem] md:w-[28rem]" color="var(--accent-primary)" />
@@ -460,12 +531,6 @@ export default function ForArtistsContent() {
         <Container className="relative py-20 md:py-28 lg:py-36">
           <div className="mx-auto max-w-3xl text-center">
             <FadeIn>
-              <p className="text-body-small mb-4 font-medium uppercase tracking-widest" style={{ color: 'var(--accent-primary)' }}>
-                For Artists
-              </p>
-            </FadeIn>
-
-            <FadeIn delay={100}>
               <h1 className="text-foreground">
                 The platform <ShimmerText>built for artists</ShimmerText>
               </h1>
@@ -510,6 +575,7 @@ export default function ForArtistsContent() {
       {/*  SECTION 1: Artist Studio                                    */}
       {/* ============================================================ */}
       <section id="v14-profile" data-testid="for-artists-profile" className="full-bleed relative overflow-hidden py-16 md:py-24">
+        <CanvasDotOverlay />
         <OutlinedBlob className="absolute -left-[18rem] top-8 h-[36rem] w-[36rem] md:-left-[20rem] md:h-[44rem] md:w-[44rem]" color="var(--accent-secondary)" variant={0} />
 
         <Container>
@@ -537,7 +603,7 @@ export default function ForArtistsContent() {
                   {[
                     { title: 'Your clean URL', desc: 'surfacedart.com/your-name. A short, memorable link that goes straight to your studio', accent: 'var(--accent-primary)' },
                     { title: 'Replace your website', desc: 'Bio, CV, artist statement, process photos. Everything a custom site would have, zero maintenance', accent: 'var(--accent-secondary)' },
-                    { title: 'Pure showcase', desc: 'Your studio presents your work without prices or checkout. Visitors who want to buy click through to the listing', accent: 'var(--accent-primary)' },
+                    { title: 'Pure showcase', desc: 'No ads, no competitor links, no prices on the page. Just your work. Visitors who want to buy click through to the listing', accent: 'var(--accent-primary)' },
                   ].map((item, i) => (
                     <div key={item.title} className="text-right">
                       <div className="inline-flex items-center gap-2">
@@ -594,27 +660,14 @@ export default function ForArtistsContent() {
                         </div>
                       </div>
                       {/* Gallery grid */}
-                      <div className="mt-3">
+                      <div className="relative mt-3">
                         <div className="grid grid-cols-3 gap-2">
-                          {[22, 14, 18, 16, 20, 12].map((mix, i) => (
+                          {[22, 14, 18].map((mix, i) => (
                             <div key={i} className="aspect-[4/5] rounded-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md" style={{ background: `color-mix(in srgb, var(--accent-${i % 2 === 0 ? 'primary' : 'secondary'}) ${mix}%, var(--surface))` }} />
                           ))}
                         </div>
-                      </div>
-                      {/* Social links */}
-                      <div className="mt-3">
-                        <div className="flex gap-2">
-                          {['Instagram', 'Website'].map((label) => (
-                            <div key={label} className="rounded-full px-3 py-1" style={{ background: 'color-mix(in srgb, var(--accent-primary) 8%, var(--surface))' }}>
-                              <p className="text-[10px]" style={{ color: 'var(--accent-primary)' }}>{label}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      {/* Empty space — the point */}
-                      <div className="mt-6 rounded-lg border border-dashed p-4 text-center" style={{ borderColor: 'color-mix(in srgb, var(--accent-primary) 20%, var(--border))' }}>
-                        <p className="text-xs font-medium" style={{ color: 'var(--accent-primary)' }}>No ads. No competitor links. No distractions.</p>
-                        <p className="mt-0.5 text-[11px] text-muted-text/50">This space intentionally left empty</p>
+                        {/* Fade-out to imply continuation */}
+                        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16" style={{ background: 'linear-gradient(to bottom, transparent, var(--background))' }} aria-hidden="true" />
                       </div>
                     </div>
                   </div>
@@ -643,7 +696,7 @@ export default function ForArtistsContent() {
                   {[
                     { title: 'Your clean URL', desc: 'A memorable link you can share anywhere' },
                     { title: 'Replace your website', desc: 'Bio, CV, process photos. Zero maintenance' },
-                    { title: 'Pure showcase', desc: 'No prices, no checkout on your studio page' },
+                    { title: 'Pure showcase', desc: 'No ads, no competitor links. Just your work' },
                     { title: 'Sold work stays visible', desc: 'Archive builds your full portfolio' },
                     { title: 'Always up to date', desc: 'New pieces appear on your page instantly' },
                     { title: 'SEO that works for you', desc: 'Optimized so collectors can find your work' },
@@ -672,11 +725,8 @@ export default function ForArtistsContent() {
       {/* ============================================================ */}
       {/*  SECTION 2: Curated                                          */}
       {/* ============================================================ */}
-      <div className="full-bleed relative z-10 -mb-1">
-        <BrushstrokeDivider color="var(--surface)" opacity={10} />
-      </div>
-      <section id="v14-curated" className="full-bleed relative overflow-hidden" style={{ background: 'var(--surface)' }}>
-        <div className="relative overflow-hidden py-24 md:py-32">
+      <WavySection id="v14-curated" texture>
+        <div className="relative overflow-hidden py-28 md:py-36">
           <WatercolorWash opacity1={0.05} opacity2={0.04} />
           <MorphingBlob className="absolute -right-24 top-0 h-96 w-96" color="var(--accent-primary)" />
           <Container className="relative">
@@ -707,10 +757,7 @@ export default function ForArtistsContent() {
           </div>
           </Container>
         </div>
-      </section>
-      <div className="full-bleed relative z-10 -mt-1">
-        <BrushstrokeDivider flip color="var(--surface)" opacity={10} />
-      </div>
+      </WavySection>
 
       {/* ============================================================ */}
       {/*  SECTION 3: Comparison                                       */}
@@ -797,11 +844,8 @@ export default function ForArtistsContent() {
       {/* ============================================================ */}
       {/*  SECTION 4: How it works                                     */}
       {/* ============================================================ */}
-      <div className="full-bleed relative z-10 -mb-1">
-        <BrushstrokeDivider color="var(--surface)" opacity={10} />
-      </div>
-      <section id="v14-how-it-works" data-testid="for-artists-how-it-works" className="full-bleed relative overflow-hidden" style={{ background: 'var(--surface)' }}>
-        <div className="relative py-16 md:py-24">
+      <WavySection id="v14-how-it-works" dataTestId="for-artists-how-it-works" texture>
+        <div className="relative py-20 md:py-28">
           <Container>
             <FadeIn>
               <div className="mx-auto mb-12 max-w-3xl text-center">
@@ -814,10 +858,7 @@ export default function ForArtistsContent() {
             <HorizontalTimeline />
           </Container>
         </div>
-      </section>
-      <div className="full-bleed relative z-10 -mt-1">
-        <BrushstrokeDivider flip color="var(--surface)" opacity={10} />
-      </div>
+      </WavySection>
 
       {/* ============================================================ */}
       {/*  SECTION 5: What the platform does (replaces tabbed UI)      */}
@@ -903,31 +944,25 @@ export default function ForArtistsContent() {
       {/* ============================================================ */}
       {/*  TESTIMONIAL                                                 */}
       {/* ============================================================ */}
-      <div className="py-6 md:py-10" />
-      <section className="full-bleed overflow-hidden">
-        <div className="relative py-10 md:py-14" style={{ background: 'var(--accent-primary)' }}>
-          <Container>
-            <blockquote className="relative mx-auto max-w-2xl text-center">
-              <p className="font-serif text-2xl italic leading-relaxed tracking-tight md:text-3xl" style={{ color: 'var(--primary-foreground)' }}>
-                &ldquo;I was selling through DMs for two years. This is the first time my work has a real home online.&rdquo;
-              </p>
-              <footer className="mt-5">
-                <p className="text-sm font-medium" style={{ color: 'color-mix(in srgb, var(--primary-foreground) 80%, transparent)' }}>Artist Name, Ceramics</p>
-              </footer>
-            </blockquote>
-          </Container>
-        </div>
-      </section>
-      <div className="py-6 md:py-10" />
+      <div className="full-bleed relative my-6 py-10 md:my-10 md:py-14" style={{ background: 'var(--accent-primary)' }}>
+        <CanvasDotOverlay />
+        <Container>
+          <blockquote className="relative mx-auto max-w-2xl text-center">
+            <p className="font-serif text-2xl italic leading-relaxed tracking-tight md:text-3xl" style={{ color: 'var(--primary-foreground)' }}>
+              &ldquo;I was selling through DMs for two years. This is the first time my work has a real home online.&rdquo;
+            </p>
+            <footer className="mt-5">
+              <p className="text-sm font-medium" style={{ color: 'color-mix(in srgb, var(--primary-foreground) 80%, transparent)' }}>Artist Name, Ceramics</p>
+            </footer>
+          </blockquote>
+        </Container>
+      </div>
 
       {/* ============================================================ */}
       {/*  SECTION 6: Pricing                                          */}
       {/* ============================================================ */}
-      <div className="full-bleed relative z-10 -mb-1">
-        <BrushstrokeDivider color="var(--surface)" opacity={10} />
-      </div>
-      <section id="v14-pricing" data-testid="for-artists-commission" className="full-bleed relative overflow-hidden" style={{ background: 'var(--surface)' }}>
-        <div className="relative overflow-hidden py-12 md:py-16">
+      <WavySection id="v14-pricing" dataTestId="for-artists-commission" texture>
+        <div className="relative overflow-hidden py-16 md:py-20">
           <WatercolorWash opacity1={0.04} opacity2={0.03} />
           <Container className="relative">
             <FadeIn>
@@ -959,10 +994,7 @@ export default function ForArtistsContent() {
             </div>
           </Container>
         </div>
-      </section>
-      <div className="full-bleed relative z-10 -mt-1">
-        <BrushstrokeDivider flip color="var(--surface)" opacity={10} />
-      </div>
+      </WavySection>
 
       {/* ============================================================ */}
       {/*  SECTION 7: Details                                          */}
@@ -1068,16 +1100,8 @@ export default function ForArtistsContent() {
       {/* ============================================================ */}
       {/*  SECTION 8: Roadmap                                          */}
       {/* ============================================================ */}
-      <div className="full-bleed relative z-10 -mb-1">
-        <BrushstrokeDivider color="var(--surface)" opacity={10} />
-      </div>
-      <section
-        id="v14-roadmap"
-        data-testid="for-artists-roadmap"
-        className="full-bleed relative overflow-hidden"
-        style={{ background: 'var(--surface)' }}
-      >
-        <div className="relative py-16 md:py-24">
+      <WavySection id="v14-roadmap" dataTestId="for-artists-roadmap" texture>
+        <div className="relative py-20 md:py-28">
         <MorphingBlob className="absolute -right-20 top-4 h-72 w-72 md:h-96 md:w-96" color="var(--accent-primary)" />
         <MorphingBlob className="absolute bottom-8 -left-16 h-64 w-64 md:bottom-4 md:h-80 md:w-80" color="var(--accent-secondary)" />
         <Container className="relative">
@@ -1130,15 +1154,13 @@ export default function ForArtistsContent() {
           </div>
         </Container>
         </div>
-      </section>
-      <div className="full-bleed relative z-10 -mt-1">
-        <BrushstrokeDivider flip color="var(--surface)" opacity={10} />
-      </div>
+      </WavySection>
 
       {/* ============================================================ */}
       {/*  CTA                                                         */}
       {/* ============================================================ */}
       <section id="v14-cta" data-testid="for-artists-cta" className="full-bleed relative overflow-hidden">
+        <CanvasDotOverlay />
         <Container className="relative py-24 md:py-32">
           <FadeIn>
             <div className="relative mx-auto max-w-xl">
@@ -1180,6 +1202,7 @@ export default function ForArtistsContent() {
         @keyframes float-3 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(10px, 6px); } 50% { transform: translate(4px, -10px); } 75% { transform: translate(-8px, 4px); } }
         @keyframes tab-in { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.15); opacity: 0.9; } }
+        @keyframes breathe-medium { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
       `}</style>
     </div>
   )
