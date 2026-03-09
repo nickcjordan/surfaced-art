@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { CanvasDotOverlayFullBleed } from '@/components/ui/canvas-texture'
 import { SITE_URL } from '@/lib/site-config'
 
 export const metadata: Metadata = {
@@ -21,7 +22,8 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="space-y-12 md:space-y-16">
+    <div className="relative space-y-12 md:space-y-16">
+      <CanvasDotOverlayFullBleed />
       <JsonLd data={{
         '@context': 'https://schema.org',
         '@type': 'WebPage',

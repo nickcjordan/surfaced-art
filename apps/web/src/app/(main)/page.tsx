@@ -8,6 +8,7 @@ import { MasonryGrid } from '@/components/MasonryGrid'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { JsonLd } from '@/components/JsonLd'
+import { CanvasDotOverlay } from '@/components/ui/canvas-texture'
 import { SITE_URL } from '@/lib/site-config'
 
 export const revalidate = 60
@@ -129,17 +130,20 @@ export default async function Home() {
       {/* Waitlist */}
       <section
         data-testid="waitlist"
-        className="rounded-md border border-border bg-surface px-6 py-12 text-center"
+        className="relative overflow-hidden rounded-md border border-border bg-surface px-6 py-12 text-center"
       >
-        <h2 className="font-serif text-2xl text-foreground">
-          Be the first to know
-        </h2>
-        <p className="mx-auto mt-3 max-w-md text-sm text-muted-text">
-          This gallery opens to buyers soon. Leave your email to get early
-          access.
-        </p>
-        <div className="mx-auto mt-6 max-w-md">
-          <WaitlistForm />
+        <CanvasDotOverlay />
+        <div className="relative">
+          <h2 className="font-serif text-2xl text-foreground">
+            Be the first to know
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-sm text-muted-text">
+            This gallery opens to buyers soon. Leave your email to get early
+            access.
+          </p>
+          <div className="mx-auto mt-6 max-w-md">
+            <WaitlistForm />
+          </div>
         </div>
       </section>
     </div>

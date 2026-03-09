@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { Container } from '@/components/ui/container'
+import { CanvasDotOverlay } from '@/components/ui/canvas-texture'
 
 /* ================================================================== */
 /*  ANIMATION PRIMITIVES                                               */
@@ -447,6 +448,7 @@ export default function ForArtistsContent() {
       <section id="v14-hero" data-testid="for-artists-hero" className="full-bleed overflow-hidden relative overflow-hidden">
         <div className="absolute inset-0" style={{ background: 'var(--surface)' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(155deg, var(--surface) 50%, color-mix(in srgb, var(--accent-primary) 5%, var(--surface)) 50%)' }} />
+        <CanvasDotOverlay />
         <WatercolorWash opacity1={0.08} opacity2={0.06} />
 
         <MorphingBlob className="absolute -right-16 bottom-4 h-80 w-80 md:-right-8 md:bottom-0 md:h-[28rem] md:w-[28rem]" color="var(--accent-primary)" />
@@ -510,6 +512,7 @@ export default function ForArtistsContent() {
       {/*  SECTION 1: Artist Studio                                    */}
       {/* ============================================================ */}
       <section id="v14-profile" data-testid="for-artists-profile" className="full-bleed relative overflow-hidden py-16 md:py-24">
+        <CanvasDotOverlay />
         <OutlinedBlob className="absolute -left-[18rem] top-8 h-[36rem] w-[36rem] md:-left-[20rem] md:h-[44rem] md:w-[44rem]" color="var(--accent-secondary)" variant={0} />
 
         <Container>
@@ -676,6 +679,7 @@ export default function ForArtistsContent() {
         <BrushstrokeDivider color="var(--surface)" opacity={10} />
       </div>
       <section id="v14-curated" className="full-bleed relative overflow-hidden" style={{ background: 'var(--surface)' }}>
+        <CanvasDotOverlay />
         <div className="relative overflow-hidden py-24 md:py-32">
           <WatercolorWash opacity1={0.05} opacity2={0.04} />
           <MorphingBlob className="absolute -right-24 top-0 h-96 w-96" color="var(--accent-primary)" />
@@ -716,6 +720,7 @@ export default function ForArtistsContent() {
       {/*  SECTION 3: Comparison                                       */}
       {/* ============================================================ */}
       <section id="v14-comparison" className="full-bleed relative overflow-hidden py-16 md:py-24">
+        <CanvasDotOverlay />
         <OutlinedBlob className="absolute -right-[18rem] top-12 h-[36rem] w-[36rem] md:-right-[20rem] md:h-[44rem] md:w-[44rem]" color="var(--accent-primary)" variant={1} />
         <Container>
           <FadeIn>
@@ -801,6 +806,7 @@ export default function ForArtistsContent() {
         <BrushstrokeDivider color="var(--surface)" opacity={10} />
       </div>
       <section id="v14-how-it-works" data-testid="for-artists-how-it-works" className="full-bleed relative overflow-hidden" style={{ background: 'var(--surface)' }}>
+        <CanvasDotOverlay />
         <div className="relative py-16 md:py-24">
           <Container>
             <FadeIn>
@@ -823,6 +829,7 @@ export default function ForArtistsContent() {
       {/*  SECTION 5: What the platform does (replaces tabbed UI)      */}
       {/* ============================================================ */}
       <section id="v14-platform" data-testid="for-artists-platform" className="full-bleed relative overflow-hidden py-16 md:py-24">
+        <CanvasDotOverlay />
         <OutlinedBlob className="absolute -left-[18rem] top-8 h-[36rem] w-[36rem] md:-left-[20rem] md:h-[42rem] md:w-[42rem]" color="var(--accent-secondary)" variant={0} />
         <Container>
           <FadeIn>
@@ -927,6 +934,7 @@ export default function ForArtistsContent() {
         <BrushstrokeDivider color="var(--surface)" opacity={10} />
       </div>
       <section id="v14-pricing" data-testid="for-artists-commission" className="full-bleed relative overflow-hidden" style={{ background: 'var(--surface)' }}>
+        <CanvasDotOverlay />
         <div className="relative overflow-hidden py-12 md:py-16">
           <WatercolorWash opacity1={0.04} opacity2={0.03} />
           <Container className="relative">
@@ -968,6 +976,7 @@ export default function ForArtistsContent() {
       {/*  SECTION 7: Details                                          */}
       {/* ============================================================ */}
       <section id="v14-details" data-testid="for-artists-details" className="full-bleed relative overflow-hidden py-16 md:py-24">
+        <CanvasDotOverlay />
         <OutlinedBlob className="absolute -right-[18rem] top-12 h-[36rem] w-[36rem] md:-right-[20rem] md:h-[44rem] md:w-[44rem]" color="var(--accent-primary)" variant={1} />
         <OutlinedBlob className="absolute -left-[18rem] bottom-0 h-[32rem] w-[32rem] md:-left-[20rem] md:h-[38rem] md:w-[38rem]" color="var(--accent-secondary)" variant={0} />
         <Container>
@@ -1077,6 +1086,7 @@ export default function ForArtistsContent() {
         className="full-bleed relative overflow-hidden"
         style={{ background: 'var(--surface)' }}
       >
+        <CanvasDotOverlay />
         <div className="relative py-16 md:py-24">
         <MorphingBlob className="absolute -right-20 top-4 h-72 w-72 md:h-96 md:w-96" color="var(--accent-primary)" />
         <MorphingBlob className="absolute bottom-8 -left-16 h-64 w-64 md:bottom-4 md:h-80 md:w-80" color="var(--accent-secondary)" />
@@ -1139,6 +1149,7 @@ export default function ForArtistsContent() {
       {/*  CTA                                                         */}
       {/* ============================================================ */}
       <section id="v14-cta" data-testid="for-artists-cta" className="full-bleed relative overflow-hidden">
+        <CanvasDotOverlay />
         <Container className="relative py-24 md:py-32">
           <FadeIn>
             <div className="relative mx-auto max-w-xl">
