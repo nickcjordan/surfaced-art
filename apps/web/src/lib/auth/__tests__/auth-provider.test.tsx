@@ -12,6 +12,8 @@ vi.mock('../cognito', () => ({
   getCurrentSession: vi.fn(),
   forgotPassword: vi.fn(),
   confirmPassword: vi.fn(),
+  completeNewPassword: vi.fn(),
+  completeMfaChallenge: vi.fn(),
 }))
 
 import * as cognito from '../cognito'
@@ -32,8 +34,11 @@ function TestConsumer() {
       <span data-testid="loading">{String(auth.loading)}</span>
       <span data-testid="user-email">{auth.user?.email ?? 'none'}</span>
       <span data-testid="user-name">{auth.user?.name ?? 'none'}</span>
+      <span data-testid="challenge">{auth.pendingChallenge ?? 'none'}</span>
       <button onClick={() => auth.signIn('test@example.com', 'Password1')}>Sign In</button>
       <button onClick={() => auth.signOut()}>Sign Out</button>
+      <button onClick={() => auth.completeNewPassword('NewPassword1')}>Complete New Password</button>
+      <button onClick={() => auth.completeMfa('123456')}>Complete MFA</button>
     </div>
   )
 }
@@ -94,7 +99,7 @@ describe('AuthProvider', () => {
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
     }
-    mockedCognito.signIn.mockResolvedValue(tokens)
+    mockedCognito.signIn.mockResolvedValue({ type: 'success', tokens })
 
     render(
       <AuthProvider>
@@ -112,6 +117,143 @@ describe('AuthProvider', () => {
     })
 
     expect(screen.getByTestId('user-email').textContent).toBe('bob@example.com')
+    expect(screen.getByTestId('challenge').textContent).toBe('none')
+  })
+
+  it('should set pendingChallenge when sign-in returns NEW_PASSWORD_REQUIRED', async () => {
+    mockedCognito.getCurrentSession.mockResolvedValue(null)
+    const fakeCognitoUser = {} as never
+    mockedCognito.signIn.mockResolvedValue({
+      type: 'newPasswordRequired',
+      cognitoUser: fakeCognitoUser,
+      requiredAttributes: {},
+    })
+
+    render(
+      <AuthProvider>
+        <TestConsumer />
+      </AuthProvider>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    await act(async () => {
+      screen.getByText('Sign In').click()
+    })
+
+    expect(screen.getByTestId('challenge').textContent).toBe('NEW_PASSWORD_REQUIRED')
+    expect(screen.getByTestId('user-email').textContent).toBe('none')
+  })
+
+  it('should complete new password challenge and sign in user', async () => {
+    mockedCognito.getCurrentSession.mockResolvedValue(null)
+    const fakeCognitoUser = {} as never
+    mockedCognito.signIn.mockResolvedValue({
+      type: 'newPasswordRequired',
+      cognitoUser: fakeCognitoUser,
+      requiredAttributes: {},
+    })
+
+    const tokens = {
+      idToken: fakeIdToken({ email: 'bob@example.com', name: 'Bob' }),
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    }
+    mockedCognito.completeNewPassword.mockResolvedValue(tokens)
+
+    render(
+      <AuthProvider>
+        <TestConsumer />
+      </AuthProvider>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    // Trigger new password challenge
+    await act(async () => {
+      screen.getByText('Sign In').click()
+    })
+
+    expect(screen.getByTestId('challenge').textContent).toBe('NEW_PASSWORD_REQUIRED')
+
+    // Complete the challenge
+    await act(async () => {
+      screen.getByText('Complete New Password').click()
+    })
+
+    expect(screen.getByTestId('challenge').textContent).toBe('none')
+    expect(screen.getByTestId('user-email').textContent).toBe('bob@example.com')
+    expect(mockedCognito.completeNewPassword).toHaveBeenCalledWith(fakeCognitoUser, 'NewPassword1')
+  })
+
+  it('should set pendingChallenge when sign-in returns MFA_REQUIRED', async () => {
+    mockedCognito.getCurrentSession.mockResolvedValue(null)
+    const fakeCognitoUser = {} as never
+    mockedCognito.signIn.mockResolvedValue({
+      type: 'mfaRequired',
+      cognitoUser: fakeCognitoUser,
+      mfaType: 'SMS_MFA',
+    })
+
+    render(
+      <AuthProvider>
+        <TestConsumer />
+      </AuthProvider>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    await act(async () => {
+      screen.getByText('Sign In').click()
+    })
+
+    expect(screen.getByTestId('challenge').textContent).toBe('MFA_REQUIRED')
+  })
+
+  it('should complete MFA challenge and sign in user', async () => {
+    mockedCognito.getCurrentSession.mockResolvedValue(null)
+    const fakeCognitoUser = {} as never
+    mockedCognito.signIn.mockResolvedValue({
+      type: 'mfaRequired',
+      cognitoUser: fakeCognitoUser,
+      mfaType: 'SMS_MFA',
+    })
+
+    const tokens = {
+      idToken: fakeIdToken({ email: 'carol@example.com', name: 'Carol' }),
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    }
+    mockedCognito.completeMfaChallenge.mockResolvedValue(tokens)
+
+    render(
+      <AuthProvider>
+        <TestConsumer />
+      </AuthProvider>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    await act(async () => {
+      screen.getByText('Sign In').click()
+    })
+
+    expect(screen.getByTestId('challenge').textContent).toBe('MFA_REQUIRED')
+
+    await act(async () => {
+      screen.getByText('Complete MFA').click()
+    })
+
+    expect(screen.getByTestId('challenge').textContent).toBe('none')
+    expect(screen.getByTestId('user-email').textContent).toBe('carol@example.com')
   })
 
   it('should clear user on sign-out', async () => {
