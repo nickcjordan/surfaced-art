@@ -6,6 +6,9 @@ import {
   CognitoUserSession,
 } from 'amazon-cognito-identity-js'
 
+// Re-export CognitoUser type for challenge references
+export type { CognitoUser } from 'amazon-cognito-identity-js'
+
 // Environment config — these must be set as NEXT_PUBLIC_ env vars
 const USER_POOL_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID ?? ''
 const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? ''
@@ -32,6 +35,25 @@ export interface AuthTokens {
   accessToken: string
   refreshToken: string
 }
+
+export interface SignInSuccess {
+  type: 'success'
+  tokens: AuthTokens
+}
+
+export interface NewPasswordChallenge {
+  type: 'newPasswordRequired'
+  cognitoUser: CognitoUser
+  requiredAttributes: Record<string, string>
+}
+
+export interface MfaChallenge {
+  type: 'mfaRequired'
+  cognitoUser: CognitoUser
+  mfaType: string
+}
+
+export type SignInResult = SignInSuccess | NewPasswordChallenge | MfaChallenge
 
 export interface SignUpResult {
   userConfirmed: boolean
@@ -102,8 +124,10 @@ export function resendConfirmationCode(email: string): Promise<void> {
 
 /**
  * Sign in with email and password using SRP auth flow.
+ * Returns a discriminated union: success with tokens, or a challenge that
+ * the caller must complete (new password, MFA, etc.).
  */
-export function signIn(email: string, password: string): Promise<AuthTokens> {
+export function signIn(email: string, password: string): Promise<SignInResult> {
   const user = getCognitoUser(email)
   const authDetails = new AuthenticationDetails({
     Username: email,
@@ -112,6 +136,77 @@ export function signIn(email: string, password: string): Promise<AuthTokens> {
 
   return new Promise((resolve, reject) => {
     user.authenticateUser(authDetails, {
+      onSuccess: (session: CognitoUserSession) => {
+        resolve({
+          type: 'success',
+          tokens: {
+            idToken: session.getIdToken().getJwtToken(),
+            accessToken: session.getAccessToken().getJwtToken(),
+            refreshToken: session.getRefreshToken().getToken(),
+          },
+        })
+      },
+      onFailure: (err: Error) => {
+        reject(err)
+      },
+      newPasswordRequired: (userAttributes: Record<string, string>) => {
+        resolve({
+          type: 'newPasswordRequired',
+          cognitoUser: user,
+          requiredAttributes: userAttributes,
+        })
+      },
+      mfaRequired: (challengeName: string) => {
+        resolve({
+          type: 'mfaRequired',
+          cognitoUser: user,
+          mfaType: challengeName,
+        })
+      },
+      totpRequired: (challengeName: string) => {
+        resolve({
+          type: 'mfaRequired',
+          cognitoUser: user,
+          mfaType: challengeName,
+        })
+      },
+    })
+  })
+}
+
+/**
+ * Complete the NEW_PASSWORD_REQUIRED challenge after sign-in.
+ * Called when an admin-created user must set their own password on first login.
+ */
+export function completeNewPassword(
+  cognitoUser: CognitoUser,
+  newPassword: string,
+): Promise<AuthTokens> {
+  return new Promise((resolve, reject) => {
+    cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
+      onSuccess: (session: CognitoUserSession) => {
+        resolve({
+          idToken: session.getIdToken().getJwtToken(),
+          accessToken: session.getAccessToken().getJwtToken(),
+          refreshToken: session.getRefreshToken().getToken(),
+        })
+      },
+      onFailure: (err: Error) => {
+        reject(err)
+      },
+    })
+  })
+}
+
+/**
+ * Complete an MFA challenge by submitting the verification code.
+ */
+export function completeMfaChallenge(
+  cognitoUser: CognitoUser,
+  code: string,
+): Promise<AuthTokens> {
+  return new Promise((resolve, reject) => {
+    cognitoUser.sendMFACode(code, {
       onSuccess: (session: CognitoUserSession) => {
         resolve({
           idToken: session.getIdToken().getJwtToken(),

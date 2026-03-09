@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function SignInForm() {
-  const { signIn } = useAuth()
+  const { signIn, pendingChallenge, completeNewPassword, completeMfa } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -18,6 +18,13 @@ export function SignInForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  // New password challenge state
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+
+  // MFA challenge state
+  const [mfaCode, setMfaCode] = useState('')
 
   const verified = searchParams.get('verified') === 'true'
   const reset = searchParams.get('reset') === 'true'
@@ -29,8 +36,12 @@ export function SignInForm() {
     setSubmitting(true)
 
     try {
-      await signIn(email, password)
-      router.push(redirect)
+      const success = await signIn(email, password)
+      if (success) {
+        router.push(redirect)
+        return
+      }
+      // Challenge was set — form will re-render to show challenge UI
     } catch (err) {
       if (err instanceof Error && err.name === 'UserNotConfirmedException') {
         router.push(`/verify-email?email=${encodeURIComponent(email)}`)
@@ -42,6 +53,142 @@ export function SignInForm() {
     }
   }
 
+  async function handleNewPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+
+    if (newPassword !== confirmNewPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      await completeNewPassword(newPassword)
+      router.push(redirect)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleMfa(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSubmitting(true)
+
+    try {
+      await completeMfa(mfaCode)
+      router.push(redirect)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // NEW_PASSWORD_REQUIRED challenge UI
+  if (pendingChallenge === 'NEW_PASSWORD_REQUIRED') {
+    return (
+      <Card className="border border-border shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Set a New Password</CardTitle>
+          <CardDescription>
+            Your account requires a new password. Please choose a secure password.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form data-testid="new-password-form" onSubmit={handleNewPassword} className="space-y-4">
+            {error && (
+              <div className="rounded-md bg-error/10 p-3 text-sm text-error" role="alert">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                required
+                autoComplete="new-password"
+                minLength={8}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                data-testid="new-password-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                At least 8 characters, with uppercase, lowercase, and a number
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmNewPassword">Confirm new password</Label>
+              <Input
+                id="confirmNewPassword"
+                type="password"
+                required
+                autoComplete="new-password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                data-testid="confirm-new-password-input"
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? 'Setting password...' : 'Set password'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // MFA_REQUIRED challenge UI
+  if (pendingChallenge === 'MFA_REQUIRED') {
+    return (
+      <Card className="border border-border shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Verification Code</CardTitle>
+          <CardDescription>
+            Enter the verification code sent to your device.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form data-testid="mfa-form" onSubmit={handleMfa} className="space-y-4">
+            {error && (
+              <div className="rounded-md bg-error/10 p-3 text-sm text-error" role="alert">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="mfaCode">Code</Label>
+              <Input
+                id="mfaCode"
+                type="text"
+                required
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                maxLength={6}
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value)}
+                data-testid="mfa-code-input"
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? 'Verifying...' : 'Verify'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Default sign-in form
   return (
     <Card className="border border-border shadow-sm">
       <CardHeader>
