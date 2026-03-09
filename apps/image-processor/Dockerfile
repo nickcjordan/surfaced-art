@@ -3,23 +3,21 @@
 # Sharp requires native binaries compiled for Amazon Linux, so we install
 # it inside the container rather than bundling it with tsup.
 
-FROM public.ecr.aws/lambda/nodejs:20
+# Pin platform to linux/amd64 — ensures correct native binaries even if
+# the Docker host or CI runner changes architecture in the future.
+FROM --platform=linux/amd64 public.ecr.aws/lambda/nodejs:20
 
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# Install sharp with native binaries for the Lambda runtime (Amazon Linux).
-# Use a temporary package.json to avoid workspace resolution issues from
-# the monorepo root, then remove it so we can copy the real one.
-#
-# IMPORTANT: This version must match apps/image-processor/package.json.
-# When upgrading sharp, update both files together.
-RUN echo '{"private":true}' > package.json && \
-    npm install sharp@0.34.5 && \
-    rm -f package.json package-lock.json
-
-# Root package.json provides "type": "module" so the Lambda Node 20
-# runtime loads the ESM bundle via import().
-COPY package.json ./
+# Install production dependencies using the image-processor's own package.json.
+# This is the single source of truth for the Sharp version — no hardcoded
+# version in this file. npm resolves @img/sharp-linux-x64 automatically
+# because we're inside an Amazon Linux x64 container.
+# AWS SDK is also installed (harmless — it's bundled in index.js by tsup).
+COPY apps/image-processor/package.json ./
+RUN npm install --omit=dev && \
+    npm cache clean --force && \
+    rm -f package-lock.json
 
 # Copy the pre-built self-contained bundle (produced by tsup in CI).
 # The tsup bundle is self-contained for @aws-sdk/client-s3 etc.

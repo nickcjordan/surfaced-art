@@ -246,10 +246,8 @@ export function ListingForm({ mode, listingId }: ListingFormProps) {
         targetListingId = listingId!
       }
 
-      // Save tags for the listing
-      if (selectedTagIds.length > 0) {
-        await updateListingTags(token, targetListingId, selectedTagIds)
-      }
+      // Save tags for the listing (always call to support clearing all tags)
+      await updateListingTags(token, targetListingId, selectedTagIds)
 
       router.push('/dashboard/listings')
     } catch (err) {

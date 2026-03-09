@@ -43,8 +43,12 @@ export async function POST(request: Request) {
     revalidatePath('/')
     revalidated.push(`/listing/${body.id}`, '/')
     if (body.category) {
-      revalidatePath(`/category/${body.category}`)
-      revalidated.push(`/category/${body.category}`)
+      const validCategory = CATEGORIES.find((cat) => cat.slug === body.category)
+      if (!validCategory) {
+        return NextResponse.json({ error: 'Invalid category slug' }, { status: 400 })
+      }
+      revalidatePath(`/category/${validCategory.slug}`)
+      revalidated.push(`/category/${validCategory.slug}`)
     } else {
       for (const cat of CATEGORIES) {
         revalidatePath(`/category/${cat.slug}`)

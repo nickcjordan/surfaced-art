@@ -106,7 +106,7 @@ export function Footer() {
           <p className="text-xs text-muted-foreground/60 text-center">
             &copy; {currentYear} Surfaced Art. All rights reserved.
           </p>
-          <nav className="flex gap-4">
+          <nav aria-label="Legal" className="flex gap-4">
             <Link
               href="/privacy"
               className="text-xs text-muted-foreground/60 transition-colors hover:text-foreground"

@@ -251,17 +251,22 @@ When starting work on an issue:
 
 ### Merge Strategy (CRITICAL)
 
-| PR direction | Strategy | Why |
+| PR direction | Strategy | Automation |
 |---|---|---|
-| feature → `dev` | **Squash merge** | Collapses noisy WIP commits into one clean commit on `dev` |
-| `dev` → `main` | **Regular merge commit** | Preserves commit parentage so git never sees dev as diverged from main |
+| feature → `dev` | **Squash merge** | **Auto-merged** by `auto-merge-dev.yml` when CI passes |
+| `dev` → `main` | **Regular merge commit** | **Manual only** — human merges via GitHub UI |
+
+**Feature → dev auto-merge:** The `auto-merge-dev.yml` workflow automatically enables squash auto-merge on every PR targeting `dev`. Once all required checks pass, GitHub merges it automatically. No manual merge step needed. Claude should **not** run `gh pr merge` for feature→dev PRs — just open the PR and auto-merge handles the rest.
 
 **Never squash dev → main.** Squash rewriting history on that direction causes permanent divergence: every subsequent dev→main PR conflicts on any file touched by the squash. Since features are already squashed before hitting dev, dev's log is already clean — a regular merge gives main the same readable history without rewriting it.
+
+**Repo settings:** Merge commit is the default merge type. Rebase merging is disabled. The only manual merge action is dev→main, which defaults to merge commit in the GitHub UI.
 
 ### Pull Request Rules (CRITICAL)
 
 - **NEVER merge to `main`** — merging to main is always a human action
 - When work is ready to merge, open a PR from CLI with a full description and stop
+- **Do NOT run `gh pr merge` for feature→dev PRs** — auto-merge handles this automatically
 - Update PR descriptions with accurate summaries of what changed and why
 - Prepare commit messages for human review, but do not execute the merge
 - `dev` → `main` merges require **explicit user permission** — never merge to main autonomously
