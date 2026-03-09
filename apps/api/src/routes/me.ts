@@ -353,6 +353,19 @@ export function createMeRoutes(prisma: PrismaClient) {
     // Deduplicate tag IDs
     const uniqueTagIds = [...new Set(parsed.data.tagIds)]
 
+    // Validate all tag IDs exist in the database
+    if (uniqueTagIds.length > 0) {
+      const existingTags = await prisma.tag.findMany({
+        where: { id: { in: uniqueTagIds } },
+        select: { id: true },
+      })
+      const existingIds = new Set(existingTags.map((t) => t.id))
+      const invalidIds = uniqueTagIds.filter((id) => !existingIds.has(id))
+      if (invalidIds.length > 0) {
+        return badRequest(c, `Invalid tag IDs: ${invalidIds.join(', ')}`)
+      }
+    }
+
     const updatedTags = await prisma.$transaction(async (tx) => {
       await tx.artistTag.deleteMany({
         where: { artistId: artist.id },
@@ -430,6 +443,19 @@ export function createMeRoutes(prisma: PrismaClient) {
 
     // Deduplicate tag IDs
     const uniqueTagIds = [...new Set(parsed.data.tagIds)]
+
+    // Validate all tag IDs exist in the database
+    if (uniqueTagIds.length > 0) {
+      const existingTags = await prisma.tag.findMany({
+        where: { id: { in: uniqueTagIds } },
+        select: { id: true },
+      })
+      const existingIds = new Set(existingTags.map((t) => t.id))
+      const invalidIds = uniqueTagIds.filter((id) => !existingIds.has(id))
+      if (invalidIds.length > 0) {
+        return badRequest(c, `Invalid tag IDs: ${invalidIds.join(', ')}`)
+      }
+    }
 
     const updatedTags = await prisma.$transaction(async (tx) => {
       await tx.listingTag.deleteMany({
