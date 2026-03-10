@@ -6,9 +6,9 @@ export const metadata: Metadata = {
   robots: { index: false },
 }
 
-export default function NotFound() {
+export default function RootNotFound() {
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
       <p className="text-6xl font-semibold text-muted-text">404</p>
       <h1 className="mt-4 font-serif text-3xl text-foreground md:text-4xl">
         Page not found
@@ -18,7 +18,7 @@ export default function NotFound() {
       </p>
       <Link
         href="/"
-        className="mt-6 text-sm text-muted-text transition-colors hover:text-foreground"
+        className="mt-8 text-sm text-muted-text transition-colors hover:text-foreground"
       >
         &larr; Back to gallery
       </Link>
