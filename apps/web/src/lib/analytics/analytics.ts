@@ -14,7 +14,7 @@ export const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? ''
 export const POSTHOG_HOST =
   process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com'
 export const POSTHOG_ENV =
-  process.env.NEXT_PUBLIC_POSTHOG_ENV || 'development'
+  process.env.NEXT_PUBLIC_POSTHOG_ENV || 'dev'
 
 export function isAnalyticsEnabled(): boolean {
   return POSTHOG_KEY.length > 0 && typeof window !== 'undefined'
