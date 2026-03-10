@@ -101,6 +101,9 @@ export const listingsQuery = z.object({
 /** POST /waitlist body */
 export const waitlistBody = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  source: z.string().max(50).optional(),
+  artistId: z.string().uuid('Invalid artist ID').optional(),
+  listingId: z.string().uuid('Invalid listing ID').optional(),
 })
 
 /** POST /artists/apply body */

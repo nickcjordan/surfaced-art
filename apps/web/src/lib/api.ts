@@ -129,10 +129,13 @@ export const getListingDetail = cache(async (id: string): Promise<ListingDetailR
   return apiFetch<ListingDetailResponse>(`/listings/${encodeURIComponent(id)}`)
 })
 
-export async function joinWaitlist(email: string): Promise<{ message: string }> {
+export async function joinWaitlist(
+  email: string,
+  context?: { source?: string; artistId?: string; listingId?: string },
+): Promise<{ message: string }> {
   return apiFetch<{ message: string }>('/waitlist', {
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, ...context }),
   })
 }
 

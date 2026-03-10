@@ -61,6 +61,40 @@ describe('POST /waitlist', () => {
       })
     })
 
+    it('should store optional context fields (source, artistId, listingId)', async () => {
+      await app.request('/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'fan@example.com',
+          source: 'listing',
+          artistId: '550e8400-e29b-41d4-a716-446655440001',
+          listingId: '550e8400-e29b-41d4-a716-446655440002',
+        }),
+      })
+
+      expect(mockPrisma.waitlist.create).toHaveBeenCalledWith({
+        data: {
+          email: 'fan@example.com',
+          source: 'listing',
+          artistId: '550e8400-e29b-41d4-a716-446655440001',
+          listingId: '550e8400-e29b-41d4-a716-446655440002',
+        },
+      })
+    })
+
+    it('should accept email-only requests without context fields', async () => {
+      await app.request('/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'simple@example.com' }),
+      })
+
+      expect(mockPrisma.waitlist.create).toHaveBeenCalledWith({
+        data: { email: 'simple@example.com' },
+      })
+    })
+
     it('should normalize email to lowercase', async () => {
       await app.request('/waitlist', {
         method: 'POST',
