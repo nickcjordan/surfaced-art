@@ -13,6 +13,8 @@ export const ANALYTICS_EVENTS = {
 export const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? ''
 export const POSTHOG_HOST =
   process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com'
+export const POSTHOG_ENV =
+  process.env.NEXT_PUBLIC_POSTHOG_ENV || 'development'
 
 export function isAnalyticsEnabled(): boolean {
   return POSTHOG_KEY.length > 0 && typeof window !== 'undefined'
@@ -29,6 +31,11 @@ export const POSTHOG_OPTIONS: Partial<PostHogConfig> = {
   // Capture pageviews manually via PostHogPageView component
   capture_pageview: false,
   capture_pageleave: true,
+  // Tag every event with the environment so dev/preview traffic
+  // can be filtered out in a single-project setup.
+  loaded: (ph) => {
+    ph.register({ environment: POSTHOG_ENV })
+  },
 }
 
 // ─── Consent Management ──────────────────────────────────────
