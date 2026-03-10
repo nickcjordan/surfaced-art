@@ -10,30 +10,6 @@ import type { ArtistSeedConfig } from './seed-data'
 
 type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
 
-/**
- * Derives image pixel dimensions from artwork physical proportions.
- *
- * Product photos of artwork closely match the artwork's aspect ratio,
- * so we scale the physical dimensions (artworkLength × artworkWidth) to
- * pixel dimensions with the longest side at `maxPixels`.
- *
- * @param artworkLength - Physical height of the artwork (inches)
- * @param artworkWidth - Physical width of the artwork (inches)
- * @param maxPixels - Maximum pixel dimension for the longest side (default 1200)
- */
-export function artworkToImageDimensions(
-  artworkLength: number,
-  artworkWidth: number,
-  maxPixels = 1200
-): { width: number; height: number } {
-  const longest = Math.max(artworkLength, artworkWidth)
-  const scale = maxPixels / longest
-  return {
-    width: Math.round(artworkWidth * scale),
-    height: Math.round(artworkLength * scale),
-  }
-}
-
 export async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) {
   // Upsert user
   const user = await tx.user.upsert({
@@ -142,15 +118,12 @@ export async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) 
     // Create 2 images per listing: primary + one additional angle
     // For documented listings, second image is a process photo
     const listingImageBase = `${seedKey(data.profile.slug, 'listings')}/${listingSlug}`
-    const imageDimensions = artworkToImageDimensions(listingData.artworkLength, listingData.artworkWidth)
     await tx.listingImage.create({
       data: {
         listingId: listing.id,
         url: cdnUrl(`${listingImageBase}/front`),
         isProcessPhoto: false,
         sortOrder: 0,
-        width: imageDimensions.width,
-        height: imageDimensions.height,
       },
     })
     await tx.listingImage.create({
@@ -159,8 +132,6 @@ export async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) 
         url: cdnUrl(`${listingImageBase}/angle`),
         isProcessPhoto: listingData.isDocumented,
         sortOrder: 1,
-        width: imageDimensions.width,
-        height: imageDimensions.height,
       },
     })
   }
