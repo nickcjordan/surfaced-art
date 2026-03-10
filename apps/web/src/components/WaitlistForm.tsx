@@ -8,10 +8,22 @@ import { trackWaitlistSignup } from '@/lib/analytics'
 
 type WaitlistState = 'idle' | 'submitting' | 'success' | 'error'
 
-export function WaitlistForm() {
+interface WaitlistFormProps {
+  artistName?: string
+  source?: string
+  artistId?: string
+  listingId?: string
+}
+
+export function WaitlistForm({ artistName, source, artistId, listingId }: WaitlistFormProps) {
   const [email, setEmail] = useState('')
   const [state, setState] = useState<WaitlistState>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+
+  const context =
+    source || artistId || listingId
+      ? { source, artistId, listingId }
+      : undefined
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,7 +48,7 @@ export function WaitlistForm() {
     setErrorMessage('')
 
     try {
-      await joinWaitlist(trimmed)
+      await joinWaitlist(trimmed, context)
       setState('success')
       setEmail('')
       trackWaitlistSignup()
@@ -51,7 +63,9 @@ export function WaitlistForm() {
       <div data-testid="waitlist-success" className="text-center">
         <p className="font-serif text-lg text-foreground">You&rsquo;re on the list.</p>
         <p className="mt-2 text-sm text-muted-text">
-          We&rsquo;ll let you know when the gallery opens to buyers.
+          {artistName
+            ? `We\u2019ll notify you when ${artistName} lists new work.`
+            : 'We\u2019ll let you know when the gallery opens to buyers.'}
         </p>
       </div>
     )
@@ -59,6 +73,11 @@ export function WaitlistForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col items-center gap-3 sm:flex-row sm:gap-2">
+      {artistName && (
+        <p className="mb-2 w-full text-center text-sm text-muted-text sm:mb-0 sm:text-left">
+          We&rsquo;ll notify you when {artistName} lists new work.
+        </p>
+      )}
       <Input
         data-testid="waitlist-email-input"
         type="text"
@@ -76,7 +95,7 @@ export function WaitlistForm() {
         disabled={state === 'submitting'}
         className="w-full sm:w-auto"
       >
-        {state === 'submitting' ? 'Joining…' : 'Join the Waitlist'}
+        {state === 'submitting' ? 'Joining\u2026' : 'Join the Waitlist'}
       </Button>
       {state === 'error' && (
         <p data-testid="waitlist-error" className="text-sm text-error" role="alert">

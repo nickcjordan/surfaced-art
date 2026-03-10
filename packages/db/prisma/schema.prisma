@@ -478,6 +478,9 @@ model Follow {
 model Waitlist {
   id        String   @id @default(uuid()) @db.Uuid
   email     String   @unique
+  source    String?
+  artistId  String?  @map("artist_id") @db.Uuid
+  listingId String?  @map("listing_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("waitlist")

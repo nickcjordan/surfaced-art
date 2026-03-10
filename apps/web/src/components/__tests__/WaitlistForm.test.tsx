@@ -15,6 +15,77 @@ vi.mock('@/lib/analytics', () => ({
 
 import { WaitlistForm } from '../WaitlistForm'
 
+describe('WaitlistForm artist-aware messaging', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockJoinWaitlist.mockResolvedValue(undefined)
+  })
+
+  it('should show artist-aware CTA text when artistName is provided', () => {
+    render(<WaitlistForm artistName="Jane Doe" />)
+    expect(
+      screen.getByText(/notify you when Jane Doe/i)
+    ).toBeInTheDocument()
+  })
+
+  it('should show generic CTA text when no artistName is provided', () => {
+    render(<WaitlistForm />)
+    expect(
+      screen.queryByText(/notify you when/i)
+    ).not.toBeInTheDocument()
+  })
+
+  it('should pass context fields to joinWaitlist when provided', async () => {
+    const user = userEvent.setup()
+    render(
+      <WaitlistForm
+        artistName="Jane Doe"
+        source="listing"
+        artistId="artist-123"
+        listingId="listing-456"
+      />
+    )
+
+    await user.type(screen.getByTestId('waitlist-email-input'), 'fan@example.com')
+    await user.click(screen.getByTestId('waitlist-submit'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('waitlist-success')).toBeInTheDocument()
+    })
+    expect(mockJoinWaitlist).toHaveBeenCalledWith('fan@example.com', {
+      source: 'listing',
+      artistId: 'artist-123',
+      listingId: 'listing-456',
+    })
+  })
+
+  it('should call joinWaitlist without context when no props provided', async () => {
+    const user = userEvent.setup()
+    render(<WaitlistForm />)
+
+    await user.type(screen.getByTestId('waitlist-email-input'), 'fan@example.com')
+    await user.click(screen.getByTestId('waitlist-submit'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('waitlist-success')).toBeInTheDocument()
+    })
+    expect(mockJoinWaitlist).toHaveBeenCalledWith('fan@example.com', undefined)
+  })
+
+  it('should show artist-aware success message when artistName is provided', async () => {
+    const user = userEvent.setup()
+    render(<WaitlistForm artistName="Jane Doe" />)
+
+    await user.type(screen.getByTestId('waitlist-email-input'), 'fan@example.com')
+    await user.click(screen.getByTestId('waitlist-submit'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('waitlist-success')).toBeInTheDocument()
+    })
+    expect(screen.getByText(/Jane Doe/)).toBeInTheDocument()
+  })
+})
+
 describe('WaitlistForm analytics tracking', () => {
   beforeEach(() => {
     vi.clearAllMocks()

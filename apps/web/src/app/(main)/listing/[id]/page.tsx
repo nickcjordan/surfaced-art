@@ -203,7 +203,12 @@ export default async function ListingDetailPage({ params }: Props) {
                 This gallery opens to buyers soon. Leave your email to be
                 the first to know.
               </p>
-              <WaitlistForm />
+              <WaitlistForm
+                artistName={listing.artist.displayName}
+                source="listing"
+                artistId={listing.artistId}
+                listingId={listing.id}
+              />
             </div>
           )}
 
