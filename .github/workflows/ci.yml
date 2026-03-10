@@ -50,6 +50,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Integration Tests
+        run: npm run test:integration
+
   terraform-plan-dev:
     name: Terraform Plan (dev)
     runs-on: ubuntu-latest
@@ -75,7 +78,7 @@ jobs:
 
       - name: Setup Terraform
         if: steps.infra_changes.outputs.changed == 'true'
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: '1.5'
           terraform_wrapper: false
