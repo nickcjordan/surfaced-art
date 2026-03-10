@@ -118,6 +118,61 @@ describe('ListingCard', () => {
     expect(link).toHaveAttribute('href', `/listing/${baseListing.id}`)
   })
 
+  it('should clamp extreme portrait aspect ratios to max 2:3', () => {
+    render(
+      <ListingCard
+        listing={{
+          ...baseListing,
+          // Extreme portrait: 200px wide × 1200px tall (1:6 ratio)
+          primaryImageWidth: 200,
+          primaryImageHeight: 1200,
+        }}
+        artistName="Abbey Peters"
+      />
+    )
+
+    const card = screen.getByTestId('listing-card')
+    const imageContainer = card.querySelector('[class*="overflow-hidden"]') as HTMLElement
+    // Should be clamped to 2/3 (max portrait), not the natural 200/1200
+    expect(imageContainer?.style.aspectRatio).toBe('2 / 3')
+  })
+
+  it('should not clamp moderate portrait aspect ratios', () => {
+    render(
+      <ListingCard
+        listing={{
+          ...baseListing,
+          // Normal portrait: 800px wide × 1000px tall (4:5 ratio)
+          primaryImageWidth: 800,
+          primaryImageHeight: 1000,
+        }}
+        artistName="Abbey Peters"
+      />
+    )
+
+    const card = screen.getByTestId('listing-card')
+    const imageContainer = card.querySelector('[class*="overflow-hidden"]') as HTMLElement
+    expect(imageContainer?.style.aspectRatio).toBe('800 / 1000')
+  })
+
+  it('should not clamp landscape aspect ratios', () => {
+    render(
+      <ListingCard
+        listing={{
+          ...baseListing,
+          // Wide landscape: 1200px × 400px (3:1 ratio)
+          primaryImageWidth: 1200,
+          primaryImageHeight: 400,
+        }}
+        artistName="Abbey Peters"
+      />
+    )
+
+    const card = screen.getByTestId('listing-card')
+    const imageContainer = card.querySelector('[class*="overflow-hidden"]') as HTMLElement
+    expect(imageContainer?.style.aspectRatio).toBe('1200 / 400')
+  })
+
   it('should apply data-testid', () => {
     render(
       <ListingCard

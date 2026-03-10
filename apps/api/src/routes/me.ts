@@ -4,7 +4,7 @@ import type { CategoryType as PrismaCategoryType } from '@surfaced-art/db'
 import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, MyListingImageResponse, MyListingResponse, ProcessMediaResponse, ProcessMediaListResponse, ProfileUpdateResponse, StripeOnboardingResponse, StripeStatusResponse, TagsUpdateResponse, Tag } from '@surfaced-art/types'
 import { fetchDashboard, fetchUserListings } from '../lib/artist-queries'
 import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingAvailabilityBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingTagsUpdateBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText, tagsUpdateBody } from '@surfaced-art/types'
-import { logger } from '@surfaced-art/utils'
+import { logger, readImageDimensions } from '@surfaced-art/utils'
 import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
 import { notFound, badRequest, validationError, conflict, internalError } from '../errors'
 import { triggerRevalidation } from '../lib/revalidation'
@@ -1312,14 +1312,36 @@ export function createMeRoutes(prisma: PrismaClient) {
       where: { listingId },
     })
 
+    // Extract dimensions from the image binary header (best-effort)
+    let width: number | null = parsed.data.width ?? null
+    let height: number | null = parsed.data.height ?? null
+    if (width === null || height === null) {
+      try {
+        const imgResponse = await fetch(parsed.data.url)
+        if (imgResponse.ok) {
+          const buffer = Buffer.from(await imgResponse.arrayBuffer())
+          const dims = readImageDimensions(buffer)
+          if (dims) {
+            width = dims.width
+            height = dims.height
+          }
+        }
+      } catch (err) {
+        logger.warn('Failed to extract image dimensions', {
+          url: parsed.data.url,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
     const created = await prisma.listingImage.create({
       data: {
         listingId,
         url: parsed.data.url,
         isProcessPhoto: parsed.data.isProcessPhoto,
         sortOrder: imageCount,
-        width: parsed.data.width ?? null,
-        height: parsed.data.height ?? null,
+        width,
+        height,
       },
     })
 
