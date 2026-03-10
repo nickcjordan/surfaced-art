@@ -13,7 +13,7 @@ export default function MainLayout({
     <>
       <ScrollToTop />
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <Container className="py-8 md:py-12">
           {children}
         </Container>

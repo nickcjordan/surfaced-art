@@ -8,6 +8,7 @@ import { SearchInput } from './SearchInput'
 import { ThemeToggle } from './ThemeToggle'
 import { AuthButton } from './AuthButton'
 import { Wordmark } from './Wordmark'
+import { SkipToContent } from './SkipToContent'
 import { Container } from './ui/container'
 import { cn } from '@/lib/utils'
 
@@ -39,6 +40,8 @@ export function Header() {
   }, [])
 
   return (
+    <>
+    <SkipToContent />
     <header
       data-testid="site-header"
       className={cn(
@@ -79,5 +82,6 @@ export function Header() {
       {/* Desktop category navigation */}
       <Navigation condensed={isCondensed} />
     </header>
+    </>
   )
 }
