@@ -26,6 +26,9 @@ export { generateSlug, validateSlug } from './slug'
 // Logger utilities
 export { logger, type LogLevel, type LogEntry } from './logger'
 
+// Image dimension parsing
+export { readImageDimensions } from './image-dimensions'
+
 // Upload constants
 export {
   UPLOAD_MAX_FILE_SIZE,

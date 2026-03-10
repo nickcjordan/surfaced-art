@@ -3112,6 +3112,90 @@ describe('POST /me/listings/:id/images', () => {
     expect(body).toHaveProperty('url')
     expect(body).not.toHaveProperty('listingId')
   })
+
+  it('should extract dimensions from image URL and store them', async () => {
+    // Build a minimal PNG buffer (1920x1080)
+    const pngBuf = Buffer.alloc(24)
+    pngBuf[0] = 0x89; pngBuf[1] = 0x50; pngBuf[2] = 0x4e; pngBuf[3] = 0x47
+    pngBuf[4] = 0x0d; pngBuf[5] = 0x0a; pngBuf[6] = 0x1a; pngBuf[7] = 0x0a
+    pngBuf.writeUInt32BE(13, 8)
+    pngBuf.write('IHDR', 12, 'ascii')
+    pngBuf.writeUInt32BE(1920, 16)
+    pngBuf.writeUInt32BE(1080, 20)
+
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(pngBuf.buffer.slice(pngBuf.byteOffset, pngBuf.byteOffset + pngBuf.byteLength)),
+    }) as unknown as typeof fetch
+
+    try {
+      const created = { ...mockListingImageForTest, width: 1920, height: 1080 }
+      const prisma = createMockPrisma({ createdListingImage: created })
+      ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+      const app = createTestApp(prisma)
+
+      const res = await postListingImage(app, LISTING_ID_1, {
+        url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
+      }, 'valid-token')
+      expect(res.status).toBe(201)
+
+      const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(createCall.data.width).toBe(1920)
+      expect(createCall.data.height).toBe(1080)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('should still create image if dimension fetch fails', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network error')) as unknown as typeof fetch
+
+    try {
+      const created = { ...mockListingImageForTest }
+      const prisma = createMockPrisma({ createdListingImage: created })
+      ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+      const app = createTestApp(prisma)
+
+      const res = await postListingImage(app, LISTING_ID_1, {
+        url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
+      }, 'valid-token')
+      expect(res.status).toBe(201)
+
+      const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(createCall.data.width).toBeNull()
+      expect(createCall.data.height).toBeNull()
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('should still create image if dimension parsing returns null', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(new ArrayBuffer(10)), // not a valid image
+    }) as unknown as typeof fetch
+
+    try {
+      const created = { ...mockListingImageForTest }
+      const prisma = createMockPrisma({ createdListingImage: created })
+      ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
+      const app = createTestApp(prisma)
+
+      const res = await postListingImage(app, LISTING_ID_1, {
+        url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
+      }, 'valid-token')
+      expect(res.status).toBe(201)
+
+      const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(createCall.data.width).toBeNull()
+      expect(createCall.data.height).toBeNull()
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
 })
 
 // ─── DELETE /me/listings/:id/images/:imageId ──────────────────────────
