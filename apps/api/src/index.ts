@@ -6,6 +6,7 @@ import { prisma } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
 
 import { securityHeaders } from './middleware/security-headers'
+import { requestId } from './middleware/request-id'
 import { rateLimiter } from './middleware/rate-limiter'
 import { cacheControl } from './middleware/cache-control'
 import { createHealthRoutes } from './routes/health'
@@ -35,6 +36,7 @@ const allowedOrigins = [FRONTEND_URL, wwwVariant, 'http://localhost:3000']
 const app = new Hono()
 
 // Middleware
+app.use('*', requestId())
 app.use('*', securityHeaders())
 app.use('*', honoLogger())
 // CORS — allow configured frontend URL, localhost for dev, and Vercel preview deploys
