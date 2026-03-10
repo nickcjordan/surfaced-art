@@ -246,6 +246,7 @@ module "lambda_api" {
   timeout                      = var.lambda_timeout
   lambda_role_arn              = module.iam.lambda_role_arn
   frontend_url                 = var.frontend_url
+  additional_cors_origins      = var.additional_cors_origins
   placeholder_image_uri        = var.placeholder_image_uri
   reserved_concurrent_executions = var.api_reserved_concurrency
 

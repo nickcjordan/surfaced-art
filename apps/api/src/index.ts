@@ -30,7 +30,11 @@ if (!FRONTEND_URL) {
 }
 // Support both bare domain and www variant (e.g. surfacedart.com + www.surfacedart.com)
 const wwwVariant = FRONTEND_URL.replace('https://', 'https://www.')
-const allowedOrigins = [FRONTEND_URL, wwwVariant, 'http://localhost:3000']
+// ADDITIONAL_CORS_ORIGINS: comma-separated list of extra allowed origins (e.g. alternate domains)
+const additionalOrigins = process.env.ADDITIONAL_CORS_ORIGINS
+  ? process.env.ADDITIONAL_CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : []
+const allowedOrigins = [FRONTEND_URL, wwwVariant, 'http://localhost:3000', ...additionalOrigins]
 
 // Create Hono app
 const app = new Hono()

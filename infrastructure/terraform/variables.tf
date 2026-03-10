@@ -150,6 +150,12 @@ variable "frontend_url" {
   default     = "https://surfaced.art"
 }
 
+variable "additional_cors_origins" {
+  description = "Additional allowed origins for API CORS (e.g. alternate domains, dev subdomains)"
+  type        = list(string)
+  default     = []
+}
+
 variable "migrate_ecr_max_images" {
   description = "Maximum number of images to retain in the migration ECR repository"
   type        = number
