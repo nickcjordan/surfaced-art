@@ -61,7 +61,8 @@ resource "aws_lambda_function" "api" {
       S3_BUCKET_NAME        = var.s3_bucket_name
       CLOUDFRONT_URL        = var.cloudfront_url
       CLOUDFRONT_DOMAIN     = var.cloudfront_domain
-      FRONTEND_URL          = var.frontend_url
+      FRONTEND_URL              = var.frontend_url
+      ADDITIONAL_CORS_ORIGINS   = join(",", var.additional_cors_origins)
       SES_FROM_ADDRESS      = var.ses_from_address
       SES_CONFIGURATION_SET = var.ses_configuration_set_name
       STRIPE_SECRET_KEY      = var.stripe_secret_key
@@ -92,7 +93,7 @@ resource "aws_apigatewayv2_api" "main" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins     = [var.frontend_url, replace(var.frontend_url, "https://", "https://www."), "http://localhost:3000"]
+    allow_origins     = concat([var.frontend_url, replace(var.frontend_url, "https://", "https://www."), "http://localhost:3000"], var.additional_cors_origins)
     allow_methods     = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     allow_headers     = ["Content-Type", "Authorization", "X-Amz-Date", "X-Api-Key"]
     expose_headers    = ["Content-Length", "Content-Type", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"]

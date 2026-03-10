@@ -50,6 +50,12 @@ variable "frontend_url" {
   type        = string
 }
 
+variable "additional_cors_origins" {
+  description = "Additional allowed origins for API CORS (e.g. alternate domains, dev subdomains)"
+  type        = list(string)
+  default     = []
+}
+
 variable "database_url" {
   description = "PostgreSQL connection string"
   type        = string
