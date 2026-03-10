@@ -555,7 +555,7 @@ jobs:
             --function-name ${{ needs.terraform.outputs.migrate_function_name }} \
             --payload '{"command":"backfill-dimensions"}' \
             --cli-binary-format raw-in-base64-out \
-            --read-timeout 300 \
+            --cli-read-timeout 300 \
             /tmp/backfill-response.json
 
           echo "Backfill response:"
