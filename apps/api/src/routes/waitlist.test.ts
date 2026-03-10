@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import { Prisma } from '@surfaced-art/db'
+
+vi.mock('@surfaced-art/email', () => ({
+  sendEmail: vi.fn().mockResolvedValue({ success: true, messageId: 'msg-123' }),
+  WaitlistWelcome: vi.fn(),
+}))
+
 import { createWaitlistRoutes } from './waitlist'
 
 function createMockPrisma(overrides?: {
@@ -59,6 +65,23 @@ describe('POST /waitlist', () => {
       expect(mockPrisma.waitlist.create).toHaveBeenCalledWith({
         data: { email: 'newuser@example.com' },
       })
+    })
+
+    it('should send welcome email for new signups', async () => {
+      await app.request('/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'newuser@example.com' }),
+      })
+
+      const { sendEmail } = await import('@surfaced-art/email')
+      expect(sendEmail).toHaveBeenCalledOnce()
+      expect(sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'newuser@example.com',
+          subject: expect.stringContaining("You're on the List"),
+        })
+      )
     })
 
     it('should normalize email to lowercase', async () => {
@@ -172,6 +195,17 @@ describe('POST /waitlist', () => {
       )
       mockPrisma = createMockPrisma({ createError: uniqueError })
       app = createTestApp(mockPrisma)
+    })
+
+    it('should not send welcome email for duplicate signups', async () => {
+      await app.request('/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'existing@example.com' }),
+      })
+
+      const { sendEmail } = await import('@surfaced-art/email')
+      expect(sendEmail).not.toHaveBeenCalled()
     })
 
     it('should return 200 with success message for duplicate email', async () => {

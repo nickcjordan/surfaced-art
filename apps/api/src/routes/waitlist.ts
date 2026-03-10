@@ -1,7 +1,9 @@
+import { createElement } from 'react'
 import { Hono } from 'hono'
 import type { PrismaClient } from '@surfaced-art/db'
 import { Prisma } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
+import { sendEmail, WaitlistWelcome } from '@surfaced-art/email'
 import { waitlistBody } from '@surfaced-art/types'
 import { badRequest, validationError, internalError } from '../errors'
 
@@ -36,6 +38,17 @@ export function createWaitlistRoutes(prisma: PrismaClient) {
 
       logger.info('Waitlist signup', {
         durationMs: Date.now() - start,
+      })
+
+      // Fire-and-forget welcome email — don't block the API response
+      sendEmail({
+        to: normalizedEmail,
+        subject: "You're on the List — Surfaced Art",
+        template: createElement(WaitlistWelcome),
+      }).catch((err) => {
+        logger.error('Failed to send waitlist welcome email', {
+          error: err instanceof Error ? err.message : String(err),
+        })
       })
 
       return c.json({ message: 'Successfully joined the waitlist' }, 201)
