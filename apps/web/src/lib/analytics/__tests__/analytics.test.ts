@@ -9,6 +9,7 @@ vi.mock('posthog-js', () => ({
     opt_out_capturing: vi.fn(),
     set_config: vi.fn(),
     debug: vi.fn(),
+    register: vi.fn(),
   },
 }))
 
@@ -199,5 +200,35 @@ describe('POSTHOG_OPTIONS', () => {
     expect(POSTHOG_KEY).toBe('phc_test123')
     vi.unstubAllEnvs()
     vi.resetModules()
+  })
+})
+
+describe('POSTHOG_ENV', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  it('should default to "dev" when NEXT_PUBLIC_POSTHOG_ENV is not set', async () => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_ENV', '')
+    vi.resetModules()
+    const { POSTHOG_ENV } = await import('../analytics')
+    expect(POSTHOG_ENV).toBe('dev')
+  })
+
+  it('should use NEXT_PUBLIC_POSTHOG_ENV when set', async () => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_ENV', 'prod')
+    vi.resetModules()
+    const { POSTHOG_ENV } = await import('../analytics')
+    expect(POSTHOG_ENV).toBe('prod')
+  })
+
+  it('loaded callback should register environment as a super property', async () => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_ENV', 'prod')
+    vi.resetModules()
+    const { POSTHOG_OPTIONS } = await import('../analytics')
+    const mockPh = { register: vi.fn() }
+    POSTHOG_OPTIONS.loaded!(mockPh as never)
+    expect(mockPh.register).toHaveBeenCalledWith({ environment: 'prod' })
   })
 })

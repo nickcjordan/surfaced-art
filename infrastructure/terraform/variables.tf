@@ -137,6 +137,12 @@ variable "api_reserved_concurrency" {
   default     = 40
 }
 
+# S3 CORS
+variable "cors_allowed_origins" {
+  description = "Allowed origins for S3 CORS policy (browser uploads)"
+  type        = list(string)
+}
+
 # Application URLs
 variable "frontend_url" {
   description = "Frontend application URL (for CORS and Cognito callbacks)"

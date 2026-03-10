@@ -14,3 +14,10 @@ seed_mode = "real"
 
 # URLs
 frontend_url = "https://surfacedart.com"
+
+# S3 CORS
+cors_allowed_origins = [
+  "https://surfacedart.com",
+  "https://www.surfacedart.com",
+  "http://localhost:3000",
+]
