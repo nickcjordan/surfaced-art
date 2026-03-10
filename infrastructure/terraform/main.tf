@@ -283,6 +283,7 @@ module "lambda_migrate" {
   database_url          = module.rds.connection_string
   seed_cdn_base         = module.s3_cloudfront.cloudfront_url
   seed_mode             = var.seed_mode
+  timeout               = 300
 
   depends_on = [aws_ecr_repository_policy.migrate]
 }
