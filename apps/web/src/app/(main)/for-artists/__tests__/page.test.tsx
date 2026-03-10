@@ -79,4 +79,10 @@ describe('For Artists Page', () => {
     render(<ForArtistsContent />)
     expect(screen.getByTestId('for-artists-roadmap')).toBeInTheDocument()
   })
+
+  it('should not render a fake testimonial', () => {
+    render(<ForArtistsContent />)
+    expect(screen.queryByText(/Surfaced Art Creator/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/selling through DMs/i)).not.toBeInTheDocument()
+  })
 })

@@ -13,6 +13,12 @@ api_reserved_concurrency   = 10
 # URLs
 frontend_url = "https://dev.surfacedart.com"
 
+# S3 CORS
+cors_allowed_origins = [
+  "https://dev.surfacedart.com",
+  "http://localhost:3000",
+]
+
 # Seed
 seed_mode = "demo"
 

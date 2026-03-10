@@ -941,22 +941,6 @@ export default function ForArtistsContent() {
         </Container>
       </section>
 
-      {/* ============================================================ */}
-      {/*  TESTIMONIAL                                                 */}
-      {/* ============================================================ */}
-      <div className="full-bleed relative my-6 py-10 md:my-10 md:py-14" style={{ background: 'var(--accent-primary)' }}>
-        <CanvasDotOverlay />
-        <Container>
-          <blockquote className="relative mx-auto max-w-2xl text-center">
-            <p className="font-serif text-2xl italic leading-relaxed tracking-tight md:text-3xl" style={{ color: 'var(--primary-foreground)' }}>
-              &ldquo;I was selling through DMs for two years. This is the first time my work has a real home online.&rdquo;
-            </p>
-            <footer className="mt-5">
-              <p className="text-sm font-medium" style={{ color: 'color-mix(in srgb, var(--primary-foreground) 80%, transparent)' }}>&mdash; Surfaced Art Creator</p>
-            </footer>
-          </blockquote>
-        </Container>
-      </div>
 
       {/* ============================================================ */}
       {/*  SECTION 6: Pricing                                          */}

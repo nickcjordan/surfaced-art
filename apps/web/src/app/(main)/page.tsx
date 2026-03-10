@@ -91,7 +91,7 @@ export default async function Home() {
           <div className="mb-8 flex items-baseline justify-between">
             <h2 className="font-serif text-2xl text-foreground">Recent Work</h2>
             <Link
-              href="/category/ceramics"
+              href="/search"
               className="text-sm text-muted-text transition-colors hover:text-foreground"
             >
               Browse all

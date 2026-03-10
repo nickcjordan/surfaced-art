@@ -200,8 +200,9 @@ module "rds" {
 module "s3_cloudfront" {
   source = "./modules/s3-cloudfront"
 
-  project_name = var.project_name
-  environment  = var.environment
+  project_name         = var.project_name
+  environment          = var.environment
+  cors_allowed_origins = var.cors_allowed_origins
 }
 
 # Cognito module
