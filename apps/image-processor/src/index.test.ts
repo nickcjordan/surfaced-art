@@ -113,10 +113,13 @@ function createS3Body(buffer: Buffer) {
 describe('image-processor Lambda handler', () => {
   const BUCKET = 'surfaced-art-dev-media'
   const context = createMockContext()
+  let consoleSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.AWS_REGION = 'us-east-1'
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   it('processes a JPEG and generates 3 WebP variants at 400, 800, 1200 widths', async () => {
@@ -477,6 +480,97 @@ describe('image-processor Lambda handler', () => {
         message: 'Failed to process uploads/artist-123/photo.jpg',
         error: 'Empty response body from S3',
       }),
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Structured logging tests
+  // ---------------------------------------------------------------------------
+
+  describe('structured logging', () => {
+    it('logs image.skip for non-image files', async () => {
+      const key = 'uploads/artist-123/notes.txt'
+      const event = createS3Event(BUCKET, key)
+
+      await handler(event, context)
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        JSON.stringify({
+          level: 'info',
+          event: 'image.skip',
+          key: 'uploads/artist-123/notes.txt',
+          reason: 'unsupported_extension',
+          extension: '.txt',
+        })
+      )
+    })
+
+    it('logs image.processed on success with dimensions, variants, and duration', async () => {
+      const key = 'uploads/artist-123/photo.jpg'
+      const event = createS3Event(BUCKET, key)
+
+      const fakeImage = Buffer.from('fake-image-data')
+      mockSend.mockResolvedValueOnce({ Body: createS3Body(fakeImage) })
+      mockMetadata.mockResolvedValue({ width: 2000, height: 1500 })
+
+      mockToBuffer
+        .mockResolvedValueOnce(Buffer.from('webp-400'))
+        .mockResolvedValueOnce(Buffer.from('webp-800'))
+        .mockResolvedValueOnce(Buffer.from('webp-1200'))
+      mockSend
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({})
+
+      await handler(event, context)
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('"event":"image.processed"')
+      )
+
+      // Parse the log line to check all fields
+      const logCall = consoleSpy.mock.calls.find(
+        (call) => typeof call[0] === 'string' && call[0].includes('"image.processed"')
+      )
+      expect(logCall).toBeDefined()
+      const parsed = JSON.parse(logCall![0] as string)
+      expect(parsed).toMatchObject({
+        level: 'info',
+        event: 'image.processed',
+        key: 'uploads/artist-123/photo.jpg',
+        bucket: BUCKET,
+        sourceWidth: 2000,
+        sourceHeight: 1500,
+        variantCount: 3,
+      })
+      expect(parsed.durationMs).toEqual(expect.any(Number))
+    })
+
+    it('logs image.error on processing failure', async () => {
+      const key = 'uploads/artist-123/photo.jpg'
+      const event = createS3Event(BUCKET, key)
+
+      mockSend.mockRejectedValueOnce(new Error('Access Denied'))
+
+      await handler(event, context)
+
+      const errorSpy = vi.mocked(console.error)
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('"event":"image.error"')
+      )
+
+      const logCall = errorSpy.mock.calls.find(
+        (call) => typeof call[0] === 'string' && call[0].includes('"image.error"')
+      )
+      expect(logCall).toBeDefined()
+      const parsed = JSON.parse(logCall![0] as string)
+      expect(parsed).toMatchObject({
+        level: 'error',
+        event: 'image.error',
+        key: 'uploads/artist-123/photo.jpg',
+        bucket: BUCKET,
+        error: 'Access Denied',
+      })
     })
   })
 })
