@@ -80,10 +80,22 @@ describe('security headers config', () => {
     expect(csp.value).toMatch(/script-src[^;]*us\.i\.posthog\.com/)
   })
 
+  it('CSP should allow PostHog assets CDN in script-src by default', async () => {
+    const headers = await loadHeaders()
+    const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).toMatch(/script-src[^;]*us-assets\.i\.posthog\.com/)
+  })
+
   it('CSP should allow PostHog host in connect-src by default', async () => {
     const headers = await loadHeaders()
     const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
     expect(csp.value).toMatch(/connect-src[^;]*us\.i\.posthog\.com/)
+  })
+
+  it('CSP should allow PostHog assets CDN in connect-src by default', async () => {
+    const headers = await loadHeaders()
+    const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).toMatch(/connect-src[^;]*us-assets\.i\.posthog\.com/)
   })
 
   it('should throw when NEXT_PUBLIC_API_URL is not set', async () => {
@@ -123,18 +135,20 @@ describe('CSP environment overrides', () => {
     const { SECURITY_HEADERS } = await import('../security-headers')
     const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
     expect(csp.value).toContain('eu.i.posthog.com')
+    expect(csp.value).toContain('eu-assets.i.posthog.com')
     expect(csp.value).not.toContain('us.i.posthog.com')
     vi.unstubAllEnvs()
     vi.resetModules()
   })
 
-  it('CSP should allow vercel.live in script-src and connect-src for preview deployments', async () => {
+  it('CSP should allow vercel.live in script-src, connect-src, and frame-src for preview deployments', async () => {
     vi.stubEnv('VERCEL_ENV', 'preview')
     vi.resetModules()
     const { SECURITY_HEADERS } = await import('../security-headers')
     const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
     expect(csp.value).toMatch(/script-src[^;]*vercel\.live/)
     expect(csp.value).toMatch(/connect-src[^;]*vercel\.live/)
+    expect(csp.value).toMatch(/frame-src[^;]*vercel\.live/)
     vi.unstubAllEnvs()
     vi.resetModules()
   })
