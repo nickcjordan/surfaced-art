@@ -64,6 +64,7 @@ export const abbeyConfig: ArtistSeedConfig = {
       artworkLength: 4.5, artworkWidth: 5.5, artworkHeight: 4,
       packedLength: 8.5, packedWidth: 9.5, packedHeight: 8,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Purple and Lighter Purple Box',
@@ -76,6 +77,7 @@ export const abbeyConfig: ArtistSeedConfig = {
       artworkLength: 6, artworkWidth: 5, artworkHeight: 3.5,
       packedLength: 10, packedWidth: 9, packedHeight: 7.5,
       packedWeight: 3.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Pink Candlestick with Hidden Base',
@@ -88,6 +90,7 @@ export const abbeyConfig: ArtistSeedConfig = {
       artworkLength: 5.5, artworkWidth: 5.5, artworkHeight: 5,
       packedLength: 9.5, packedWidth: 9.5, packedHeight: 9,
       packedWeight: 2.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'White with Tea Bag Box',
@@ -100,6 +103,7 @@ export const abbeyConfig: ArtistSeedConfig = {
       artworkLength: 5, artworkWidth: 5, artworkHeight: 7,
       packedLength: 9, packedWidth: 9, packedHeight: 11,
       packedWeight: 4,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Pink Vase',
@@ -112,6 +116,7 @@ export const abbeyConfig: ArtistSeedConfig = {
       artworkLength: 4, artworkWidth: 4, artworkHeight: 7,
       packedLength: 8, packedWidth: 8, packedHeight: 11,
       packedWeight: 2.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     // Sold listings (2 for archive)
     {
@@ -125,6 +130,7 @@ export const abbeyConfig: ArtistSeedConfig = {
       artworkLength: 5, artworkWidth: 5, artworkHeight: 6.5,
       packedLength: 9, packedWidth: 9, packedHeight: 10.5,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Pale Pink Box with Key',
@@ -137,6 +143,7 @@ export const abbeyConfig: ArtistSeedConfig = {
       artworkLength: 7, artworkWidth: 6, artworkHeight: 5.5,
       packedLength: 11, packedWidth: 10, packedHeight: 9.5,
       packedWeight: 4.5,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [

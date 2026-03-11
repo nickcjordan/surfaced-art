@@ -47,6 +47,7 @@ const mayaConfig: ArtistSeedConfig = {
       artworkLength: 14, artworkWidth: 18, artworkHeight: 0,
       packedLength: 18, packedWidth: 22, packedHeight: 3,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Chinatown Grocery No. 4',
@@ -59,6 +60,7 @@ const mayaConfig: ArtistSeedConfig = {
       artworkLength: 11, artworkWidth: 14, artworkHeight: 0,
       packedLength: 15, packedWidth: 18, packedHeight: 2,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Moon Festival',
@@ -71,6 +73,7 @@ const mayaConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 20, artworkHeight: 1.5,
       packedLength: 20, packedWidth: 24, packedHeight: 5,
       packedWeight: 4,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Dim Sum Field Guide',
@@ -83,6 +86,7 @@ const mayaConfig: ArtistSeedConfig = {
       artworkLength: 20, artworkWidth: 24, artworkHeight: 1,
       packedLength: 24, packedWidth: 28, packedHeight: 4,
       packedWeight: 5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Grandmother\'s Apron',
@@ -95,6 +99,7 @@ const mayaConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 20, artworkHeight: 0,
       packedLength: 20, packedWidth: 24, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
   ],
   processMedia: [
@@ -149,6 +154,7 @@ const isaiahConfig: ArtistSeedConfig = {
       artworkLength: 24, artworkWidth: 36, artworkHeight: 0,
       packedLength: 28, packedWidth: 40, packedHeight: 4,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Motown Session',
@@ -161,6 +167,7 @@ const isaiahConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 0,
       packedLength: 22, packedWidth: 28, packedHeight: 2,
       packedWeight: 1,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Barber Shop, Livernois',
@@ -173,6 +180,7 @@ const isaiahConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 0,
       packedLength: 22, packedWidth: 28, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Michigan Central Station',
@@ -185,6 +193,7 @@ const isaiahConfig: ArtistSeedConfig = {
       artworkLength: 24, artworkWidth: 30, artworkHeight: 0,
       packedLength: 28, packedWidth: 34, packedHeight: 4,
       packedWeight: 2.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Eastern Market, Saturday',
@@ -197,6 +206,7 @@ const isaiahConfig: ArtistSeedConfig = {
       artworkLength: 30, artworkWidth: 40, artworkHeight: 0,
       packedLength: 34, packedWidth: 44, packedHeight: 4,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -251,6 +261,7 @@ const nadiaConfig: ArtistSeedConfig = {
       artworkLength: 14, artworkWidth: 18, artworkHeight: 0,
       packedLength: 18, packedWidth: 22, packedHeight: 3,
       packedWeight: 1,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Firebird',
@@ -263,6 +274,7 @@ const nadiaConfig: ArtistSeedConfig = {
       artworkLength: 22, artworkWidth: 30, artworkHeight: 0,
       packedLength: 26, packedWidth: 34, packedHeight: 4,
       packedWeight: 2,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Mushroom Field Guide, Eastern PA',
@@ -275,6 +287,7 @@ const nadiaConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 20, artworkHeight: 0,
       packedLength: 20, packedWidth: 24, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Pysanka Studies',
@@ -287,6 +300,7 @@ const nadiaConfig: ArtistSeedConfig = {
       artworkLength: 11, artworkWidth: 14, artworkHeight: 0,
       packedLength: 15, packedWidth: 18, packedHeight: 2,
       packedWeight: 0.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Baba\'s Kitchen',
@@ -299,6 +313,7 @@ const nadiaConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 0,
       packedLength: 22, packedWidth: 28, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
   ],
   processMedia: [

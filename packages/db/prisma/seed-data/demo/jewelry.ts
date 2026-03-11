@@ -48,6 +48,7 @@ const amaraConfig: ArtistSeedConfig = {
       artworkLength: 3, artworkWidth: 2.5, artworkHeight: 2.5,
       packedLength: 7, packedWidth: 6.5, packedHeight: 6.5,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Goldweight Earrings, Geometric',
@@ -60,6 +61,7 @@ const amaraConfig: ArtistSeedConfig = {
       artworkLength: 0.5, artworkWidth: 0.75, artworkHeight: 2,
       packedLength: 4.5, packedWidth: 4.75, packedHeight: 6,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Adinkra Ring, Gye Nyame',
@@ -72,6 +74,7 @@ const amaraConfig: ArtistSeedConfig = {
       artworkLength: 1, artworkWidth: 1, artworkHeight: 0.75,
       packedLength: 5, packedWidth: 5, packedHeight: 4.75,
       packedWeight: 0.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Kente Pendant, Large',
@@ -84,6 +87,7 @@ const amaraConfig: ArtistSeedConfig = {
       artworkLength: 2, artworkWidth: 2, artworkHeight: 0.25,
       packedLength: 6, packedWidth: 6, packedHeight: 4.25,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Goldweight Brooch, Bird',
@@ -96,6 +100,7 @@ const amaraConfig: ArtistSeedConfig = {
       artworkLength: 1.5, artworkWidth: 2, artworkHeight: 0.5,
       packedLength: 5.5, packedWidth: 6, packedHeight: 4.5,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -150,6 +155,7 @@ const rosaConfig: ArtistSeedConfig = {
       artworkLength: 2.5, artworkWidth: 2.5, artworkHeight: 1.5,
       packedLength: 6.5, packedWidth: 6.5, packedHeight: 5.5,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Desert Bloom Earrings',
@@ -162,6 +168,7 @@ const rosaConfig: ArtistSeedConfig = {
       artworkLength: 0.75, artworkWidth: 0.75, artworkHeight: 2.5,
       packedLength: 4.75, packedWidth: 4.75, packedHeight: 6.5,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Milagro Bowl',
@@ -174,6 +181,7 @@ const rosaConfig: ArtistSeedConfig = {
       artworkLength: 7, artworkWidth: 7, artworkHeight: 4,
       packedLength: 11, packedWidth: 11, packedHeight: 8,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Copper and Silver Ring',
@@ -186,6 +194,7 @@ const rosaConfig: ArtistSeedConfig = {
       artworkLength: 1, artworkWidth: 1, artworkHeight: 0.5,
       packedLength: 5, packedWidth: 5, packedHeight: 4.5,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Nopal Brooch',
@@ -198,6 +207,7 @@ const rosaConfig: ArtistSeedConfig = {
       artworkLength: 2, artworkWidth: 2.5, artworkHeight: 0.5,
       packedLength: 6, packedWidth: 6.5, packedHeight: 4.5,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -251,6 +261,7 @@ const lenaConfig: ArtistSeedConfig = {
       artworkLength: 6, artworkWidth: 6, artworkHeight: 0.25,
       packedLength: 10, packedWidth: 10, packedHeight: 4.25,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Knot Earrings, Gold',
@@ -263,6 +274,7 @@ const lenaConfig: ArtistSeedConfig = {
       artworkLength: 0.5, artworkWidth: 0.5, artworkHeight: 1.5,
       packedLength: 4.5, packedWidth: 4.5, packedHeight: 5.5,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Steel Lace Cuff',
@@ -275,6 +287,7 @@ const lenaConfig: ArtistSeedConfig = {
       artworkLength: 3, artworkWidth: 2.5, artworkHeight: 2,
       packedLength: 7, packedWidth: 6.5, packedHeight: 6,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Woven Ring, Silver',
@@ -287,6 +300,7 @@ const lenaConfig: ArtistSeedConfig = {
       artworkLength: 1, artworkWidth: 1, artworkHeight: 0.5,
       packedLength: 5, packedWidth: 5, packedHeight: 4.5,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Grandmother\'s Thread Brooch',
@@ -299,6 +313,7 @@ const lenaConfig: ArtistSeedConfig = {
       artworkLength: 2, artworkWidth: 2.5, artworkHeight: 0.5,
       packedLength: 6, packedWidth: 6.5, packedHeight: 4.5,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -353,6 +368,7 @@ const sophieConfig: ArtistSeedConfig = {
       artworkLength: 1.5, artworkWidth: 1.5, artworkHeight: 0.25,
       packedLength: 5.5, packedWidth: 5.5, packedHeight: 4.25,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Lake Champlain Brooch',
@@ -365,6 +381,7 @@ const sophieConfig: ArtistSeedConfig = {
       artworkLength: 2, artworkWidth: 1.5, artworkHeight: 0.5,
       packedLength: 6, packedWidth: 5.5, packedHeight: 4.5,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Woven Linen Bracelet, Indigo',
@@ -377,6 +394,7 @@ const sophieConfig: ArtistSeedConfig = {
       artworkLength: 7, artworkWidth: 1, artworkHeight: 0.25,
       packedLength: 5, packedWidth: 5, packedHeight: 4.25,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Enamel Stud Earrings, Winter',
@@ -389,6 +407,7 @@ const sophieConfig: ArtistSeedConfig = {
       artworkLength: 0.5, artworkWidth: 0.5, artworkHeight: 0.25,
       packedLength: 4.5, packedWidth: 4.5, packedHeight: 4.25,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Enamel Pendant, Spring Melt',
@@ -401,6 +420,7 @@ const sophieConfig: ArtistSeedConfig = {
       artworkLength: 1.5, artworkWidth: 1, artworkHeight: 0.25,
       packedLength: 5.5, packedWidth: 5, packedHeight: 4.25,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [

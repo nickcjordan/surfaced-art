@@ -58,6 +58,7 @@ export const karinaConfig: ArtistSeedConfig = {
       artworkLength: 6, artworkWidth: 6, artworkHeight: 2.5,
       packedLength: 10, packedWidth: 10, packedHeight: 6.5,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 1130,
     },
     {
       title: 'Olive Oil Bowl, green and ochre',
@@ -70,6 +71,7 @@ export const karinaConfig: ArtistSeedConfig = {
       artworkLength: 6, artworkWidth: 6, artworkHeight: 2.5,
       packedLength: 10, packedWidth: 10, packedHeight: 6.5,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 1155,
     },
     {
       title: 'Collaged Tile, watermelon',
@@ -82,6 +84,7 @@ export const karinaConfig: ArtistSeedConfig = {
       artworkLength: 8, artworkWidth: 8, artworkHeight: 1,
       packedLength: 12, packedWidth: 12, packedHeight: 5,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 1188,
     },
     // Sold listings
     {
@@ -95,6 +98,7 @@ export const karinaConfig: ArtistSeedConfig = {
       artworkLength: 6, artworkWidth: 6, artworkHeight: 2.5,
       packedLength: 10, packedWidth: 10, packedHeight: 6.5,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 1312,
     },
     {
       title: 'Olive Oil Bowl 4',
@@ -107,6 +111,7 @@ export const karinaConfig: ArtistSeedConfig = {
       artworkLength: 6, artworkWidth: 6, artworkHeight: 2.5,
       packedLength: 10, packedWidth: 10, packedHeight: 6.5,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 1192,
     },
   ],
   processMedia: [

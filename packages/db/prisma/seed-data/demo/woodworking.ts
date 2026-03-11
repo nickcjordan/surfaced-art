@@ -48,6 +48,7 @@ const hankConfig: ArtistSeedConfig = {
       artworkLength: 48, artworkWidth: 14, artworkHeight: 18,
       packedLength: 52, packedWidth: 18, packedHeight: 22,
       packedWeight: 35,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Turned Bowl, Cottonwood Burl',
@@ -60,6 +61,7 @@ const hankConfig: ArtistSeedConfig = {
       artworkLength: 14, artworkWidth: 14, artworkHeight: 6,
       packedLength: 18, packedWidth: 18, packedHeight: 10,
       packedWeight: 5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Cutting Board, End Grain',
@@ -72,6 +74,7 @@ const hankConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 12, artworkHeight: 2,
       packedLength: 22, packedWidth: 16, packedHeight: 6,
       packedWeight: 8,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Wall Shelf, Lodge Pole',
@@ -84,6 +87,7 @@ const hankConfig: ArtistSeedConfig = {
       artworkLength: 36, artworkWidth: 8, artworkHeight: 2,
       packedLength: 40, packedWidth: 12, packedHeight: 6,
       packedWeight: 8,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Writing Desk, Reclaimed Fir',
@@ -96,6 +100,7 @@ const hankConfig: ArtistSeedConfig = {
       artworkLength: 42, artworkWidth: 24, artworkHeight: 30,
       packedLength: 46, packedWidth: 28, packedHeight: 34,
       packedWeight: 45,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -150,6 +155,7 @@ const marcusConfig: ArtistSeedConfig = {
       artworkLength: 10, artworkWidth: 10, artworkHeight: 8,
       packedLength: 14, packedWidth: 14, packedHeight: 12,
       packedWeight: 5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Serving Spoons, Cherry',
@@ -162,6 +168,7 @@ const marcusConfig: ArtistSeedConfig = {
       artworkLength: 12, artworkWidth: 3, artworkHeight: 1.5,
       packedLength: 16, packedWidth: 7, packedHeight: 5.5,
       packedWeight: 1,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Stoneware Pitcher, iron glaze',
@@ -174,6 +181,7 @@ const marcusConfig: ArtistSeedConfig = {
       artworkLength: 6, artworkWidth: 5, artworkHeight: 9,
       packedLength: 10, packedWidth: 9, packedHeight: 13,
       packedWeight: 4,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Cheese Board, Reclaimed Oak',
@@ -186,6 +194,7 @@ const marcusConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 8, artworkHeight: 1,
       packedLength: 20, packedWidth: 12, packedHeight: 5,
       packedWeight: 4,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Ceremonial Bowl, Ash',
@@ -198,6 +207,7 @@ const marcusConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 16, artworkHeight: 5,
       packedLength: 20, packedWidth: 20, packedHeight: 9,
       packedWeight: 6,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
