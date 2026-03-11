@@ -127,4 +127,34 @@ describe('CSP environment overrides', () => {
     vi.unstubAllEnvs()
     vi.resetModules()
   })
+
+  it('CSP should allow vercel.live in script-src and connect-src for preview deployments', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.resetModules()
+    const { SECURITY_HEADERS } = await import('../security-headers')
+    const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).toMatch(/script-src[^;]*vercel\.live/)
+    expect(csp.value).toMatch(/connect-src[^;]*vercel\.live/)
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  it('CSP should NOT include vercel.live in production', async () => {
+    vi.stubEnv('VERCEL_ENV', 'production')
+    vi.resetModules()
+    const { SECURITY_HEADERS } = await import('../security-headers')
+    const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).not.toContain('vercel.live')
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  it('CSP should NOT include vercel.live when VERCEL_ENV is unset', async () => {
+    vi.resetModules()
+    const { SECURITY_HEADERS } = await import('../security-headers')
+    const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).not.toContain('vercel.live')
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
 })
