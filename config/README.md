@@ -10,8 +10,8 @@ and documentation of where values come from (Terraform outputs, generated secret
 
 | File | Purpose |
 |---|---|
-| `dev.env-reference` | Dev environment (dev.surfacedart.com) variable reference |
-| `prod.env-reference` | Prod environment (surfacedart.com) variable reference |
+| `dev.env-reference` | Dev environment (dev.surfaced.art) variable reference |
+| `prod.env-reference` | Prod environment (surfaced.art) variable reference |
 
 ## How to use after a Terraform apply
 

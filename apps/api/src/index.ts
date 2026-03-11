@@ -28,7 +28,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL
 if (!FRONTEND_URL) {
   throw new Error('FRONTEND_URL is required')
 }
-// Support both bare domain and www variant (e.g. surfacedart.com + www.surfacedart.com)
+// Support both bare domain and www variant (e.g. surfaced.art + www.surfaced.art)
 const wwwVariant = FRONTEND_URL.replace('https://', 'https://www.')
 // ADDITIONAL_CORS_ORIGINS: comma-separated list of extra allowed origins (e.g. alternate domains)
 const additionalOrigins = process.env.ADDITIONAL_CORS_ORIGINS

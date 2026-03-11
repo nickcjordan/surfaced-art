@@ -21,7 +21,7 @@ describe('sendEmail', () => {
     resetRateLimit()
     configureRateLimit({ maxPerSecond: 100, windowMs: 1000 })
     setSESClient(mockSESClient)
-    process.env.SES_FROM_ADDRESS = 'support@surfacedart.com'
+    process.env.SES_FROM_ADDRESS = 'support@surfaced.art'
     process.env.SES_CONFIGURATION_SET = 'surfaced-art-prod'
     process.env.AWS_REGION = 'us-east-1'
     mockSend.mockResolvedValue({ MessageId: 'test-message-id-123' })
@@ -56,14 +56,14 @@ describe('sendEmail', () => {
     const command = mockSend.mock.calls[0]![0] as SendEmailCommand
     const input = command.input
 
-    expect(input.Source).toBe('Surfaced Art <support@surfacedart.com>')
+    expect(input.Source).toBe('Surfaced Art <support@surfaced.art>')
     expect(input.Destination?.ToAddresses).toEqual(['artist@example.com'])
     expect(input.Message?.Subject?.Data).toBe('Welcome')
     expect(input.Message?.Subject?.Charset).toBe('UTF-8')
     expect(input.Message?.Body?.Html?.Data).toContain('Test email content')
     expect(input.Message?.Body?.Html?.Charset).toBe('UTF-8')
     expect(input.Message?.Body?.Text?.Charset).toBe('UTF-8')
-    expect(input.ReplyToAddresses).toEqual(['support@surfacedart.com'])
+    expect(input.ReplyToAddresses).toEqual(['support@surfaced.art'])
     expect(input.ConfigurationSetName).toBe('surfaced-art-prod')
   })
 

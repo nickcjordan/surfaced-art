@@ -98,7 +98,7 @@ variable "api_gateway_log_group_arn" {
 }
 
 variable "ses_from_address" {
-  description = "SES sender email address (e.g. support@surfacedart.com)"
+  description = "SES sender email address (e.g. support@surfaced.art)"
   type        = string
 }
 

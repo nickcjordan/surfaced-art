@@ -601,7 +601,7 @@ export default function ForArtistsContent() {
                 {/* Left feature column */}
                 <div className="hidden flex-col justify-center gap-6 pt-16 lg:flex">
                   {[
-                    { title: 'Your clean URL', desc: 'surfacedart.com/your-name. A short, memorable link that goes straight to your studio', accent: 'var(--accent-primary)' },
+                    { title: 'Your clean URL', desc: 'surfaced.art/your-name. A short, memorable link that goes straight to your studio', accent: 'var(--accent-primary)' },
                     { title: 'Replace your website', desc: 'Bio, CV, artist statement, process photos. Everything a custom site would have, zero maintenance', accent: 'var(--accent-secondary)' },
                     { title: 'Pure showcase', desc: 'No ads, no competitor links, no prices on the page. Just your work. Visitors who want to buy click through to the listing', accent: 'var(--accent-primary)' },
                   ].map((item, i) => (
@@ -630,7 +630,7 @@ export default function ForArtistsContent() {
                         <div className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--accent-secondary)', opacity: 0.2 }} />
                       </div>
                       <div className="flex-1 rounded-md px-3 py-1" style={{ background: 'color-mix(in srgb, var(--accent-primary) 5%, var(--surface))' }}>
-                        <p className="text-[11px] text-muted-text/60">surfacedart.com/<span className="font-medium" style={{ color: 'var(--accent-primary)' }}>sarah-chen</span></p>
+                        <p className="text-[11px] text-muted-text/60">surfaced.art/<span className="font-medium" style={{ color: 'var(--accent-primary)' }}>sarah-chen</span></p>
                       </div>
                     </div>
                     <div className="p-6">
@@ -804,7 +804,7 @@ export default function ForArtistsContent() {
                       <div className="h-2 w-2 rounded-full bg-foreground/10" />
                     </div>
                     <div className="h-4 flex-1 rounded-sm bg-foreground/5 px-2">
-                      <p className="truncate text-[9px] leading-4 text-muted-text/50">surfacedart.com/your-name</p>
+                      <p className="truncate text-[9px] leading-4 text-muted-text/50">surfaced.art/your-name</p>
                     </div>
                   </div>
                   <div className="p-4">

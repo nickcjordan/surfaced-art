@@ -20,7 +20,7 @@ import { triggerRevalidation } from '../../lib/revalidation'
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfacedart.com', name = 'Admin User') {
+function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
   return { verify: vi.fn().mockResolvedValue({ sub, email, name }) }
 }
 
@@ -30,7 +30,7 @@ const ARTIST_PROFILE_ID = 'profile-uuid-456'
 const mockAdminUser = {
   id: ADMIN_USER_ID,
   cognitoId: 'cognito-admin',
-  email: 'admin@surfacedart.com',
+  email: 'admin@surfaced.art',
   fullName: 'Admin User',
   roles: [{ role: 'admin' }],
 }

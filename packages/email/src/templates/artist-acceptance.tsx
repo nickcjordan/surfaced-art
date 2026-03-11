@@ -5,7 +5,7 @@ export interface ArtistAcceptanceProps {
   artistName: string
 }
 
-const PROFILE_SETUP_URL = 'https://surfacedart.com/dashboard'
+const PROFILE_SETUP_URL = 'https://surfaced.art/dashboard'
 
 export function ArtistAcceptance({ artistName }: ArtistAcceptanceProps) {
   return (

@@ -181,9 +181,9 @@ export default function PrivacyPage() {
           <p>Surfaced Art</p>
           <p>
             Email:{' '}
-            <a href="mailto:privacy@surfacedart.com"
+            <a href="mailto:privacy@surfaced.art"
                className="underline underline-offset-4 hover:text-foreground transition-colors">
-              privacy@surfacedart.com
+              privacy@surfaced.art
             </a>
           </p>
         </address>

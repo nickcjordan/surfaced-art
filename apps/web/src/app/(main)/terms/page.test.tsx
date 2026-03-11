@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 
-vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfacedart.com')
-vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfacedart.com')
+vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfaced.art')
+vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfaced.art')
 import { render, screen } from '@testing-library/react'
 
 import TermsPage, { metadata } from './page'
@@ -60,7 +60,7 @@ describe('Terms of Service Page', () => {
   })
 
   it('should have canonical URL in metadata', () => {
-    expect(metadata.alternates?.canonical).toBe('https://surfacedart.com/terms')
+    expect(metadata.alternates?.canonical).toBe('https://surfaced.art/terms')
   })
 
   it('should have metadata description', () => {
