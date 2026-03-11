@@ -94,8 +94,13 @@ function readImageDimensions(buf: Buffer): { width: number; height: number } | n
 
 async function getImageDimensionsFromUrl(url: string): Promise<{ width: number; height: number } | null> {
   try {
-    const response = await fetch(url)
-    if (!response.ok) {
+    // For PNG/WebP, the first 30 bytes contain dimensions.
+    // For JPEG, the SOF marker can be further in, so fetch more.
+    // Try a small range first; fall back to a larger fetch for JPEG.
+    const response = await fetch(url, {
+      headers: { Range: 'bytes=0-65535' },
+    })
+    if (!response.ok && response.status !== 206) {
       console.warn(`  SKIP: HTTP ${response.status} for ${url}`)
       return null
     }
@@ -118,6 +123,8 @@ async function getImageDimensionsFromUrl(url: string): Promise<{ width: number; 
 // Main
 // ---------------------------------------------------------------------------
 
+const CONCURRENCY = 10
+
 async function main() {
   const images = await prisma.listingImage.findMany({
     where: { width: null },
@@ -129,23 +136,31 @@ async function main() {
   let updated = 0
   let skipped = 0
 
-  for (const image of images) {
-    console.log(`Processing ${image.url}...`)
-    const dims = await getImageDimensionsFromUrl(image.url)
+  // Process in batches of CONCURRENCY
+  for (let i = 0; i < images.length; i += CONCURRENCY) {
+    const batch = images.slice(i, i + CONCURRENCY)
+    const results = await Promise.all(
+      batch.map(async (image) => {
+        const dims = await getImageDimensionsFromUrl(image.url)
+        if (!dims) return { id: image.id, dims: null }
+        return { id: image.id, dims }
+      })
+    )
 
-    if (!dims) {
-      skipped++
-      continue
+    for (const result of results) {
+      if (!result.dims) {
+        skipped++
+        continue
+      }
+
+      await prisma.listingImage.update({
+        where: { id: result.id },
+        data: { width: result.dims.width, height: result.dims.height },
+      })
+      updated++
     }
 
-    console.log(`  ${dims.width}x${dims.height}`)
-
-    await prisma.listingImage.update({
-      where: { id: image.id },
-      data: { width: dims.width, height: dims.height },
-    })
-
-    updated++
+    console.log(`  Batch ${Math.floor(i / CONCURRENCY) + 1}: processed ${batch.length} images`)
   }
 
   console.log(`\nDone: ${updated} updated, ${skipped} skipped`)
