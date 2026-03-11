@@ -9,12 +9,16 @@
  *   NEXT_PUBLIC_API_URL      — API origin for connect-src
  */
 
-import { CDN_DOMAINS, API_URL, COGNITO_IDP, POSTHOG_HOST } from './env'
+function required(name: string): string {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing required environment variable: ${name}`)
+  return value
+}
 
-const CDN_DOMAINS_TRIMMED = CDN_DOMAINS.trim()
-const API_ORIGIN = API_URL.trim()
-const COGNITO_IDP_TRIMMED = COGNITO_IDP.trim()
-const POSTHOG_HOST_TRIMMED = POSTHOG_HOST.trim()
+const CDN_DOMAINS_TRIMMED = required('NEXT_PUBLIC_CDN_DOMAINS').trim()
+const API_ORIGIN = required('NEXT_PUBLIC_API_URL').trim()
+const COGNITO_IDP_TRIMMED = 'https://cognito-idp.us-east-1.amazonaws.com'
+const POSTHOG_HOST_TRIMMED = required('NEXT_PUBLIC_POSTHOG_HOST').trim()
 
 const CSP_DIRECTIVES = [
   "default-src 'self'",
