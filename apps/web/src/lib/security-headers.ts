@@ -9,7 +9,7 @@
  *   NEXT_PUBLIC_API_URL      — API origin for connect-src
  */
 
-import { CDN_DOMAINS, API_URL, COGNITO_IDP, POSTHOG_HOST } from '@/lib/env'
+import { CDN_DOMAINS, API_URL, COGNITO_IDP, POSTHOG_HOST } from './env'
 
 const CDN_DOMAINS_TRIMMED = CDN_DOMAINS.trim()
 const API_ORIGIN = API_URL.trim()
