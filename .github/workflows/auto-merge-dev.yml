@@ -7,7 +7,7 @@ name: Auto-merge to dev
 on:
   pull_request:
     branches: [dev]
-    types: [opened, reopened]
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: write
