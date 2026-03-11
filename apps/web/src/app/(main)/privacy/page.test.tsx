@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 
-vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfacedart.com')
-vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfacedart.com')
+vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfaced.art')
+vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfaced.art')
 import { render, screen } from '@testing-library/react'
 
 import PrivacyPage, { metadata } from './page'
@@ -48,7 +48,7 @@ describe('Privacy Policy Page', () => {
   })
 
   it('should have canonical URL in metadata', () => {
-    expect(metadata.alternates?.canonical).toBe('https://surfacedart.com/privacy')
+    expect(metadata.alternates?.canonical).toBe('https://surfaced.art/privacy')
   })
 
   it('should have metadata description', () => {

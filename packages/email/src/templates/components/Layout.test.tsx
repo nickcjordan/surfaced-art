@@ -21,7 +21,7 @@ describe('Layout component', () => {
     const html = await render(<Layout preview="Test">Content</Layout>)
 
     expect(html).toContain('Curated handmade art from vetted artists')
-    expect(html).toContain('surfacedart.com')
+    expect(html).toContain('surfaced.art')
   })
 
   it('should render child content', async () => {
@@ -62,6 +62,6 @@ describe('Layout component', () => {
 
     expect(text).toContain('SURFACED ART')
     expect(text).toContain('Some email body text')
-    expect(text).toContain('surfacedart.com')
+    expect(text).toContain('surfaced.art')
   })
 })

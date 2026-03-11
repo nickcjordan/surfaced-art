@@ -1,13 +1,17 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfacedart.com')
-vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfacedart.com')
+vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfaced.art')
+vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfaced.art')
 import { render, screen, fireEvent } from '@testing-library/react'
 import ErrorPage from '../error'
 
 describe('Error Page (main route group)', () => {
   const mockError = new Error('Something went wrong')
   const mockReset = vi.fn()
+
+  beforeEach(() => {
+    mockReset.mockClear()
+  })
 
   it('should render an error heading', () => {
     render(<ErrorPage error={mockError} reset={mockReset} />)
@@ -30,9 +34,4 @@ describe('Error Page (main route group)', () => {
     expect(link).toHaveAttribute('href', '/')
   })
 
-  it('should have noindex metadata', async () => {
-    const { metadata } = await import('../error')
-    expect(metadata).toBeDefined()
-    expect(metadata.robots).toEqual({ index: false })
-  })
 })

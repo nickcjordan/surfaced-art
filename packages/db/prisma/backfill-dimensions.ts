@@ -136,7 +136,7 @@ async function getImageDimensionsFromS3(url: string): Promise<{ width: number; h
 // Main
 // ---------------------------------------------------------------------------
 
-const BATCH_SIZE = 10
+const CONCURRENCY = 10
 
 async function main() {
   console.log(`Using S3 bucket: ${S3_BUCKET_NAME}`)
@@ -151,34 +151,31 @@ async function main() {
   let updated = 0
   let skipped = 0
 
-  // Process images in batches for performance
-  for (let i = 0; i < images.length; i += BATCH_SIZE) {
-    const batch = images.slice(i, i + BATCH_SIZE)
-    console.log(`\nBatch ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} images)...`)
-
+  // Process in batches of CONCURRENCY
+  for (let i = 0; i < images.length; i += CONCURRENCY) {
+    const batch = images.slice(i, i + CONCURRENCY)
     const results = await Promise.all(
       batch.map(async (image) => {
-        console.log(`  Processing ${image.url}...`)
         const dims = await getImageDimensionsFromS3(image.url)
-        return { image, dims }
+        if (!dims) return { id: image.id, dims: null }
+        return { id: image.id, dims }
       }),
     )
 
-    for (const { image, dims } of results) {
-      if (!dims) {
-        skipped++
-        continue
-      }
+    const updates = results.filter((r) => r.dims !== null)
+    skipped += results.length - updates.length
 
-      console.log(`  ${image.url} → ${dims.width}x${dims.height}`)
+    await Promise.all(
+      updates.map((result) =>
+        prisma.listingImage.update({
+          where: { id: result.id },
+          data: { width: result.dims!.width, height: result.dims!.height },
+        }),
+      ),
+    )
+    updated += updates.length
 
-      await prisma.listingImage.update({
-        where: { id: image.id },
-        data: { width: dims.width, height: dims.height },
-      })
-
-      updated++
-    }
+    console.log(`  Batch ${Math.floor(i / CONCURRENCY) + 1}: processed ${batch.length} images`)
   }
 
   console.log(`\nDone: ${updated} updated, ${skipped} skipped`)

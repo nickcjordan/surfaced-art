@@ -13,7 +13,7 @@ lambda_timeout     = 30
 seed_mode = "real"
 
 # URLs
-frontend_url = "https://surfacedart.com"
+frontend_url = "https://surfaced.art"
 additional_cors_origins = [
   "https://surfaced.art",
   "https://www.surfaced.art",
@@ -21,9 +21,6 @@ additional_cors_origins = [
 
 # S3 CORS
 cors_allowed_origins = [
-  "https://surfacedart.com",
-  "https://www.surfacedart.com",
   "https://surfaced.art",
   "https://www.surfaced.art",
-  "http://localhost:3000",
 ]

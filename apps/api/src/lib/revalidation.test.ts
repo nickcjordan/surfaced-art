@@ -18,7 +18,7 @@ describe('triggerRevalidation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFetch.mockResolvedValue({ ok: true })
-    process.env.FRONTEND_URL = 'https://surfacedart.com'
+    process.env.FRONTEND_URL = 'https://surfaced.art'
     process.env.REVALIDATION_SECRET = 'test-secret'
   })
 
@@ -47,7 +47,7 @@ describe('triggerRevalidation', () => {
     triggerRevalidation({ type: 'listing', id: 'listing-123', category: 'ceramics' })
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://surfacedart.com/api/revalidate',
+      'https://surfaced.art/api/revalidate',
       expect.objectContaining({
         method: 'POST',
         headers: {
@@ -66,7 +66,7 @@ describe('triggerRevalidation', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://surfacedart.com/api/revalidate',
+      'https://surfaced.art/api/revalidate',
       expect.objectContaining({
         body: JSON.stringify({ type: 'artist', slug: 'karina-yanes' }),
       }),

@@ -40,7 +40,7 @@ jobs:
 
       - name: Build
         env:
-          NEXT_PUBLIC_SITE_URL: https://dev.surfacedart.com
+          NEXT_PUBLIC_SITE_URL: https://dev.surfaced.art
           NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com/prod
           NEXT_PUBLIC_CDN_DOMAINS: https://d2agn4aoo0e7ji.cloudfront.net
         run: npm run build
@@ -555,7 +555,7 @@ jobs:
             --function-name ${{ needs.terraform.outputs.migrate_function_name }} \
             --payload '{"command":"backfill-dimensions"}' \
             --cli-binary-format raw-in-base64-out \
-            --read-timeout 300 \
+            --cli-read-timeout 300 \
             /tmp/backfill-response.json
 
           echo "Backfill response:"

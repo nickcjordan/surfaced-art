@@ -10,13 +10,13 @@
 
 Phase 3 introduces Cognito auth, Stripe Connect, and the artist dashboard — features that
 require safe end-to-end testing before they touch production. The project had no staging
-environment: every deploy went directly to prod (surfacedart.com).
+environment: every deploy went directly to prod (surfaced.art).
 
 The Terraform infrastructure was already parameterized with `var.environment`, and separate
 `prod.tfvars` / `dev.tfvars` files already existed. The gaps were:
 
-1. Hardcoded `surfaced.art` domain references throughout application code (wrong domain anyway —
-   the correct domain is `surfacedart.com`).
+1. Hardcoded `surfacedart.com` domain references throughout application code (wrong domain anyway —
+   the correct domain is `surfaced.art`).
 2. Silent env var fallbacks that masked missing configuration in new environments.
 3. No GitHub Actions deploy workflow for dev.
 4. No mechanism to surface AI code review suggestions (Greptile, Sourcery) to the team.
@@ -25,12 +25,12 @@ The Terraform infrastructure was already parameterized with `var.environment`, a
 
 ## Decision
 
-### 1. Domain: surfacedart.com
+### 1. Domain: surfaced.art
 
-The project uses `surfacedart.com`, not `surfaced.art`. All hardcoded references to
-`surfaced.art` were bugs. This PR fixes them:
+The project uses `surfaced.art`, not `surfacedart.com`. All hardcoded references to
+`surfacedart.com` were bugs. This PR fixes them:
 
-- `SITE_URL`: `https://surfacedart.com` (prod), `https://dev.surfacedart.com` (dev)
+- `SITE_URL`: `https://surfaced.art` (prod), `https://dev.surfaced.art` (dev)
 - Cognito Hosted UI: `surfaced-art-{env}.auth.us-east-1.amazoncognito.com` (unchanged — was correct)
 - `www` redirect: handled at DNS/CDN level, removed from API CORS and Lambda-level allowed origins
 
@@ -119,7 +119,7 @@ secrets, etc.). They make onboarding and secret rotation explicit without storin
 - Missing env vars fail fast and loudly at build time rather than silently at runtime
 - AI code review suggestions are captured in Slack regardless of when bots finish reviewing
 - Terraform plan is visible in PR review before applying to dev infra
-- Domain is now correct across all code (surfacedart.com, not surfaced.art)
+- Domain is now correct across all code (surfaced.art, not surfacedart.com)
 
 ### Negative / Trade-offs
 
