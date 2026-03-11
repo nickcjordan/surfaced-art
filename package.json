@@ -9,6 +9,7 @@
     "tools/*"
   ],
   "scripts": {
+    "check": "turbo run build typecheck lint test test:integration --force",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "test": "turbo run test",
