@@ -1317,8 +1317,11 @@ export function createMeRoutes(prisma: PrismaClient) {
     let height: number | null = parsed.data.height ?? null
     if (width === null || height === null) {
       try {
-        const imgResponse = await fetch(parsed.data.url)
-        if (imgResponse.ok) {
+        const imgResponse = await fetch(parsed.data.url, {
+          headers: { Range: 'bytes=0-65535' },
+          signal: AbortSignal.timeout(5_000),
+        })
+        if (imgResponse.ok || imgResponse.status === 206) {
           const buffer = Buffer.from(await imgResponse.arrayBuffer())
           const dims = readImageDimensions(buffer)
           if (dims) {
