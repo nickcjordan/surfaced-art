@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 
-vi.stubEnv('FRONTEND_URL', 'https://surfacedart.com')
+vi.stubEnv('FRONTEND_URL', 'https://surfaced.art')
 
 vi.mock('@surfaced-art/db', () => ({
   prisma: {

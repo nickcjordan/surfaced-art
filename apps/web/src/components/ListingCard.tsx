@@ -30,11 +30,20 @@ export function ListingCard({
   const isSold = listing.status === 'sold'
   const href = `/listing/${listing.id}`
 
-  // Use natural aspect ratio if dimensions are known, fall back to square
+  // Use natural aspect ratio if dimensions are known, fall back to square.
+  // Clamp extreme portrait ratios to 2:3 (w:h) so tall narrow artwork
+  // doesn't blow out masonry columns.
   const hasNaturalRatio = listing.primaryImageWidth && listing.primaryImageHeight
-  const aspectStyle = hasNaturalRatio
-    ? { aspectRatio: `${listing.primaryImageWidth} / ${listing.primaryImageHeight}` }
-    : undefined
+  const MIN_RATIO = 2 / 3 // most portrait allowed (height = 1.5× width)
+  let aspectStyle: { aspectRatio: string } | undefined
+  if (hasNaturalRatio) {
+    const naturalRatio = listing.primaryImageWidth! / listing.primaryImageHeight!
+    if (naturalRatio < MIN_RATIO) {
+      aspectStyle = { aspectRatio: '2 / 3' }
+    } else {
+      aspectStyle = { aspectRatio: `${listing.primaryImageWidth} / ${listing.primaryImageHeight}` }
+    }
+  }
   const aspectClass = hasNaturalRatio ? '' : 'aspect-square'
 
   return (

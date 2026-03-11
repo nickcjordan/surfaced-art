@@ -101,7 +101,7 @@ variable "stripe_webhook_secret" {
 variable "ses_domain" {
   description = "Domain for SES email sending"
   type        = string
-  default     = "surfacedart.com"
+  default     = "surfaced.art"
 }
 
 # Seed mode
@@ -137,11 +137,23 @@ variable "api_reserved_concurrency" {
   default     = 40
 }
 
+# S3 CORS
+variable "cors_allowed_origins" {
+  description = "Allowed origins for S3 CORS policy (browser uploads)"
+  type        = list(string)
+}
+
 # Application URLs
 variable "frontend_url" {
   description = "Frontend application URL (for CORS and Cognito callbacks)"
   type        = string
   default     = "https://surfaced.art"
+}
+
+variable "additional_cors_origins" {
+  description = "Additional allowed origins for API CORS (e.g. alternate domains, dev subdomains)"
+  type        = list(string)
+  default     = []
 }
 
 variable "migrate_ecr_max_images" {

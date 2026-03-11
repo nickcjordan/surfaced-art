@@ -22,5 +22,9 @@ jobs:
     steps:
       - name: Enable squash auto-merge
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Must use a PAT (not GITHUB_TOKEN) so the resulting merge push
+          # triggers downstream workflows like deploy-dev.yml.
+          # GITHUB_TOKEN merges are attributed to github-actions[bot],
+          # and GitHub suppresses push events from that actor.
+          GH_TOKEN: ${{ secrets.SURFACED_ART_PAT }}
         run: gh pr merge ${{ github.event.pull_request.number }} --squash --auto --repo ${{ github.repository }}

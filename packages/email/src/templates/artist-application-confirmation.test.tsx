@@ -34,7 +34,7 @@ describe('ArtistApplicationConfirmation template', () => {
     const html = await render(<ArtistApplicationConfirmation {...props} />)
 
     expect(html).toContain('SURFACED ART')
-    expect(html).toContain('surfacedart.com')
+    expect(html).toContain('surfaced.art')
   })
 
   it('should render plain text with key content', async () => {

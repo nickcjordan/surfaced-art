@@ -200,8 +200,9 @@ module "rds" {
 module "s3_cloudfront" {
   source = "./modules/s3-cloudfront"
 
-  project_name = var.project_name
-  environment  = var.environment
+  project_name         = var.project_name
+  environment          = var.environment
+  cors_allowed_origins = var.cors_allowed_origins
 }
 
 # Cognito module
@@ -245,6 +246,7 @@ module "lambda_api" {
   timeout                      = var.lambda_timeout
   lambda_role_arn              = module.iam.lambda_role_arn
   frontend_url                 = var.frontend_url
+  additional_cors_origins      = var.additional_cors_origins
   placeholder_image_uri        = var.placeholder_image_uri
   reserved_concurrent_executions = var.api_reserved_concurrency
 
@@ -281,6 +283,7 @@ module "lambda_migrate" {
   database_url          = module.rds.connection_string
   seed_cdn_base         = module.s3_cloudfront.cloudfront_url
   seed_mode             = var.seed_mode
+  timeout               = 300
 
   depends_on = [aws_ecr_repository_policy.migrate]
 }

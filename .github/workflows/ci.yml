@@ -36,7 +36,7 @@ jobs:
 
       - name: Build
         env:
-          NEXT_PUBLIC_SITE_URL: https://surfacedart.com
+          NEXT_PUBLIC_SITE_URL: https://surfaced.art
           NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com/prod
           NEXT_PUBLIC_CDN_DOMAINS: https://dmfu4c7s6z2cc.cloudfront.net
         run: npm run build
@@ -63,7 +63,7 @@ jobs:
 
       - name: Check for infrastructure changes
         id: infra_changes
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -118,7 +118,7 @@ jobs:
 
       - name: Post plan as PR comment
         if: steps.infra_changes.outputs.changed == 'true' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

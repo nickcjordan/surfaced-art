@@ -34,7 +34,7 @@ export function ArtistApplicationConfirmation({
         </Text>
         <Text style={{ ...bodyStyle, color: BRAND.colors.muted }}>
           In the meantime, feel free to explore our current collection at
-          surfacedart.com.
+          surfaced.art.
         </Text>
         <Text style={bodyStyle}>
           Warmly,

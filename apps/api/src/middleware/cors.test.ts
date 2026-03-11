@@ -1,5 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
 
+vi.mock('@surfaced-art/utils', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
 vi.mock('@surfaced-art/db', () => ({
   prisma: {
     $queryRawUnsafe: vi.fn().mockResolvedValue([{ now: new Date() }]),
@@ -14,7 +22,8 @@ vi.mock('@surfaced-art/db', () => ({
   },
 }))
 
-vi.stubEnv('FRONTEND_URL', 'https://surfacedart.com')
+vi.stubEnv('FRONTEND_URL', 'https://surfaced.art')
+vi.stubEnv('ADDITIONAL_CORS_ORIGINS', 'https://surfaced.art,https://www.surfaced.art,https://dev.surfaced.art')
 
 const { app } = await import('../index')
 
@@ -23,22 +32,22 @@ describe('CORS configuration', () => {
     const res = await app.request('/health', {
       method: 'OPTIONS',
       headers: {
-        Origin: 'https://surfacedart.com',
+        Origin: 'https://surfaced.art',
         'Access-Control-Request-Method': 'GET',
       },
     })
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://surfacedart.com')
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://surfaced.art')
   })
 
   it('should allow requests from the www variant of FRONTEND_URL', async () => {
     const res = await app.request('/health', {
       method: 'OPTIONS',
       headers: {
-        Origin: 'https://www.surfacedart.com',
+        Origin: 'https://www.surfaced.art',
         'Access-Control-Request-Method': 'GET',
       },
     })
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://www.surfacedart.com')
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://www.surfaced.art')
   })
 
   it('should allow requests from localhost:3000', async () => {
@@ -63,6 +72,30 @@ describe('CORS configuration', () => {
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://surfaced-art-abc123.vercel.app')
   })
 
+  it('should allow requests from ADDITIONAL_CORS_ORIGINS', async () => {
+    const res = await app.request('/health', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://surfaced.art',
+        'Access-Control-Request-Method': 'GET',
+      },
+    })
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://surfaced.art')
+  })
+
+  it('should allow requests from all additional origins', async () => {
+    for (const origin of ['https://www.surfaced.art', 'https://dev.surfaced.art']) {
+      const res = await app.request('/health', {
+        method: 'OPTIONS',
+        headers: {
+          Origin: origin,
+          'Access-Control-Request-Method': 'GET',
+        },
+      })
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+    }
+  })
+
   it('should reject requests from unauthorized origins', async () => {
     const res = await app.request('/health', {
       method: 'OPTIONS',
@@ -79,7 +112,7 @@ describe('CORS configuration', () => {
     const res = await app.request('/health', {
       method: 'OPTIONS',
       headers: {
-        Origin: 'https://surfacedart.com',
+        Origin: 'https://surfaced.art',
         'Access-Control-Request-Method': 'GET',
       },
     })
@@ -93,6 +126,6 @@ describe('CORS: missing FRONTEND_URL', () => {
     vi.stubEnv('FRONTEND_URL', '')
     await expect(import('../index')).rejects.toThrow('FRONTEND_URL is required')
     vi.unstubAllEnvs()
-    vi.stubEnv('FRONTEND_URL', 'https://surfacedart.com')
+    vi.stubEnv('FRONTEND_URL', 'https://surfaced.art')
   })
 })

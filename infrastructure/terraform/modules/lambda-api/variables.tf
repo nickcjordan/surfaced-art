@@ -50,6 +50,12 @@ variable "frontend_url" {
   type        = string
 }
 
+variable "additional_cors_origins" {
+  description = "Additional allowed origins for API CORS (e.g. alternate domains, dev subdomains)"
+  type        = list(string)
+  default     = []
+}
+
 variable "database_url" {
   description = "PostgreSQL connection string"
   type        = string
@@ -92,7 +98,7 @@ variable "api_gateway_log_group_arn" {
 }
 
 variable "ses_from_address" {
-  description = "SES sender email address (e.g. support@surfacedart.com)"
+  description = "SES sender email address (e.g. support@surfaced.art)"
   type        = string
 }
 

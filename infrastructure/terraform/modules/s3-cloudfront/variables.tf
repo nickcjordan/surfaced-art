@@ -7,3 +7,8 @@ variable "environment" {
   description = "Environment name"
   type        = string
 }
+
+variable "cors_allowed_origins" {
+  description = "Allowed origins for S3 CORS policy"
+  type        = list(string)
+}

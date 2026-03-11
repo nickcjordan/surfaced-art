@@ -6,6 +6,7 @@ import { prisma } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
 
 import { securityHeaders } from './middleware/security-headers'
+import { requestId } from './middleware/request-id'
 import { rateLimiter } from './middleware/rate-limiter'
 import { cacheControl } from './middleware/cache-control'
 import { createHealthRoutes } from './routes/health'
@@ -27,14 +28,19 @@ const FRONTEND_URL = process.env.FRONTEND_URL
 if (!FRONTEND_URL) {
   throw new Error('FRONTEND_URL is required')
 }
-// Support both bare domain and www variant (e.g. surfacedart.com + www.surfacedart.com)
+// Support both bare domain and www variant (e.g. surfaced.art + www.surfaced.art)
 const wwwVariant = FRONTEND_URL.replace('https://', 'https://www.')
-const allowedOrigins = [FRONTEND_URL, wwwVariant, 'http://localhost:3000']
+// ADDITIONAL_CORS_ORIGINS: comma-separated list of extra allowed origins (e.g. alternate domains)
+const additionalOrigins = process.env.ADDITIONAL_CORS_ORIGINS
+  ? process.env.ADDITIONAL_CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : []
+const allowedOrigins = [FRONTEND_URL, wwwVariant, 'http://localhost:3000', ...additionalOrigins]
 
 // Create Hono app
 const app = new Hono()
 
 // Middleware
+app.use('*', requestId())
 app.use('*', securityHeaders())
 app.use('*', honoLogger())
 // CORS — allow configured frontend URL, localhost for dev, and Vercel preview deploys

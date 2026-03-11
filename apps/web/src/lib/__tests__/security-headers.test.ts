@@ -11,7 +11,7 @@ const REQUIRED_HEADERS = [
 
 beforeEach(() => {
   vi.resetModules()
-  vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfacedart.com')
+  vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfaced.art')
 })
 
 afterEach(() => {
@@ -60,7 +60,7 @@ describe('security headers config', () => {
   it('CSP should include the configured API URL in connect-src', async () => {
     const headers = await loadHeaders()
     const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
-    expect(csp.value).toContain('api.surfacedart.com')
+    expect(csp.value).toContain('api.surfaced.art')
   })
 
   it('CSP should allow Cognito IDP for authentication by default', async () => {
@@ -109,12 +109,12 @@ describe('CSP environment overrides', () => {
   })
 
   it('should use NEXT_PUBLIC_API_URL for connect-src when set', async () => {
-    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.dev.surfacedart.com')
+    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.dev.surfaced.art')
     vi.resetModules()
     const { SECURITY_HEADERS } = await import('../security-headers')
     const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
-    expect(csp.value).toContain('api.dev.surfacedart.com')
-    expect(csp.value).not.toContain('api.surfacedart.com')
+    expect(csp.value).toContain('api.dev.surfaced.art')
+    expect(csp.value).not.toContain('api.surfaced.art')
     vi.unstubAllEnvs()
     vi.resetModules()
   })

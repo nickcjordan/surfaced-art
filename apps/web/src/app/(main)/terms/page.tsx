@@ -199,9 +199,9 @@ export default function TermsPage() {
         </p>
         <p className="text-base leading-relaxed text-muted-text">
           Questions about these Terms? Contact us at{' '}
-          <a href="mailto:legal@surfacedart.com"
+          <a href="mailto:legal@surfaced.art"
              className="underline underline-offset-4 hover:text-foreground transition-colors">
-            legal@surfacedart.com
+            legal@surfaced.art
           </a>.
         </p>
       </section>

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfacedart.com')
-vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfacedart.com')
+vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfaced.art')
+vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfaced.art')
 import { render, screen } from '@testing-library/react'
 
 vi.mock('@/lib/api', () => ({
@@ -41,5 +41,17 @@ describe('Home Page', () => {
     const Component = await Home()
     render(Component)
     expect(screen.getByText('Browse by Category')).toBeInTheDocument()
+  })
+
+  it('should link Browse all to /search, not a hardcoded category', async () => {
+    const { getListings } = await import('@/lib/api')
+    vi.mocked(getListings).mockResolvedValueOnce({
+      data: [{ id: '1', title: 'Test', medium: 'Oil', category: 'ceramics', price: 1000, status: 'available', primaryImage: { url: '/img.jpg', width: 400, height: 300 }, artist: { displayName: 'Test Artist' } }] as never,
+      meta: { page: 1, limit: 6, total: 1, totalPages: 1 },
+    })
+    const Component = await Home()
+    render(Component)
+    const browseLink = screen.getByRole('link', { name: /browse all/i })
+    expect(browseLink).toHaveAttribute('href', '/search')
   })
 })

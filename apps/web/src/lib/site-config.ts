@@ -4,4 +4,4 @@
  * Falls back to production URL for local builds.
  */
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://surfacedart.com'
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://surfaced.art'

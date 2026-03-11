@@ -11,7 +11,17 @@ lambda_timeout             = 30
 api_reserved_concurrency   = 10
 
 # URLs
-frontend_url = "https://dev.surfacedart.com"
+frontend_url = "https://dev.surfaced.art"
+additional_cors_origins = [
+  "https://dev.surfaced.art",
+  "https://www.dev.surfaced.art",
+]
+
+# S3 CORS
+cors_allowed_origins = [
+  "https://dev.surfaced.art",
+  "http://localhost:3000",
+]
 
 # Seed
 seed_mode = "demo"

@@ -44,7 +44,7 @@ jobs:
 
       - name: Build
         env:
-          NEXT_PUBLIC_SITE_URL: https://surfacedart.com
+          NEXT_PUBLIC_SITE_URL: https://surfaced.art
           NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com/prod
           NEXT_PUBLIC_CDN_DOMAINS: https://dmfu4c7s6z2cc.cloudfront.net
         run: npm run build
@@ -499,6 +499,42 @@ jobs:
             const r = JSON.parse(require('fs').readFileSync('/tmp/migrate-response.json', 'utf8'));
             if (!r.success) { console.error('Migration failed:', r.error); process.exit(1); }
             console.log('Migrations completed successfully');
+          "
+
+  backfill-dimensions:
+    name: Backfill Image Dimensions
+    runs-on: ubuntu-latest
+    needs: [terraform, migrate-database]
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Backfill image dimensions via Lambda
+        run: |
+          aws lambda invoke \
+            --function-name ${{ needs.terraform.outputs.migrate_function_name }} \
+            --payload '{"command":"backfill-dimensions"}' \
+            --cli-binary-format raw-in-base64-out \
+            --read-timeout 300 \
+            /tmp/backfill-response.json
+
+          echo "Backfill response:"
+          cat /tmp/backfill-response.json
+
+          node -e "
+            const r = JSON.parse(require('fs').readFileSync('/tmp/backfill-response.json', 'utf8'));
+            if (!r.success) { console.error('Backfill failed:', r.error); process.exit(1); }
+            console.log('Image dimensions backfilled successfully');
           "
 
   verify:

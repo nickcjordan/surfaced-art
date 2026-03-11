@@ -28,10 +28,16 @@ export function createWaitlistRoutes(prisma: PrismaClient) {
     }
 
     const normalizedEmail = parsed.data.email.trim().toLowerCase()
+    const { source, artistId, listingId } = parsed.data
 
     try {
       await prisma.waitlist.create({
-        data: { email: normalizedEmail },
+        data: {
+          email: normalizedEmail,
+          ...(source && { source }),
+          ...(artistId && { artistId }),
+          ...(listingId && { listingId }),
+        },
       })
 
       logger.info('Waitlist signup', {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 
-vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfacedart.com')
-vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfacedart.com')
+vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfaced.art')
+vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfaced.art')
 import { render, screen } from '@testing-library/react'
 import ForArtistsContent from '../ForArtistsContent'
 
@@ -78,5 +78,11 @@ describe('For Artists Page', () => {
   it('should render the roadmap section', () => {
     render(<ForArtistsContent />)
     expect(screen.getByTestId('for-artists-roadmap')).toBeInTheDocument()
+  })
+
+  it('should not render a fake testimonial', () => {
+    render(<ForArtistsContent />)
+    expect(screen.queryByText(/Surfaced Art Creator/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/selling through DMs/i)).not.toBeInTheDocument()
   })
 })
