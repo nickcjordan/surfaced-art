@@ -14,12 +14,12 @@ import { POSTHOG_KEY, POSTHOG_HOST, POSTHOG_ENV } from '@/lib/env'
 export { POSTHOG_KEY, POSTHOG_HOST, POSTHOG_ENV }
 
 export function isAnalyticsEnabled(): boolean {
-  return typeof window !== 'undefined'
+  return typeof window !== 'undefined' && !!POSTHOG_KEY
 }
 
 /** PostHog init options passed to PostHogProvider from posthog-js/react. */
 export const POSTHOG_OPTIONS: Partial<PostHogConfig> = {
-  api_host: POSTHOG_HOST,
+  api_host: POSTHOG_HOST ?? '',
   // GDPR: start opted out, memory-only persistence until consent
   opt_out_capturing_by_default: true,
   persistence: 'memory',

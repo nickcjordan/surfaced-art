@@ -40,11 +40,11 @@ export const COGNITO_CLIENT_ID = required('NEXT_PUBLIC_COGNITO_CLIENT_ID')
 /** Cognito IDP origin for CSP connect-src — stable AWS service URL, not env-configurable */
 export const COGNITO_IDP = 'https://cognito-idp.us-east-1.amazonaws.com'
 
-/** PostHog ingest host */
-export const POSTHOG_HOST = required('NEXT_PUBLIC_POSTHOG_HOST')
+/** PostHog ingest host — optional; analytics disabled when absent */
+export const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST
 
-/** PostHog project API key */
-export const POSTHOG_KEY = required('NEXT_PUBLIC_POSTHOG_KEY')
+/** PostHog project API key — optional; analytics disabled when absent */
+export const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY
 
-/** PostHog environment tag (e.g. 'prod', 'dev') */
-export const POSTHOG_ENV = required('NEXT_PUBLIC_POSTHOG_ENV')
+/** PostHog environment tag — optional, defaults to 'dev' */
+export const POSTHOG_ENV = process.env.NEXT_PUBLIC_POSTHOG_ENV || 'dev'
