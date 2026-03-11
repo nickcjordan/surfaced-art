@@ -39,6 +39,11 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://surfaced.art
           NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com/prod
           NEXT_PUBLIC_CDN_DOMAINS: https://dmfu4c7s6z2cc.cloudfront.net
+          NEXT_PUBLIC_COGNITO_USER_POOL_ID: us-east-1_placeholder
+          NEXT_PUBLIC_COGNITO_CLIENT_ID: placeholder-client-id
+          NEXT_PUBLIC_POSTHOG_KEY: phc_placeholder
+          NEXT_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
+          NEXT_PUBLIC_POSTHOG_ENV: ci
         run: npm run build
 
       - name: Type Check
