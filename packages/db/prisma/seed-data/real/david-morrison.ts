@@ -52,6 +52,7 @@ export const davidConfig: ArtistSeedConfig = {
       artworkLength: 11, artworkWidth: 8, artworkHeight: 8,
       packedLength: 15, packedWidth: 12, packedHeight: 12,
       packedWeight: 8,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Core Sample Cup (27)',
@@ -64,6 +65,7 @@ export const davidConfig: ArtistSeedConfig = {
       artworkLength: 4, artworkWidth: 3.5, artworkHeight: 4,
       packedLength: 8, packedWidth: 7.5, packedHeight: 8,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Core Sample Mug (22)',
@@ -76,6 +78,7 @@ export const davidConfig: ArtistSeedConfig = {
       artworkLength: 5, artworkWidth: 3.5, artworkHeight: 4.5,
       packedLength: 9, packedWidth: 7.5, packedHeight: 8.5,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Core Sample Tumbler (14)',
@@ -88,6 +91,7 @@ export const davidConfig: ArtistSeedConfig = {
       artworkLength: 3.5, artworkWidth: 3.5, artworkHeight: 5,
       packedLength: 7.5, packedWidth: 7.5, packedHeight: 9,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     // Sold listings
     {
@@ -101,6 +105,7 @@ export const davidConfig: ArtistSeedConfig = {
       artworkLength: 5, artworkWidth: 3.5, artworkHeight: 4.5,
       packedLength: 9, packedWidth: 7.5, packedHeight: 8.5,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Core Sample Bowl (24)',
@@ -113,6 +118,7 @@ export const davidConfig: ArtistSeedConfig = {
       artworkLength: 6, artworkWidth: 6, artworkHeight: 3,
       packedLength: 10, packedWidth: 10, packedHeight: 7,
       packedWeight: 2.5,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [

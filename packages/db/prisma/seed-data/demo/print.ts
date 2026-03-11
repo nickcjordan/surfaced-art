@@ -48,6 +48,7 @@ const renConfig: ArtistSeedConfig = {
       artworkLength: 11, artworkWidth: 17, artworkHeight: 0,
       packedLength: 15, packedWidth: 21, packedHeight: 2,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Urban Pollinator',
@@ -60,6 +61,7 @@ const renConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 0,
       packedLength: 22, packedWidth: 28, packedHeight: 2,
       packedWeight: 1,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Transit Map (Queer Atlas)',
@@ -72,6 +74,7 @@ const renConfig: ArtistSeedConfig = {
       artworkLength: 11, artworkWidth: 17, artworkHeight: 0,
       packedLength: 15, packedWidth: 21, packedHeight: 2,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Night Garden',
@@ -84,6 +87,7 @@ const renConfig: ArtistSeedConfig = {
       artworkLength: 14, artworkWidth: 18, artworkHeight: 0,
       packedLength: 18, packedWidth: 22, packedHeight: 3,
       packedWeight: 1,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Solstice',
@@ -96,6 +100,7 @@ const renConfig: ArtistSeedConfig = {
       artworkLength: 22, artworkWidth: 30, artworkHeight: 0,
       packedLength: 26, packedWidth: 34, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -150,6 +155,7 @@ const desireeConfig: ArtistSeedConfig = {
       artworkLength: 14, artworkWidth: 20, artworkHeight: 0,
       packedLength: 18, packedWidth: 24, packedHeight: 2,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Second Line',
@@ -162,6 +168,7 @@ const desireeConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 0,
       packedLength: 22, packedWidth: 28, packedHeight: 2,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Po-Boy Sign, Magazine Street',
@@ -174,6 +181,7 @@ const desireeConfig: ArtistSeedConfig = {
       artworkLength: 11, artworkWidth: 14, artworkHeight: 0,
       packedLength: 15, packedWidth: 18, packedHeight: 2,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Magnolia & Mosquito',
@@ -186,6 +194,7 @@ const desireeConfig: ArtistSeedConfig = {
       artworkLength: 9, artworkWidth: 12, artworkHeight: 0,
       packedLength: 13, packedWidth: 16, packedHeight: 2,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Mardi Gras Indian, Big Chief',
@@ -198,6 +207,7 @@ const desireeConfig: ArtistSeedConfig = {
       artworkLength: 24, artworkWidth: 30, artworkHeight: 0,
       packedLength: 28, packedWidth: 34, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -251,6 +261,7 @@ const nathanConfig: ArtistSeedConfig = {
       artworkLength: 22, artworkWidth: 30, artworkHeight: 0,
       packedLength: 26, packedWidth: 34, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Storm Pattern',
@@ -263,6 +274,7 @@ const nathanConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 20, artworkHeight: 0,
       packedLength: 20, packedWidth: 24, packedHeight: 2,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Carved Bowl, Juniper',
@@ -275,6 +287,7 @@ const nathanConfig: ArtistSeedConfig = {
       artworkLength: 8, artworkWidth: 8, artworkHeight: 4,
       packedLength: 12, packedWidth: 12, packedHeight: 8,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Ponderosa Series No. 5',
@@ -287,6 +300,7 @@ const nathanConfig: ArtistSeedConfig = {
       artworkLength: 8, artworkWidth: 10, artworkHeight: 0,
       packedLength: 12, packedWidth: 14, packedHeight: 2,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Four Sacred Mountains',
@@ -299,6 +313,7 @@ const nathanConfig: ArtistSeedConfig = {
       artworkLength: 12, artworkWidth: 36, artworkHeight: 0,
       packedLength: 16, packedWidth: 40, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -353,6 +368,7 @@ const calebConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 0,
       packedLength: 22, packedWidth: 28, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Birch Grove',
@@ -365,6 +381,7 @@ const calebConfig: ArtistSeedConfig = {
       artworkLength: 22, artworkWidth: 30, artworkHeight: 0,
       packedLength: 26, packedWidth: 34, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Turned Bowl, Cherry',
@@ -377,6 +394,7 @@ const calebConfig: ArtistSeedConfig = {
       artworkLength: 10, artworkWidth: 10, artworkHeight: 4,
       packedLength: 14, packedWidth: 14, packedHeight: 8,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Prairie Horizon',
@@ -389,6 +407,7 @@ const calebConfig: ArtistSeedConfig = {
       artworkLength: 12, artworkWidth: 18, artworkHeight: 0,
       packedLength: 16, packedWidth: 22, packedHeight: 2,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Lake Superior, November',
@@ -401,6 +420,7 @@ const calebConfig: ArtistSeedConfig = {
       artworkLength: 24, artworkWidth: 36, artworkHeight: 0,
       packedLength: 28, packedWidth: 40, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [

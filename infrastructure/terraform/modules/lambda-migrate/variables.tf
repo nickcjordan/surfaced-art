@@ -61,3 +61,8 @@ variable "seed_mode" {
   type        = string
   default     = "all"
 }
+
+variable "s3_bucket_name" {
+  description = "S3 bucket name for media assets (used by backfill scripts)"
+  type        = string
+}

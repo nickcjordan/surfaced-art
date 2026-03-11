@@ -8,6 +8,7 @@
  * Designed to run inside the migrate Lambda via tsx, following the
  * same pattern as seed-safe.ts.
  */
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { PrismaClient } from '../src/generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
@@ -92,24 +93,41 @@ function readImageDimensions(buf: Buffer): { width: number; height: number } | n
   return null
 }
 
-async function getImageDimensionsFromUrl(url: string): Promise<{ width: number; height: number } | null> {
+const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || 'surfaced-art-dev-media'
+const s3 = new S3Client({})
+
+/**
+ * Extract the S3 object key from a CloudFront URL.
+ * URL format: https://{domain}/uploads/seed/artists/{slug}/...
+ * S3 key is everything after the domain, i.e. "uploads/seed/artists/...".
+ */
+function extractS3Key(url: string): string {
+  const parsed = new URL(url)
+  // pathname starts with "/", strip the leading slash for the S3 key
+  return parsed.pathname.slice(1)
+}
+
+async function getImageDimensionsFromS3(url: string): Promise<{ width: number; height: number } | null> {
   try {
-    const response = await fetch(url)
-    if (!response.ok) {
-      console.warn(`  SKIP: HTTP ${response.status} for ${url}`)
+    const key = extractS3Key(url)
+    const command = new GetObjectCommand({ Bucket: S3_BUCKET_NAME, Key: key })
+    const response = await s3.send(command)
+
+    if (!response.Body) {
+      console.warn(`  SKIP: Empty body for s3://${S3_BUCKET_NAME}/${key}`)
       return null
     }
 
-    const buffer = Buffer.from(await response.arrayBuffer())
+    const buffer = Buffer.from(await response.Body.transformToByteArray())
     const dims = readImageDimensions(buffer)
     if (!dims) {
-      console.warn(`  SKIP: Could not parse dimensions from ${url}`)
+      console.warn(`  SKIP: Could not parse dimensions from s3://${S3_BUCKET_NAME}/${key}`)
       return null
     }
 
     return dims
   } catch (err) {
-    console.warn(`  SKIP: Fetch error for ${url}: ${err instanceof Error ? err.message : err}`)
+    console.warn(`  SKIP: S3 error for ${url}: ${err instanceof Error ? err.message : err}`)
     return null
   }
 }
@@ -118,7 +136,11 @@ async function getImageDimensionsFromUrl(url: string): Promise<{ width: number; 
 // Main
 // ---------------------------------------------------------------------------
 
+const BATCH_SIZE = 10
+
 async function main() {
+  console.log(`Using S3 bucket: ${S3_BUCKET_NAME}`)
+
   const images = await prisma.listingImage.findMany({
     where: { width: null },
     select: { id: true, url: true },
@@ -129,23 +151,34 @@ async function main() {
   let updated = 0
   let skipped = 0
 
-  for (const image of images) {
-    console.log(`Processing ${image.url}...`)
-    const dims = await getImageDimensionsFromUrl(image.url)
+  // Process images in batches for performance
+  for (let i = 0; i < images.length; i += BATCH_SIZE) {
+    const batch = images.slice(i, i + BATCH_SIZE)
+    console.log(`\nBatch ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} images)...`)
 
-    if (!dims) {
-      skipped++
-      continue
+    const results = await Promise.all(
+      batch.map(async (image) => {
+        console.log(`  Processing ${image.url}...`)
+        const dims = await getImageDimensionsFromS3(image.url)
+        return { image, dims }
+      }),
+    )
+
+    for (const { image, dims } of results) {
+      if (!dims) {
+        skipped++
+        continue
+      }
+
+      console.log(`  ${image.url} → ${dims.width}x${dims.height}`)
+
+      await prisma.listingImage.update({
+        where: { id: image.id },
+        data: { width: dims.width, height: dims.height },
+      })
+
+      updated++
     }
-
-    console.log(`  ${dims.width}x${dims.height}`)
-
-    await prisma.listingImage.update({
-      where: { id: image.id },
-      data: { width: dims.width, height: dims.height },
-    })
-
-    updated++
   }
 
   console.log(`\nDone: ${updated} updated, ${skipped} skipped`)
