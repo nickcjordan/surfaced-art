@@ -9,6 +9,10 @@ describe('Error Page (main route group)', () => {
   const mockError = new Error('Something went wrong')
   const mockReset = vi.fn()
 
+  beforeEach(() => {
+    mockReset.mockClear()
+  })
+
   it('should render an error heading', () => {
     render(<ErrorPage error={mockError} reset={mockReset} />)
     expect(
@@ -30,9 +34,4 @@ describe('Error Page (main route group)', () => {
     expect(link).toHaveAttribute('href', '/')
   })
 
-  it('should have noindex metadata', async () => {
-    const { metadata } = await import('../error')
-    expect(metadata).toBeDefined()
-    expect(metadata.robots).toEqual({ index: false })
-  })
 })

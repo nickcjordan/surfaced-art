@@ -9,6 +9,10 @@ describe('Global Error Page', () => {
   const mockError = new Error('Root layout crash')
   const mockReset = vi.fn()
 
+  beforeEach(() => {
+    mockReset.mockClear()
+  })
+
   it('should render an error heading', () => {
     render(<GlobalError error={mockError} reset={mockReset} />)
     expect(
