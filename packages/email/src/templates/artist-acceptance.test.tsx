@@ -35,7 +35,7 @@ describe('ArtistAcceptance template', () => {
     const html = await render(<ArtistAcceptance {...props} />)
 
     expect(html).toContain('Set Up Your Profile')
-    expect(html).toContain('surfacedart.com/dashboard')
+    expect(html).toContain('surfaced.art/dashboard')
   })
 
   it('should include brand header and footer', async () => {

@@ -5,7 +5,7 @@ describe('getEmailConfig', () => {
   const originalEnv = { ...process.env }
 
   beforeEach(() => {
-    process.env.SES_FROM_ADDRESS = 'support@surfacedart.com'
+    process.env.SES_FROM_ADDRESS = 'support@surfaced.art'
     process.env.SES_CONFIGURATION_SET = 'surfaced-art-prod'
     process.env.AWS_REGION = 'us-east-1'
   })
@@ -17,9 +17,9 @@ describe('getEmailConfig', () => {
   it('should return correct config when all env vars are set', () => {
     const config = getEmailConfig()
 
-    expect(config.fromAddress).toBe('Surfaced Art <support@surfacedart.com>')
+    expect(config.fromAddress).toBe('Surfaced Art <support@surfaced.art>')
     expect(config.fromName).toBe('Surfaced Art')
-    expect(config.replyToAddress).toBe('support@surfacedart.com')
+    expect(config.replyToAddress).toBe('support@surfaced.art')
     expect(config.configurationSet).toBe('surfaced-art-prod')
     expect(config.region).toBe('us-east-1')
   })

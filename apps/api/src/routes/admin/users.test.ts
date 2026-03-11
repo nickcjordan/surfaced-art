@@ -13,7 +13,7 @@ vi.mock('@surfaced-art/email', () => ({
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfacedart.com', name = 'Admin User') {
+function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
   return { verify: vi.fn().mockResolvedValue({ sub, email, name }) }
 }
 
@@ -23,7 +23,7 @@ const TARGET_USER_ID = 'target-uuid-456'
 const mockAdminUser = {
   id: ADMIN_USER_ID,
   cognitoId: 'cognito-admin',
-  email: 'admin@surfacedart.com',
+  email: 'admin@surfaced.art',
   fullName: 'Admin User',
   roles: [{ role: 'admin', grantedAt: new Date('2025-01-01'), grantedBy: null }],
 }

@@ -26,7 +26,7 @@ export const BRAND = {
     heading: "Georgia, 'Times New Roman', Times, serif",
     body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   },
-  siteUrl: 'https://surfacedart.com',
+  siteUrl: 'https://surfaced.art',
 } as const
 
 interface LayoutProps {
@@ -100,7 +100,7 @@ export function Layout({ preview, children }: LayoutProps) {
                 textDecoration: 'none',
               }}
             >
-              surfacedart.com
+              surfaced.art
             </Link>
           </Section>
         </Container>

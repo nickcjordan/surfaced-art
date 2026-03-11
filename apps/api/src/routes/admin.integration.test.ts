@@ -18,7 +18,7 @@ vi.mock('@surfaced-art/email', () => ({
 
 const ADMIN_COGNITO_ID = 'cognito-admin-integration'
 const ARTIST_COGNITO_ID = 'cognito-artist-integration'
-const ADMIN_EMAIL = 'admin@surfacedart.com'
+const ADMIN_EMAIL = 'admin@surfaced.art'
 const ARTIST_EMAIL = 'artist@integration-test.com'
 
 describe('Admin routes — integration', () => {

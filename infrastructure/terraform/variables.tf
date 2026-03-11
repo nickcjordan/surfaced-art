@@ -101,7 +101,7 @@ variable "stripe_webhook_secret" {
 variable "ses_domain" {
   description = "Domain for SES email sending"
   type        = string
-  default     = "surfacedart.com"
+  default     = "surfaced.art"
 }
 
 # Seed mode
