@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
-import { authMiddleware, optionalAuth, requireRole, requireAnyRole, setVerifier, resetVerifier } from './auth'
+import { authMiddleware, optionalAuth, requireRole, requireAnyRole } from './auth'
 import type { AuthUser } from './auth'
 
 // Mock Prisma
@@ -12,22 +12,7 @@ const mockPrisma = {
   $transaction: vi.fn(),
 } as unknown as Parameters<typeof authMiddleware>[0]
 
-// Mock JWT verifier
-const mockVerifier = {
-  verify: vi.fn(),
-} as unknown as ReturnType<typeof import('./auth').createVerifier>
-
-// Test token payload (what Cognito returns)
-const validPayload = {
-  sub: 'cognito-user-123',
-  email: 'alice@example.com',
-  name: 'Alice Smith',
-  iss: 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_test',
-  aud: 'test-client-id',
-  token_use: 'id',
-}
-
-// Test user from DB
+// Test users from DB
 const existingUser = {
   id: '550e8400-e29b-41d4-a716-446655440000',
   cognitoId: 'cognito-user-123',
@@ -50,6 +35,21 @@ const adminUser = {
     { id: 'role-1', userId: existingUser.id, role: 'buyer', grantedAt: new Date(), grantedBy: null },
     { id: 'role-3', userId: existingUser.id, role: 'admin', grantedAt: new Date(), grantedBy: null },
   ],
+}
+
+/**
+ * Create an env object simulating API Gateway v2 JWT authorizer claims.
+ */
+function createAuthEnv(sub = 'cognito-user-123', email = 'alice@example.com', name = 'Alice Smith') {
+  return {
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
 }
 
 function createAuthApp() {
@@ -90,16 +90,11 @@ function createRoleApp() {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  setVerifier(mockVerifier as ReturnType<typeof import('./auth').createVerifier>)
-})
-
-afterEach(() => {
-  resetVerifier()
 })
 
 describe('authMiddleware', () => {
-  describe('missing/invalid token', () => {
-    it('should return 401 when no Authorization header is present', async () => {
+  describe('missing claims', () => {
+    it('should return 401 when no claims in event context (no env)', async () => {
       const app = createAuthApp()
       const res = await app.request('/protected/test')
       expect(res.status).toBe(401)
@@ -108,38 +103,30 @@ describe('authMiddleware', () => {
       expect(body.error.message).toBe('Authentication required')
     })
 
-    it('should return 401 when Authorization header has no Bearer prefix', async () => {
+    it('should return 401 when claims lack sub', async () => {
       const app = createAuthApp()
-      const res = await app.request('/protected/test', {
-        headers: { Authorization: 'Basic abc123' },
-      })
+      const env = {
+        requestContext: {
+          authorizer: {
+            jwt: {
+              claims: { email: 'alice@example.com' },
+            },
+          },
+        },
+      }
+      const res = await app.request('/protected/test', {}, env)
       expect(res.status).toBe(401)
       const body = await res.json()
       expect(body.error.code).toBe('UNAUTHORIZED')
-    })
-
-    it('should return 401 when token verification fails', async () => {
-      mockVerifier.verify.mockRejectedValue(new Error('Token expired'))
-      const app = createAuthApp()
-      const res = await app.request('/protected/test', {
-        headers: { Authorization: 'Bearer invalid-token' },
-      })
-      expect(res.status).toBe(401)
-      const body = await res.json()
-      expect(body.error.code).toBe('UNAUTHORIZED')
-      expect(body.error.message).toBe('Invalid or expired token')
     })
   })
 
   describe('existing user', () => {
-    it('should attach user to context for valid token with existing user', async () => {
-      mockVerifier.verify.mockResolvedValue(validPayload)
+    it('should attach user to context when valid claims and existing DB user', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(existingUser)
 
       const app = createAuthApp()
-      const res = await app.request('/protected/test', {
-        headers: { Authorization: 'Bearer valid-token' },
-      })
+      const res = await app.request('/protected/test', {}, createAuthEnv())
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -147,14 +134,11 @@ describe('authMiddleware', () => {
       expect(body.roles).toEqual(['buyer'])
     })
 
-    it('should look up user by cognitoId from token sub claim', async () => {
-      mockVerifier.verify.mockResolvedValue(validPayload)
+    it('should look up user by cognitoId from claims.sub', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(existingUser)
 
       const app = createAuthApp()
-      await app.request('/protected/test', {
-        headers: { Authorization: 'Bearer valid-token' },
-      })
+      await app.request('/protected/test', {}, createAuthEnv())
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { cognitoId: 'cognito-user-123' },
@@ -165,12 +149,11 @@ describe('authMiddleware', () => {
 
   describe('user auto-provisioning', () => {
     it('should create new user with buyer role on first request', async () => {
-      mockVerifier.verify.mockResolvedValue(validPayload)
       mockPrisma.user.findUnique.mockResolvedValue(null)
 
       const createdUser = {
         ...existingUser,
-        cognitoId: validPayload.sub,
+        cognitoId: 'cognito-user-123',
       }
       mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
         const tx = {
@@ -182,41 +165,53 @@ describe('authMiddleware', () => {
       })
 
       const app = createAuthApp()
-      const res = await app.request('/protected/test', {
-        headers: { Authorization: 'Bearer valid-token' },
-      })
+      const res = await app.request('/protected/test', {}, createAuthEnv())
 
       expect(res.status).toBe(200)
       expect(mockPrisma.$transaction).toHaveBeenCalled()
     })
 
     it('should use email prefix as fullName when name claim is missing', async () => {
-      const payloadNoName = { ...validPayload, name: undefined }
-      mockVerifier.verify.mockResolvedValue(payloadNoName)
       mockPrisma.user.findUnique.mockResolvedValue(null)
 
       const createdUser = { ...existingUser, fullName: 'alice' }
+      const mockCreate = vi.fn().mockResolvedValue(createdUser)
       mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
         const tx = {
           user: {
-            create: vi.fn().mockResolvedValue(createdUser),
+            create: mockCreate,
           },
         }
         return fn(tx)
       })
 
       const app = createAuthApp()
-      const res = await app.request('/protected/test', {
-        headers: { Authorization: 'Bearer valid-token' },
-      })
+      // Pass claims without a name property
+      const env = {
+        requestContext: {
+          authorizer: {
+            jwt: {
+              claims: { sub: 'cognito-user-123', email: 'alice@example.com' },
+            },
+          },
+        },
+      }
+      const res = await app.request('/protected/test', {}, env)
 
       expect(res.status).toBe(200)
+      expect(mockCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            fullName: 'alice',
+          }),
+        }),
+      )
     })
   })
 })
 
 describe('optionalAuth', () => {
-  it('should proceed without user when no token is present', async () => {
+  it('should proceed without user when no claims present', async () => {
     const app = createOptionalAuthApp()
     const res = await app.request('/optional/test')
     expect(res.status).toBe(200)
@@ -225,14 +220,11 @@ describe('optionalAuth', () => {
     expect(body.userId).toBeNull()
   })
 
-  it('should attach user when valid token is present', async () => {
-    mockVerifier.verify.mockResolvedValue(validPayload)
+  it('should attach user when claims are present', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(existingUser)
 
     const app = createOptionalAuthApp()
-    const res = await app.request('/optional/test', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/optional/test', {}, createAuthEnv())
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -240,13 +232,11 @@ describe('optionalAuth', () => {
     expect(body.userId).toBe(existingUser.id)
   })
 
-  it('should proceed without user when token is invalid', async () => {
-    mockVerifier.verify.mockRejectedValue(new Error('Invalid token'))
+  it('should proceed without user if DB lookup throws', async () => {
+    mockPrisma.user.findUnique.mockRejectedValue(new Error('DB connection failed'))
 
     const app = createOptionalAuthApp()
-    const res = await app.request('/optional/test', {
-      headers: { Authorization: 'Bearer bad-token' },
-    })
+    const res = await app.request('/optional/test', {}, createAuthEnv())
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -256,7 +246,7 @@ describe('optionalAuth', () => {
 })
 
 describe('requireRole', () => {
-  it('should return 401 when no user is attached (middleware not chained)', async () => {
+  it('should return 401 when no user is attached', async () => {
     const app = new Hono()
     app.use('/test', requireRole('artist'))
     app.get('/test', (c) => c.json({ ok: true }))
@@ -266,13 +256,10 @@ describe('requireRole', () => {
   })
 
   it('should return 403 when user lacks the required role', async () => {
-    mockVerifier.verify.mockResolvedValue(validPayload)
     mockPrisma.user.findUnique.mockResolvedValue(existingUser) // only has 'buyer'
 
     const app = createRoleApp()
-    const res = await app.request('/artist/test', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/artist/test', {}, createAuthEnv())
 
     expect(res.status).toBe(403)
     const body = await res.json()
@@ -281,13 +268,10 @@ describe('requireRole', () => {
   })
 
   it('should allow access when user has the required role', async () => {
-    mockVerifier.verify.mockResolvedValue(validPayload)
     mockPrisma.user.findUnique.mockResolvedValue(artistUser)
 
     const app = createRoleApp()
-    const res = await app.request('/artist/test', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/artist/test', {}, createAuthEnv())
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -295,13 +279,10 @@ describe('requireRole', () => {
   })
 
   it('should check admin role correctly', async () => {
-    mockVerifier.verify.mockResolvedValue(validPayload)
     mockPrisma.user.findUnique.mockResolvedValue(adminUser)
 
     const app = createRoleApp()
-    const res = await app.request('/admin/test', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/admin/test', {}, createAuthEnv())
 
     expect(res.status).toBe(200)
   })
@@ -309,25 +290,19 @@ describe('requireRole', () => {
 
 describe('requireAnyRole', () => {
   it('should return 403 when user has none of the required roles', async () => {
-    mockVerifier.verify.mockResolvedValue(validPayload)
     mockPrisma.user.findUnique.mockResolvedValue(existingUser) // only has 'buyer'
 
     const app = createRoleApp()
-    const res = await app.request('/any-role/test', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/any-role/test', {}, createAuthEnv())
 
     expect(res.status).toBe(403)
   })
 
   it('should allow access when user has one of the required roles', async () => {
-    mockVerifier.verify.mockResolvedValue(validPayload)
     mockPrisma.user.findUnique.mockResolvedValue(adminUser) // has admin
 
     const app = createRoleApp()
-    const res = await app.request('/any-role/test', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/any-role/test', {}, createAuthEnv())
 
     expect(res.status).toBe(200)
   })

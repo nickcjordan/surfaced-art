@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import { createAdminRoutes } from './admin'
-import { setVerifier, resetVerifier } from '../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock email module
@@ -13,10 +12,16 @@ vi.mock('@surfaced-art/email', () => ({
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
+function createAuthEnv(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
   return {
-    verify: vi.fn().mockResolvedValue({ sub, email, name }),
-  } as unknown as ReturnType<typeof setVerifier extends (v: infer T) => void ? () => T : never>
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
 }
 
 const ADMIN_USER_ID = 'admin-uuid-123'
@@ -126,42 +131,43 @@ function approveArtist(
   app: ReturnType<typeof createTestApp>,
   userId: string,
   body?: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/artists/${userId}/approve`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body ?? {}),
-  })
+  return app.request(
+    `/admin/artists/${userId}/approve`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+    },
+    env,
+  )
 }
 
 function rejectArtist(
   app: ReturnType<typeof createTestApp>,
   userId: string,
   body?: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/artists/${userId}/reject`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body ?? {}),
-  })
+  return app.request(
+    `/admin/artists/${userId}/reject`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+    },
+    env,
+  )
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────
 
+const authEnv = createAuthEnv()
+
 describe('POST /admin/artists/:userId/approve', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
-  })
-
-  afterEach(() => {
-    resetVerifier()
   })
 
   describe('authentication and authorization', () => {
@@ -180,7 +186,7 @@ describe('POST /admin/artists/:userId/approve', () => {
       const prisma = createMockPrisma({ adminRoles: ['buyer'] })
       const app = createTestApp(prisma)
 
-      const res = await approveArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      const res = await approveArtist(app, TARGET_USER_ID, {}, authEnv)
       expect(res.status).toBe(403)
 
       const body = await res.json()
@@ -193,7 +199,7 @@ describe('POST /admin/artists/:userId/approve', () => {
       const prisma = createMockPrisma({ targetUser: null })
       const app = createTestApp(prisma)
 
-      const res = await approveArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      const res = await approveArtist(app, TARGET_USER_ID, {}, authEnv)
       expect(res.status).toBe(404)
 
       const body = await res.json()
@@ -204,7 +210,7 @@ describe('POST /admin/artists/:userId/approve', () => {
       const prisma = createMockPrisma({ application: null })
       const app = createTestApp(prisma)
 
-      const res = await approveArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      const res = await approveArtist(app, TARGET_USER_ID, {}, authEnv)
       expect(res.status).toBe(404)
 
       const body = await res.json()
@@ -217,7 +223,7 @@ describe('POST /admin/artists/:userId/approve', () => {
       const prisma = createMockPrisma({ targetUser: targetWithArtistRole })
       const app = createTestApp(prisma)
 
-      const res = await approveArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      const res = await approveArtist(app, TARGET_USER_ID, {}, authEnv)
       expect(res.status).toBe(409)
 
       const body = await res.json()
@@ -230,7 +236,7 @@ describe('POST /admin/artists/:userId/approve', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await approveArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      const res = await approveArtist(app, TARGET_USER_ID, {}, authEnv)
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -246,7 +252,7 @@ describe('POST /admin/artists/:userId/approve', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      await approveArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      await approveArtist(app, TARGET_USER_ID, {}, authEnv)
 
       expect(prisma.$transaction).toHaveBeenCalledOnce()
     })
@@ -255,7 +261,7 @@ describe('POST /admin/artists/:userId/approve', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await approveArtist(app, TARGET_USER_ID, { reviewNotes: 'Great portfolio!' }, 'valid-token')
+      const res = await approveArtist(app, TARGET_USER_ID, { reviewNotes: 'Great portfolio!' }, authEnv)
       expect(res.status).toBe(200)
     })
 
@@ -264,7 +270,7 @@ describe('POST /admin/artists/:userId/approve', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      await approveArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      await approveArtist(app, TARGET_USER_ID, {}, authEnv)
 
       expect(sendEmail).toHaveBeenCalledOnce()
       expect(sendEmail).toHaveBeenCalledWith(
@@ -280,11 +286,6 @@ describe('POST /admin/artists/:userId/approve', () => {
 describe('POST /admin/artists/:userId/reject', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
-  })
-
-  afterEach(() => {
-    resetVerifier()
   })
 
   describe('authentication and authorization', () => {
@@ -303,7 +304,7 @@ describe('POST /admin/artists/:userId/reject', () => {
       const prisma = createMockPrisma({ adminRoles: ['buyer'] })
       const app = createTestApp(prisma)
 
-      const res = await rejectArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      const res = await rejectArtist(app, TARGET_USER_ID, {}, authEnv)
       expect(res.status).toBe(403)
 
       const body = await res.json()
@@ -316,7 +317,7 @@ describe('POST /admin/artists/:userId/reject', () => {
       const prisma = createMockPrisma({ targetUser: null })
       const app = createTestApp(prisma)
 
-      const res = await rejectArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      const res = await rejectArtist(app, TARGET_USER_ID, {}, authEnv)
       expect(res.status).toBe(404)
 
       const body = await res.json()
@@ -327,7 +328,7 @@ describe('POST /admin/artists/:userId/reject', () => {
       const prisma = createMockPrisma({ application: null })
       const app = createTestApp(prisma)
 
-      const res = await rejectArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      const res = await rejectArtist(app, TARGET_USER_ID, {}, authEnv)
       expect(res.status).toBe(404)
 
       const body = await res.json()
@@ -341,7 +342,7 @@ describe('POST /admin/artists/:userId/reject', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await rejectArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      const res = await rejectArtist(app, TARGET_USER_ID, {}, authEnv)
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -352,7 +353,7 @@ describe('POST /admin/artists/:userId/reject', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      await rejectArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      await rejectArtist(app, TARGET_USER_ID, {}, authEnv)
 
       expect(prisma.artistApplication.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -369,7 +370,7 @@ describe('POST /admin/artists/:userId/reject', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await rejectArtist(app, TARGET_USER_ID, { reviewNotes: 'Not a good fit at this time.' }, 'valid-token')
+      const res = await rejectArtist(app, TARGET_USER_ID, { reviewNotes: 'Not a good fit at this time.' }, authEnv)
       expect(res.status).toBe(200)
     })
 
@@ -378,7 +379,7 @@ describe('POST /admin/artists/:userId/reject', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      await rejectArtist(app, TARGET_USER_ID, {}, 'valid-token')
+      await rejectArtist(app, TARGET_USER_ID, {}, authEnv)
 
       expect(sendEmail).toHaveBeenCalledOnce()
       expect(sendEmail).toHaveBeenCalledWith(

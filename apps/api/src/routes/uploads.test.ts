@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { Hono } from 'hono'
 import { createUploadRoutes } from './uploads'
-import { setVerifier, resetVerifier } from '../middleware/auth'
 import { setS3Client, resetS3Client } from '../lib/s3'
 import type { PrismaClient } from '@surfaced-art/db'
 
@@ -15,10 +14,16 @@ const mockCreatePresignedPost = vi.mocked(createPresignedPost)
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-123', email = 'artist@example.com', name = 'Test Artist') {
+function createAuthEnv(sub = 'cognito-123', email = 'artist@example.com', name = 'Test Artist') {
   return {
-    verify: vi.fn().mockResolvedValue({ sub, email, name }),
-  } as unknown as ReturnType<typeof setVerifier extends (v: infer T) => void ? () => T : never>
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
 }
 
 function createMockPrisma(roles: string[] = ['artist']) {
@@ -44,15 +49,17 @@ function createTestApp(prisma: PrismaClient) {
 function postPresignedUrl(
   app: ReturnType<typeof createTestApp>,
   body: unknown,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request('/uploads/presigned-url', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  })
+  return app.request(
+    '/uploads/presigned-url',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+    env,
+  )
 }
 
 const validBody = {
@@ -69,9 +76,6 @@ describe('POST /uploads/presigned-url', () => {
     vi.clearAllMocks()
     process.env.S3_BUCKET_NAME = 'test-bucket'
 
-    // Set up mock verifier
-    setVerifier(createMockVerifier() as never)
-
     // Set up mock S3 client
     setS3Client({} as never)
 
@@ -87,7 +91,6 @@ describe('POST /uploads/presigned-url', () => {
   })
 
   afterEach(() => {
-    resetVerifier()
     resetS3Client()
     if (originalEnv !== undefined) {
       process.env.S3_BUCKET_NAME = originalEnv
@@ -112,7 +115,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma(['buyer'])
       const app = createTestApp(prisma)
 
-      const res = await postPresignedUrl(app, validBody, 'valid-token')
+      const res = await postPresignedUrl(app, validBody, createAuthEnv())
       expect(res.status).toBe(403)
 
       const body = await res.json()
@@ -123,7 +126,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma(['artist'])
       const app = createTestApp(prisma)
 
-      const res = await postPresignedUrl(app, validBody, 'valid-token')
+      const res = await postPresignedUrl(app, validBody, createAuthEnv())
       expect(res.status).toBe(200)
     })
 
@@ -131,7 +134,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma(['admin'])
       const app = createTestApp(prisma)
 
-      const res = await postPresignedUrl(app, validBody, 'valid-token')
+      const res = await postPresignedUrl(app, validBody, createAuthEnv())
       expect(res.status).toBe(200)
     })
   })
@@ -141,14 +144,15 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await app.request('/uploads/presigned-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer valid-token',
+      const res = await app.request(
+        '/uploads/presigned-url',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      })
+        createAuthEnv(),
+      )
       expect(res.status).toBe(400)
     })
 
@@ -159,7 +163,7 @@ describe('POST /uploads/presigned-url', () => {
       const res = await postPresignedUrl(
         app,
         { context: 'listing', contentType: 'image/gif' },
-        'valid-token',
+        createAuthEnv(),
       )
       expect(res.status).toBe(400)
 
@@ -174,7 +178,7 @@ describe('POST /uploads/presigned-url', () => {
       const res = await postPresignedUrl(
         app,
         { context: 'avatar', contentType: 'image/jpeg' },
-        'valid-token',
+        createAuthEnv(),
       )
       expect(res.status).toBe(400)
     })
@@ -183,14 +187,15 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await app.request('/uploads/presigned-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer valid-token',
+      const res = await app.request(
+        '/uploads/presigned-url',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: 'not valid json{',
         },
-        body: 'not valid json{',
-      })
+        createAuthEnv(),
+      )
       expect(res.status).toBe(400)
     })
   })
@@ -200,7 +205,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await postPresignedUrl(app, validBody, 'valid-token')
+      const res = await postPresignedUrl(app, validBody, createAuthEnv())
       expect(res.status).toBe(200)
 
       const body = await res.json()
@@ -214,7 +219,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      await postPresignedUrl(app, validBody, 'valid-token')
+      await postPresignedUrl(app, validBody, createAuthEnv())
 
       expect(mockCreatePresignedPost).toHaveBeenCalledWith(
         expect.anything(),
@@ -240,7 +245,7 @@ describe('POST /uploads/presigned-url', () => {
         await postPresignedUrl(
           app,
           { context, contentType: 'image/jpeg' },
-          'valid-token',
+          createAuthEnv(),
         )
 
         expect(mockCreatePresignedPost).toHaveBeenCalledWith(
@@ -272,7 +277,7 @@ describe('POST /uploads/presigned-url', () => {
         await postPresignedUrl(
           app,
           { context: 'listing', contentType },
-          'valid-token',
+          createAuthEnv(),
         )
 
         expect(mockCreatePresignedPost).toHaveBeenCalledWith(
@@ -290,7 +295,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      await postPresignedUrl(app, validBody, 'valid-token')
+      await postPresignedUrl(app, validBody, createAuthEnv())
 
       expect(mockCreatePresignedPost).toHaveBeenCalledWith(
         expect.anything(),
@@ -306,7 +311,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      await postPresignedUrl(app, validBody, 'valid-token')
+      await postPresignedUrl(app, validBody, createAuthEnv())
 
       expect(mockCreatePresignedPost).toHaveBeenCalledWith(
         expect.anything(),
@@ -322,7 +327,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      await postPresignedUrl(app, validBody, 'valid-token')
+      await postPresignedUrl(app, validBody, createAuthEnv())
 
       expect(mockCreatePresignedPost).toHaveBeenCalledWith(
         expect.anything(),
@@ -342,7 +347,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await postPresignedUrl(app, validBody, 'valid-token')
+      const res = await postPresignedUrl(app, validBody, createAuthEnv())
       expect(res.status).toBe(500)
 
       const body = await res.json()
@@ -355,7 +360,7 @@ describe('POST /uploads/presigned-url', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await postPresignedUrl(app, validBody, 'valid-token')
+      const res = await postPresignedUrl(app, validBody, createAuthEnv())
       expect(res.status).toBe(500)
 
       const body = await res.json()

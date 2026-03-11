@@ -43,7 +43,13 @@ export default function DashboardPage() {
           setStripeStatusLoaded(false)
         })
     } catch (err) {
-      if (err instanceof Error && 'status' in err && (err as ApiError).status === 403) {
+      const status = err instanceof Error && 'status' in err ? (err as ApiError).status : 0
+      if (status === 401) {
+        // Token expired or invalid — redirect to sign-in
+        window.location.href = `/sign-in?redirect=${encodeURIComponent(window.location.pathname)}`
+        return
+      }
+      if (status === 403) {
         setError('You do not have artist access.')
         return
       }

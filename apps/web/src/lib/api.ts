@@ -51,7 +51,21 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     })
 
     if (!response.ok) {
-      throw new ApiError(response.status, `API request failed: ${response.statusText}`)
+      // Parse error body to get a meaningful message.
+      // API Gateway returns { message: "Unauthorized" }
+      // Lambda returns { error: { code: "...", message: "..." } }
+      let message = response.statusText || `HTTP ${response.status}`
+      try {
+        const body = await response.json()
+        if (body?.error?.message) {
+          message = body.error.message
+        } else if (body?.message) {
+          message = body.message
+        }
+      } catch {
+        // Body not parseable — use statusText fallback
+      }
+      throw new ApiError(response.status, message)
     }
 
     return response.json() as Promise<T>

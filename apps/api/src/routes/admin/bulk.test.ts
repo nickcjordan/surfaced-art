@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { Hono } from 'hono'
 import { createAdminRoutes } from './index'
-import { setVerifier, resetVerifier } from '../../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock email module
@@ -23,9 +22,15 @@ vi.mock('../../lib/revalidation', () => ({
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
+function createAuthEnv(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
   return {
-    verify: vi.fn().mockResolvedValue({ sub, email, name }),
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
   }
 }
 
@@ -124,11 +129,9 @@ function createTestApp(prisma: PrismaClient) {
   return app
 }
 
-describe('Admin Bulk Operations', () => {
-  afterEach(() => {
-    resetVerifier()
-  })
+const authEnv = createAuthEnv()
 
+describe('Admin Bulk Operations', () => {
   // ─── POST /admin/listings/bulk-status ──────────────────────
 
   describe('POST /admin/listings/bulk-status', () => {
@@ -144,33 +147,30 @@ describe('Admin Bulk Operations', () => {
     })
 
     it('should return 403 for non-admin users', async () => {
-      setVerifier(createMockVerifier())
       const prisma = createMockPrisma({ adminRoles: ['buyer'] })
       const app = createTestApp(prisma)
       const res = await app.request('/admin/listings/bulk-status', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingIds: [LISTING_ID_1], status: 'hidden', reason: 'test' }),
-      })
+      }, authEnv)
       expect(res.status).toBe(403)
     })
 
     it('should reject empty listingIds array', async () => {
-      setVerifier(createMockVerifier())
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
       const res = await app.request('/admin/listings/bulk-status', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingIds: [], status: 'hidden', reason: 'test' }),
-      })
+      }, authEnv)
 
       expect(res.status).toBe(400)
     })
 
     it('should reject more than 100 IDs', async () => {
-      setVerifier(createMockVerifier())
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
@@ -180,27 +180,26 @@ describe('Admin Bulk Operations', () => {
 
       const res = await app.request('/admin/listings/bulk-status', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingIds: ids, status: 'hidden', reason: 'test' }),
-      })
+      }, authEnv)
 
       expect(res.status).toBe(400)
     })
 
     it('should update listings in a transaction and return counts', async () => {
-      setVerifier(createMockVerifier())
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
       const res = await app.request('/admin/listings/bulk-status', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           listingIds: [LISTING_ID_1, LISTING_ID_2],
           status: 'hidden',
           reason: 'Inappropriate content',
         }),
-      })
+      }, authEnv)
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -210,7 +209,6 @@ describe('Admin Bulk Operations', () => {
     })
 
     it('should report IDs not found in failed array', async () => {
-      setVerifier(createMockVerifier())
       // Only LISTING_ID_1 exists, LISTING_ID_3 doesn't
       const prisma = createMockPrisma({
         listingsFound: [{ id: LISTING_ID_1, category: 'ceramics', artist: { slug: 'artist-1' } }],
@@ -220,13 +218,13 @@ describe('Admin Bulk Operations', () => {
 
       const res = await app.request('/admin/listings/bulk-status', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           listingIds: [LISTING_ID_1, LISTING_ID_3],
           status: 'hidden',
           reason: 'test',
         }),
-      })
+      }, authEnv)
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -237,19 +235,18 @@ describe('Admin Bulk Operations', () => {
 
     it('should audit log bulk status changes', async () => {
       const { logAdminAction } = await import('../../lib/audit')
-      setVerifier(createMockVerifier())
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
       await app.request('/admin/listings/bulk-status', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           listingIds: [LISTING_ID_1, LISTING_ID_2],
           status: 'hidden',
           reason: 'bulk hide test',
         }),
-      })
+      }, authEnv)
 
       expect(logAdminAction).toHaveBeenCalledWith(
         prisma,
@@ -277,29 +274,27 @@ describe('Admin Bulk Operations', () => {
     })
 
     it('should reject empty userIds array', async () => {
-      setVerifier(createMockVerifier())
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
       const res = await app.request('/admin/users/bulk-role', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userIds: [], role: 'artist' }),
-      })
+      }, authEnv)
 
       expect(res.status).toBe(400)
     })
 
     it('should grant roles and return counts', async () => {
-      setVerifier(createMockVerifier())
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
       const res = await app.request('/admin/users/bulk-role', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userIds: [USER_ID_1, USER_ID_2], role: 'artist' }),
-      })
+      }, authEnv)
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -309,7 +304,6 @@ describe('Admin Bulk Operations', () => {
     })
 
     it('should skip users who already have the role', async () => {
-      setVerifier(createMockVerifier())
       const prisma = createMockPrisma({
         existingRoles: [{ userId: USER_ID_1, role: 'artist' }],
       })
@@ -317,9 +311,9 @@ describe('Admin Bulk Operations', () => {
 
       const res = await app.request('/admin/users/bulk-role', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userIds: [USER_ID_1, USER_ID_2], role: 'artist' }),
-      })
+      }, authEnv)
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -327,7 +321,6 @@ describe('Admin Bulk Operations', () => {
     })
 
     it('should report users not found in failed array', async () => {
-      setVerifier(createMockVerifier())
       // Only USER_ID_1 found, USER_ID_3 not
       const prisma = createMockPrisma({
         usersFound: [{ id: USER_ID_1 }],
@@ -336,9 +329,9 @@ describe('Admin Bulk Operations', () => {
 
       const res = await app.request('/admin/users/bulk-role', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userIds: [USER_ID_1, USER_ID_3], role: 'artist' }),
-      })
+      }, authEnv)
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -349,15 +342,14 @@ describe('Admin Bulk Operations', () => {
 
     it('should audit log bulk role grants', async () => {
       const { logAdminAction } = await import('../../lib/audit')
-      setVerifier(createMockVerifier())
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
       await app.request('/admin/users/bulk-role', {
         method: 'POST',
-        headers: { Authorization: 'Bearer valid-token', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userIds: [USER_ID_1, USER_ID_2], role: 'artist' }),
-      })
+      }, authEnv)
 
       expect(logAdminAction).toHaveBeenCalledWith(
         prisma,
