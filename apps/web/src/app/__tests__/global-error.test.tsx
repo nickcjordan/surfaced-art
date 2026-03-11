@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://surfaced.art')
 vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.surfaced.art')
