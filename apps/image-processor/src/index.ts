@@ -11,7 +11,16 @@ const WEBP_QUALITY = 82
 /** Supported input image extensions (lowercase). */
 const SUPPORTED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png'])
 
-const s3 = new S3Client({ region: process.env.AWS_REGION ?? 'us-east-1' })
+let s3: S3Client | null = null
+
+function getS3Client(): S3Client {
+  if (!s3) {
+    const region = process.env.AWS_REGION
+    if (!region) throw new Error('AWS_REGION is not set')
+    s3 = new S3Client({ region })
+  }
+  return s3
+}
 
 interface ProcessingResult {
   statusCode: number
@@ -65,7 +74,7 @@ async function processImage(
   key: string
 ): Promise<SingleImageResult & { sourceWidth: number; sourceHeight: number }> {
   // Fetch the original image from S3
-  const getResponse = await s3.send(
+  const getResponse = await getS3Client().send(
     new GetObjectCommand({ Bucket: bucket, Key: key })
   )
 
@@ -103,7 +112,7 @@ async function processImage(
     const outputBuffer = await resized.toBuffer()
     const variantKey = `${baseKey}/${targetWidth}w.webp`
 
-    await s3.send(
+    await getS3Client().send(
       new PutObjectCommand({
         Bucket: bucket,
         Key: variantKey,

@@ -42,12 +42,14 @@ import {
 
 // Notion SDK v5 uses dataSources.query (not databases.query).
 // The data source ID is the collection ID from the Notion database.
-const NOTION_DATA_SOURCE_ID =
-  process.env.NOTION_DATA_SOURCE_ID ??
-  process.env.NOTION_DATABASE_ID ??
-  'd190c7e8-fbcb-49c6-ac4e-abf6389575cf'
-const S3_BUCKET = process.env.S3_MEDIA_BUCKET ?? 'surfaced-art-prod-media'
-const AWS_REGION = process.env.AWS_REGION ?? 'us-east-1'
+function required(name: string): string {
+  const v = process.env[name]
+  if (!v) throw new Error(`Missing required env var: ${name}`)
+  return v
+}
+const NOTION_DATA_SOURCE_ID = process.env.NOTION_DATA_SOURCE_ID ?? required('NOTION_DATABASE_ID')
+const S3_BUCKET = required('S3_MEDIA_BUCKET')
+const AWS_REGION = required('AWS_REGION')
 
 // ---------------------------------------------------------------------------
 // CLI argument parsing

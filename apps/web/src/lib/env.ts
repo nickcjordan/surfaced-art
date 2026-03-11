@@ -28,19 +28,23 @@ export const API_URL = required('NEXT_PUBLIC_API_URL')
 /** Space-separated CDN origins for images (CloudFront) */
 export const CDN_DOMAINS = required('NEXT_PUBLIC_CDN_DOMAINS')
 
+/** Primary CloudFront domain (bare hostname) for constructing image URLs — first entry of CDN_DOMAINS */
+export const CLOUDFRONT_DOMAIN = CDN_DOMAINS.split(/\s+/)[0].replace(/^https?:\/\//, '')
+
 /** Cognito user pool ID */
 export const COGNITO_USER_POOL_ID = required('NEXT_PUBLIC_COGNITO_USER_POOL_ID')
 
 /** Cognito app client ID */
 export const COGNITO_CLIENT_ID = required('NEXT_PUBLIC_COGNITO_CLIENT_ID')
 
-/** Cognito IDP origin for CSP connect-src (stable AWS service URL) */
-export const COGNITO_IDP =
-  process.env.NEXT_PUBLIC_COGNITO_IDP ?? 'https://cognito-idp.us-east-1.amazonaws.com'
+/** Cognito IDP origin for CSP connect-src — stable AWS service URL, not env-configurable */
+export const COGNITO_IDP = 'https://cognito-idp.us-east-1.amazonaws.com'
 
-/** PostHog ingest host (stable third-party URL) */
-export const POSTHOG_HOST =
-  process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com'
+/** PostHog ingest host */
+export const POSTHOG_HOST = required('NEXT_PUBLIC_POSTHOG_HOST')
 
-/** PostHog project API key (optional — analytics disabled if unset) */
-export const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? ''
+/** PostHog project API key */
+export const POSTHOG_KEY = required('NEXT_PUBLIC_POSTHOG_KEY')
+
+/** PostHog environment tag (e.g. 'prod', 'dev') */
+export const POSTHOG_ENV = required('NEXT_PUBLIC_POSTHOG_ENV')

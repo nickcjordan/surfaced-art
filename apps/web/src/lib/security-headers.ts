@@ -7,35 +7,22 @@
  *
  *   NEXT_PUBLIC_CDN_DOMAINS  — space-separated CloudFront (or other CDN) origins for img-src
  *   NEXT_PUBLIC_API_URL      — API origin for connect-src
- *   NEXT_PUBLIC_COGNITO_IDP  — Cognito IDP origin for connect-src
  */
 
-const CDN_DOMAINS = (
-  process.env.NEXT_PUBLIC_CDN_DOMAINS ??
-  'https://dmfu4c7s6z2cc.cloudfront.net https://d2agn4aoo0e7ji.cloudfront.net'
-).trim()
+import { CDN_DOMAINS, API_URL, COGNITO_IDP, POSTHOG_HOST } from '@/lib/env'
 
-const API_ORIGIN = (
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://xl3aiyolr6.execute-api.us-east-1.amazonaws.com'
-).trim()
-
-const COGNITO_IDP = (
-  process.env.NEXT_PUBLIC_COGNITO_IDP ??
-  'https://cognito-idp.us-east-1.amazonaws.com'
-).trim()
-
-const POSTHOG_HOST = (
-  process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com'
-).trim()
+const CDN_DOMAINS_TRIMMED = CDN_DOMAINS.trim()
+const API_ORIGIN = API_URL.trim()
+const COGNITO_IDP_TRIMMED = COGNITO_IDP.trim()
+const POSTHOG_HOST_TRIMMED = POSTHOG_HOST.trim()
 
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${POSTHOG_HOST}`,
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${POSTHOG_HOST_TRIMMED}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  `img-src 'self' data: ${CDN_DOMAINS}`,
-  `connect-src 'self' ${API_ORIGIN} ${COGNITO_IDP} ${POSTHOG_HOST}`,
+  `img-src 'self' data: ${CDN_DOMAINS_TRIMMED}`,
+  `connect-src 'self' ${API_ORIGIN} ${COGNITO_IDP_TRIMMED} ${POSTHOG_HOST_TRIMMED}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

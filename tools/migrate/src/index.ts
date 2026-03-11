@@ -1,13 +1,6 @@
 import { execSync } from 'child_process'
 import fs from 'node:fs'
 
-const LAMBDA_ROOT = process.env.LAMBDA_TASK_ROOT ?? '/var/task'
-
-// prisma is a direct dependency of @surfaced-art/migrate, so it resolves
-// at the standard node_modules path — no workspace hoisting hacks needed.
-const PRISMA_CLI = `${LAMBDA_ROOT}/node_modules/prisma/build/index.js`
-const PRISMA_CMD = `node ${PRISMA_CLI}`
-
 interface MigrateEvent {
   command: 'migrate' | 'force-reapply-baseline' | 'reset-baseline' | 'resolve-rolled-back' | 'seed' | 'backfill-dimensions'
   migration?: string
@@ -23,6 +16,14 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
   if (!validCommands.includes(event.command)) {
     return { success: false, error: `Unknown command: ${event.command}` }
   }
+
+  const LAMBDA_ROOT = process.env.LAMBDA_TASK_ROOT
+  if (!LAMBDA_ROOT) throw new Error('LAMBDA_TASK_ROOT is not set')
+
+  // prisma is a direct dependency of @surfaced-art/migrate, so it resolves
+  // at the standard node_modules path — no workspace hoisting hacks needed.
+  const PRISMA_CLI = `${LAMBDA_ROOT}/node_modules/prisma/build/index.js`
+  const PRISMA_CMD = `node ${PRISMA_CLI}`
 
   if (!fs.existsSync(LAMBDA_ROOT)) {
     return {

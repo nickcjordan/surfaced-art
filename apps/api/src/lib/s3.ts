@@ -11,7 +11,8 @@ let client: S3Client | null = null
 
 export function getS3Client(): S3Client {
   if (!client) {
-    const region = process.env.AWS_REGION ?? 'us-east-1'
+    const region = process.env.AWS_REGION
+    if (!region) throw new Error('AWS_REGION is not set')
     client = new S3Client({ region })
   }
   return client

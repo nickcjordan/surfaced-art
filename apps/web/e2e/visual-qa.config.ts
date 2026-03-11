@@ -14,7 +14,11 @@ export default defineConfig({
 
   // Base URL comes from environment — Vercel preview URL or production URL
   use: {
-    baseURL: process.env.VISUAL_QA_BASE_URL || 'https://surfaced.art',
+    baseURL: (() => {
+      const url = process.env.VISUAL_QA_BASE_URL
+      if (!url) throw new Error('VISUAL_QA_BASE_URL is not set')
+      return url
+    })(),
     screenshot: 'on',
     trace: 'on-first-retry',
     // When running against a Vercel preview deployment, bypass deployment

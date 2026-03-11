@@ -69,9 +69,6 @@ describe('ListingImages', () => {
     mockGetIdToken.mockResolvedValue('test-token')
     mockDeleteListingImage.mockResolvedValue(undefined)
     mockReorderListingImages.mockResolvedValue({ images: mockImages })
-
-    // Mock environment variable
-    vi.stubEnv('NEXT_PUBLIC_CLOUDFRONT_DOMAIN', 'cdn.example.com')
   })
 
   it('should render images passed as props', () => {

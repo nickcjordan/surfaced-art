@@ -6,8 +6,10 @@ import { getPresignedUrl } from '@/lib/api'
 import { validateFile, uploadToS3, UploadError } from '@/lib/upload'
 import { Button } from '@/components/ui/button'
 
+import { CLOUDFRONT_DOMAIN } from '@/lib/env'
+
 function getCloudfrontDomain(): string {
-  return process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN || ''
+  return CLOUDFRONT_DOMAIN
 }
 
 interface ImageUploadProps {

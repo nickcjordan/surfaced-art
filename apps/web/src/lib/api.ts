@@ -33,9 +33,7 @@ import type {
   TagsUpdateResponse,
 } from '@surfaced-art/types'
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://xl3aiyolr6.execute-api.us-east-1.amazonaws.com'
+import { API_URL as API_BASE_URL } from '@/lib/env'
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`

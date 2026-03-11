@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
+import { CLOUDFRONT_DOMAIN } from '@/lib/env'
+
 function getCloudfrontDomain(): string {
-  return process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN || ''
+  return CLOUDFRONT_DOMAIN
 }
 
 /** Read pixel dimensions from an image file in the browser. */
