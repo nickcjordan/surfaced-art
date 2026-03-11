@@ -20,6 +20,7 @@ describe('migrate handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockedExistsSync.mockReturnValue(true)
+    process.env.LAMBDA_TASK_ROOT = '/var/task'
   })
 
   it('should return error for unknown commands', async () => {

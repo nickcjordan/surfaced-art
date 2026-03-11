@@ -170,6 +170,7 @@ describe('image-processor integration tests', () => {
     vi.clearAllMocks()
     _hoistedUploads.clear()
     _hoistedStore.clear()
+    process.env.AWS_REGION = 'us-east-1'
   })
 
   it('generates 3 WebP variants at 400, 800, 1200px for a 1600px JPEG', async () => {

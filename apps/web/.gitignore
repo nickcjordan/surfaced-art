@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Committed build-time env — non-secret NEXT_PUBLIC_* placeholders for CI/production builds.
+# .env.local (gitignored) overrides these for local dev. Vercel project settings override for deployments.
+!.env.production
 
 # vercel
 .vercel

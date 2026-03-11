@@ -84,7 +84,8 @@ async function main() {
     process.exit(1)
   }
 
-  const mode = process.env.SEED_MODE || 'all'
+  const mode = process.env.SEED_MODE
+  if (!mode) throw new Error('SEED_MODE must be set (e.g. demo, real, all)')
   console.log(`Safety check passed. Starting seed... (SEED_MODE=${mode}, ${artistConfigs.length} artists)`)
 
   for (const config of artistConfigs) {

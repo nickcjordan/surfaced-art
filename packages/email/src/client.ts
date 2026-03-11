@@ -11,7 +11,8 @@ let client: SESClient | null = null
 
 export function getSESClient(): SESClient {
   if (!client) {
-    const region = process.env.AWS_REGION ?? 'us-east-1'
+    const region = process.env.AWS_REGION
+    if (!region) throw new Error('AWS_REGION is not set')
     client = new SESClient({ region })
   }
   return client

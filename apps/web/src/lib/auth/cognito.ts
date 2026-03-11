@@ -9,17 +9,12 @@ import {
 // Re-export CognitoUser type for challenge references
 export type { CognitoUser } from 'amazon-cognito-identity-js'
 
-// Environment config — these must be set as NEXT_PUBLIC_ env vars
-const USER_POOL_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID ?? ''
-const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? ''
+import { COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID } from '@/lib/env'
 
 function getUserPool(): CognitoUserPool {
-  if (!USER_POOL_ID || !CLIENT_ID) {
-    throw new Error('Cognito configuration missing: NEXT_PUBLIC_COGNITO_USER_POOL_ID and NEXT_PUBLIC_COGNITO_CLIENT_ID must be set')
-  }
   return new CognitoUserPool({
-    UserPoolId: USER_POOL_ID,
-    ClientId: CLIENT_ID,
+    UserPoolId: COGNITO_USER_POOL_ID,
+    ClientId: COGNITO_CLIENT_ID,
   })
 }
 

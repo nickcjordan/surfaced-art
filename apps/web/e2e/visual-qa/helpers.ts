@@ -2,11 +2,13 @@ import type { Page } from '@playwright/test'
 
 /**
  * Expected CloudFront CDN hostname for media assets.
- * Configurable via CLOUDFRONT_HOSTNAME env var for different environments.
- * Falls back to the `.cloudfront.net` suffix check when no specific hostname is set.
+ * Must be set via CLOUDFRONT_HOSTNAME env var.
  */
-export const EXPECTED_CDN_HOSTNAME =
-  process.env.CLOUDFRONT_HOSTNAME || 'cloudfront.net'
+export const EXPECTED_CDN_HOSTNAME = (() => {
+  const hostname = process.env.CLOUDFRONT_HOSTNAME
+  if (!hostname) throw new Error('CLOUDFRONT_HOSTNAME is not set')
+  return hostname
+})()
 
 /**
  * Returns true if the URL or console message refers to a known-acceptable

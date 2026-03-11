@@ -3,9 +3,10 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { CanvasDotOverlay } from '@/components/ui/canvas-texture'
 
+import { CDN_DOMAINS } from '@/lib/env'
+
 function getCdnBase(): string {
-  const domains = process.env.NEXT_PUBLIC_CDN_DOMAINS || ''
-  return domains.split(/\s+/)[0] || ''
+  return CDN_DOMAINS.split(/\s+/)[0]
 }
 
 const HERO_IMAGE_PATHS = [

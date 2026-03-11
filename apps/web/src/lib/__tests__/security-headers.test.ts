@@ -43,11 +43,10 @@ describe('security headers config', () => {
     expect(csp!.value).toContain("frame-ancestors 'none'")
   })
 
-  it('CSP should allow CloudFront CDN domains for images by default', async () => {
+  it('CSP should allow CloudFront CDN domains for images', async () => {
     const headers = await loadHeaders()
     const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
-    expect(csp.value).toContain('dmfu4c7s6z2cc.cloudfront.net')
-    expect(csp.value).toContain('d2agn4aoo0e7ji.cloudfront.net')
+    expect(csp.value).toContain('test.cloudfront.net')
   })
 
   it('CSP should allow Google Fonts for font loading', async () => {
@@ -87,12 +86,11 @@ describe('security headers config', () => {
     expect(csp.value).toMatch(/connect-src[^;]*us\.i\.posthog\.com/)
   })
 
-  it('should use default API URL when NEXT_PUBLIC_API_URL is not set', async () => {
+  it('should throw when NEXT_PUBLIC_API_URL is not set', async () => {
     vi.unstubAllEnvs()
     vi.stubEnv('NEXT_PUBLIC_API_URL', '')
-    const headers = await loadHeaders()
-    const csp = headers.find((h) => h.key === 'Content-Security-Policy')!
-    expect(csp.value).toMatch(/connect-src[^;]*execute-api\.us-east-1\.amazonaws\.com/)
+    vi.resetModules()
+    await expect(loadHeaders()).rejects.toThrow('NEXT_PUBLIC_API_URL')
   })
 })
 
@@ -115,17 +113,6 @@ describe('CSP environment overrides', () => {
     const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
     expect(csp.value).toContain('api.dev.surfaced.art')
     expect(csp.value).not.toContain('api.surfaced.art')
-    vi.unstubAllEnvs()
-    vi.resetModules()
-  })
-
-  it('should use NEXT_PUBLIC_COGNITO_IDP for connect-src when set', async () => {
-    vi.stubEnv('NEXT_PUBLIC_COGNITO_IDP', 'https://cognito-idp.eu-west-1.amazonaws.com')
-    vi.resetModules()
-    const { SECURITY_HEADERS } = await import('../security-headers')
-    const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
-    expect(csp.value).toContain('cognito-idp.eu-west-1.amazonaws.com')
-    expect(csp.value).not.toContain('cognito-idp.us-east-1.amazonaws.com')
     vi.unstubAllEnvs()
     vi.resetModules()
   })

@@ -30,18 +30,17 @@ describe('getEmailConfig', () => {
     expect(() => getEmailConfig()).toThrow('SES_FROM_ADDRESS must be set')
   })
 
-  it('should default region to us-east-1 when AWS_REGION is not set', () => {
+  it('should throw when AWS_REGION is not set', () => {
     delete process.env.AWS_REGION
 
-    const config = getEmailConfig()
-    expect(config.region).toBe('us-east-1')
+    expect(() => getEmailConfig()).toThrow('AWS_REGION must be set')
   })
 
-  it('should default configurationSet to empty string when not set', () => {
+  it('should return undefined configurationSet when SES_CONFIGURATION_SET is not set', () => {
     delete process.env.SES_CONFIGURATION_SET
 
     const config = getEmailConfig()
-    expect(config.configurationSet).toBe('')
+    expect(config.configurationSet).toBeUndefined()
   })
 })
 

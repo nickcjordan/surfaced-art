@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
@@ -37,7 +37,6 @@ vi.mock('@/lib/upload', () => ({
 import { ImageUpload } from '../components/image-upload'
 
 beforeEach(() => {
-  process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN = 'test.cloudfront.net'
   vi.clearAllMocks()
   mockValidateFile.mockImplementation(() => {})
   mockGetIdToken.mockResolvedValue('mock-token')
@@ -48,10 +47,6 @@ beforeEach(() => {
     key: 'uploads/profile/user-123/abc.jpg',
     expiresIn: 900,
   })
-})
-
-afterEach(() => {
-  delete process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN
 })
 
 describe('ImageUpload', () => {
@@ -123,21 +118,6 @@ describe('ImageUpload', () => {
       expect(defaultProps.onUploadComplete).toHaveBeenCalledWith(
         'https://test.cloudfront.net/uploads/profile/user-123/abc.jpg'
       )
-    })
-  })
-
-  it('should show error when CLOUDFRONT_DOMAIN is not configured', async () => {
-    delete process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN
-
-    const user = userEvent.setup()
-    render(<ImageUpload {...defaultProps} />)
-
-    const fileInput = screen.getByTestId('profile-image-upload-input')
-    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
-    await user.upload(fileInput, file)
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/CDN is not configured/i)
     })
   })
 

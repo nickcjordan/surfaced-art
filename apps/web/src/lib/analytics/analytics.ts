@@ -10,19 +10,16 @@ export const ANALYTICS_EVENTS = {
 
 // ─── Configuration ───────────────────────────────────────────
 // Exported so layout.tsx can pass them to PostHogProvider from posthog-js/react.
-export const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? ''
-export const POSTHOG_HOST =
-  process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com'
-export const POSTHOG_ENV =
-  process.env.NEXT_PUBLIC_POSTHOG_ENV || 'dev'
+import { POSTHOG_KEY, POSTHOG_HOST, POSTHOG_ENV } from '@/lib/env'
+export { POSTHOG_KEY, POSTHOG_HOST, POSTHOG_ENV }
 
 export function isAnalyticsEnabled(): boolean {
-  return POSTHOG_KEY.length > 0 && typeof window !== 'undefined'
+  return typeof window !== 'undefined' && !!POSTHOG_KEY
 }
 
 /** PostHog init options passed to PostHogProvider from posthog-js/react. */
 export const POSTHOG_OPTIONS: Partial<PostHogConfig> = {
-  api_host: POSTHOG_HOST,
+  api_host: POSTHOG_HOST ?? '',
   // GDPR: start opted out, memory-only persistence until consent
   opt_out_capturing_by_default: true,
   persistence: 'memory',
