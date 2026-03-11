@@ -23,5 +23,4 @@ additional_cors_origins = [
 cors_allowed_origins = [
   "https://surfaced.art",
   "https://www.surfaced.art",
-  "http://localhost:3000",
 ]
