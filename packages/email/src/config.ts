@@ -6,7 +6,7 @@ export interface EmailConfig {
   fromAddress: string
   fromName: string
   replyToAddress: string
-  configurationSet: string
+  configurationSet: string | undefined
   region: string
 }
 
@@ -26,7 +26,6 @@ export function getEmailConfig(): EmailConfig {
   }
 
   const configurationSet = process.env.SES_CONFIGURATION_SET
-  if (!configurationSet) throw new Error('SES_CONFIGURATION_SET must be set')
   const region = process.env.AWS_REGION
   if (!region) throw new Error('AWS_REGION must be set')
 
