@@ -95,8 +95,8 @@ function readImageDimensions(buf: Buffer): { width: number; height: number } | n
 async function getImageDimensionsFromUrl(url: string): Promise<{ width: number; height: number } | null> {
   try {
     // For PNG/WebP, the first 30 bytes contain dimensions.
-    // For JPEG, the SOF marker can be further in, so fetch more.
-    // Try a small range first; fall back to a larger fetch for JPEG.
+    // For JPEG, the SOF marker can be further in (up to ~64KB).
+    // Fetch 64KB which covers all common format headers.
     const response = await fetch(url, {
       headers: { Range: 'bytes=0-65535' },
     })
@@ -147,18 +147,18 @@ async function main() {
       })
     )
 
-    for (const result of results) {
-      if (!result.dims) {
-        skipped++
-        continue
-      }
+    const updates = results.filter((r) => r.dims !== null)
+    skipped += results.length - updates.length
 
-      await prisma.listingImage.update({
-        where: { id: result.id },
-        data: { width: result.dims.width, height: result.dims.height },
-      })
-      updated++
-    }
+    await Promise.all(
+      updates.map((result) =>
+        prisma.listingImage.update({
+          where: { id: result.id },
+          data: { width: result.dims!.width, height: result.dims!.height },
+        }),
+      ),
+    )
+    updated += updates.length
 
     console.log(`  Batch ${Math.floor(i / CONCURRENCY) + 1}: processed ${batch.length} images`)
   }

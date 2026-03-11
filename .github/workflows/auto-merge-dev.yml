@@ -17,8 +17,8 @@ jobs:
   enable-auto-merge:
     name: Enable auto-merge
     runs-on: ubuntu-latest
-    # Skip Dependabot PRs (handled by dependabot-auto-merge.yml)
-    if: github.actor != 'dependabot[bot]'
+    # Skip Dependabot PRs (handled by dependabot-auto-merge.yml) and draft PRs
+    if: github.actor != 'dependabot[bot]' && github.event.pull_request.draft == false
     steps:
       - name: Enable squash auto-merge
         env:

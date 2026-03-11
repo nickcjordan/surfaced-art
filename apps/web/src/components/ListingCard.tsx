@@ -4,6 +4,9 @@ import { cn } from '@/lib/utils'
 import { formatCurrency } from '@surfaced-art/utils'
 import type { ListingStatusType, CategoryType } from '@surfaced-art/types'
 
+// Most portrait ratio allowed (height = 1.5x width) — clamps extreme portrait artwork
+const MIN_RATIO = 2 / 3
+
 type ListingCardProps = {
   listing: {
     id: string
@@ -34,7 +37,6 @@ export function ListingCard({
   // Clamp extreme portrait ratios to 2:3 (w:h) so tall narrow artwork
   // doesn't blow out masonry columns.
   const hasNaturalRatio = listing.primaryImageWidth && listing.primaryImageHeight
-  const MIN_RATIO = 2 / 3 // most portrait allowed (height = 1.5× width)
   let aspectStyle: { aspectRatio: string } | undefined
   if (hasNaturalRatio) {
     const naturalRatio = listing.primaryImageWidth! / listing.primaryImageHeight!
