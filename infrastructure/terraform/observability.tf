@@ -464,11 +464,39 @@ resource "aws_cloudwatch_dashboard" "image_processor_logs" {
         x      = 0
         y      = 0
         width  = 24
-        height = 14
+        height = 8
         properties = {
-          title         = "All Log Events"
+          title         = "Processed Images"
           logGroupNames = [aws_cloudwatch_log_group.image_processor_lambda.name]
-          query         = "fields @timestamp, @message, @logStream\n| sort @timestamp desc\n| limit 500"
+          query         = "filter event = 'image.processed'\n| fields @timestamp, key, sourceWidth, sourceHeight, variantCount, durationMs, bucket\n| sort @timestamp desc\n| limit 200"
+          region        = var.aws_region
+          view          = "table"
+        }
+      },
+      {
+        type   = "log"
+        x      = 0
+        y      = 8
+        width  = 12
+        height = 6
+        properties = {
+          title         = "Processing Duration (avg/max by minute)"
+          logGroupNames = [aws_cloudwatch_log_group.image_processor_lambda.name]
+          query         = "filter event = 'image.processed'\n| stats avg(durationMs) as avgMs, max(durationMs) as maxMs, count(*) as images by bin(1m)"
+          region        = var.aws_region
+          view          = "timeSeries"
+        }
+      },
+      {
+        type   = "log"
+        x      = 12
+        y      = 8
+        width  = 12
+        height = 6
+        properties = {
+          title         = "Skipped Files"
+          logGroupNames = [aws_cloudwatch_log_group.image_processor_lambda.name]
+          query         = "filter event = 'image.skip'\n| fields @timestamp, key, extension, reason\n| sort @timestamp desc\n| limit 100"
           region        = var.aws_region
           view          = "table"
         }
@@ -478,11 +506,11 @@ resource "aws_cloudwatch_dashboard" "image_processor_logs" {
         x      = 0
         y      = 14
         width  = 24
-        height = 10
+        height = 8
         properties = {
-          title         = "Errors & Failures"
+          title         = "Errors"
           logGroupNames = [aws_cloudwatch_log_group.image_processor_lambda.name]
-          query         = "fields @timestamp, @message\n| filter @message like /(?i)(error|failed|exception|timeout)/\n| sort @timestamp desc\n| limit 200"
+          query         = "filter event = 'image.error'\n| fields @timestamp, key, bucket, error\n| sort @timestamp desc\n| limit 200"
           region        = var.aws_region
           view          = "table"
         }

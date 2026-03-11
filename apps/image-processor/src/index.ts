@@ -42,6 +42,16 @@ function stripExtension(key: string): string {
   return key.slice(0, lastDot)
 }
 
+/** Emit a structured JSON log line. */
+function log(level: 'info' | 'error', data: Record<string, unknown>): void {
+  const line = JSON.stringify({ level, ...data })
+  if (level === 'error') {
+    console.error(line)
+  } else {
+    console.log(line)
+  }
+}
+
 /**
  * Processes a single image: fetches from S3, generates WebP variants at
  * target widths, and uploads variants back to S3.
@@ -53,7 +63,7 @@ function stripExtension(key: string): string {
 async function processImage(
   bucket: string,
   key: string
-): Promise<SingleImageResult> {
+): Promise<SingleImageResult & { sourceWidth: number; sourceHeight: number }> {
   // Fetch the original image from S3
   const getResponse = await s3.send(
     new GetObjectCommand({ Bucket: bucket, Key: key })
@@ -106,7 +116,7 @@ async function processImage(
     variants.push(variantKey)
   }
 
-  return { key, variants }
+  return { key, variants, sourceWidth, sourceHeight: metadata.height ?? 0 }
 }
 
 /**
@@ -143,6 +153,7 @@ export const handler = async (
     const extension = getExtension(key)
 
     if (!SUPPORTED_EXTENSIONS.has(extension)) {
+      log('info', { event: 'image.skip', key, reason: 'unsupported_extension', extension })
       return {
         statusCode: 200,
         body: JSON.stringify({
@@ -152,7 +163,17 @@ export const handler = async (
     }
 
     try {
+      const start = Date.now()
       const result = await processImage(bucket, key)
+      log('info', {
+        event: 'image.processed',
+        key,
+        bucket,
+        sourceWidth: result.sourceWidth,
+        sourceHeight: result.sourceHeight,
+        variantCount: result.variants.length,
+        durationMs: Date.now() - start,
+      })
       return {
         statusCode: 200,
         body: JSON.stringify({
@@ -162,7 +183,7 @@ export const handler = async (
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
-      console.error(`Error processing ${key}:`, message)
+      log('error', { event: 'image.error', key, bucket, error: message })
       return {
         statusCode: 500,
         body: JSON.stringify({
@@ -183,15 +204,26 @@ export const handler = async (
     const extension = getExtension(key)
 
     if (!SUPPORTED_EXTENSIONS.has(extension)) {
+      log('info', { event: 'image.skip', key, reason: 'unsupported_extension', extension })
       continue
     }
 
     try {
+      const start = Date.now()
       const result = await processImage(bucket, key)
+      log('info', {
+        event: 'image.processed',
+        key,
+        bucket,
+        sourceWidth: result.sourceWidth,
+        sourceHeight: result.sourceHeight,
+        variantCount: result.variants.length,
+        durationMs: Date.now() - start,
+      })
       results.push(result)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
-      console.error(`Error processing ${key}:`, message)
+      log('error', { event: 'image.error', key, bucket, error: message })
       errors.push({ key, error: message })
     }
   }
