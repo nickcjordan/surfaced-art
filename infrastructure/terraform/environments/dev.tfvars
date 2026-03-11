@@ -20,6 +20,7 @@ additional_cors_origins = [
 # S3 CORS
 cors_allowed_origins = [
   "https://dev.surfaced.art",
+  "https://www.dev.surfaced.art",
   "http://localhost:3000",
 ]
 
