@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import { createAdminRoutes } from './index'
-import { setVerifier, resetVerifier } from '../../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock email module (required by applications sub-router)
@@ -13,8 +12,16 @@ vi.mock('@surfaced-art/email', () => ({
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
-  return { verify: vi.fn().mockResolvedValue({ sub, email, name }) }
+function createAuthEnv(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
+  return {
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
 }
 
 const ADMIN_USER_ID = 'admin-uuid-123'
@@ -163,22 +170,16 @@ function createTestApp(prisma: PrismaClient) {
   return app
 }
 
-function impersonateUser(app: ReturnType<typeof createTestApp>, userId: string, token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/impersonate/${userId}`, { method: 'POST', headers })
+function impersonateUser(app: ReturnType<typeof createTestApp>, userId: string, env?: Record<string, unknown>) {
+  return app.request(`/admin/impersonate/${userId}`, { method: 'POST' }, env)
 }
 
-function impersonateDashboard(app: ReturnType<typeof createTestApp>, userId: string, token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/impersonate/${userId}/dashboard`, { headers })
+function impersonateDashboard(app: ReturnType<typeof createTestApp>, userId: string, env?: Record<string, unknown>) {
+  return app.request(`/admin/impersonate/${userId}/dashboard`, {}, env)
 }
 
-function impersonateListings(app: ReturnType<typeof createTestApp>, userId: string, query = '', token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/impersonate/${userId}/listings${query ? `?${query}` : ''}`, { headers })
+function impersonateListings(app: ReturnType<typeof createTestApp>, userId: string, query = '', env?: Record<string, unknown>) {
+  return app.request(`/admin/impersonate/${userId}/listings${query ? `?${query}` : ''}`, {}, env)
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────
@@ -186,9 +187,7 @@ function impersonateListings(app: ReturnType<typeof createTestApp>, userId: stri
 describe('POST /admin/impersonate/:userId', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -200,14 +199,14 @@ describe('POST /admin/impersonate/:userId', () => {
   it('should return 403 without admin role', async () => {
     const prisma = createMockPrisma({ adminRoles: ['buyer'] })
     const app = createTestApp(prisma)
-    const res = await impersonateUser(app, TARGET_USER_ID, 'valid-token')
+    const res = await impersonateUser(app, TARGET_USER_ID, createAuthEnv())
     expect(res.status).toBe(403)
   })
 
   it('should return 404 when user not found', async () => {
     const prisma = createMockPrisma({ targetUser: null })
     const app = createTestApp(prisma)
-    const res = await impersonateUser(app, TARGET_USER_ID, 'valid-token')
+    const res = await impersonateUser(app, TARGET_USER_ID, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
@@ -219,7 +218,7 @@ describe('POST /admin/impersonate/:userId', () => {
     }
     const prisma = createMockPrisma({ targetUser: nonArtistUser, artistProfile: null })
     const app = createTestApp(prisma)
-    const res = await impersonateUser(app, TARGET_USER_ID, 'valid-token')
+    const res = await impersonateUser(app, TARGET_USER_ID, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -231,7 +230,7 @@ describe('POST /admin/impersonate/:userId', () => {
   it('should return user detail + dashboard for artist user', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await impersonateUser(app, TARGET_USER_ID, 'valid-token')
+    const res = await impersonateUser(app, TARGET_USER_ID, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -246,7 +245,7 @@ describe('POST /admin/impersonate/:userId', () => {
   it('should write audit log with action user.impersonate', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await impersonateUser(app, TARGET_USER_ID, 'valid-token')
+    await impersonateUser(app, TARGET_USER_ID, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -264,9 +263,7 @@ describe('POST /admin/impersonate/:userId', () => {
 describe('GET /admin/impersonate/:userId/dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -278,7 +275,7 @@ describe('GET /admin/impersonate/:userId/dashboard', () => {
   it('should return 404 when user not found', async () => {
     const prisma = createMockPrisma({ targetUser: null })
     const app = createTestApp(prisma)
-    const res = await impersonateDashboard(app, TARGET_USER_ID, 'valid-token')
+    const res = await impersonateDashboard(app, TARGET_USER_ID, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
@@ -286,14 +283,14 @@ describe('GET /admin/impersonate/:userId/dashboard', () => {
     const nonArtistUser = { ...mockTargetUser, artistProfile: null }
     const prisma = createMockPrisma({ targetUser: nonArtistUser, artistProfile: null })
     const app = createTestApp(prisma)
-    const res = await impersonateDashboard(app, TARGET_USER_ID, 'valid-token')
+    const res = await impersonateDashboard(app, TARGET_USER_ID, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should return dashboard data for artist user', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await impersonateDashboard(app, TARGET_USER_ID, 'valid-token')
+    const res = await impersonateDashboard(app, TARGET_USER_ID, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -307,7 +304,7 @@ describe('GET /admin/impersonate/:userId/dashboard', () => {
   it('should write audit log', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await impersonateDashboard(app, TARGET_USER_ID, 'valid-token')
+    await impersonateDashboard(app, TARGET_USER_ID, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -326,9 +323,7 @@ describe('GET /admin/impersonate/:userId/dashboard', () => {
 describe('GET /admin/impersonate/:userId/listings', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -340,7 +335,7 @@ describe('GET /admin/impersonate/:userId/listings', () => {
   it('should return 404 when user not found', async () => {
     const prisma = createMockPrisma({ targetUser: null })
     const app = createTestApp(prisma)
-    const res = await impersonateListings(app, TARGET_USER_ID, '', 'valid-token')
+    const res = await impersonateListings(app, TARGET_USER_ID, '', createAuthEnv())
     expect(res.status).toBe(404)
   })
 
@@ -348,14 +343,14 @@ describe('GET /admin/impersonate/:userId/listings', () => {
     const nonArtistUser = { ...mockTargetUser, artistProfile: null }
     const prisma = createMockPrisma({ targetUser: nonArtistUser, artistProfile: null })
     const app = createTestApp(prisma)
-    const res = await impersonateListings(app, TARGET_USER_ID, '', 'valid-token')
+    const res = await impersonateListings(app, TARGET_USER_ID, '', createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should return paginated listings for artist user', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await impersonateListings(app, TARGET_USER_ID, '', 'valid-token')
+    const res = await impersonateListings(app, TARGET_USER_ID, '', createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -369,7 +364,7 @@ describe('GET /admin/impersonate/:userId/listings', () => {
   it('should support status and category query filters', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await impersonateListings(app, TARGET_USER_ID, 'status=available&category=drawing_painting', 'valid-token')
+    await impersonateListings(app, TARGET_USER_ID, 'status=available&category=drawing_painting', createAuthEnv())
 
     expect(prisma.listing.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -385,7 +380,7 @@ describe('GET /admin/impersonate/:userId/listings', () => {
   it('should support pagination query params', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await impersonateListings(app, TARGET_USER_ID, 'page=2&limit=5', 'valid-token')
+    await impersonateListings(app, TARGET_USER_ID, 'page=2&limit=5', createAuthEnv())
 
     expect(prisma.listing.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -398,7 +393,7 @@ describe('GET /admin/impersonate/:userId/listings', () => {
   it('should write audit log', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await impersonateListings(app, TARGET_USER_ID, '', 'valid-token')
+    await impersonateListings(app, TARGET_USER_ID, '', createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -144,7 +144,48 @@ resource "aws_apigatewayv2_integration" "lambda" {
   payload_format_version = "2.0"
 }
 
-# Catch-all route
+# JWT authorizer — validates Cognito tokens at the API Gateway layer.
+# Protected routes use this authorizer so Lambda never needs to contact Cognito.
+resource "aws_apigatewayv2_authorizer" "jwt" {
+  api_id           = aws_apigatewayv2_api.main.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "${var.project_name}-${var.environment}-jwt"
+
+  jwt_configuration {
+    issuer   = "https://cognito-idp.${var.aws_region}.amazonaws.com/${var.cognito_user_pool_id}"
+    audience = [var.cognito_client_id]
+  }
+}
+
+# Protected route: /me/{proxy+} — artist dashboard endpoints
+resource "aws_apigatewayv2_route" "me" {
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "ANY /me/{proxy+}"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+}
+
+# Protected route: /admin/{proxy+} — admin endpoints
+resource "aws_apigatewayv2_route" "admin" {
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "ANY /admin/{proxy+}"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+}
+
+# Protected route: /uploads/{proxy+} — file upload endpoints
+resource "aws_apigatewayv2_route" "uploads" {
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "ANY /uploads/{proxy+}"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+}
+
+# Catch-all route — public endpoints (no authorizer)
 resource "aws_apigatewayv2_route" "catch_all" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "$default"

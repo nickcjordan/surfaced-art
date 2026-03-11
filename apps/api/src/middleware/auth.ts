@@ -1,5 +1,4 @@
 import type { MiddlewareHandler } from 'hono'
-import { CognitoJwtVerifier } from 'aws-jwt-verify'
 import type { PrismaClient } from '@surfaced-art/db'
 import type { UserRoleType } from '@surfaced-art/types'
 import { logger } from '@surfaced-art/utils'
@@ -16,24 +15,26 @@ export interface AuthUser {
 }
 
 /**
- * Creates a Cognito JWT verifier instance.
- * Exported for testability — tests can provide a mock.
+ * JWT claims structure from API Gateway v2 JWT authorizer.
+ * API Gateway validates the Cognito JWT (signature, issuer, audience, expiry)
+ * before the Lambda is invoked — claims are pre-validated.
  */
-export function createVerifier(userPoolId: string, clientId: string) {
-  return CognitoJwtVerifier.create({
-    userPoolId,
-    clientId,
-    tokenUse: 'id',
-  })
+interface JwtClaims {
+  sub: string
+  email?: string
+  name?: string
+  [key: string]: unknown
 }
 
 /**
- * Extract the Bearer token from the Authorization header.
+ * Extract pre-validated JWT claims from the API Gateway v2 event context.
+ * Returns null if no authorizer claims are present (e.g. on $default public routes).
  */
-function extractToken(authHeader: string | undefined): string | null {
-  if (!authHeader) return null
-  const match = authHeader.match(/^Bearer\s+(.+)$/i)
-  return match?.[1] ?? null
+function getJwtClaims(c: { env: Record<string, unknown> }): JwtClaims | null {
+  const rc = c.env?.requestContext as
+    | { authorizer?: { jwt?: { claims?: JwtClaims } } }
+    | undefined
+  return rc?.authorizer?.jwt?.claims ?? null
 }
 
 /**
@@ -95,100 +96,60 @@ async function findOrCreateUser(
   }
 }
 
-// Module-level verifier singleton — initialized on first use
-let verifier: ReturnType<typeof createVerifier> | null = null
-
-function getVerifier(): ReturnType<typeof createVerifier> {
-  if (!verifier) {
-    const userPoolId = process.env.COGNITO_USER_POOL_ID
-    const clientId = process.env.COGNITO_CLIENT_ID
-    if (!userPoolId || !clientId) {
-      throw new Error('COGNITO_USER_POOL_ID and COGNITO_CLIENT_ID must be set')
-    }
-    verifier = createVerifier(userPoolId, clientId)
-  }
-  return verifier
-}
-
 /**
- * Reset the cached verifier — used only by tests.
- */
-export function resetVerifier(): void {
-  verifier = null
-}
-
-/**
- * Set a custom verifier — used for testing with mocks.
- */
-export function setVerifier(v: ReturnType<typeof createVerifier>): void {
-  verifier = v
-}
-
-/**
- * Auth middleware — validates JWT and provisions user.
- * Attaches AuthUser to `c.set('user', authUser)`.
- * Returns 401 for missing/invalid tokens.
+ * Auth middleware — reads pre-validated JWT claims from API Gateway.
+ * API Gateway validates the Cognito JWT before Lambda is invoked;
+ * this middleware extracts claims and provisions the DB user.
+ * Returns 401 if no claims are present (should not normally happen
+ * on routes behind the JWT authorizer — API Gateway rejects first).
  */
 export function authMiddleware(prisma: PrismaClient): MiddlewareHandler {
   return async (c, next) => {
-    const token = extractToken(c.req.header('Authorization'))
+    const claims = getJwtClaims(c)
 
-    if (!token) {
+    if (!claims?.sub) {
       return c.json(
         { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
         401,
       )
     }
 
-    try {
-      const payload = await getVerifier().verify(token)
+    const cognitoId = claims.sub
+    const email = (claims.email as string) ?? ''
+    const fullName = (claims.name as string) ?? (email ? email.split('@')[0] : '')
 
-      const cognitoId = payload.sub as string
-      const email = (payload.email as string) ?? ''
-      const fullName = (payload.name as string) ?? email.split('@')[0]
+    const user = await findOrCreateUser(prisma, cognitoId, email, fullName)
 
-      const user = await findOrCreateUser(prisma, cognitoId, email, fullName)
+    c.set('user', user)
 
-      c.set('user', user)
-
-      await next()
-      return
-    } catch (err) {
-      logger.warn('JWT verification failed', {
-        errorMessage: err instanceof Error ? err.message : String(err),
-      })
-      return c.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Invalid or expired token' } },
-        401,
-      )
-    }
+    await next()
+    return
   }
 }
 
 /**
- * Optional auth middleware — attaches user if token is present, but doesn't require it.
- * For public routes that optionally enhance behavior when authenticated.
+ * Optional auth middleware — attaches user if JWT claims are present, but doesn't require it.
+ * For public routes (on $default) that optionally enhance behavior when authenticated.
+ * On routes behind the JWT authorizer, claims will always be present.
  */
 export function optionalAuth(prisma: PrismaClient): MiddlewareHandler {
   return async (c, next) => {
-    const token = extractToken(c.req.header('Authorization'))
+    const claims = getJwtClaims(c)
 
-    if (!token) {
+    if (!claims?.sub) {
       await next()
       return
     }
 
     try {
-      const payload = await getVerifier().verify(token)
-
-      const cognitoId = payload.sub as string
-      const email = (payload.email as string) ?? ''
-      const fullName = (payload.name as string) ?? email.split('@')[0]
+      const cognitoId = claims.sub
+      const email = (claims.email as string) ?? ''
+      const fullName = (claims.name as string) ?? (email ? email.split('@')[0] : '')
 
       const user = await findOrCreateUser(prisma, cognitoId, email, fullName)
       c.set('user', user)
     } catch {
-      // Optional auth — silently ignore invalid tokens
+      // Optional auth — silently ignore errors
     }
 
     await next()

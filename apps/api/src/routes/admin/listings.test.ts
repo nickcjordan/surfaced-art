@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import { createAdminRoutes } from './index'
-import { setVerifier, resetVerifier } from '../../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock email module (required by applications sub-router)
@@ -20,8 +19,16 @@ import { triggerRevalidation } from '../../lib/revalidation'
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
-  return { verify: vi.fn().mockResolvedValue({ sub, email, name }) }
+function createAuthEnv(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
+  return {
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
 }
 
 const ADMIN_USER_ID = 'admin-uuid-123'
@@ -158,46 +165,36 @@ function createTestApp(prisma: PrismaClient) {
   return app
 }
 
-function getListings(app: ReturnType<typeof createTestApp>, query = '', token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/listings${query ? `?${query}` : ''}`, { headers })
+function getListings(app: ReturnType<typeof createTestApp>, query = '', env?: Record<string, unknown>) {
+  return app.request(`/admin/listings${query ? `?${query}` : ''}`, {}, env)
 }
 
-function getListingDetail(app: ReturnType<typeof createTestApp>, id: string, token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/listings/${id}`, { headers })
+function getListingDetail(app: ReturnType<typeof createTestApp>, id: string, env?: Record<string, unknown>) {
+  return app.request(`/admin/listings/${id}`, {}, env)
 }
 
-function updateListing(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, token?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function updateListing(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, env?: Record<string, unknown>) {
   return app.request(`/admin/listings/${id}`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
-function hideListing(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, token?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function hideListing(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, env?: Record<string, unknown>) {
   return app.request(`/admin/listings/${id}/hide`, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
-function unhideListing(app: ReturnType<typeof createTestApp>, id: string, token?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function unhideListing(app: ReturnType<typeof createTestApp>, id: string, env?: Record<string, unknown>) {
   return app.request(`/admin/listings/${id}/unhide`, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({}),
-  })
+  }, env)
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────
@@ -205,9 +202,7 @@ function unhideListing(app: ReturnType<typeof createTestApp>, id: string, token?
 describe('GET /admin/listings', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -219,7 +214,7 @@ describe('GET /admin/listings', () => {
   it('should return paginated listing list', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await getListings(app, '', 'valid-token')
+    const res = await getListings(app, '', createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -232,7 +227,7 @@ describe('GET /admin/listings', () => {
   it('should filter by status', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getListings(app, 'status=hidden', 'valid-token')
+    await getListings(app, 'status=hidden', createAuthEnv())
 
     expect(prisma.listing.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -245,7 +240,7 @@ describe('GET /admin/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
     const uuid = '00000000-0000-4000-8000-000000000789'
-    await getListings(app, `artistId=${uuid}`, 'valid-token')
+    await getListings(app, `artistId=${uuid}`, createAuthEnv())
 
     expect(prisma.listing.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -257,7 +252,7 @@ describe('GET /admin/listings', () => {
   it('should filter by category', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getListings(app, 'category=ceramics', 'valid-token')
+    await getListings(app, 'category=ceramics', createAuthEnv())
 
     expect(prisma.listing.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -269,7 +264,7 @@ describe('GET /admin/listings', () => {
   it('should filter by search on title', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getListings(app, 'search=vase', 'valid-token')
+    await getListings(app, 'search=vase', createAuthEnv())
 
     expect(prisma.listing.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -285,7 +280,7 @@ describe('GET /admin/listings', () => {
   it('should filter by price range', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getListings(app, 'priceMin=1000&priceMax=20000', 'valid-token')
+    await getListings(app, 'priceMin=1000&priceMax=20000', createAuthEnv())
 
     expect(prisma.listing.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -300,21 +295,19 @@ describe('GET /admin/listings', () => {
 describe('GET /admin/listings/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when listing not found', async () => {
     const prisma = createMockPrisma({ listingDetail: null })
     const app = createTestApp(prisma)
-    const res = await getListingDetail(app, LISTING_ID, 'valid-token')
+    const res = await getListingDetail(app, LISTING_ID, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should return full listing detail with order and review counts', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await getListingDetail(app, LISTING_ID, 'valid-token')
+    const res = await getListingDetail(app, LISTING_ID, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -331,21 +324,19 @@ describe('GET /admin/listings/:id', () => {
 describe('PUT /admin/listings/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when listing not found', async () => {
     const prisma = createMockPrisma({ listingDetail: null })
     const app = createTestApp(prisma)
-    const res = await updateListing(app, LISTING_ID, { title: 'New Title' }, 'valid-token')
+    const res = await updateListing(app, LISTING_ID, { title: 'New Title' }, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should update listing', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await updateListing(app, LISTING_ID, { title: 'New Title' }, 'valid-token')
+    const res = await updateListing(app, LISTING_ID, { title: 'New Title' }, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -355,7 +346,7 @@ describe('PUT /admin/listings/:id', () => {
   it('should write audit log on update', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await updateListing(app, LISTING_ID, { title: 'New Title' }, 'valid-token')
+    await updateListing(app, LISTING_ID, { title: 'New Title' }, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -372,7 +363,7 @@ describe('PUT /admin/listings/:id', () => {
   it('should trigger ISR revalidation', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await updateListing(app, LISTING_ID, { title: 'New Title' }, 'valid-token')
+    await updateListing(app, LISTING_ID, { title: 'New Title' }, createAuthEnv())
 
     expect(triggerRevalidation).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -385,7 +376,7 @@ describe('PUT /admin/listings/:id', () => {
   it('should return validation error for invalid body', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await updateListing(app, LISTING_ID, { title: '' }, 'valid-token')
+    const res = await updateListing(app, LISTING_ID, { title: '' }, createAuthEnv())
     expect(res.status).toBe(400)
   })
 })
@@ -393,21 +384,19 @@ describe('PUT /admin/listings/:id', () => {
 describe('POST /admin/listings/:id/hide', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when listing not found', async () => {
     const prisma = createMockPrisma({ listingDetail: null })
     const app = createTestApp(prisma)
-    const res = await hideListing(app, LISTING_ID, { reason: 'Policy violation' }, 'valid-token')
+    const res = await hideListing(app, LISTING_ID, { reason: 'Policy violation' }, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should hide the listing', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await hideListing(app, LISTING_ID, { reason: 'Policy violation' }, 'valid-token')
+    const res = await hideListing(app, LISTING_ID, { reason: 'Policy violation' }, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -417,14 +406,14 @@ describe('POST /admin/listings/:id/hide', () => {
   it('should require a reason', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await hideListing(app, LISTING_ID, {}, 'valid-token')
+    const res = await hideListing(app, LISTING_ID, {}, createAuthEnv())
     expect(res.status).toBe(400)
   })
 
   it('should set status to hidden', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await hideListing(app, LISTING_ID, { reason: 'Policy violation' }, 'valid-token')
+    await hideListing(app, LISTING_ID, { reason: 'Policy violation' }, createAuthEnv())
 
     expect(prisma.listing.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -437,7 +426,7 @@ describe('POST /admin/listings/:id/hide', () => {
   it('should write audit log', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await hideListing(app, LISTING_ID, { reason: 'Policy violation' }, 'valid-token')
+    await hideListing(app, LISTING_ID, { reason: 'Policy violation' }, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -454,14 +443,12 @@ describe('POST /admin/listings/:id/hide', () => {
 describe('POST /admin/listings/:id/unhide', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when listing not found', async () => {
     const prisma = createMockPrisma({ listingDetail: null })
     const app = createTestApp(prisma)
-    const res = await unhideListing(app, LISTING_ID, 'valid-token')
+    const res = await unhideListing(app, LISTING_ID, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
@@ -469,7 +456,7 @@ describe('POST /admin/listings/:id/unhide', () => {
     const hidden = { ...mockListing, status: 'hidden' }
     const prisma = createMockPrisma({ listingDetail: hidden })
     const app = createTestApp(prisma)
-    const res = await unhideListing(app, LISTING_ID, 'valid-token')
+    const res = await unhideListing(app, LISTING_ID, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -480,7 +467,7 @@ describe('POST /admin/listings/:id/unhide', () => {
     const hidden = { ...mockListing, status: 'hidden' }
     const prisma = createMockPrisma({ listingDetail: hidden })
     const app = createTestApp(prisma)
-    await unhideListing(app, LISTING_ID, 'valid-token')
+    await unhideListing(app, LISTING_ID, createAuthEnv())
 
     expect(prisma.listing.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -494,7 +481,7 @@ describe('POST /admin/listings/:id/unhide', () => {
     const hidden = { ...mockListing, status: 'hidden' }
     const prisma = createMockPrisma({ listingDetail: hidden })
     const app = createTestApp(prisma)
-    await unhideListing(app, LISTING_ID, 'valid-token')
+    await unhideListing(app, LISTING_ID, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
