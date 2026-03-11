@@ -9,6 +9,7 @@ import type { MiddlewareHandler } from 'hono'
 export function requestId(): MiddlewareHandler {
   return async (c, next) => {
     const id = c.req.header('X-Request-Id') ?? randomUUID()
+    c.set('requestId', id)
     await next()
     c.header('X-Request-Id', id)
   }
