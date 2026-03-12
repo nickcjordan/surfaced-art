@@ -5,6 +5,7 @@ import { getArtistProfile, ApiError } from '@/lib/api'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ListingCard } from '@/components/ListingCard'
 import { MasonryGrid } from '@/components/MasonryGrid'
+import { estimateCardHeight } from '@/lib/masonry-utils'
 import { Badge } from '@/components/ui/badge'
 import { categoryLabels } from '@/lib/category-labels'
 import { JsonLd } from '@/components/JsonLd'
@@ -299,7 +300,12 @@ export default async function StudioPage({ params }: Props) {
         {availableListings.length > 0 && (
           <section data-testid="available-work">
             <h2 className="mb-6 font-serif text-2xl text-foreground">Work</h2>
-            <MasonryGrid columns={[2, 2, 3, 3]}>
+            <MasonryGrid
+              columns={[2, 2, 3, 3]}
+              itemHeights={availableListings.map((l) =>
+                estimateCardHeight(l.images[0]?.width, l.images[0]?.height)
+              )}
+            >
               {availableListings.map((listing) => (
                 <ListingCard
                   key={listing.id}
@@ -316,7 +322,13 @@ export default async function StudioPage({ params }: Props) {
         {soldListings.length > 0 && (
           <section data-testid="archive-section">
             <h2 className="mb-6 font-serif text-2xl text-foreground">Archive</h2>
-            <MasonryGrid columns={[2, 2, 3, 3]} className="opacity-75">
+            <MasonryGrid
+              columns={[2, 2, 3, 3]}
+              className="opacity-75"
+              itemHeights={soldListings.map((l) =>
+                estimateCardHeight(l.images[0]?.width, l.images[0]?.height)
+              )}
+            >
               {soldListings.map((listing) => (
                 <ListingCard
                   key={listing.id}

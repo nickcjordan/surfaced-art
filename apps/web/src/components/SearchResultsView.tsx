@@ -4,7 +4,7 @@ import { useId, useState } from 'react'
 import type { FeaturedArtistItem } from '@surfaced-art/types'
 import { ViewToggle, getTabId, getPanelId } from '@/components/ViewToggle'
 import { CardGrid } from '@/components/CardGrid'
-import { MasonryGrid } from '@/components/MasonryGrid'
+import { MasonryGrid, estimateCardHeight } from '@/components/MasonryGrid'
 import { EmptyState } from '@/components/EmptyState'
 import { ListingCard } from '@/components/ListingCard'
 import { ArtistCard } from '@/components/ArtistCard'
@@ -72,7 +72,11 @@ export function SearchResultsView({
               action={{ label: '← Back to gallery', href: '/' }}
             />
           ) : listings.length > 0 ? (
-            <MasonryGrid>
+            <MasonryGrid
+              itemHeights={listings.map((l) =>
+                estimateCardHeight(l.primaryImageWidth, l.primaryImageHeight)
+              )}
+            >
               {listings.map((listing) => (
                 <ListingCard
                   key={listing.id}

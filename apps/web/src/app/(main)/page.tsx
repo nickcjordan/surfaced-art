@@ -5,6 +5,7 @@ import { SplitHero } from '@/components/SplitHero'
 import { ArtistCard } from '@/components/ArtistCard'
 import { ListingCard } from '@/components/ListingCard'
 import { MasonryGrid } from '@/components/MasonryGrid'
+import { estimateCardHeight } from '@/lib/masonry-utils'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { JsonLd } from '@/components/JsonLd'
@@ -97,7 +98,12 @@ export default async function Home() {
               Browse all
             </Link>
           </div>
-          <MasonryGrid columns={[2, 2, 3, 3]}>
+          <MasonryGrid
+            columns={[2, 2, 3, 3]}
+            itemHeights={listings.map((l) =>
+              estimateCardHeight(l.primaryImage?.width, l.primaryImage?.height)
+            )}
+          >
             {listings.map((listing) => (
               <ListingCard
                 key={listing.id}

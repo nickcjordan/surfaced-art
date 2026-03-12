@@ -33,6 +33,7 @@ describe('Artists Page', () => {
         location: 'Portland, OR',
         profileImageUrl: null,
         coverImageUrl: null,
+        artworkImageUrls: [],
         categories: ['ceramics'],
       },
       {
@@ -41,6 +42,7 @@ describe('Artists Page', () => {
         location: 'Brooklyn, NY',
         profileImageUrl: null,
         coverImageUrl: null,
+        artworkImageUrls: [],
         categories: ['drawing_painting'],
       },
     ])
