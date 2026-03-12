@@ -166,6 +166,7 @@ resource "aws_apigatewayv2_authorizer" "jwt" {
 locals {
   jwt_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
   jwt_prefixes = {
+    auth    = "/auth/{proxy+}"
     me      = "/me/{proxy+}"
     admin   = "/admin/{proxy+}"
     uploads = "/uploads/{proxy+}"

@@ -53,6 +53,7 @@ export type {
   ListingDetailResponse,
   PaginatedResponse,
   ApiError,
+  AuthMeResponse,
   ArtistApplication,
   ApplicationSubmitResponse,
   PresignedPostResponse,

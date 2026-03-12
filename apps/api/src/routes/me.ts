@@ -5,7 +5,7 @@ import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, My
 import { fetchDashboard, fetchUserListings } from '../lib/artist-queries'
 import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingAvailabilityBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingTagsUpdateBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText, tagsUpdateBody } from '@surfaced-art/types'
 import { logger, readImageDimensions } from '@surfaced-art/utils'
-import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
+import { authMiddleware, requireRole, requireAnyRole, type AuthUser } from '../middleware/auth'
 import { notFound, badRequest, validationError, conflict, internalError } from '../errors'
 import { triggerRevalidation } from '../lib/revalidation'
 import { getStripeClient } from '../lib/stripe'
@@ -111,7 +111,7 @@ export function createMeRoutes(prisma: PrismaClient) {
   const me = new Hono<{ Variables: { user: AuthUser } }>()
 
   me.use('*', authMiddleware(prisma))
-  me.use('*', requireRole('artist'))
+  me.use('*', requireAnyRole(['artist', 'admin']))
 
   /**
    * GET /me/dashboard

@@ -1,0 +1,34 @@
+meta {
+  name: Get Auth Me
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{sa_baseUrl}}/auth/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: isDefined
+  res.body.email: isDefined
+  res.body.fullName: isDefined
+  res.body.roles: isDefined
+}
+
+tests {
+  test("should return 200 with user profile and roles", function() {
+    const body = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(body.id).to.be.a("string");
+    expect(body.email).to.be.a("string");
+    expect(body.fullName).to.be.a("string");
+    expect(body.roles).to.be.an("array").with.length.greaterThan(0);
+  });
+}

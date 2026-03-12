@@ -2,10 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import type { UserRoleType } from '@surfaced-art/types'
 import * as cognito from './cognito'
 import type { AuthTokens } from './cognito'
 import type { CognitoUser } from 'amazon-cognito-identity-js'
 import { AUTH_COOKIE_NAME } from './constants'
+import { getAuthMe } from '@/lib/api'
 
 export interface AuthUser {
   email: string
@@ -21,8 +23,16 @@ export interface AuthContextValue {
   loading: boolean
   /** Active auth challenge requiring user input, or null */
   pendingChallenge: PendingChallenge
-  /** Sign in with email and password. Returns true if auth completed, false if a challenge is pending. */
-  signIn: (email: string, password: string) => Promise<boolean>
+  /** User's roles from the API */
+  roles: UserRoleType[]
+  /** True if the user has the admin role */
+  isAdmin: boolean
+  /** True if the user has the artist role */
+  isArtist: boolean
+  /** Check if the user has a specific role */
+  hasRole: (role: UserRoleType) => boolean
+  /** Sign in with email and password. Returns auth result with roles. */
+  signIn: (email: string, password: string) => Promise<{ authenticated: boolean; roles: UserRoleType[] }>
   /** Sign up with email, password, and full name */
   signUp: (email: string, password: string, fullName: string) => Promise<{ userConfirmed: boolean }>
   /** Confirm email verification code after sign-up */
@@ -35,10 +45,10 @@ export interface AuthContextValue {
   forgotPassword: (email: string) => Promise<void>
   /** Confirm new password with verification code */
   confirmPassword: (email: string, code: string, newPassword: string) => Promise<void>
-  /** Complete the NEW_PASSWORD_REQUIRED challenge */
-  completeNewPassword: (newPassword: string) => Promise<void>
-  /** Complete an MFA challenge with a verification code */
-  completeMfa: (code: string) => Promise<void>
+  /** Complete the NEW_PASSWORD_REQUIRED challenge. Returns roles. */
+  completeNewPassword: (newPassword: string) => Promise<{ roles: UserRoleType[] }>
+  /** Complete an MFA challenge with a verification code. Returns roles. */
+  completeMfa: (code: string) => Promise<{ roles: UserRoleType[] }>
   /** Get current ID token for API calls, or null if not signed in */
   getIdToken: () => Promise<string | null>
 }
@@ -54,6 +64,18 @@ function extractUserFromTokens(tokens: AuthTokens): AuthUser {
     }
   } catch {
     return { email: '', name: '' }
+  }
+}
+
+/**
+ * Fetch user roles from the API. Returns empty array on failure (graceful degradation).
+ */
+async function fetchRoles(idToken: string): Promise<UserRoleType[]> {
+  try {
+    const me = await getAuthMe(idToken)
+    return me.roles
+  } catch {
+    return []
   }
 }
 
@@ -82,6 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
   const [pendingChallenge, setPendingChallenge] = useState<PendingChallenge>(null)
   const [challengeUser, setChallengeUser] = useState<CognitoUser | null>(null)
+  const [roles, setRoles] = useState<UserRoleType[]>([])
 
   // Check for existing session on mount
   useEffect(() => {
@@ -93,6 +116,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!cancelled && tokens) {
           setUser(extractUserFromTokens(tokens))
           setAuthCookie()
+          const userRoles = await fetchRoles(tokens.idToken)
+          if (!cancelled) {
+            setRoles(userRoles)
+          }
         }
       } catch {
         // No valid session — remain signed out
@@ -108,24 +135,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => { cancelled = true }
   }, [])
 
-  const handleSignIn = useCallback(async (email: string, password: string): Promise<boolean> => {
+  const handleSignIn = useCallback(async (email: string, password: string): Promise<{ authenticated: boolean; roles: UserRoleType[] }> => {
     const result = await cognito.signIn(email, password)
 
     switch (result.type) {
-      case 'success':
+      case 'success': {
         setUser(extractUserFromTokens(result.tokens))
         setAuthCookie()
         setPendingChallenge(null)
         setChallengeUser(null)
-        return true
+        const userRoles = await fetchRoles(result.tokens.idToken)
+        setRoles(userRoles)
+        return { authenticated: true, roles: userRoles }
+      }
       case 'newPasswordRequired':
         setChallengeUser(result.cognitoUser)
         setPendingChallenge('NEW_PASSWORD_REQUIRED')
-        return false
+        return { authenticated: false, roles: [] }
       case 'mfaRequired':
         setChallengeUser(result.cognitoUser)
         setPendingChallenge('MFA_REQUIRED')
-        return false
+        return { authenticated: false, roles: [] }
     }
   }, [])
 
@@ -146,6 +176,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     cognito.signOut()
     clearAuthCookie()
     setUser(null)
+    setRoles([])
   }, [])
 
   const handleForgotPassword = useCallback(async (email: string) => {
@@ -156,7 +187,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await cognito.confirmPassword(email, code, newPassword)
   }, [])
 
-  const handleCompleteNewPassword = useCallback(async (newPassword: string) => {
+  const handleCompleteNewPassword = useCallback(async (newPassword: string): Promise<{ roles: UserRoleType[] }> => {
     if (!challengeUser) {
       throw new Error('No pending new password challenge')
     }
@@ -165,9 +196,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthCookie()
     setPendingChallenge(null)
     setChallengeUser(null)
+    const userRoles = await fetchRoles(tokens.idToken)
+    setRoles(userRoles)
+    return { roles: userRoles }
   }, [challengeUser])
 
-  const handleCompleteMfa = useCallback(async (code: string) => {
+  const handleCompleteMfa = useCallback(async (code: string): Promise<{ roles: UserRoleType[] }> => {
     if (!challengeUser) {
       throw new Error('No pending MFA challenge')
     }
@@ -176,6 +210,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthCookie()
     setPendingChallenge(null)
     setChallengeUser(null)
+    const userRoles = await fetchRoles(tokens.idToken)
+    setRoles(userRoles)
+    return { roles: userRoles }
   }, [challengeUser])
 
   const getIdToken = useCallback(async (): Promise<string | null> => {
@@ -183,10 +220,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return tokens?.idToken ?? null
   }, [])
 
+  const hasRole = useCallback((role: UserRoleType) => roles.includes(role), [roles])
+
+  const isAdmin = useMemo(() => roles.includes('admin'), [roles])
+  const isArtist = useMemo(() => roles.includes('artist'), [roles])
+
   const value = useMemo<AuthContextValue>(() => ({
     user,
     loading,
     pendingChallenge,
+    roles,
+    isAdmin,
+    isArtist,
+    hasRole,
     signIn: handleSignIn,
     signUp: handleSignUp,
     confirmSignUp: handleConfirmSignUp,
@@ -197,7 +243,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     completeNewPassword: handleCompleteNewPassword,
     completeMfa: handleCompleteMfa,
     getIdToken,
-  }), [user, loading, pendingChallenge, handleSignIn, handleSignUp, handleConfirmSignUp, handleResendCode, handleSignOut, handleForgotPassword, handleConfirmPassword, handleCompleteNewPassword, handleCompleteMfa, getIdToken])
+  }), [user, loading, pendingChallenge, roles, isAdmin, isArtist, hasRole, handleSignIn, handleSignUp, handleConfirmSignUp, handleResendCode, handleSignOut, handleForgotPassword, handleConfirmPassword, handleCompleteNewPassword, handleCompleteMfa, getIdToken])
 
   return (
     <AuthContext.Provider value={value}>

@@ -27,7 +27,15 @@ export function SignInForm() {
 
   const verified = searchParams.get('verified') === 'true'
   const reset = searchParams.get('reset') === 'true'
-  const redirect = searchParams.get('redirect') ?? '/dashboard'
+  const explicitRedirect = searchParams.get('redirect')
+  const defaultRedirect = '/dashboard'
+
+  /** Pick redirect target based on roles — admin goes to /admin unless an explicit redirect was given. */
+  function getRedirectForRoles(roles: string[]): string {
+    if (explicitRedirect) return explicitRedirect
+    if (roles.includes('admin')) return '/admin'
+    return defaultRedirect
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,10 +43,10 @@ export function SignInForm() {
     setSubmitting(true)
 
     try {
-      const success = await signIn(email, password)
-      if (success) {
+      const result = await signIn(email, password)
+      if (result.authenticated) {
         // Full navigation (not router.push) ensures clean state after auth
-        window.location.href = redirect
+        window.location.href = getRedirectForRoles(result.roles)
         return
       }
       // Challenge was set — form will re-render to show challenge UI
@@ -65,8 +73,8 @@ export function SignInForm() {
     setSubmitting(true)
 
     try {
-      await completeNewPassword(newPassword)
-      window.location.href = redirect
+      const result = await completeNewPassword(newPassword)
+      window.location.href = getRedirectForRoles(result.roles)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
@@ -80,8 +88,8 @@ export function SignInForm() {
     setSubmitting(true)
 
     try {
-      await completeMfa(mfaCode)
-      window.location.href = redirect
+      const result = await completeMfa(mfaCode)
+      window.location.href = getRedirectForRoles(result.roles)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
