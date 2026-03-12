@@ -243,4 +243,76 @@ describe('migrate handler', () => {
       error: 'SEED BLOCKED: Found 3 non-seed user(s)',
     })
   })
+
+  // --- bootstrap-admin ---
+
+  it('should require email for bootstrap-admin command', async () => {
+    const result = await handler({ command: 'bootstrap-admin' })
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('requires an "email" field')
+    expect(mockedExecSync).not.toHaveBeenCalled()
+  })
+
+  it('should reject invalid email format for bootstrap-admin', async () => {
+    const result = await handler({ command: 'bootstrap-admin', email: 'not-an-email' })
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('Invalid email')
+    expect(mockedExecSync).not.toHaveBeenCalled()
+  })
+
+  it('should run bootstrap-admin via tsx when script exists', async () => {
+    mockedExecSync.mockReturnValue('')
+
+    const result = await handler({ command: 'bootstrap-admin', email: 'admin@example.com' })
+
+    expect(result).toEqual({ success: true })
+    expect(mockedExecSync).toHaveBeenCalledTimes(1)
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('bootstrap-admin.ts'),
+      expect.objectContaining({ encoding: 'utf-8' })
+    )
+  })
+
+  it('should pass email as environment variable to bootstrap-admin script', async () => {
+    mockedExecSync.mockReturnValue('')
+
+    await handler({ command: 'bootstrap-admin', email: 'admin@example.com' })
+
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        env: expect.objectContaining({
+          BOOTSTRAP_EMAIL: 'admin@example.com',
+        }),
+      })
+    )
+  })
+
+  it('should return error when bootstrap-admin script is missing', async () => {
+    mockedExistsSync
+      .mockReturnValueOnce(true)   // LAMBDA_ROOT
+      .mockReturnValueOnce(true)   // PRISMA_CLI
+      .mockReturnValueOnce(false)  // bootstrap-admin.ts
+
+    const result = await handler({ command: 'bootstrap-admin', email: 'admin@example.com' })
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('Bootstrap script not found')
+    expect(mockedExecSync).not.toHaveBeenCalled()
+  })
+
+  it('should return error when bootstrap-admin script fails', async () => {
+    mockedExecSync.mockImplementationOnce(() => {
+      throw new Error('User not found with email admin@example.com')
+    })
+
+    const result = await handler({ command: 'bootstrap-admin', email: 'admin@example.com' })
+
+    expect(result).toEqual({
+      success: false,
+      error: 'User not found with email admin@example.com',
+    })
+  })
 })

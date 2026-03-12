@@ -2,8 +2,9 @@ import { execSync } from 'child_process'
 import fs from 'node:fs'
 
 interface MigrateEvent {
-  command: 'migrate' | 'force-reapply-baseline' | 'reset-baseline' | 'resolve-rolled-back' | 'seed' | 'backfill-dimensions'
+  command: 'migrate' | 'force-reapply-baseline' | 'reset-baseline' | 'resolve-rolled-back' | 'seed' | 'backfill-dimensions' | 'bootstrap-admin'
   migration?: string
+  email?: string
 }
 
 interface MigrateResult {
@@ -12,7 +13,7 @@ interface MigrateResult {
 }
 
 export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
-  const validCommands = ['migrate', 'force-reapply-baseline', 'reset-baseline', 'resolve-rolled-back', 'seed', 'backfill-dimensions']
+  const validCommands = ['migrate', 'force-reapply-baseline', 'reset-baseline', 'resolve-rolled-back', 'seed', 'backfill-dimensions', 'bootstrap-admin']
   if (!validCommands.includes(event.command)) {
     return { success: false, error: `Unknown command: ${event.command}` }
   }
@@ -98,6 +99,44 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('Backfill dimensions failed:', message)
+      return { success: false, error: message }
+    }
+  }
+
+  // bootstrap-admin: grants admin role to a user identified by email.
+  // The user must already exist in the database (i.e. they must have logged
+  // in at least once via Cognito, which auto-provisions a buyer account).
+  // Idempotent — silently succeeds if the user already has admin role.
+  if (event.command === 'bootstrap-admin') {
+    if (!event.email) {
+      return { success: false, error: 'bootstrap-admin requires an "email" field' }
+    }
+    // Basic email validation — just check structure, the DB lookup is the real validation.
+    // Avoids complex regex patterns that could be vulnerable to ReDoS.
+    const atIndex = event.email.indexOf('@')
+    if (atIndex < 1 || atIndex === event.email.length - 1 || event.email.length > 254 || event.email.includes(' ')) {
+      return { success: false, error: `Invalid email: ${event.email}` }
+    }
+    try {
+      const tsxPath = `${LAMBDA_ROOT}/node_modules/.bin/tsx`
+      const bootstrapScript = `${LAMBDA_ROOT}/prisma/bootstrap-admin.ts`
+
+      if (!fs.existsSync(bootstrapScript)) {
+        return {
+          success: false,
+          error: `Bootstrap script not found at ${bootstrapScript}. Ensure the Dockerfile copies prisma/bootstrap-admin.ts.`,
+        }
+      }
+
+      const output = execSync(
+        `node ${tsxPath} ${bootstrapScript}`,
+        { ...execOpts, env: { ...process.env, BOOTSTRAP_EMAIL: event.email } }
+      )
+      console.log('Bootstrap admin output:', output)
+      return { success: true }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('Bootstrap admin failed:', message)
       return { success: false, error: message }
     }
   }
