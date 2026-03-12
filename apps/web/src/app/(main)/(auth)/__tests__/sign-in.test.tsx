@@ -10,6 +10,10 @@ const mockCompleteMfa = vi.fn()
 const mockAuth = {
   user: null,
   loading: false,
+  roles: [] as string[],
+  isAdmin: false,
+  isArtist: false,
+  hasRole: vi.fn(),
   signIn: mockSignIn,
   signUp: vi.fn(),
   confirmSignUp: vi.fn(),
@@ -78,9 +82,9 @@ describe('Sign In Page', () => {
     expect(link).toHaveAttribute('href', '/forgot-password')
   })
 
-  it('should call signIn and redirect on successful submission', async () => {
+  it('should call signIn and redirect to dashboard for non-admin users', async () => {
     const user = userEvent.setup()
-    mockSignIn.mockResolvedValue(true)
+    mockSignIn.mockResolvedValue({ authenticated: true, roles: ['buyer'] })
 
     render(<SignInPage />)
 
@@ -90,6 +94,19 @@ describe('Sign In Page', () => {
 
     expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'Password1')
     expect(locationHref).toBe('/dashboard')
+  })
+
+  it('should redirect admin users to /admin after sign-in', async () => {
+    const user = userEvent.setup()
+    mockSignIn.mockResolvedValue({ authenticated: true, roles: ['admin', 'buyer'] })
+
+    render(<SignInPage />)
+
+    await user.type(screen.getByLabelText(/email/i), 'admin@surfaced.art')
+    await user.type(screen.getByLabelText(/password/i), 'Password1')
+    await user.click(screen.getByRole('button', { name: /sign in/i }))
+
+    expect(locationHref).toBe('/admin')
   })
 
   it('should display error message on failed sign-in', async () => {
@@ -157,7 +174,7 @@ describe('Sign In - New Password Required', () => {
 
   it('should call completeNewPassword and redirect on successful submission', async () => {
     const user = userEvent.setup()
-    mockCompleteNewPassword.mockResolvedValue(undefined)
+    mockCompleteNewPassword.mockResolvedValue({ roles: ['artist'] })
 
     render(<SignInPage />)
 
@@ -167,6 +184,19 @@ describe('Sign In - New Password Required', () => {
 
     expect(mockCompleteNewPassword).toHaveBeenCalledWith('NewPassword1!')
     expect(locationHref).toBe('/dashboard')
+  })
+
+  it('should redirect admin to /admin after completing new password', async () => {
+    const user = userEvent.setup()
+    mockCompleteNewPassword.mockResolvedValue({ roles: ['admin'] })
+
+    render(<SignInPage />)
+
+    await user.type(screen.getByLabelText('New password'), 'NewPassword1!')
+    await user.type(screen.getByLabelText('Confirm new password'), 'NewPassword1!')
+    await user.click(screen.getByRole('button', { name: /set password/i }))
+
+    expect(locationHref).toBe('/admin')
   })
 
   it('should show error when passwords do not match', async () => {
@@ -216,7 +246,7 @@ describe('Sign In - MFA Required', () => {
 
   it('should call completeMfa and redirect on successful submission', async () => {
     const user = userEvent.setup()
-    mockCompleteMfa.mockResolvedValue(undefined)
+    mockCompleteMfa.mockResolvedValue({ roles: ['buyer'] })
 
     render(<SignInPage />)
 
@@ -225,6 +255,18 @@ describe('Sign In - MFA Required', () => {
 
     expect(mockCompleteMfa).toHaveBeenCalledWith('123456')
     expect(locationHref).toBe('/dashboard')
+  })
+
+  it('should redirect admin to /admin after MFA', async () => {
+    const user = userEvent.setup()
+    mockCompleteMfa.mockResolvedValue({ roles: ['admin', 'buyer'] })
+
+    render(<SignInPage />)
+
+    await user.type(screen.getByLabelText(/code/i), '123456')
+    await user.click(screen.getByRole('button', { name: /verify/i }))
+
+    expect(locationHref).toBe('/admin')
   })
 
   it('should show error when MFA verification fails', async () => {

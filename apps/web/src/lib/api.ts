@@ -4,6 +4,7 @@ import type {
   ArtistApplicationBody,
   ApplicationStatusType,
   ApplicationSubmitResponse,
+  AuthMeResponse,
   CategoriesUpdateResponse,
   CategoryType,
   CvEntryBody,
@@ -157,6 +158,12 @@ export async function submitApplication(
   return apiFetch<ApplicationSubmitResponse>('/artists/apply', {
     method: 'POST',
     body: JSON.stringify(data),
+  })
+}
+
+export async function getAuthMe(token: string): Promise<AuthMeResponse> {
+  return apiFetch<AuthMeResponse>('/auth/me', {
+    headers: { Authorization: `Bearer ${token}` },
   })
 }
 

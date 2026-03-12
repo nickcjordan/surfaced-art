@@ -1015,3 +1015,16 @@ export interface ApiError {
     details?: unknown // Field-level validation errors when applicable
   }
 }
+
+// ─── Auth Response Types ────────────────────────────────────────────
+
+/**
+ * Response from GET /auth/me — authenticated user profile with roles.
+ * Available to any authenticated user (no role requirement).
+ */
+export interface AuthMeResponse {
+  id: string
+  email: string
+  fullName: string
+  roles: UserRoleType[]
+}

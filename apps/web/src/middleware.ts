@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { AUTH_COOKIE_NAME } from '@/lib/auth/constants'
 
 /**
- * Middleware to protect /dashboard routes.
+ * Middleware to protect /dashboard and /admin routes.
  * Checks for the auth marker cookie — if missing, redirects to /sign-in.
  *
  * Note: This is a client-side guard only. The actual JWT validation happens
@@ -23,5 +23,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/admin/:path*'],
 }
