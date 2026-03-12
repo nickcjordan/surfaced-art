@@ -1,21 +1,27 @@
 'use client'
 
 import { useState, useEffect, useCallback, type ReactNode, type ReactElement } from 'react'
+export { estimateCardHeight } from '@/lib/masonry-utils'
 
 type MasonryGridProps = {
   children: ReactNode
   /** Column counts at breakpoints: [mobile, sm, md, lg] */
   columns?: [number, number, number, number]
   gap?: number
+  /**
+   * Relative height estimates for each child, used to distribute items
+   * into the shortest column. When omitted, falls back to round-robin.
+   */
+  itemHeights?: number[]
   'data-testid'?: string
   className?: string
 }
 
 /**
- * JS-assisted masonry grid that distributes children into columns
- * using round-robin assignment. Items flow left-to-right in source
- * order, cycling through columns sequentially. This works well when
- * items have similar heights (e.g. known aspect ratios).
+ * JS-assisted masonry grid that distributes children into columns.
+ *
+ * When `itemHeights` is provided, uses shortest-column-first placement
+ * for balanced columns. Otherwise falls back to round-robin assignment.
  *
  * Falls back to a single column on the server (SSR) and reflows
  * on mount + resize.
@@ -24,6 +30,7 @@ export function MasonryGrid({
   children,
   columns = [2, 2, 3, 4],
   gap = 16,
+  itemHeights,
   'data-testid': testId,
   className,
 }: MasonryGridProps) {
@@ -50,10 +57,6 @@ export function MasonryGrid({
     return () => observer.disconnect()
   }, [getColumnCount])
 
-  // Distribute children into columns using round-robin
-  // (true height-based distribution would require measuring DOM elements,
-  // but round-robin with source-order preservation works well when items
-  // have similar heights, which they do with known aspect ratios)
   const items = Array.isArray(children)
     ? (children.filter(Boolean) as ReactElement[])
     : children
@@ -62,8 +65,20 @@ export function MasonryGrid({
 
   const columnItems: ReactElement[][] = Array.from({ length: columnCount }, () => [])
 
-  for (let i = 0; i < items.length; i++) {
-    columnItems[i % columnCount]!.push(items[i]!)
+  if (itemHeights && itemHeights.length >= items.length) {
+    // Shortest-column-first: place each item into the column with the
+    // least accumulated height for visually balanced columns.
+    const heights = new Array<number>(columnCount).fill(0)
+    for (let i = 0; i < items.length; i++) {
+      const shortest = heights.indexOf(Math.min(...heights))
+      columnItems[shortest]!.push(items[i]!)
+      heights[shortest] += itemHeights[i]!
+    }
+  } else {
+    // Round-robin fallback when no height data is available.
+    for (let i = 0; i < items.length; i++) {
+      columnItems[i % columnCount]!.push(items[i]!)
+    }
   }
 
   return (

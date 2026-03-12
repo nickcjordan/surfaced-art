@@ -53,7 +53,7 @@ export function ListingCard({
       href={href}
       data-testid="listing-card"
       className={cn(
-        'group block rounded-md bg-surface transition-[box-shadow,transform] duration-250 ease-in-out hover:shadow-md hover:-translate-y-0.5',
+        'group block rounded-md bg-surface shadow-sm transition-[box-shadow,transform] duration-250 ease-in-out hover:shadow-lg hover:-translate-y-0.5',
         className
       )}
     >

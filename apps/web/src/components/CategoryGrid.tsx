@@ -10,7 +10,7 @@ export function CategoryGrid({ counts }: CategoryGridProps) {
   const countMap = new Map(counts.map((c) => [c.category, c.count]))
 
   return (
-    <div data-testid="category-grid" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <div data-testid="category-grid" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {CATEGORIES.map((cat) => {
         const count = countMap.get(cat.slug) ?? 0
         return (

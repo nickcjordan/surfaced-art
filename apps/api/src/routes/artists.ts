@@ -45,6 +45,19 @@ export function createArtistRoutes(prisma: PrismaClient) {
         profileImageUrl: true,
         coverImageUrl: true,
         categories: true,
+        listings: {
+          where: { status: 'available' },
+          select: {
+            images: {
+              where: { isProcessPhoto: false },
+              select: { url: true },
+              orderBy: { sortOrder: 'asc' },
+              take: 1,
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 4,
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -56,6 +69,9 @@ export function createArtistRoutes(prisma: PrismaClient) {
       location: artist.location,
       profileImageUrl: artist.profileImageUrl,
       coverImageUrl: artist.coverImageUrl,
+      artworkImageUrls: artist.listings
+        .map((l) => l.images[0]?.url)
+        .filter((url): url is string => url != null),
       categories: artist.categories.map((c) => c.category),
     }))
 

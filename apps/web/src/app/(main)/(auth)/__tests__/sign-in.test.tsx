@@ -27,10 +27,31 @@ vi.mock('@/lib/auth', () => ({
   useAuth: () => mockAuth,
 }))
 
-import { mockPush } from '@/test/mocks/next-navigation'
+// Mock window.location for navigation assertions
+const originalLocation = window.location
+let locationHref = ''
 
 beforeEach(() => {
   vi.clearAllMocks()
+  locationHref = ''
+  Object.defineProperty(window, 'location', {
+    value: { ...originalLocation, href: '' },
+    writable: true,
+    configurable: true,
+  })
+  Object.defineProperty(window.location, 'href', {
+    set: (value: string) => { locationHref = value },
+    get: () => locationHref,
+    configurable: true,
+  })
+})
+
+afterEach(() => {
+  Object.defineProperty(window, 'location', {
+    value: originalLocation,
+    writable: true,
+    configurable: true,
+  })
 })
 
 describe('Sign In Page', () => {
@@ -68,7 +89,7 @@ describe('Sign In Page', () => {
     await user.click(screen.getByRole('button', { name: /sign in/i }))
 
     expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'Password1')
-    expect(mockPush).toHaveBeenCalledWith('/dashboard')
+    expect(locationHref).toBe('/dashboard')
   })
 
   it('should display error message on failed sign-in', async () => {
@@ -96,7 +117,7 @@ describe('Sign In Page', () => {
     await user.type(screen.getByLabelText(/password/i), 'Password1')
     await user.click(screen.getByRole('button', { name: /sign in/i }))
 
-    expect(mockPush).toHaveBeenCalledWith('/verify-email?email=test%40example.com')
+    expect(locationHref).toBe('/verify-email?email=test%40example.com')
   })
 
   it('should disable submit button while loading', async () => {
@@ -145,7 +166,7 @@ describe('Sign In - New Password Required', () => {
     await user.click(screen.getByRole('button', { name: /set password/i }))
 
     expect(mockCompleteNewPassword).toHaveBeenCalledWith('NewPassword1!')
-    expect(mockPush).toHaveBeenCalledWith('/dashboard')
+    expect(locationHref).toBe('/dashboard')
   })
 
   it('should show error when passwords do not match', async () => {
@@ -203,7 +224,7 @@ describe('Sign In - MFA Required', () => {
     await user.click(screen.getByRole('button', { name: /verify/i }))
 
     expect(mockCompleteMfa).toHaveBeenCalledWith('123456')
-    expect(mockPush).toHaveBeenCalledWith('/dashboard')
+    expect(locationHref).toBe('/dashboard')
   })
 
   it('should show error when MFA verification fails', async () => {

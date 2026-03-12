@@ -327,6 +327,8 @@ export interface FeaturedArtistItem {
   location: string
   profileImageUrl: string | null
   coverImageUrl: string | null
+  /** Up to 4 front-image URLs from the artist's listings, for the card mosaic grid */
+  artworkImageUrls: string[]
   categories: CategoryType[]
 }
 
@@ -905,6 +907,8 @@ export interface SearchArtistItem {
   location: string
   profileImageUrl: string | null
   coverImageUrl: string | null
+  /** Up to 4 front-image URLs from the artist's listings, for the card mosaic grid */
+  artworkImageUrls: string[]
   categories: CategoryType[]
   rank: number
 }

@@ -25,6 +25,7 @@ const mockArtistResult = {
   location: 'Portland, OR',
   profileImageUrl: 'https://cdn.example.com/profile.jpg',
   coverImageUrl: 'https://cdn.example.com/cover.jpg',
+  artworkImageUrls: ['https://cdn.example.com/art1.jpg', 'https://cdn.example.com/art2.jpg'],
   categories: ['ceramics', 'mixed_media_3d'],
   rank: 0.06079271,
   totalCount: BigInt(1),
