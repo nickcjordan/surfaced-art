@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export function SignInForm() {
   const { signIn, pendingChallenge, completeNewPassword, completeMfa } = useAuth()
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   const [email, setEmail] = useState('')
@@ -38,13 +37,14 @@ export function SignInForm() {
     try {
       const success = await signIn(email, password)
       if (success) {
-        router.push(redirect)
+        // Full navigation (not router.push) ensures clean state after auth
+        window.location.href = redirect
         return
       }
       // Challenge was set — form will re-render to show challenge UI
     } catch (err) {
       if (err instanceof Error && err.name === 'UserNotConfirmedException') {
-        router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+        window.location.href = `/verify-email?email=${encodeURIComponent(email)}`
         return
       }
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
@@ -66,7 +66,7 @@ export function SignInForm() {
 
     try {
       await completeNewPassword(newPassword)
-      router.push(redirect)
+      window.location.href = redirect
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
@@ -81,7 +81,7 @@ export function SignInForm() {
 
     try {
       await completeMfa(mfaCode)
-      router.push(redirect)
+      window.location.href = redirect
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
