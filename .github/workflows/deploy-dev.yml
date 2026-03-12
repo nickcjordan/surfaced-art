@@ -527,8 +527,16 @@ jobs:
 
           node -e "
             const r = JSON.parse(require('fs').readFileSync('/tmp/seed-response.json', 'utf8'));
-            if (!r.success) { console.error('Seed failed:', r.error); process.exit(1); }
-            console.log('Database seeded successfully');
+            if (!r.success) {
+              if (r.error && r.error.includes('SEED BLOCKED')) {
+                console.log('Seed skipped (non-seed users exist):', r.error);
+              } else {
+                console.error('Seed failed:', r.error);
+                process.exit(1);
+              }
+            } else {
+              console.log('Database seeded successfully');
+            }
           "
 
   backfill-dimensions:
