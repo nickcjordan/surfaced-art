@@ -111,8 +111,10 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
     if (!event.email) {
       return { success: false, error: 'bootstrap-admin requires an "email" field' }
     }
-    // Basic email validation to prevent injection
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(event.email)) {
+    // Basic email validation — just check structure, the DB lookup is the real validation.
+    // Avoids complex regex patterns that could be vulnerable to ReDoS.
+    const atIndex = event.email.indexOf('@')
+    if (atIndex < 1 || atIndex === event.email.length - 1 || event.email.length > 254 || event.email.includes(' ')) {
       return { success: false, error: `Invalid email: ${event.email}` }
     }
     try {
