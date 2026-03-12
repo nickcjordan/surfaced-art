@@ -1,5 +1,9 @@
 import { cache } from 'react'
 import type {
+  AdminActionResponse,
+  AdminRoleGrantResponse,
+  AdminUserDetailResponse,
+  AdminUserListItem,
   ArtistProfileResponse,
   ArtistApplicationBody,
   ApplicationStatusType,
@@ -32,6 +36,7 @@ import type {
   StripeStatusResponse,
   Tag,
   TagsUpdateResponse,
+  UserRoleType,
 } from '@surfaced-art/types'
 
 import { API_URL as API_BASE_URL } from '@/lib/env'
@@ -492,6 +497,63 @@ export async function updateListingTags(
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify({ tagIds }),
+    },
+  )
+}
+
+// ─── Admin: User Management ─────────────────────────────────────────
+
+export async function getAdminUsers(
+  token: string,
+  params?: { search?: string; role?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<AdminUserListItem>> {
+  const qs = new URLSearchParams()
+  if (params?.search) qs.set('search', params.search)
+  if (params?.role) qs.set('role', params.role)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<AdminUserListItem>>(
+    `/admin/users${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function getAdminUser(
+  token: string,
+  id: string,
+): Promise<AdminUserDetailResponse> {
+  return apiFetch<AdminUserDetailResponse>(
+    `/admin/users/${encodeURIComponent(id)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function grantRole(
+  token: string,
+  userId: string,
+  role: UserRoleType,
+): Promise<AdminRoleGrantResponse> {
+  return apiFetch<AdminRoleGrantResponse>(
+    `/admin/users/${encodeURIComponent(userId)}/roles`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ role }),
+    },
+  )
+}
+
+export async function revokeRole(
+  token: string,
+  userId: string,
+  role: UserRoleType,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(role)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
     },
   )
 }
