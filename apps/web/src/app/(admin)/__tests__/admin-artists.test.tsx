@@ -270,6 +270,7 @@ describe('AdminArtistDetail', () => {
     coverImageUrl: null,
     profileImageUrl: null,
     applicationSource: null,
+    accentColor: null,
     isDemo: false,
     hasStripeAccount: false,
     createdAt: '2026-02-01T00:00:00Z',

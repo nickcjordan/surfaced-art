@@ -194,6 +194,10 @@ export function sanitizeText(input: string): string {
 }
 
 /** PUT /me/profile body — all fields optional for partial update */
+/** Hex color validation — must be # followed by exactly 6 hex digits */
+export const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a valid hex color (e.g. #FF5733)')
+
+/** PUT /me/profile body — all fields optional for partial update */
 export const profileUpdateBody = z.object({
   bio: z.string().max(5000, 'Bio must be at most 5000 characters').optional(),
   location: z.string().max(200, 'Location must be at most 200 characters').optional(),
@@ -201,6 +205,7 @@ export const profileUpdateBody = z.object({
   instagramUrl: z.string().url('Invalid Instagram URL').optional().or(z.literal('')),
   profileImageUrl: z.string().url('Invalid image URL').nullable().optional(),
   coverImageUrl: z.string().url('Invalid image URL').nullable().optional(),
+  accentColor: hexColor.nullable().optional(),
 })
 
 /** PUT /me/categories body — replace-all semantics */
@@ -464,6 +469,7 @@ export const adminArtistUpdateBody = z.object({
   originZip: z.string().max(10).optional(),
   status: z.enum(['pending', 'approved', 'suspended'] as const).optional(),
   isDemo: z.boolean().optional(),
+  accentColor: hexColor.nullable().optional(),
 })
 
 /** PUT /admin/listings/:id body — extends listing update with status */

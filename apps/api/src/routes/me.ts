@@ -205,6 +205,9 @@ export function createMeRoutes(prisma: PrismaClient) {
     if (parsed.data.coverImageUrl !== undefined) {
       updateData.coverImageUrl = parsed.data.coverImageUrl
     }
+    if (parsed.data.accentColor !== undefined) {
+      updateData.accentColor = parsed.data.accentColor
+    }
 
     const updated = await prisma.artistProfile.update({
       where: { id: artist.id },
@@ -221,6 +224,7 @@ export function createMeRoutes(prisma: PrismaClient) {
       instagramUrl: updated.instagramUrl,
       profileImageUrl: updated.profileImageUrl,
       coverImageUrl: updated.coverImageUrl,
+      accentColor: updated.accentColor,
       status: updated.status,
     }
 

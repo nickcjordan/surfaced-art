@@ -131,6 +131,7 @@ export function createAdminArtistRoutes(prisma: PrismaClient) {
       coverImageUrl: artist.coverImageUrl,
       profileImageUrl: artist.profileImageUrl,
       applicationSource: artist.applicationSource,
+      accentColor: artist.accentColor,
       isDemo: artist.isDemo,
       hasStripeAccount: artist.stripeAccountId !== null,
       createdAt: artist.createdAt.toISOString(),

@@ -27,6 +27,8 @@ import {
   adminBulkRoleGrantBody,
   tagsUpdateBody,
   listingTagsUpdateBody,
+  hexColor,
+  profileUpdateBody,
 } from './schemas'
 
 describe('Shared Validation Schemas', () => {
@@ -1124,6 +1126,59 @@ describe('Shared Validation Schemas', () => {
         `550e8400-e29b-41d4-a716-${String(i).padStart(12, '0')}`,
       )
       expect(listingTagsUpdateBody.safeParse({ tagIds: ids }).success).toBe(false)
+    })
+  })
+
+  describe('hexColor', () => {
+    it('should accept valid 6-digit hex colors', () => {
+      expect(hexColor.safeParse('#FF5733').success).toBe(true)
+      expect(hexColor.safeParse('#000000').success).toBe(true)
+      expect(hexColor.safeParse('#ffffff').success).toBe(true)
+      expect(hexColor.safeParse('#1a2B3c').success).toBe(true)
+    })
+
+    it('should reject colors without hash prefix', () => {
+      expect(hexColor.safeParse('FF5733').success).toBe(false)
+    })
+
+    it('should reject 3-digit shorthand colors', () => {
+      expect(hexColor.safeParse('#FFF').success).toBe(false)
+      expect(hexColor.safeParse('#abc').success).toBe(false)
+    })
+
+    it('should reject 8-digit colors (with alpha)', () => {
+      expect(hexColor.safeParse('#FF5733FF').success).toBe(false)
+    })
+
+    it('should reject invalid hex characters', () => {
+      expect(hexColor.safeParse('#GGGGGG').success).toBe(false)
+      expect(hexColor.safeParse('#12345Z').success).toBe(false)
+    })
+
+    it('should reject empty string', () => {
+      expect(hexColor.safeParse('').success).toBe(false)
+    })
+  })
+
+  describe('profileUpdateBody — accentColor', () => {
+    it('should accept valid hex accentColor', () => {
+      const result = profileUpdateBody.safeParse({ accentColor: '#FF5733' })
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept null accentColor (reset to default)', () => {
+      const result = profileUpdateBody.safeParse({ accentColor: null })
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept omitted accentColor (no change)', () => {
+      const result = profileUpdateBody.safeParse({ bio: 'test' })
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject invalid accentColor', () => {
+      expect(profileUpdateBody.safeParse({ accentColor: 'red' }).success).toBe(false)
+      expect(profileUpdateBody.safeParse({ accentColor: '#FFF' }).success).toBe(false)
     })
   })
 })

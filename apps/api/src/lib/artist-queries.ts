@@ -91,6 +91,7 @@ export async function fetchDashboard(
       instagramUrl: artist.instagramUrl,
       profileImageUrl: artist.profileImageUrl,
       coverImageUrl: artist.coverImageUrl,
+      accentColor: artist.accentColor,
       status: artist.status,
       stripeAccountId: artist.stripeAccountId,
       categories: artist.categories.map((c) => c.category),

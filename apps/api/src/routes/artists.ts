@@ -140,6 +140,7 @@ export function createArtistRoutes(prisma: PrismaClient) {
       commissionsOpen: artist.commissionsOpen,
       coverImageUrl: artist.coverImageUrl,
       profileImageUrl: artist.profileImageUrl,
+      accentColor: artist.accentColor,
       createdAt: artist.createdAt,
       updatedAt: artist.updatedAt,
       categories: artist.categories.map((c) => c.category),
