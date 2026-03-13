@@ -135,6 +135,31 @@ describe('Lightbox', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
+  it('closes when clicking empty space around the image', () => {
+    const onOpenChange = vi.fn()
+
+    render(
+      <Lightbox images={images} open={true} onOpenChange={onOpenChange} />
+    )
+
+    // Click the lightbox backdrop (the content container itself)
+    fireEvent.click(screen.getByTestId('lightbox'))
+
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('does not close when clicking the image', () => {
+    const onOpenChange = vi.fn()
+
+    render(
+      <Lightbox images={images} open={true} onOpenChange={onOpenChange} />
+    )
+
+    fireEvent.click(screen.getByTestId('lightbox-image'))
+
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
   it('initializes at the given initialIndex', () => {
     render(
       <Lightbox images={images} open={true} initialIndex={2} onOpenChange={vi.fn()} />
