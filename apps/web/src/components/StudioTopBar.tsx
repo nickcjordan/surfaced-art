@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { ShoppingBag } from 'lucide-react'
+import { ShareButton } from './ShareButton'
+import { SITE_URL } from '@/lib/site-config'
 
 type StudioTopBarProps = {
   artistName: string
@@ -13,15 +15,21 @@ export function StudioTopBar({ artistName, artistSlug }: StudioTopBarProps) {
         <span className="font-serif text-foreground tracking-wide text-base truncate">
           {artistName}
         </span>
-        <Link
-          href={`/artist/${artistSlug}`}
-          className="flex items-center gap-1.5 text-sm text-muted-text transition-colors hover:text-foreground shrink-0 ml-4"
-        >
-          <ShoppingBag className="size-4" aria-hidden="true" />
-          <span className="hidden sm:inline">Shop on Surfaced Art</span>
-          <span className="sm:hidden sr-only">Shop on Surfaced Art</span>
-          <span className="sm:hidden" aria-hidden="true">→</span>
-        </Link>
+        <div className="flex items-center gap-4 shrink-0 ml-4">
+          <ShareButton
+            url={`${SITE_URL}/${artistSlug}`}
+            title={`${artistName} — Surfaced Art`}
+          />
+          <Link
+            href={`/artist/${artistSlug}`}
+            className="flex items-center gap-1.5 text-sm text-muted-text transition-colors hover:text-foreground"
+          >
+            <ShoppingBag className="size-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Shop on Surfaced Art</span>
+            <span className="sm:hidden sr-only">Shop on Surfaced Art</span>
+            <span className="sm:hidden" aria-hidden="true">→</span>
+          </Link>
+        </div>
       </div>
     </header>
   )
