@@ -127,6 +127,13 @@ function LightboxInner({
           onKeyDown={handleKeyDown}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
+          onClick={(e) => {
+            // Close when clicking the backdrop (empty space), not buttons/image
+            const target = e.target as HTMLElement
+            if (!target.closest('button, img, [data-testid="lightbox-counter"]')) {
+              onOpenChange(false)
+            }
+          }}
           className="fixed inset-0 z-50 flex items-center justify-center outline-none"
         >
           <DialogPrimitive.Title className="sr-only">Image viewer</DialogPrimitive.Title>
