@@ -194,38 +194,36 @@ export default async function StudioPage({ params }: Props) {
       {/* Remaining content — constrained width */}
       <div className="mx-auto max-w-6xl px-6 space-y-16 py-12">
 
-        {/* Bio */}
+        {/* Bio + Social links */}
         <section data-testid="artist-bio">
-          <p className="max-w-2xl whitespace-pre-line text-base leading-relaxed text-foreground">
+          <p className="max-w-2xl whitespace-pre-line text-body-large text-foreground">
             {artist.bio}
           </p>
+          {(artist.instagramUrl || artist.websiteUrl) && (
+            <div data-testid="artist-social-links" className="mt-6 flex flex-wrap gap-6">
+              {artist.instagramUrl && (
+                <a
+                  href={artist.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-text underline underline-offset-2 transition-colors hover:text-accent-primary"
+                >
+                  Instagram
+                </a>
+              )}
+              {artist.websiteUrl && (
+                <a
+                  href={artist.websiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-text underline underline-offset-2 transition-colors hover:text-accent-primary"
+                >
+                  Website
+                </a>
+              )}
+            </div>
+          )}
         </section>
-
-        {/* Social links */}
-        {(artist.instagramUrl || artist.websiteUrl) && (
-          <section data-testid="artist-social-links" className="flex flex-wrap gap-4">
-            {artist.instagramUrl && (
-              <a
-                href={artist.instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-text transition-colors hover:text-foreground"
-              >
-                Instagram →
-              </a>
-            )}
-            {artist.websiteUrl && (
-              <a
-                href={artist.websiteUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-text transition-colors hover:text-foreground"
-              >
-                Website →
-              </a>
-            )}
-          </section>
-        )}
 
         {/* Process Section */}
         {(processPhotos.length > 0 || processVideo) && (
@@ -330,10 +328,10 @@ export default async function StudioPage({ params }: Props) {
         {/* Archive */}
         {soldListings.length > 0 && (
           <section data-testid="archive-section">
-            <h2 className="mb-6 font-serif text-2xl text-foreground">Archive</h2>
+            <h2 className="mb-6 font-serif text-2xl text-muted-text">Archive</h2>
             <MasonryGrid
               columns={[2, 2, 3, 3]}
-              className="opacity-75"
+              className="opacity-60 grayscale-[20%]"
               itemHeights={soldListings.map((l) =>
                 estimateCardHeight(l.images[0]?.width, l.images[0]?.height)
               )}

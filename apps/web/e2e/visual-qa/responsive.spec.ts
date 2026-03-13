@@ -15,6 +15,7 @@ const BREAKPOINTS = [
 const PAGES = [
   { name: 'homepage', path: '/' },
   { name: 'artist-profile', path: '/artist/abbey-peters' },
+  { name: 'artist-studio', path: '/abbey-peters' },
   { name: 'category-ceramics', path: '/category/ceramics' },
 ]
 
