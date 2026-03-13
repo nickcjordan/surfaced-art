@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { CATEGORIES } from '@/lib/categories'
+import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 
 /**
@@ -13,6 +14,7 @@ import { cn } from '@/lib/utils'
  */
 export function MobileNav() {
   const pathname = usePathname()
+  const { user, isArtist, isAdmin, signOut } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
 
@@ -163,6 +165,85 @@ export function MobileNav() {
                 })}
               </ul>
             </nav>
+
+            {/* Auth-aware links */}
+            {user && (
+              <nav data-testid="mobile-auth-nav" aria-label="Account navigation" className="px-6 mt-6">
+                <p className="px-0 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Account
+                </p>
+                <ul className="space-y-1">
+                  <li>
+                    <Link
+                      href="/dashboard"
+                      onClick={close}
+                      data-testid="mobile-dashboard-link"
+                      className="block py-3 text-base tracking-wide transition-colors border-b border-border/50 text-muted-foreground hover:text-foreground"
+                    >
+                      Dashboard
+                    </Link>
+                  </li>
+                  {isArtist && (
+                    <li>
+                      <Link
+                        href="/dashboard/profile"
+                        onClick={close}
+                        data-testid="mobile-artist-profile-link"
+                        className="block py-3 text-base tracking-wide transition-colors border-b border-border/50 text-muted-foreground hover:text-foreground"
+                      >
+                        Artist Profile
+                      </Link>
+                    </li>
+                  )}
+                  {isAdmin && (
+                    <li>
+                      <Link
+                        href="/admin"
+                        onClick={close}
+                        data-testid="mobile-admin-link"
+                        className="block py-3 text-base tracking-wide transition-colors border-b border-border/50 text-muted-foreground hover:text-foreground"
+                      >
+                        Admin Panel
+                      </Link>
+                    </li>
+                  )}
+                  <li>
+                    <Link
+                      href="/dashboard/settings"
+                      onClick={close}
+                      data-testid="mobile-settings-link"
+                      className="block py-3 text-base tracking-wide transition-colors border-b border-border/50 text-muted-foreground hover:text-foreground"
+                    >
+                      Settings
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => { signOut(); close() }}
+                      data-testid="mobile-sign-out"
+                      className="block w-full text-left py-3 text-base tracking-wide transition-colors text-muted-foreground hover:text-foreground"
+                    >
+                      Sign Out
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            )}
+
+            {/* Sign in link for unauthenticated users */}
+            {!user && (
+              <div className="px-6 mt-6">
+                <Link
+                  href="/sign-in"
+                  onClick={close}
+                  data-testid="mobile-sign-in-link"
+                  className="block py-3 text-base tracking-wide transition-colors text-accent-primary hover:text-foreground font-medium"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
           </div>
         </>,
         document.body

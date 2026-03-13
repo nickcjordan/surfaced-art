@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import type { DashboardResponse } from '@surfaced-art/types'
 
-// Mock the auth provider
-const mockGetIdToken = vi.fn()
+// Mock the auth provider — mutable so tests can override
 const mockAuth = {
-  user: { email: 'artist@test.com', name: 'Test Artist' },
+  user: { email: 'artist@test.com', name: 'Test Artist' } as { email: string; name: string } | null,
   loading: false,
+  isArtist: true,
+  isAdmin: false,
+  roles: ['artist'] as string[],
+  hasRole: vi.fn((role: string) => role === 'artist'),
   signIn: vi.fn(),
   signUp: vi.fn(),
   confirmSignUp: vi.fn(),
@@ -15,7 +17,10 @@ const mockAuth = {
   signOut: vi.fn(),
   forgotPassword: vi.fn(),
   confirmPassword: vi.fn(),
-  getIdToken: mockGetIdToken,
+  getIdToken: vi.fn().mockResolvedValue('mock-token'),
+  completeNewPassword: vi.fn(),
+  completeMfa: vi.fn(),
+  pendingChallenge: null,
 }
 
 vi.mock('@/lib/auth', () => ({
@@ -76,31 +81,64 @@ const mockDashboardData: DashboardResponse = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockGetIdToken.mockResolvedValue('mock-token')
+  mockAuth.user = { email: 'artist@test.com', name: 'Test Artist' }
+  mockAuth.loading = false
+  mockAuth.isArtist = true
+  mockAuth.isAdmin = false
+  mockAuth.hasRole = vi.fn((role: string) => role === 'artist')
+  mockAuth.getIdToken = vi.fn().mockResolvedValue('mock-token')
   mockGetDashboard.mockResolvedValue(mockDashboardData)
   mockGetStripeStatus.mockResolvedValue({ status: 'not_started', stripeAccountId: null })
 })
 
 describe('DashboardPage', () => {
-  it('should show loading skeleton initially', () => {
-    // Never resolve — keeps in loading state
-    mockGetDashboard.mockReturnValue(new Promise(() => {}))
+  it('should show loading skeleton when auth is loading', () => {
+    mockAuth.loading = true
 
     render(<DashboardPage />)
 
     expect(screen.getByTestId('dashboard-skeleton')).toBeInTheDocument()
   })
 
-  it('should render welcome header with artist name', async () => {
+  it('should render welcome header with user name', () => {
     render(<DashboardPage />)
 
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-welcome')).toBeInTheDocument()
-    })
+    expect(screen.getByTestId('dashboard-welcome')).toBeInTheDocument()
     expect(screen.getByText('Welcome, Test Artist')).toBeInTheDocument()
   })
 
-  it('should render profile completion card with percentage', async () => {
+  it('should render ArtistOverview when user is an artist', async () => {
+    render(<DashboardPage />)
+
+    // ArtistOverview fetches data and renders — wait for it
+    await waitFor(() => {
+      expect(screen.getByTestId('artist-overview')).toBeInTheDocument()
+    })
+  })
+
+  it('should show generic welcome card when user is not an artist', () => {
+    mockAuth.isArtist = false
+    mockAuth.hasRole = vi.fn((_role: string) => false) as typeof mockAuth.hasRole
+
+    render(<DashboardPage />)
+
+    expect(screen.getByTestId('generic-welcome')).toBeInTheDocument()
+    expect(screen.getByText('Welcome to Surfaced Art')).toBeInTheDocument()
+    expect(screen.queryByTestId('artist-overview')).not.toBeInTheDocument()
+  })
+
+  it('should show Browse Artists link for non-artist users', () => {
+    mockAuth.isArtist = false
+    mockAuth.hasRole = vi.fn((_role: string) => false) as typeof mockAuth.hasRole
+
+    render(<DashboardPage />)
+
+    expect(screen.getByRole('link', { name: /browse artists/i })).toHaveAttribute('href', '/artists')
+    expect(screen.getByRole('link', { name: /account settings/i })).toHaveAttribute('href', '/dashboard/settings')
+  })
+
+  // Artist-specific tests that verify ArtistOverview content through DashboardPage
+  it('should render profile completion card for artists', async () => {
     render(<DashboardPage />)
 
     await waitFor(() => {
@@ -109,50 +147,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('67% complete')).toBeInTheDocument()
   })
 
-  it('should render completion field checklist', async () => {
-    render(<DashboardPage />)
-
-    await waitFor(() => {
-      expect(screen.getByTestId('profile-completion')).toBeInTheDocument()
-    })
-
-    expect(screen.getByText('Bio')).toBeInTheDocument()
-    expect(screen.getByText('Location')).toBeInTheDocument()
-    expect(screen.getByText('At least 1 category')).toBeInTheDocument()
-    expect(screen.getByText('At least 1 CV entry')).toBeInTheDocument()
-  })
-
-  it('should show "Complete your profile" link when completion < 100%', async () => {
-    render(<DashboardPage />)
-
-    await waitFor(() => {
-      expect(screen.getByTestId('profile-completion')).toBeInTheDocument()
-    })
-
-    const link = screen.getByRole('link', { name: /complete your profile/i })
-    expect(link).toHaveAttribute('href', '/dashboard/profile')
-  })
-
-  it('should not show "Complete your profile" when completion is 100%', async () => {
-    const fullData = {
-      ...mockDashboardData,
-      completion: {
-        percentage: 100,
-        fields: mockDashboardData.completion.fields.map((f) => ({ ...f, complete: true })),
-      },
-    }
-    mockGetDashboard.mockResolvedValue(fullData)
-
-    render(<DashboardPage />)
-
-    await waitFor(() => {
-      expect(screen.getByTestId('profile-completion')).toBeInTheDocument()
-    })
-
-    expect(screen.queryByRole('link', { name: /complete your profile/i })).not.toBeInTheDocument()
-  })
-
-  it('should render stats grid with correct values', async () => {
+  it('should render stats grid for artists', async () => {
     render(<DashboardPage />)
 
     await waitFor(() => {
@@ -161,42 +156,9 @@ describe('DashboardPage', () => {
 
     expect(screen.getByText('5')).toBeInTheDocument()
     expect(screen.getByText('Total Listings')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
-    expect(screen.getByText('Available')).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
-    expect(screen.getByText('Sold')).toBeInTheDocument()
-    expect(screen.getByText('0')).toBeInTheDocument()
-    expect(screen.getByText('Total Views')).toBeInTheDocument()
   })
 
-  it('should show Stripe CTA when stripeAccountId is null', async () => {
-    render(<DashboardPage />)
-
-    await waitFor(() => {
-      expect(screen.getByTestId('stripe-cta')).toBeInTheDocument()
-    })
-
-    expect(screen.getByText('Set Up Payments')).toBeInTheDocument()
-  })
-
-  it('should not show Stripe CTA when stripeAccountId is set', async () => {
-    const dataWithStripe = {
-      ...mockDashboardData,
-      profile: { ...mockDashboardData.profile, stripeAccountId: 'acct_123' },
-    }
-    mockGetDashboard.mockResolvedValue(dataWithStripe)
-    mockGetStripeStatus.mockResolvedValue({ status: 'complete', stripeAccountId: 'acct_123' })
-
-    render(<DashboardPage />)
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-content')).toBeInTheDocument()
-    })
-
-    expect(screen.queryByTestId('stripe-cta')).not.toBeInTheDocument()
-  })
-
-  it('should render action links', async () => {
+  it('should render action links for artists', async () => {
     render(<DashboardPage />)
 
     await waitFor(() => {
@@ -205,55 +167,22 @@ describe('DashboardPage', () => {
 
     expect(screen.getByRole('link', { name: /edit profile/i })).toHaveAttribute('href', '/dashboard/profile')
     expect(screen.getByRole('link', { name: /manage listings/i })).toHaveAttribute('href', '/dashboard/listings')
-    expect(screen.getByRole('link', { name: /view public profile/i })).toHaveAttribute('href', '/artist/test-artist')
   })
 
-  it('should show error message when API call fails', async () => {
+  it('should show error message when artist API call fails', async () => {
     mockGetDashboard.mockRejectedValue(new Error('Network error'))
 
     render(<DashboardPage />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
+      expect(screen.getByTestId('artist-overview-error')).toBeInTheDocument()
     })
 
     expect(screen.getByText(/network error/i)).toBeInTheDocument()
   })
 
-  it('should show not authorized message on 403', async () => {
-    const error = new Error('API request failed: Forbidden')
-    Object.assign(error, { name: 'ApiError', status: 403 })
-    mockGetDashboard.mockRejectedValue(error)
-
-    render(<DashboardPage />)
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    })
-
-    expect(screen.getByText(/do not have artist access/i)).toBeInTheDocument()
-  })
-
-  it('should show retry button on error', async () => {
-    mockGetDashboard.mockRejectedValueOnce(new Error('Temporary failure'))
-    mockGetDashboard.mockResolvedValueOnce(mockDashboardData)
-
-    const user = userEvent.setup()
-    render(<DashboardPage />)
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    })
-
-    await user.click(screen.getByRole('button', { name: /try again/i }))
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-content')).toBeInTheDocument()
-    })
-  })
-
-  it('should call getDashboard with the auth token', async () => {
-    mockGetIdToken.mockResolvedValue('my-jwt-token')
+  it('should call getDashboard with the auth token for artists', async () => {
+    mockAuth.getIdToken = vi.fn().mockResolvedValue('my-jwt-token')
 
     render(<DashboardPage />)
 

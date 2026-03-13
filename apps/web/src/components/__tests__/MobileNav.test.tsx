@@ -12,11 +12,39 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({}),
 }))
 
+const mockAuth = {
+  user: null as { email: string; name: string } | null,
+  loading: false,
+  isArtist: false,
+  isAdmin: false,
+  roles: [] as string[],
+  hasRole: vi.fn(() => false),
+  signIn: vi.fn(),
+  signUp: vi.fn(),
+  confirmSignUp: vi.fn(),
+  resendCode: vi.fn(),
+  signOut: vi.fn(),
+  forgotPassword: vi.fn(),
+  confirmPassword: vi.fn(),
+  getIdToken: vi.fn(),
+  completeNewPassword: vi.fn(),
+  completeMfa: vi.fn(),
+  pendingChallenge: null,
+}
+
+vi.mock('@/lib/auth', () => ({
+  useAuth: () => mockAuth,
+}))
+
 import { MobileNav } from '../MobileNav'
 
 describe('MobileNav', () => {
   beforeEach(() => {
     mockPathname = '/'
+    vi.clearAllMocks()
+    mockAuth.user = null
+    mockAuth.isArtist = false
+    mockAuth.isAdmin = false
   })
 
   it('should render a menu button', () => {
@@ -69,5 +97,78 @@ describe('MobileNav', () => {
 
     const inactiveLink = screen.getByRole('link', { name: 'Drawing & Painting' })
     expect(inactiveLink).not.toHaveAttribute('aria-current')
+  })
+
+  describe('authenticated user links', () => {
+    beforeEach(() => {
+      mockAuth.user = { email: 'user@test.com', name: 'Test User' }
+    })
+
+    it('should show Dashboard and Settings links for authenticated users', async () => {
+      render(<MobileNav />)
+      await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+
+      expect(screen.getByTestId('mobile-dashboard-link')).toBeInTheDocument()
+      expect(screen.getByTestId('mobile-settings-link')).toBeInTheDocument()
+      expect(screen.getByTestId('mobile-sign-out')).toBeInTheDocument()
+    })
+
+    it('should show Artist Profile link for artists', async () => {
+      mockAuth.isArtist = true
+      render(<MobileNav />)
+      await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+
+      expect(screen.getByTestId('mobile-artist-profile-link')).toBeInTheDocument()
+    })
+
+    it('should not show Artist Profile link for non-artists', async () => {
+      mockAuth.isArtist = false
+      render(<MobileNav />)
+      await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+
+      expect(screen.queryByTestId('mobile-artist-profile-link')).not.toBeInTheDocument()
+    })
+
+    it('should show Admin Panel link for admins', async () => {
+      mockAuth.isAdmin = true
+      render(<MobileNav />)
+      await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+
+      expect(screen.getByTestId('mobile-admin-link')).toBeInTheDocument()
+    })
+
+    it('should not show Admin Panel link for non-admins', async () => {
+      mockAuth.isAdmin = false
+      render(<MobileNav />)
+      await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+
+      expect(screen.queryByTestId('mobile-admin-link')).not.toBeInTheDocument()
+    })
+
+    it('should call signOut when Sign Out is clicked', async () => {
+      render(<MobileNav />)
+      await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+      await userEvent.click(screen.getByTestId('mobile-sign-out'))
+
+      expect(mockAuth.signOut).toHaveBeenCalled()
+    })
+  })
+
+  describe('unauthenticated user', () => {
+    it('should show Sign In link when not authenticated', async () => {
+      mockAuth.user = null
+      render(<MobileNav />)
+      await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+
+      expect(screen.getByTestId('mobile-sign-in-link')).toBeInTheDocument()
+    })
+
+    it('should not show account nav when not authenticated', async () => {
+      mockAuth.user = null
+      render(<MobileNav />)
+      await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+
+      expect(screen.queryByTestId('mobile-auth-nav')).not.toBeInTheDocument()
+    })
   })
 })
