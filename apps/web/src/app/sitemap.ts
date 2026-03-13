@@ -55,14 +55,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     artistPages = artists.flatMap((artist) => [
       {
-        url: `${SITE_URL}/artist/${artist.slug}`,
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      },
-      {
-        url: `${SITE_URL}/studio/${artist.slug}`,
+        url: `${SITE_URL}/${artist.slug}`,
         changeFrequency: 'weekly' as const,
         priority: 0.9,
+      },
+      {
+        url: `${SITE_URL}/artist/${artist.slug}`,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
       },
     ])
 
