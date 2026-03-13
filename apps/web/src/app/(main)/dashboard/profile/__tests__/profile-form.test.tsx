@@ -64,6 +64,7 @@ const mockDashboardData: DashboardResponse = {
     instagramUrl: null,
     profileImageUrl: 'https://cdn.example.com/profile.jpg',
     coverImageUrl: 'https://cdn.example.com/cover.jpg',
+    accentColor: null,
     status: 'approved',
     stripeAccountId: null,
     categories: ['ceramics', 'drawing_painting'],
@@ -94,6 +95,7 @@ beforeEach(() => {
     instagramUrl: null,
     profileImageUrl: null,
     coverImageUrl: null,
+    accentColor: null,
     status: 'approved',
   })
   mockUpdateCategories.mockResolvedValue({

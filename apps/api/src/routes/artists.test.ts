@@ -19,6 +19,7 @@ const mockApprovedArtist = {
   coverImageUrl: 'https://cdn.example.com/cover.jpg',
   profileImageUrl: 'https://cdn.example.com/profile.jpg',
   applicationSource: null,
+  accentColor: null,
   createdAt: new Date('2025-01-01T00:00:00Z'),
   updatedAt: new Date('2025-01-01T00:00:00Z'),
   categories: [

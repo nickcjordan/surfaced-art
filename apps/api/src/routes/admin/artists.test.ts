@@ -57,6 +57,7 @@ const mockArtistProfile = {
   coverImageUrl: null,
   profileImageUrl: 'https://cdn.example.com/jane.jpg',
   applicationSource: null,
+  accentColor: null,
   isDemo: false,
   stripeAccountId: 'acct_123',
   createdAt: new Date('2025-01-01'),

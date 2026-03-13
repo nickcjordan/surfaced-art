@@ -104,6 +104,15 @@ export default async function StudioPage({ params }: Props) {
 
   const sameAs = [artist.instagramUrl, artist.websiteUrl].filter(Boolean)
 
+  // Build CSS custom property overrides for per-artist accent color theming
+  const accentStyle = artist.accentColor
+    ? ({
+        '--primary': artist.accentColor,
+        '--accent-primary': artist.accentColor,
+        '--ring': artist.accentColor,
+      } as React.CSSProperties)
+    : undefined
+
   const toListingCardProp = (listing: (typeof artist.listings)[number]) => ({
     id: listing.id,
     title: listing.title,
@@ -117,7 +126,7 @@ export default async function StudioPage({ params }: Props) {
   })
 
   return (
-    <>
+    <div style={accentStyle}>
       <JsonLd data={{
         '@context': 'https://schema.org',
         '@type': 'Person',
@@ -341,6 +350,6 @@ export default async function StudioPage({ params }: Props) {
           </section>
         )}
       </div>
-    </>
+    </div>
   )
 }

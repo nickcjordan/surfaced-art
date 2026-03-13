@@ -61,6 +61,7 @@ export interface ArtistProfile {
   coverImageUrl: string | null
   profileImageUrl: string | null
   applicationSource: string | null
+  accentColor: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -461,6 +462,7 @@ export interface DashboardResponse {
     instagramUrl: string | null
     profileImageUrl: string | null
     coverImageUrl: string | null
+    accentColor: string | null
     status: ArtistStatusType
     stripeAccountId: string | null
     categories: CategoryType[]
@@ -493,6 +495,7 @@ export interface ProfileUpdateResponse {
   instagramUrl: string | null
   profileImageUrl: string | null
   coverImageUrl: string | null
+  accentColor: string | null
   status: ArtistStatusType
 }
 
@@ -688,6 +691,7 @@ export interface AdminArtistDetailResponse {
   coverImageUrl: string | null
   profileImageUrl: string | null
   applicationSource: string | null
+  accentColor: string | null
   isDemo: boolean
   hasStripeAccount: boolean
   createdAt: string

@@ -111,6 +111,7 @@ export {
   artistApplicationBody,
   checkEmailQuery,
   presignedUrlBody,
+  hexColor,
   profileUpdateBody,
   categoriesUpdateBody,
   tagsUpdateBody,
