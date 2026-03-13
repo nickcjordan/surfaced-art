@@ -5,7 +5,7 @@ import { ListingForm } from '../components/listing-form'
 
 export default function NewListingPage() {
   return (
-    <RoleGuard role="artist">
+    <RoleGuard requiredRole="artist">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold">New Listing</h1>

@@ -7,7 +7,7 @@ const mockAuth = {
   roles: [] as string[],
   isAdmin: false,
   isArtist: false,
-  hasRole: vi.fn((role: string) => false),
+  hasRole: vi.fn((_role: string) => false),
   signIn: vi.fn(),
   signUp: vi.fn(),
   confirmSignUp: vi.fn(),
@@ -39,7 +39,7 @@ describe('RoleGuard', () => {
     mockAuth.loading = true
 
     render(
-      <RoleGuard role="artist">
+      <RoleGuard requiredRole="artist">
         <div>Protected content</div>
       </RoleGuard>
     )
@@ -52,7 +52,7 @@ describe('RoleGuard', () => {
     mockAuth.hasRole = vi.fn(() => false)
 
     render(
-      <RoleGuard role="artist">
+      <RoleGuard requiredRole="artist">
         <div>Protected content</div>
       </RoleGuard>
     )
@@ -66,7 +66,7 @@ describe('RoleGuard', () => {
     mockAuth.user = null
 
     render(
-      <RoleGuard role="artist">
+      <RoleGuard requiredRole="artist">
         <div>Protected content</div>
       </RoleGuard>
     )
@@ -78,7 +78,7 @@ describe('RoleGuard', () => {
     mockAuth.hasRole = vi.fn(() => true)
 
     render(
-      <RoleGuard role="artist">
+      <RoleGuard requiredRole="artist">
         <div>Protected content</div>
       </RoleGuard>
     )
@@ -91,7 +91,7 @@ describe('RoleGuard', () => {
     mockAuth.hasRole = vi.fn(() => false)
 
     render(
-      <RoleGuard role="artist">
+      <RoleGuard requiredRole="artist">
         <div>Protected content</div>
       </RoleGuard>
     )
@@ -104,7 +104,7 @@ describe('RoleGuard', () => {
     mockAuth.hasRole = vi.fn(() => false)
 
     render(
-      <RoleGuard role="artist">
+      <RoleGuard requiredRole="artist">
         <div>Protected content</div>
       </RoleGuard>
     )

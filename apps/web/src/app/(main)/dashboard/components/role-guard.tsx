@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth'
 import type { UserRoleType } from '@surfaced-art/types'
 
 interface RoleGuardProps {
-  role: UserRoleType
+  requiredRole: UserRoleType
   children: React.ReactNode
 }
 
@@ -18,7 +18,7 @@ interface RoleGuardProps {
  * from reaching /dashboard/* (redirects to /sign-in). This guard handles
  * the case where the user is authenticated but lacks a specific role.
  */
-export function RoleGuard({ role, children }: RoleGuardProps) {
+export function RoleGuard({ requiredRole, children }: RoleGuardProps) {
   const { loading, user, hasRole } = useAuth()
 
   if (loading) {
@@ -32,7 +32,7 @@ export function RoleGuard({ role, children }: RoleGuardProps) {
     )
   }
 
-  if (!user || !hasRole(role)) {
+  if (!user || !hasRole(requiredRole)) {
     return (
       <div data-testid="role-guard-denied" className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-2">

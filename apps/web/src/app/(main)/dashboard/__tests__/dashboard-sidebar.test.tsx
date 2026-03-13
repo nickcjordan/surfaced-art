@@ -19,7 +19,7 @@ const mockAuth = {
   roles: [] as string[],
   isAdmin: false,
   isArtist: false,
-  hasRole: vi.fn((role: string) => false),
+  hasRole: vi.fn((_role: string) => false),
   signIn: vi.fn(),
   signUp: vi.fn(),
   confirmSignUp: vi.fn(),

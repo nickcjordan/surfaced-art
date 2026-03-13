@@ -7,7 +7,7 @@ import { ProcessMediaGrid } from './components/process-media-grid'
 
 export default function ProfilePage() {
   return (
-    <RoleGuard role="artist">
+    <RoleGuard requiredRole="artist">
     <div data-testid="profile-editor" className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Edit Profile</h1>

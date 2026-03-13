@@ -5,7 +5,7 @@ import { ListingsTable } from './components/listings-table'
 
 export default function ListingsPage() {
   return (
-    <RoleGuard role="artist">
+    <RoleGuard requiredRole="artist">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold">Listings</h1>
