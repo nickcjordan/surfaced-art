@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma } from '@surfaced-art/db'
-import { logger, generateSlug } from '@surfaced-art/utils'
+import { logger, generateSlug, isReservedSlug } from '@surfaced-art/utils'
 import { adminReviewBody, adminApplicationsQuery } from '@surfaced-art/types'
 import type {
   AdminApproveResponse,
@@ -381,12 +381,20 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
 
 /**
  * Generate a unique slug by appending a numeric suffix if needed.
+ * Skips reserved slugs (platform routes, brand terms, profanity).
  */
 async function ensureUniqueSlug(prisma: PrismaClient, baseSlug: string): Promise<string> {
   let slug = baseSlug
   let suffix = 1
 
   while (true) {
+    // Skip reserved slugs (platform routes, brand terms, profanity)
+    if (isReservedSlug(slug)) {
+      suffix++
+      slug = `${baseSlug}-${suffix}`
+      continue
+    }
+
     const existing = await prisma.artistProfile.findUnique({
       where: { slug },
       select: { id: true },

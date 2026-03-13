@@ -23,6 +23,9 @@ export {
 // Slug utilities
 export { generateSlug, validateSlug } from './slug'
 
+// Reserved slug validation
+export { isReservedSlug, RESERVED_SLUGS } from './reserved-slugs'
+
 // Logger utilities
 export { logger, type LogLevel, type LogEntry } from './logger'
 
