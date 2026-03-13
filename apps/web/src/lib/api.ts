@@ -1,8 +1,12 @@
 import { cache } from 'react'
 import type {
   AdminActionResponse,
+  AdminApplicationDetailResponse,
+  AdminApplicationListItem,
+  AdminApproveResponse,
   AdminArtistDetailResponse,
   AdminArtistListItem,
+  AdminRejectResponse,
   AdminRoleGrantResponse,
   AdminUserDetailResponse,
   AdminUserListItem,
@@ -556,6 +560,64 @@ export async function revokeRole(
     {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
+    },
+  )
+}
+
+// ─── Admin: Application Management ──────────────────────────────────
+
+export async function getAdminApplications(
+  token: string,
+  params?: { status?: string; search?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<AdminApplicationListItem>> {
+  const qs = new URLSearchParams()
+  if (params?.status) qs.set('status', params.status)
+  if (params?.search) qs.set('search', params.search)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<AdminApplicationListItem>>(
+    `/admin/applications${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function getAdminApplication(
+  token: string,
+  id: string,
+): Promise<AdminApplicationDetailResponse> {
+  return apiFetch<AdminApplicationDetailResponse>(
+    `/admin/applications/${encodeURIComponent(id)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function approveApplication(
+  token: string,
+  userId: string,
+  reviewNotes?: string,
+): Promise<AdminApproveResponse> {
+  return apiFetch<AdminApproveResponse>(
+    `/admin/artists/${encodeURIComponent(userId)}/approve`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ reviewNotes }),
+    },
+  )
+}
+
+export async function rejectApplication(
+  token: string,
+  userId: string,
+  reviewNotes?: string,
+): Promise<AdminRejectResponse> {
+  return apiFetch<AdminRejectResponse>(
+    `/admin/artists/${encodeURIComponent(userId)}/reject`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ reviewNotes }),
     },
   )
 }
