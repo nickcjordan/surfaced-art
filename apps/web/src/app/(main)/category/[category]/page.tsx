@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getListings, getCategories, getFeaturedArtists, ApiError } from '@/lib/api'
+import { getListings, getCategories, getFeaturedArtists } from '@/lib/api'
 import { categoryLabels } from '@/lib/category-labels'
 import { CategoryBrowseView, type CategoryListingItem } from '@/components/CategoryBrowseView'
 import { JsonLd } from '@/components/JsonLd'
@@ -59,44 +59,32 @@ export default async function CategoryBrowsePage({ params }: Props) {
   const categorySlug = category as CategoryType
   const label = categoryLabels[categorySlug]
 
-  let listings: CategoryListingItem[] = []
-  let artists: Awaited<ReturnType<typeof getFeaturedArtists>> = []
-  let totalListingCount = 0
-  let totalArtistCount = 0
-  let hasError = false
+  // Let errors propagate so ISR preserves the previous good page during
+  // revalidation failures instead of caching an error/empty state.
+  // On initial render the (main)/error.tsx boundary handles failures.
+  const [listingsResponse, artistsData, categories] = await Promise.all([
+    getListings({ category: categorySlug, status: 'available', limit: 100 }),
+    getFeaturedArtists({ category: categorySlug, limit: 50 }),
+    getCategories(),
+  ])
 
-  try {
-    const [listingsResponse, artistsData, categories] = await Promise.all([
-      getListings({ category: categorySlug, status: 'available', limit: 100 }),
-      getFeaturedArtists({ category: categorySlug, limit: 50 }),
-      getCategories(),
-    ])
+  const catData = categories.find((c) => c.category === categorySlug)
+  const artists = artistsData
+  const totalListingCount = catData?.count ?? listingsResponse.meta.total
+  const totalArtistCount = catData?.artistCount ?? artists.length
 
-    const catData = categories.find((c) => c.category === categorySlug)
-    artists = artistsData
-    totalListingCount = catData?.count ?? listingsResponse.meta.total
-    totalArtistCount = catData?.artistCount ?? artists.length
-
-    listings = listingsResponse.data.map((listing) => ({
-      id: listing.id,
-      title: listing.title,
-      medium: listing.medium,
-      category: listing.category,
-      price: listing.price,
-      status: listing.status,
-      primaryImageUrl: listing.primaryImage?.url ?? null,
-      primaryImageWidth: listing.primaryImage?.width ?? null,
-      primaryImageHeight: listing.primaryImage?.height ?? null,
-      artistName: listing.artist.displayName,
-    }))
-  } catch (error) {
-    hasError = true
-    if (error instanceof ApiError) {
-      console.error(`API error fetching category data: ${error.status} ${error.message}`)
-    } else {
-      console.error('Unexpected error fetching category data:', error)
-    }
-  }
+  const listings: CategoryListingItem[] = listingsResponse.data.map((listing) => ({
+    id: listing.id,
+    title: listing.title,
+    medium: listing.medium,
+    category: listing.category,
+    price: listing.price,
+    status: listing.status,
+    primaryImageUrl: listing.primaryImage?.url ?? null,
+    primaryImageWidth: listing.primaryImage?.width ?? null,
+    primaryImageHeight: listing.primaryImage?.height ?? null,
+    artistName: listing.artist.displayName,
+  }))
 
   return (
     <div className="space-y-8">
@@ -117,7 +105,6 @@ export default async function CategoryBrowsePage({ params }: Props) {
         artists={artists}
         totalListingCount={totalListingCount}
         totalArtistCount={totalArtistCount}
-        hasError={hasError}
       />
     </div>
   )

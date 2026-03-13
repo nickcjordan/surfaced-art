@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getFeaturedArtists, ApiError } from '@/lib/api'
+import { getFeaturedArtists } from '@/lib/api'
 import { ArtistCard } from '@/components/ArtistCard'
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
@@ -23,17 +23,11 @@ export const metadata: Metadata = {
   },
 }
 
+// Let errors propagate so ISR preserves the previous good page during
+// revalidation failures instead of caching an empty state.
+// On initial render the (main)/error.tsx boundary handles failures.
 async function fetchArtists() {
-  try {
-    return await getFeaturedArtists({ limit: 50 })
-  } catch (error) {
-    if (error instanceof ApiError) {
-      console.error(`API error fetching artists: ${error.status} ${error.message}`)
-    } else {
-      console.error('Unexpected error fetching artists:', error)
-    }
-    return []
-  }
+  return await getFeaturedArtists({ limit: 50 })
 }
 
 export default async function ArtistsPage() {

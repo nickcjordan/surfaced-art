@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getCategories, getListings, getFeaturedArtists, ApiError } from '@/lib/api'
+import { getCategories, getListings, getFeaturedArtists } from '@/lib/api'
 import { SplitHero } from '@/components/SplitHero'
 import { ArtistCard } from '@/components/ArtistCard'
 import { ListingCard } from '@/components/ListingCard'
@@ -27,22 +27,16 @@ export const metadata: Metadata = {
   },
 }
 
+// Let errors propagate so ISR preserves the previous good page during
+// revalidation failures instead of caching an empty state.
+// On initial render the (main)/error.tsx boundary handles failures.
 async function fetchHomeData() {
-  try {
-    const [categories, listingsResponse, featuredArtists] = await Promise.all([
-      getCategories(),
-      getListings({ status: 'available', limit: 6 }),
-      getFeaturedArtists({ limit: 4 }),
-    ])
-    return { categories, listings: listingsResponse.data, artists: featuredArtists }
-  } catch (error) {
-    if (error instanceof ApiError) {
-      console.error(`API error fetching home data: ${error.status} ${error.message}`)
-    } else {
-      console.error('Unexpected error fetching home data:', error)
-    }
-    return { categories: [], listings: [], artists: [] }
-  }
+  const [categories, listingsResponse, featuredArtists] = await Promise.all([
+    getCategories(),
+    getListings({ status: 'available', limit: 6 }),
+    getFeaturedArtists({ limit: 4 }),
+  ])
+  return { categories, listings: listingsResponse.data, artists: featuredArtists }
 }
 
 export default async function Home() {
