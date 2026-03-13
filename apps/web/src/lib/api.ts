@@ -4,6 +4,7 @@ import type {
   AdminRoleGrantResponse,
   AdminUserDetailResponse,
   AdminUserListItem,
+  AdminWaitlistEntry,
   ArtistProfileResponse,
   ArtistApplicationBody,
   ApplicationStatusType,
@@ -551,6 +552,36 @@ export async function revokeRole(
 ): Promise<AdminActionResponse> {
   return apiFetch<AdminActionResponse>(
     `/admin/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(role)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  )
+}
+
+// ─── Admin: Waitlist Management ─────────────────────────────────────
+
+export async function getAdminWaitlist(
+  token: string,
+  params?: { search?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<AdminWaitlistEntry>> {
+  const qs = new URLSearchParams()
+  if (params?.search) qs.set('search', params.search)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<AdminWaitlistEntry>>(
+    `/admin/waitlist${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function deleteWaitlistEntry(
+  token: string,
+  id: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/waitlist/${encodeURIComponent(id)}`,
     {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
