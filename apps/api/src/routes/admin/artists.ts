@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma } from '@surfaced-art/db'
-import { logger } from '@surfaced-art/utils'
+import { logger, isReservedSlug } from '@surfaced-art/utils'
 import { adminArtistsQuery, adminArtistUpdateBody, adminSuspendBody } from '@surfaced-art/types'
 import type {
   AdminArtistListItem,
@@ -178,8 +178,15 @@ export function createAdminArtistRoutes(prisma: PrismaClient) {
         return notFound(c, 'Artist not found')
       }
 
-      // If slug is being changed, check uniqueness
+      // If slug is being changed, check reserved slugs and uniqueness
       if (parsed.data.slug && parsed.data.slug !== artist.slug) {
+        if (isReservedSlug(parsed.data.slug)) {
+          return c.json(
+            { error: { code: 'VALIDATION_ERROR', message: 'This slug is reserved and cannot be used' } },
+            400,
+          )
+        }
+
         const existing = await prisma.artistProfile.findUnique({
           where: { slug: parsed.data.slug },
           select: { id: true },
