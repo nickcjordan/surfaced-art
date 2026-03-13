@@ -44,14 +44,15 @@ export function ImageGallery({ images, alt }: ImageGalleryProps) {
   return (
     <div data-testid="listing-images" className="space-y-3" role="toolbar" aria-label="Image gallery" onKeyDown={handleKeyDown} tabIndex={0}>
       {/* Primary image */}
-      <div className="group relative aspect-square overflow-hidden rounded-md bg-surface">
+      <div className="group relative overflow-hidden rounded-md shadow-sm">
         {activeImage && (
           <Image
             src={activeImage.url}
             alt={alt}
-            fill
             unoptimized
-            className="object-contain"
+            width={1200}
+            height={1200}
+            className="h-auto w-full"
             priority
           />
         )}
