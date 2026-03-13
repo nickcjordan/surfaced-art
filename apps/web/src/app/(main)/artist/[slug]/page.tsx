@@ -50,13 +50,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${artist.displayName} — Surfaced Art`,
       description,
       alternates: {
-        canonical: `/artist/${slug}`,
+        canonical: `/${slug}`,
       },
       openGraph: {
         title: `${artist.displayName} — Surfaced Art`,
         description,
         type: 'profile',
-        url: `${SITE_URL}/artist/${slug}`,
+        url: `${SITE_URL}/${slug}`,
         images: artist.profileImageUrl ? [{ url: artist.profileImageUrl, width: 400, height: 400 }] : [],
       },
       twitter: {
@@ -109,7 +109,7 @@ export default async function ArtistProfilePage({ params }: Props) {
         name: artist.displayName,
         jobTitle: 'Artist',
         description: artist.bio.length > 155 ? artist.bio.slice(0, 155) + '…' : artist.bio,
-        url: `${SITE_URL}/artist/${slug}`,
+        url: `${SITE_URL}/${slug}`,
         ...(artist.profileImageUrl && { image: artist.profileImageUrl }),
         ...(sameAs.length > 0 && { sameAs }),
       }} />
@@ -119,7 +119,7 @@ export default async function ArtistProfilePage({ params }: Props) {
           { label: artist.displayName },
         ]} />
         <Link
-          href={`/studio/${slug}`}
+          href={`/${slug}`}
           className="text-sm text-muted-text transition-colors hover:text-foreground shrink-0 ml-4"
         >
           Visit {artist.displayName.split(' ')[0]}&apos;s Studio →
