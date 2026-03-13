@@ -4,6 +4,8 @@ import type {
   AdminApplicationDetailResponse,
   AdminApplicationListItem,
   AdminApproveResponse,
+  AdminArtistDetailResponse,
+  AdminArtistListItem,
   AdminRejectResponse,
   AdminRoleGrantResponse,
   AdminUserDetailResponse,
@@ -616,6 +618,77 @@ export async function rejectApplication(
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify({ reviewNotes }),
+    },
+  )
+}
+
+// ─── Admin: Artist Management ───────────────────────────────────────
+
+export async function getAdminArtists(
+  token: string,
+  params?: { status?: string; search?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<AdminArtistListItem>> {
+  const qs = new URLSearchParams()
+  if (params?.status) qs.set('status', params.status)
+  if (params?.search) qs.set('search', params.search)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<AdminArtistListItem>>(
+    `/admin/artists${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function getAdminArtist(
+  token: string,
+  id: string,
+): Promise<AdminArtistDetailResponse> {
+  return apiFetch<AdminArtistDetailResponse>(
+    `/admin/artists/${encodeURIComponent(id)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function updateAdminArtist(
+  token: string,
+  id: string,
+  data: Record<string, unknown>,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/artists/${encodeURIComponent(id)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    },
+  )
+}
+
+export async function suspendArtist(
+  token: string,
+  id: string,
+  reason: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/artists/${encodeURIComponent(id)}/suspend`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ reason }),
+    },
+  )
+}
+
+export async function unsuspendArtist(
+  token: string,
+  id: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/artists/${encodeURIComponent(id)}/unsuspend`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
     },
   )
 }
