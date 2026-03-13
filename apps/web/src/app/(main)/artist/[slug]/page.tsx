@@ -8,6 +8,7 @@ import { ListingCard } from '@/components/ListingCard'
 import { MasonryGrid } from '@/components/MasonryGrid'
 import { estimateCardHeight } from '@/lib/masonry-utils'
 import { Badge } from '@/components/ui/badge'
+import { ProcessPhotoGrid } from '@/components/ProcessPhotoGrid'
 import { categoryLabels } from '@/lib/category-labels'
 import { JsonLd } from '@/components/JsonLd'
 import { ArtistProfileViewTracker } from '@/components/ArtistProfileViewTracker'
@@ -228,22 +229,10 @@ export default async function ArtistProfilePage({ params }: Props) {
 
           {/* Process photos grid */}
           {processPhotos.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {processPhotos.map((photo, index) => (
-                <div
-                  key={photo.id}
-                  className="relative aspect-square overflow-hidden rounded-md bg-surface"
-                >
-                  <Image
-                    src={photo.url!}
-                    alt={`${artist.displayName} process photo ${index + 1} of ${processPhotos.length}`}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+            <ProcessPhotoGrid
+              photos={processPhotos.map((p) => ({ id: p.id, url: p.url! }))}
+              artistName={artist.displayName}
+            />
           )}
         </section>
       )}
