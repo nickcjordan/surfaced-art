@@ -4,7 +4,7 @@ resource "aws_security_group" "lambda" {
   description = "Security group for Lambda functions"
   vpc_id      = var.vpc_id
 
-  # Allow HTTPS outbound for AWS service APIs (S3, Cognito, SES, etc.)
+  # Allow HTTPS outbound for AWS service APIs (S3, SES, Stripe, etc.)
   # trivy:ignore:AVD-AWS-0104 - HTTPS to 0.0.0.0/0 required for AWS service endpoint calls
   egress {
     from_port   = 443
@@ -56,8 +56,6 @@ resource "aws_lambda_function" "api" {
     variables = {
       NODE_ENV              = var.environment
       DATABASE_URL          = var.database_url
-      COGNITO_USER_POOL_ID  = var.cognito_user_pool_id
-      COGNITO_CLIENT_ID     = var.cognito_client_id
       S3_BUCKET_NAME        = var.s3_bucket_name
       CLOUDFRONT_URL        = var.cloudfront_url
       CLOUDFRONT_DOMAIN     = var.cloudfront_domain
