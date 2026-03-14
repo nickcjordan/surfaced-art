@@ -122,7 +122,7 @@ export default async function ArtistProfilePage({ params }: Props) {
           href={`/${slug}`}
           className="text-sm text-muted-text transition-colors hover:text-foreground shrink-0 ml-4"
         >
-          Visit {artist.displayName.split(' ')[0]}&apos;s Studio →
+          Visit {artist.displayName.split(' ')[0]}&apos;s Portfolio →
         </Link>
       </div>
 
@@ -133,7 +133,7 @@ export default async function ArtistProfilePage({ params }: Props) {
           {artist.coverImageUrl ? (
             <Image
               src={artist.coverImageUrl}
-              alt={`${artist.displayName}'s studio`}
+              alt={`${artist.displayName}'s portfolio`}
               fill
               unoptimized
               className="object-cover"

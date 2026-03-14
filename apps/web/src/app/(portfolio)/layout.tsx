@@ -1,6 +1,6 @@
-import { StudioFooter } from '@/components/StudioFooter'
+import { PortfolioFooter } from '@/components/PortfolioFooter'
 
-export default function StudioLayout({
+export default function PortfolioLayout({
   children,
 }: {
   children: React.ReactNode
@@ -8,7 +8,7 @@ export default function StudioLayout({
   return (
     <div className="min-h-screen flex flex-col">
       <main id="main-content" className="flex-1">{children}</main>
-      <StudioFooter />
+      <PortfolioFooter />
     </div>
   )
 }

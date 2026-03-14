@@ -31,7 +31,7 @@ export function AuthButton() {
     )
   }
 
-  const initial = user.name.charAt(0).toUpperCase()
+  const initial = (user.name || user.email || '?').charAt(0).toUpperCase()
 
   return (
     <div data-testid="user-menu">

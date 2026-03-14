@@ -46,12 +46,18 @@ const mockGetAdminListings = vi.fn()
 const mockGetAdminListing = vi.fn()
 const mockHideListing = vi.fn()
 const mockUnhideListing = vi.fn()
+const mockUpdateAdminListingCategory = vi.fn()
+const mockUpdateAdminListingTags = vi.fn()
+const mockGetTagVocabulary = vi.fn()
 
 vi.mock('@/lib/api', () => ({
   getAdminListings: (...args: unknown[]) => mockGetAdminListings(...args),
   getAdminListing: (...args: unknown[]) => mockGetAdminListing(...args),
   hideListing: (...args: unknown[]) => mockHideListing(...args),
   unhideListing: (...args: unknown[]) => mockUnhideListing(...args),
+  updateAdminListingCategory: (...args: unknown[]) => mockUpdateAdminListingCategory(...args),
+  updateAdminListingTags: (...args: unknown[]) => mockUpdateAdminListingTags(...args),
+  getTagVocabulary: (...args: unknown[]) => mockGetTagVocabulary(...args),
 }))
 
 beforeEach(() => {
@@ -281,6 +287,13 @@ describe('AdminListingDetail', () => {
     AdminListingDetail = mod.AdminListingDetail
   })
 
+  const mockTags = [
+    { id: 'tag-1', slug: 'functional', label: 'Functional', category: 'ceramics', sortOrder: 0 },
+    { id: 'tag-2', slug: 'sculptural', label: 'Sculptural', category: 'ceramics', sortOrder: 1 },
+    { id: 'tag-3', slug: 'abstract', label: 'Abstract', category: null, sortOrder: 0 },
+    { id: 'tag-4', slug: 'landscape', label: 'Landscape', category: 'drawing_painting', sortOrder: 0 },
+  ]
+
   const mockDetail = {
     id: 'listing-1',
     artistId: 'artist-1',
@@ -313,6 +326,9 @@ describe('AdminListingDetail', () => {
     artist: { id: 'artist-1', displayName: 'Jane Doe', slug: 'jane-doe', status: 'approved' as const },
     orderCount: 0,
     reviewCount: 0,
+    tags: [
+      { id: 'tag-1', slug: 'functional', label: 'Functional', category: 'ceramics', sortOrder: 0 },
+    ],
   }
 
   it('renders listing detail', async () => {
@@ -446,5 +462,119 @@ describe('AdminListingDetail', () => {
 
     expect(screen.getByTestId('stat-orders')).toHaveTextContent('0')
     expect(screen.getByTestId('stat-reviews')).toHaveTextContent('0')
+  })
+
+  it('displays current tags', async () => {
+    mockGetAdminListing.mockResolvedValue(mockDetail)
+    render(<AdminListingDetail listingId="listing-1" />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-listing-detail')).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId('listing-tags')).toBeInTheDocument()
+    expect(screen.getByText('Functional')).toBeInTheDocument()
+  })
+
+  it('shows category reassignment select with current value', async () => {
+    mockGetAdminListing.mockResolvedValue(mockDetail)
+    render(<AdminListingDetail listingId="listing-1" />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-listing-detail')).toBeInTheDocument()
+    })
+
+    const categorySelect = screen.getByTestId('category-select')
+    expect(categorySelect).toBeInTheDocument()
+    expect(categorySelect).toHaveValue('ceramics')
+  })
+
+  it('calls updateAdminListingCategory when category is changed', async () => {
+    mockGetAdminListing.mockResolvedValue(mockDetail)
+    mockUpdateAdminListingCategory.mockResolvedValue({ message: 'Listing updated successfully' })
+    const user = userEvent.setup()
+    render(<AdminListingDetail listingId="listing-1" />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-listing-detail')).toBeInTheDocument()
+    })
+
+    const categorySelect = screen.getByTestId('category-select')
+    await user.selectOptions(categorySelect, 'drawing_painting')
+
+    await waitFor(() => {
+      expect(mockUpdateAdminListingCategory).toHaveBeenCalledWith(
+        'mock-token',
+        'listing-1',
+        'drawing_painting',
+      )
+    })
+  })
+
+  it('shows tag editing UI when edit tags button is clicked', async () => {
+    mockGetAdminListing.mockResolvedValue(mockDetail)
+    mockGetTagVocabulary.mockResolvedValue(mockTags)
+    const user = userEvent.setup()
+    render(<AdminListingDetail listingId="listing-1" />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-listing-detail')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByTestId('edit-tags-btn'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tag-editor')).toBeInTheDocument()
+    })
+  })
+
+  it('saves tag changes when save button is clicked', async () => {
+    mockGetAdminListing.mockResolvedValue(mockDetail)
+    mockGetTagVocabulary.mockResolvedValue(mockTags)
+    mockUpdateAdminListingTags.mockResolvedValue({ tags: mockTags.slice(0, 2) })
+    const user = userEvent.setup()
+    render(<AdminListingDetail listingId="listing-1" />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-listing-detail')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByTestId('edit-tags-btn'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tag-editor')).toBeInTheDocument()
+    })
+
+    // Toggle tag-2 (Sculptural) on
+    const tag2Checkbox = screen.getByTestId('tag-checkbox-tag-2')
+    await user.click(tag2Checkbox)
+
+    await user.click(screen.getByTestId('save-tags-btn'))
+
+    await waitFor(() => {
+      expect(mockUpdateAdminListingTags).toHaveBeenCalledWith(
+        'mock-token',
+        'listing-1',
+        expect.arrayContaining(['tag-1', 'tag-2']),
+      )
+    })
+  })
+
+  it('shows success message after category update', async () => {
+    mockGetAdminListing.mockResolvedValue(mockDetail)
+    mockUpdateAdminListingCategory.mockResolvedValue({ message: 'Listing updated successfully' })
+    const user = userEvent.setup()
+    render(<AdminListingDetail listingId="listing-1" />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-listing-detail')).toBeInTheDocument()
+    })
+
+    const categorySelect = screen.getByTestId('category-select')
+    await user.selectOptions(categorySelect, 'drawing_painting')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('action-success')).toBeInTheDocument()
+    })
   })
 })

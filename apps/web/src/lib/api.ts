@@ -754,6 +754,36 @@ export async function unhideListing(
   )
 }
 
+export async function updateAdminListingCategory(
+  token: string,
+  id: string,
+  category: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/listings/${encodeURIComponent(id)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ category }),
+    },
+  )
+}
+
+export async function updateAdminListingTags(
+  token: string,
+  id: string,
+  tagIds: string[],
+): Promise<TagsUpdateResponse> {
+  return apiFetch<TagsUpdateResponse>(
+    `/admin/listings/${encodeURIComponent(id)}/tags`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ tagIds }),
+    },
+  )
+}
+
 // ─── Admin: Waitlist Management ─────────────────────────────────────
 
 export async function getAdminWaitlist(

@@ -75,6 +75,7 @@ export function createSearchRoutes(prisma: PrismaClient) {
                FROM listings l2
                JOIN listing_images li ON li.listing_id = l2.id AND li.is_process_photo = false
                WHERE l2.artist_id = ap.id
+                 AND l2.status IN ('available', 'reserved_system')
                ORDER BY l2.id, li.sort_order ASC
              ) sub
              WHERE sub.rn <= 4),

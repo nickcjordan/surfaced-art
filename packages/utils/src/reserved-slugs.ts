@@ -11,8 +11,8 @@
 const CURRENT_ROUTES = [
   'about', 'admin', 'api', 'apply', 'artist', 'artists',
   'category', 'dashboard', 'for-artists', 'forgot-password',
-  'listing', 'privacy', 'reset-password', 'search',
-  'sign-in', 'sign-up', 'studio', 'terms', 'verify-email',
+  'listing', 'portfolio', 'privacy', 'reset-password', 'search',
+  'sign-in', 'sign-up', 'terms', 'verify-email',
 ] as const
 
 /** Planned routes for future platform features */

@@ -719,6 +719,7 @@ export interface AdminListingListItem extends Listing {
  */
 export interface AdminListingDetailResponse extends Listing {
   images: ListingImage[]
+  tags: Tag[]
   artist: { id: string; displayName: string; slug: string; status: ArtistStatusType }
   orderCount: number
   reviewCount: number

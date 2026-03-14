@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Share2, Check } from 'lucide-react'
 
 type ShareButtonProps = {
@@ -10,6 +10,13 @@ type ShareButtonProps = {
 
 export function ShareButton({ url, title }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
 
   const handleShare = useCallback(async () => {
     // Use native share API on mobile when available
@@ -17,8 +24,10 @@ export function ShareButton({ url, title }: ShareButtonProps) {
       try {
         await navigator.share({ title, url })
         return
-      } catch {
-        // User cancelled or share failed — fall through to clipboard
+      } catch (err) {
+        // User cancelled share — don't fall through to clipboard
+        if (err instanceof Error && err.name === 'AbortError') return
+        // Other share failures — fall through to clipboard
       }
     }
 
@@ -26,7 +35,8 @@ export function ShareButton({ url, title }: ShareButtonProps) {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(() => setCopied(false), 2000)
     } catch {
       // Clipboard API not available — no-op
     }

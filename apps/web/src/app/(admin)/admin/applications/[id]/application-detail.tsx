@@ -286,13 +286,14 @@ export function AdminApplicationDetail({ applicationId }: { applicationId: strin
             </div>
           )}
 
-          {actionError && (
-            <p data-testid="action-error" className="text-sm text-error">{actionError}</p>
-          )}
-          {actionSuccess && (
-            <p data-testid="action-success" className="text-sm text-success">{actionSuccess}</p>
-          )}
         </div>
+      )}
+
+      {actionError && (
+        <p data-testid="action-error" className="text-sm text-error">{actionError}</p>
+      )}
+      {actionSuccess && (
+        <p data-testid="action-success" className="text-sm text-success">{actionSuccess}</p>
       )}
     </div>
   )

@@ -77,6 +77,11 @@ const mockListing = {
       createdAt: new Date('2025-01-01'),
     },
   ],
+  tags: [
+    {
+      tag: { id: 'tag-1', slug: 'functional', label: 'Functional', category: 'ceramics', sortOrder: 0 },
+    },
+  ],
   artist: {
     id: 'artist-uuid-789',
     displayName: 'Jane Artist',
@@ -318,6 +323,8 @@ describe('GET /admin/listings/:id', () => {
     expect(body.orderCount).toBe(2)
     expect(body.reviewCount).toBe(1)
     expect(body.images).toHaveLength(1)
+    expect(body.tags).toHaveLength(1)
+    expect(body.tags[0].slug).toBe('functional')
   })
 })
 
