@@ -337,11 +337,7 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
           <div data-testid="tag-editor" className="space-y-3">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {relevantTags.map((tag) => (
-                <label
-                  key={tag.id}
-                  htmlFor={`tag-${tag.id}`}
-                  className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
-                >
+                <div key={tag.id} className="flex items-center gap-2 text-sm text-foreground">
                   <input
                     id={`tag-${tag.id}`}
                     type="checkbox"
@@ -350,11 +346,13 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
                     onChange={() => handleToggleTag(tag.id)}
                     className="rounded border-border"
                   />
-                  {tag.label}
-                  {tag.category === null && (
-                    <span className="text-xs text-muted-foreground">(style)</span>
-                  )}
-                </label>
+                  <label htmlFor={`tag-${tag.id}`} className="cursor-pointer">
+                    {tag.label}
+                    {tag.category === null && (
+                      <span className="text-xs text-muted-foreground"> (style)</span>
+                    )}
+                  </label>
+                </div>
               ))}
             </div>
             <div className="flex gap-2">
