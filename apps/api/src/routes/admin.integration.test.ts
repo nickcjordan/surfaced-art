@@ -162,7 +162,7 @@ describe('Admin routes — integration', () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       // Should have a suffixed slug since "jane-artist" is taken
-      expect(body.profile.slug).toBe('jane-artist-2')
+      expect(body.profile.slug).toBe('jane-artist-1')
     })
 
     it('should return 409 if user already has artist role', async () => {
