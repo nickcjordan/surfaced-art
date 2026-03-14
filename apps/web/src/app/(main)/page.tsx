@@ -27,10 +27,15 @@ export const metadata: Metadata = {
   },
 }
 
-// Let errors propagate so ISR preserves the previous good page during
-// revalidation failures instead of caching an empty state.
-// On initial render the (main)/error.tsx boundary handles failures.
+// CI builds use a placeholder API URL that doesn't resolve.
+// Return empty data during build so static generation succeeds;
+// the first real request fills the ISR cache with live data.
+// At runtime, errors propagate so ISR preserves the previous good page
+// via stale-while-revalidate instead of caching an empty state.
+const isBuildPlaceholder = process.env.NEXT_PUBLIC_API_URL?.includes('placeholder')
+
 async function fetchHomeData() {
+  if (isBuildPlaceholder) return { categories: [], listings: [], artists: [] }
   const [categories, listingsResponse, featuredArtists] = await Promise.all([
     getCategories(),
     getListings({ status: 'available', limit: 6 }),

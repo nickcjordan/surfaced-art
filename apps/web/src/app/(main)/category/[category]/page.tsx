@@ -59,9 +59,11 @@ export default async function CategoryBrowsePage({ params }: Props) {
   const categorySlug = category as CategoryType
   const label = categoryLabels[categorySlug]
 
-  // Let errors propagate so ISR preserves the previous good page during
+  // Errors propagate so ISR preserves the previous good page during
   // revalidation failures instead of caching an error/empty state.
   // On initial render the (main)/error.tsx boundary handles failures.
+  // Note: generateStaticParams returns [] so this page is never pre-rendered
+  // at build time — no placeholder-API guard needed here.
   const [listingsResponse, artistsData, categories] = await Promise.all([
     getListings({ category: categorySlug, status: 'available', limit: 100 }),
     getFeaturedArtists({ category: categorySlug, limit: 50 }),
