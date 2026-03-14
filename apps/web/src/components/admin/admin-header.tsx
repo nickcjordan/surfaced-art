@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/button'
 export function AdminHeader() {
   const { user, signOut } = useAuth()
 
+  const handleSignOut = async () => {
+    await signOut()
+    window.location.href = '/sign-in'
+  }
+
   return (
     <header data-testid="admin-header" className="border-b border-border bg-surface">
       <div className="flex items-center justify-between h-14 px-6">
@@ -24,7 +29,7 @@ export function AdminHeader() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={signOut}
+            onClick={handleSignOut}
             data-testid="admin-sign-out"
           >
             Sign out
