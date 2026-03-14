@@ -32,7 +32,10 @@ export function SignInForm() {
 
   /** Pick redirect target based on roles — admin goes to /admin unless an explicit redirect was given. */
   function getRedirectForRoles(roles: string[]): string {
-    if (explicitRedirect) return explicitRedirect
+    // Only allow relative path redirects to prevent open redirect attacks
+    if (explicitRedirect && explicitRedirect.startsWith('/') && !explicitRedirect.startsWith('//')) {
+      return explicitRedirect
+    }
     if (roles.includes('admin')) return '/admin'
     return defaultRedirect
   }

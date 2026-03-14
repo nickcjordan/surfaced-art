@@ -15,7 +15,7 @@ export default function StudioLoading() {
       {/* Profile info skeleton */}
       <div className="mx-auto max-w-6xl px-6">
         <div className="relative -mt-16 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:gap-6">
-          <div className="size-28 shrink-0 animate-skeleton rounded-full bg-surface ring-4 ring-background" />
+          <div className="size-[160px] shrink-0 animate-skeleton rounded-full bg-surface ring-4 ring-background" />
           <div className="flex-1 space-y-3 pb-1">
             <div className="h-8 w-48 animate-skeleton rounded bg-surface" />
             <div className="h-4 w-28 animate-skeleton rounded bg-surface" />
