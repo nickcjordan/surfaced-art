@@ -572,7 +572,7 @@ export default function ForArtistsContent() {
       </section>
 
       {/* ============================================================ */}
-      {/*  SECTION 1: Artist Studio                                    */}
+      {/*  SECTION 1: Artist Portfolio                                  */}
       {/* ============================================================ */}
       <section id="v14-profile" data-testid="for-artists-profile" className="full-bleed relative overflow-hidden py-16 md:py-24">
         <CanvasDotOverlay />
@@ -582,18 +582,18 @@ export default function ForArtistsContent() {
           {/* Section header */}
           <FadeIn>
             <div className="mx-auto max-w-3xl text-center">
-              <p className="text-body-small mb-3 font-medium uppercase tracking-widest" style={{ color: 'var(--accent-secondary)' }}>Your Artist Studio</p>
+              <p className="text-body-small mb-3 font-medium uppercase tracking-widest" style={{ color: 'var(--accent-secondary)' }}>Your Artist Portfolio</p>
               <h2 className="text-foreground">
                 A website for your art.{' '}
                 <span className="relative inline-block"><ShimmerText>No building required</ShimmerText><HandwrittenUnderline color="var(--accent-secondary)" /></span>
               </h2>
               <p className="text-body-default mx-auto mt-5 max-w-2xl text-muted-text">
-                Your studio page is a standalone website dedicated entirely to you and your work. No ads, no links to other artists, no distractions. Just your name and your art.
+                Your portfolio page is a standalone website dedicated entirely to you and your work. No ads, no links to other artists, no distractions. Just your name and your art.
               </p>
             </div>
           </FadeIn>
 
-          {/* Studio mockup with integrated feature points */}
+          {/* Portfolio mockup with integrated feature points */}
           <div className="mx-auto mt-14 max-w-5xl">
             <FadeIn delay={150}>
               <div className="grid items-start gap-8 lg:grid-cols-[1fr_auto_1fr]">
@@ -601,7 +601,7 @@ export default function ForArtistsContent() {
                 {/* Left feature column */}
                 <div className="hidden flex-col justify-center gap-6 pt-16 lg:flex">
                   {[
-                    { title: 'Your clean URL', desc: 'surfaced.art/your-name. A short, memorable link that goes straight to your studio', accent: 'var(--accent-primary)' },
+                    { title: 'Your clean URL', desc: 'surfaced.art/your-name. A short, memorable link that goes straight to your portfolio', accent: 'var(--accent-primary)' },
                     { title: 'Replace your website', desc: 'Bio, CV, artist statement, process photos. Everything a custom site would have, zero maintenance', accent: 'var(--accent-secondary)' },
                     { title: 'Pure showcase', desc: 'No ads, no competitor links, no prices on the page. Just your work. Visitors who want to buy click through to the listing', accent: 'var(--accent-primary)' },
                   ].map((item, i) => (
@@ -677,8 +677,8 @@ export default function ForArtistsContent() {
                 <div className="hidden flex-col justify-center gap-6 pt-16 lg:flex">
                   {[
                     { title: 'Sold work stays visible', desc: 'Pieces that sell move to your archive, building a portfolio of everything you\'ve made', accent: 'var(--accent-secondary)' },
-                    { title: 'Always up to date', desc: 'Add a new piece from your dashboard and it appears on your studio page instantly', accent: 'var(--accent-primary)' },
-                    { title: 'SEO that works for you', desc: 'Your studio page is optimized so people searching for your kind of work can find it', accent: 'var(--accent-secondary)' },
+                    { title: 'Always up to date', desc: 'Add a new piece from your dashboard and it appears on your portfolio page instantly', accent: 'var(--accent-primary)' },
+                    { title: 'SEO that works for you', desc: 'Your portfolio page is optimized so people searching for your kind of work can find it', accent: 'var(--accent-secondary)' },
                   ].map((item, i) => (
                     <div key={item.title}>
                       <div className="flex items-center gap-2">
@@ -714,7 +714,7 @@ export default function ForArtistsContent() {
             <FadeIn delay={300}>
               <div className="mx-auto mt-12 max-w-xl rounded-lg p-5" style={{ background: 'color-mix(in srgb, var(--accent-primary) 5%, var(--surface))' }}>
                 <p className="text-center text-sm text-muted-text">
-                  <span className="font-medium text-foreground">Our commitment:</span> Your studio page will never show ads, never recommend other artists, and never do anything to pull focus from your work. It&apos;s your space.
+                  <span className="font-medium text-foreground">Our commitment:</span> Your portfolio page will never show ads, never recommend other artists, and never do anything to pull focus from your work. It&apos;s your space.
                 </p>
               </div>
             </FadeIn>

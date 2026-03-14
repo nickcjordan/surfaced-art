@@ -96,17 +96,17 @@ test.describe('Page Rendering — Listing Detail', () => {
   })
 })
 
-test.describe('Page Rendering — Artist Studio', () => {
-  test(`studio page renders: ${SEED_ARTIST.displayName}`, async ({ page }) => {
+test.describe('Page Rendering — Artist Portfolio', () => {
+  test(`portfolio page renders: ${SEED_ARTIST.displayName}`, async ({ page }) => {
     await page.goto(`/${SEED_ARTIST.slug}`)
     await page.waitForLoadState('networkidle')
 
     // Did not 404
     await expect(page).not.toHaveTitle(/404|not found/i)
 
-    // Studio-specific chrome
-    await expect(page.getByTestId('studio-top-bar')).toBeVisible()
-    await expect(page.getByTestId('studio-footer')).toBeVisible()
+    // Portfolio-specific chrome
+    await expect(page.getByTestId('portfolio-top-bar')).toBeVisible()
+    await expect(page.getByTestId('portfolio-footer')).toBeVisible()
 
     // No main site chrome
     await expect(page.getByTestId('site-header')).not.toBeAttached()
@@ -120,7 +120,7 @@ test.describe('Page Rendering — Artist Studio', () => {
     await expect(page.getByTestId('artist-bio')).toBeVisible()
 
     await page.screenshot({
-      path: `results/studio-${SEED_ARTIST.slug}-${test.info().project.name}.png`,
+      path: `results/portfolio-${SEED_ARTIST.slug}-${test.info().project.name}.png`,
       fullPage: true,
     })
   })

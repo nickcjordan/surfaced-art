@@ -20,7 +20,7 @@ type ListingCardProps = {
     primaryImageHeight?: number | null
   }
   artistName: string
-  variant?: 'browse' | 'profile' | 'studio'
+  variant?: 'browse' | 'profile' | 'portfolio'
   className?: string
 }
 
@@ -70,7 +70,7 @@ export function ListingCard({
             unoptimized
             className={cn(
               'object-cover rounded-sm transition-transform duration-300 ease-in-out',
-              (variant === 'profile' || variant === 'studio') && 'group-hover:scale-[1.02]'
+              (variant === 'profile' || variant === 'portfolio') && 'group-hover:scale-[1.02]'
             )}
           />
         ) : (
@@ -103,7 +103,7 @@ export function ListingCard({
         <h3 className="font-serif text-foreground text-sm truncate">
           {listing.title}
         </h3>
-        {variant !== 'studio' && (
+        {variant !== 'portfolio' && (
           <>
             <p className="text-muted-text text-sm truncate">
               {artistName}
@@ -119,7 +119,7 @@ export function ListingCard({
             </div>
           </>
         )}
-        {variant === 'studio' && isSold && (
+        {variant === 'portfolio' && isSold && (
           <span className="text-muted-text text-xs font-medium">Sold</span>
         )}
       </div>
