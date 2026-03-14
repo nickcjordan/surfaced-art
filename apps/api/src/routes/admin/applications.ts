@@ -385,7 +385,7 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
  */
 async function ensureUniqueSlug(prisma: PrismaClient, baseSlug: string): Promise<string> {
   let slug = baseSlug
-  let suffix = 1
+  let suffix = 0
 
   while (true) {
     // Skip reserved slugs (platform routes, brand terms, profanity)
