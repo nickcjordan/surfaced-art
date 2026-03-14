@@ -97,7 +97,7 @@ test.describe('Page Rendering — Listing Detail', () => {
 })
 
 test.describe('Page Rendering — Artist Portfolio', () => {
-  test(`portfolio page renders: ${SEED_ARTIST.displayName}`, async ({ page }) => {
+  test(`portfolio work page renders: ${SEED_ARTIST.displayName}`, async ({ page }) => {
     await page.goto(`/${SEED_ARTIST.slug}`)
     await page.waitForLoadState('networkidle')
 
@@ -112,15 +112,45 @@ test.describe('Page Rendering — Artist Portfolio', () => {
     await expect(page.getByTestId('site-header')).not.toBeAttached()
     await expect(page.getByTestId('site-footer')).not.toBeAttached()
 
-    // Core content sections
-    await expect(page.getByTestId('artist-hero')).toBeVisible()
+    // Art-forward layout: header + nav + work grid
+    await expect(page.getByTestId('portfolio-header')).toBeVisible()
     await expect(page.getByTestId('artist-name')).toContainText(
       SEED_ARTIST.displayName
     )
+    await expect(page.getByTestId('portfolio-nav')).toBeVisible()
+    await expect(page.getByTestId('available-work')).toBeVisible()
+
+    await page.screenshot({
+      path: `results/portfolio-${SEED_ARTIST.slug}-work-${test.info().project.name}.png`,
+      fullPage: true,
+    })
+  })
+
+  test(`portfolio about page renders: ${SEED_ARTIST.displayName}`, async ({ page }) => {
+    await page.goto(`/${SEED_ARTIST.slug}/about`)
+    await page.waitForLoadState('networkidle')
+
+    await expect(page).not.toHaveTitle(/404|not found/i)
+    await expect(page.getByTestId('portfolio-header')).toBeVisible()
+    await expect(page.getByTestId('portfolio-about')).toBeVisible()
     await expect(page.getByTestId('artist-bio')).toBeVisible()
 
     await page.screenshot({
-      path: `results/portfolio-${SEED_ARTIST.slug}-${test.info().project.name}.png`,
+      path: `results/portfolio-${SEED_ARTIST.slug}-about-${test.info().project.name}.png`,
+      fullPage: true,
+    })
+  })
+
+  test(`portfolio cv page renders: ${SEED_ARTIST.displayName}`, async ({ page }) => {
+    await page.goto(`/${SEED_ARTIST.slug}/cv`)
+    await page.waitForLoadState('networkidle')
+
+    await expect(page).not.toHaveTitle(/404|not found/i)
+    await expect(page.getByTestId('portfolio-header')).toBeVisible()
+    await expect(page.getByTestId('cv-section')).toBeVisible()
+
+    await page.screenshot({
+      path: `results/portfolio-${SEED_ARTIST.slug}-cv-${test.info().project.name}.png`,
       fullPage: true,
     })
   })

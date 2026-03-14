@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * Surfaced Art — Design tokens (Brand Design System v2.0)
  *

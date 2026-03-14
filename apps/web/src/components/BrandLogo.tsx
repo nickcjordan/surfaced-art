@@ -27,7 +27,7 @@ export function BrandLogo({ size = 'md', className }: BrandLogoProps) {
         width={dims.width}
         height={dims.height}
         unoptimized
-        className="dark:hidden"
+        className="block dark:hidden"
       />
       <Image
         src="/brand/surfaced_logo_dark.svg"

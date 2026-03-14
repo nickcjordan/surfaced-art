@@ -39,13 +39,27 @@
       "WebFetch(domain:d2agn4aoo0e7ji.cloudfront.net)",
       "Bash(git mv:*)",
       "Bash(mkdir:*)",
-      "Bash(ls c:/dev/src/surfaced-art/apps/web/src/app/\\\\\\(portfolio\\\\\\)/[slug]/)",
-      "Bash(mv \"apps/web/src/app/\\(portfolio\\)/[slug]/layout.tsx\" \"apps/web/src/app/\\(portfolio\\)/[slug]/layout.tsx.bak\")",
-      "Bash(mv \"apps/web/src/app/\\(portfolio\\)/[slug]/about\" \"apps/web/src/app/\\(portfolio\\)/[slug]/about.bak\")",
-      "Bash(mv \"apps/web/src/app/\\(portfolio\\)/[slug]/cv\" \"apps/web/src/app/\\(portfolio\\)/[slug]/cv.bak\")"
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "mcp__claude_ai_Linear__list_issues",
+      "mcp__claude_ai_Linear__list_teams",
+      "mcp__claude_ai_Linear__list_issue_labels",
+      "mcp__claude_ai_Linear__save_issue",
+      "Bash(git ls-files:*)",
+      "mcp__claude_ai_Linear__get_issue",
+      "Bash(npx vitest:*)",
+      "Bash(npm run:*)",
+      "Bash(git diff:*)",
+      "Bash(gh pr:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git rm:*)",
+      "Bash(ls c:/dev/src/surfaced-art/apps/web/src/app/\\\\\\(portfolio\\\\\\)/[slug]/)"
     ],
     "additionalDirectories": [
-      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio"
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio",
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)",
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio\\[slug]",
+      "c:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(portfolio)\\[slug]"
     ]
   }
 }
