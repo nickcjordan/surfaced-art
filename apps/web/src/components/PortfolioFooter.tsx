@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
-export function StudioFooter() {
+export function PortfolioFooter() {
   return (
-    <footer data-testid="studio-footer" className="border-t border-border mt-auto py-8">
+    <footer data-testid="portfolio-footer" className="border-t border-border mt-auto py-8">
       <p className="text-center text-xs tracking-wide text-muted-text">
         Powered by{' '}
         <Link

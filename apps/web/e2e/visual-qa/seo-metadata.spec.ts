@@ -82,8 +82,8 @@ test.describe('SEO Metadata — Artist Profile', () => {
   })
 })
 
-test.describe('SEO Metadata — Artist Studio Page', () => {
-  test('studio page title is artist name only (no "Surfaced Art")', async ({ page }) => {
+test.describe('SEO Metadata — Artist Portfolio Page', () => {
+  test('portfolio page title is artist name only (no "Surfaced Art")', async ({ page }) => {
     await page.goto(`/${SEED_ARTIST_SLUG}`)
     await page.waitForLoadState('networkidle')
 
@@ -92,7 +92,7 @@ test.describe('SEO Metadata — Artist Studio Page', () => {
     expect(title.toLowerCase()).not.toContain('surfaced art')
   })
 
-  test('studio page has description, OG tags, and canonical', async ({ page }) => {
+  test('portfolio page has description, OG tags, and canonical', async ({ page }) => {
     await page.goto(`/${SEED_ARTIST_SLUG}`)
     await page.waitForLoadState('networkidle')
 
@@ -118,7 +118,7 @@ test.describe('SEO Metadata — Artist Studio Page', () => {
     expect(canonical).toContain(`/${SEED_ARTIST_SLUG}`)
   })
 
-  test('studio page is indexable (no noindex)', async ({ page }) => {
+  test('portfolio page is indexable (no noindex)', async ({ page }) => {
     await page.goto(`/${SEED_ARTIST_SLUG}`)
     await page.waitForLoadState('networkidle')
 
@@ -131,7 +131,7 @@ test.describe('SEO Metadata — Artist Studio Page', () => {
     }
   })
 
-  test('studio page has Person JSON-LD schema', async ({ page }) => {
+  test('portfolio page has Person JSON-LD schema', async ({ page }) => {
     await page.goto(`/${SEED_ARTIST_SLUG}`)
     await page.waitForLoadState('networkidle')
 
@@ -144,7 +144,7 @@ test.describe('SEO Metadata — Artist Studio Page', () => {
     expect(structured.name).toBeTruthy()
   })
 
-  test('studio page has no site header or footer', async ({ page }) => {
+  test('portfolio page has no site header or footer', async ({ page }) => {
     await page.goto(`/${SEED_ARTIST_SLUG}`)
     await page.waitForLoadState('networkidle')
 
@@ -152,11 +152,11 @@ test.describe('SEO Metadata — Artist Studio Page', () => {
     await expect(page.getByTestId('site-footer')).not.toBeAttached()
   })
 
-  test('studio page top bar is visible with shop link', async ({ page }) => {
+  test('portfolio page top bar is visible with shop link', async ({ page }) => {
     await page.goto(`/${SEED_ARTIST_SLUG}`)
     await page.waitForLoadState('networkidle')
 
-    const topBar = page.getByTestId('studio-top-bar')
+    const topBar = page.getByTestId('portfolio-top-bar')
     await expect(topBar).toBeVisible()
 
     const shopLink = topBar.locator('a[href*="/artist/"]')

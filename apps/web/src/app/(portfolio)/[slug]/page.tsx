@@ -9,7 +9,7 @@ import { estimateCardHeight } from '@/lib/masonry-utils'
 import { Badge } from '@/components/ui/badge'
 import { categoryLabels } from '@/lib/category-labels'
 import { JsonLd } from '@/components/JsonLd'
-import { StudioTopBar } from '@/components/StudioTopBar'
+import { PortfolioTopBar } from '@/components/PortfolioTopBar'
 import { SITE_URL } from '@/lib/site-config'
 import type { ArtistProfileResponse, CvEntryTypeType } from '@surfaced-art/types'
 
@@ -69,11 +69,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
     }
   } catch {
-    return { title: 'Artist Studio' }
+    return { title: 'Artist Portfolio' }
   }
 }
 
-export default async function StudioPage({ params }: Props) {
+export default async function PortfolioPage({ params }: Props) {
   const { slug } = await params
 
   let artist: ArtistProfileResponse
@@ -138,7 +138,7 @@ export default async function StudioPage({ params }: Props) {
         ...(sameAs.length > 0 && { sameAs }),
       }} />
 
-      <StudioTopBar artistName={artist.displayName} artistSlug={slug} />
+      <PortfolioTopBar artistName={artist.displayName} artistSlug={slug} />
 
       {/* Hero — full-bleed cover */}
       <section data-testid="artist-hero">
@@ -146,7 +146,7 @@ export default async function StudioPage({ params }: Props) {
           {artist.coverImageUrl ? (
             <Image
               src={artist.coverImageUrl}
-              alt={`${artist.displayName}'s studio`}
+              alt={`${artist.displayName}'s portfolio`}
               fill
               unoptimized
               className="object-cover"
@@ -318,7 +318,7 @@ export default async function StudioPage({ params }: Props) {
                   key={listing.id}
                   listing={toListingCardProp(listing)}
                   artistName={artist.displayName}
-                  variant="studio"
+                  variant="portfolio"
                 />
               ))}
             </MasonryGrid>
@@ -341,7 +341,7 @@ export default async function StudioPage({ params }: Props) {
                   key={listing.id}
                   listing={toListingCardProp(listing)}
                   artistName={artist.displayName}
-                  variant="studio"
+                  variant="portfolio"
                 />
               ))}
             </MasonryGrid>

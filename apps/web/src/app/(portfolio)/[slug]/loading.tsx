@@ -1,6 +1,6 @@
-export default function StudioLoading() {
+export default function PortfolioLoading() {
   return (
-    <div data-testid="studio-skeleton">
+    <div data-testid="portfolio-skeleton">
       {/* Top bar skeleton */}
       <div className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">

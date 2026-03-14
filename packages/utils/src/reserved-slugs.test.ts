@@ -15,8 +15,8 @@ describe('Reserved Slug Validation', () => {
       const currentRoutes = [
         'about', 'admin', 'api', 'apply', 'artist', 'artists',
         'category', 'dashboard', 'for-artists', 'forgot-password',
-        'listing', 'privacy', 'reset-password', 'search',
-        'sign-in', 'sign-up', 'studio', 'terms', 'verify-email',
+        'listing', 'portfolio', 'privacy', 'reset-password', 'search',
+        'sign-in', 'sign-up', 'terms', 'verify-email',
       ]
       for (const route of currentRoutes) {
         expect(RESERVED_SLUGS.has(route)).toBe(true)

@@ -385,16 +385,16 @@ export function ProfileForm() {
         </CardContent>
       </Card>
 
-      {/* Studio Customization */}
+      {/* Portfolio Customization */}
       <Card>
         <CardHeader>
-          <CardTitle>Studio Customization</CardTitle>
+          <CardTitle>Portfolio Customization</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="accentColor">Accent Color</Label>
             <p className="text-xs text-muted-foreground">
-              Choose a color to personalize your studio page. It will tint headings, links, and interactive elements.
+              Choose a color to personalize your portfolio page. It will tint headings, links, and interactive elements.
             </p>
             <div className="flex items-center gap-3">
               <input
