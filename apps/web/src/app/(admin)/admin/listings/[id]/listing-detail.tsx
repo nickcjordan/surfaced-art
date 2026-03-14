@@ -339,9 +339,11 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
               {relevantTags.map((tag) => (
                 <label
                   key={tag.id}
+                  htmlFor={`tag-${tag.id}`}
                   className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
                 >
                   <input
+                    id={`tag-${tag.id}`}
                     type="checkbox"
                     data-testid={`tag-checkbox-${tag.id}`}
                     checked={selectedTagIds.has(tag.id)}
