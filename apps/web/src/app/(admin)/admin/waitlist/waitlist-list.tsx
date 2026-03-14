@@ -64,11 +64,18 @@ export function AdminWaitlistList() {
     }
   }
 
+  /** Quote a CSV cell to prevent formula injection (=, +, -, @, \t, \r can trigger formulas in spreadsheets). */
+  const csvCell = (value: string) => {
+    const needsQuoting = /[,"\n\r]/.test(value) || /^[=+\-@\t\r]/.test(value)
+    if (!needsQuoting) return value
+    return `"${value.replace(/"/g, '""')}"`
+  }
+
   const handleExportCsv = () => {
     if (!data) return
     const header = 'Email,Signed Up'
     const rows = data.data.map((e) =>
-      `${e.email},${new Date(e.createdAt).toISOString()}`
+      `${csvCell(e.email)},${new Date(e.createdAt).toISOString()}`
     )
     const csv = [header, ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
