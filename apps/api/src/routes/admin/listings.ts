@@ -1,15 +1,17 @@
 import { Hono } from 'hono'
 import type { PrismaClient, Prisma, Listing, ListingImage } from '@surfaced-art/db'
 import { logger } from '@surfaced-art/utils'
-import { adminListingsQuery, adminListingUpdateBody, adminListingHideBody } from '@surfaced-art/types'
+import { adminListingsQuery, adminListingUpdateBody, adminListingHideBody, listingTagsUpdateBody } from '@surfaced-art/types'
 import type {
   AdminListingListItem,
   AdminListingDetailResponse,
   AdminActionResponse,
   PaginatedResponse,
+  Tag,
+  TagsUpdateResponse,
 } from '@surfaced-art/types'
 import type { AuthUser } from '../../middleware/auth'
-import { notFound, validationError, internalError } from '../../errors'
+import { notFound, validationError, badRequest, internalError } from '../../errors'
 import { logAdminAction } from '../../lib/audit'
 import { triggerRevalidation } from '../../lib/revalidation'
 
@@ -168,6 +170,7 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
 
     type ListingDetail = Listing & {
       images: ListingImage[]
+      tags: { tag: { id: string; slug: string; label: string; category: string | null; sortOrder: number } }[]
       artist: { id: string; displayName: string; slug: string; status: string }
       _count: { orders: number; reviews: number }
     }
@@ -176,6 +179,10 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
       where: { id },
       include: {
         images: { orderBy: { sortOrder: 'asc' } },
+        tags: {
+          include: { tag: { select: { id: true, slug: true, label: true, category: true, sortOrder: true } } },
+          orderBy: { tag: { sortOrder: 'asc' } },
+        },
         artist: { select: { id: true, displayName: true, slug: true, status: true } },
         _count: { select: { orders: true, reviews: true } },
       },
@@ -215,6 +222,13 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
         width: img.width,
         height: img.height,
         createdAt: img.createdAt,
+      })),
+      tags: listing.tags.map((lt): Tag => ({
+        id: lt.tag.id,
+        slug: lt.tag.slug,
+        label: lt.tag.label,
+        category: lt.tag.category as Tag['category'],
+        sortOrder: lt.tag.sortOrder,
       })),
       artist: {
         id: listing.artist.id,
@@ -419,6 +433,102 @@ export function createAdminListingRoutes(prisma: PrismaClient) {
       return c.json(response)
     } catch (err) {
       logger.error('Listing unhide failed', {
+        listingId: id,
+        error: err instanceof Error ? err.message : String(err),
+        durationMs: Date.now() - start,
+      })
+      return internalError(c)
+    }
+  })
+
+  /**
+   * PUT /admin/listings/:id/tags
+   * Admin reassignment of listing tags. Replace-all semantics.
+   */
+  app.put('/:id/tags', async (c) => {
+    const start = Date.now()
+    const adminUser = c.get('user')
+    const { id } = c.req.param()
+
+    const body = await c.req.json().catch(() => ({}))
+    const parsed = listingTagsUpdateBody.safeParse(body)
+    if (!parsed.success) {
+      return validationError(c, parsed.error)
+    }
+
+    try {
+      const listing = await prisma.listing.findUnique({
+        where: { id },
+        include: { artist: { select: { slug: true } } },
+      })
+      if (!listing) {
+        return notFound(c, 'Listing not found')
+      }
+
+      const { tagIds } = parsed.data
+      const uniqueTagIds = [...new Set(tagIds)]
+
+      // Validate all tag IDs exist
+      if (uniqueTagIds.length > 0) {
+        const existingTags = await prisma.tag.findMany({
+          where: { id: { in: uniqueTagIds } },
+          select: { id: true },
+        })
+        if (existingTags.length !== uniqueTagIds.length) {
+          return badRequest(c, 'One or more tag IDs are invalid')
+        }
+      }
+
+      // Replace-all in transaction
+      const updatedTags = await prisma.$transaction(async (tx) => {
+        await tx.listingTag.deleteMany({ where: { listingId: id } })
+        if (uniqueTagIds.length > 0) {
+          await tx.listingTag.createMany({
+            data: uniqueTagIds.map((tagId) => ({ listingId: id, tagId })),
+          })
+        }
+        const tags = await tx.listingTag.findMany({
+          where: { listingId: id },
+          include: { tag: { select: { id: true, slug: true, label: true, category: true, sortOrder: true } } },
+          orderBy: { tag: { sortOrder: 'asc' } },
+        })
+        return tags.map((lt): Tag => ({
+          id: lt.tag.id,
+          slug: lt.tag.slug,
+          label: lt.tag.label,
+          category: lt.tag.category as Tag['category'],
+          sortOrder: lt.tag.sortOrder,
+        }))
+      })
+
+      // Audit log (fire-and-forget)
+      void logAdminAction(prisma, {
+        adminId: adminUser.id,
+        action: 'listing_update',
+        targetType: 'listing',
+        targetId: id,
+        details: { fields: ['tags'], tagIds: uniqueTagIds },
+      })
+
+      triggerRevalidation({
+        type: 'listing',
+        id: id,
+        category: listing.category,
+        artistSlug: listing.artist.slug,
+      })
+
+      const response: TagsUpdateResponse = { tags: updatedTags }
+
+      logger.info('Admin updated listing tags', {
+        listingId: id,
+        tagCount: uniqueTagIds.length,
+        updatedBy: adminUser.id,
+        durationMs: Date.now() - start,
+      })
+
+      return c.json(response)
+    } catch (err) {
+      logger.error('Admin listing tag update failed', {
         listingId: id,
         error: err instanceof Error ? err.message : String(err),
         durationMs: Date.now() - start,

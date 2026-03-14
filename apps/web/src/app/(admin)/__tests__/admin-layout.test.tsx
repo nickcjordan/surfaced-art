@@ -107,6 +107,14 @@ describe('AdminHeader', () => {
     expect(screen.getByTestId('admin-sign-out')).toHaveTextContent('Sign out')
   })
 
+  it('renders a link back to the main site', () => {
+    render(<AdminHeader />)
+
+    const backLink = screen.getByTestId('admin-back-to-site')
+    expect(backLink).toHaveAttribute('href', '/')
+    expect(backLink).toHaveTextContent('Back to site')
+  })
+
   it('calls signOut when sign-out button is clicked', async () => {
     render(<AdminHeader />)
 
