@@ -3,11 +3,19 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
-import { getAdminListing, hideListing, unhideListing } from '@/lib/api'
+import {
+  getAdminListing,
+  hideListing,
+  unhideListing,
+  updateAdminListingCategory,
+  updateAdminListingTags,
+  getTagVocabulary,
+} from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { AdminListingDetailResponse } from '@surfaced-art/types'
+import { CATEGORIES } from '@/lib/categories'
+import type { AdminListingDetailResponse, Tag } from '@surfaced-art/types'
 
 function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`
@@ -28,6 +36,12 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
 
   // Unhide state
   const [showUnhideConfirm, setShowUnhideConfirm] = useState(false)
+
+  // Tag editing state
+  const [editingTags, setEditingTags] = useState(false)
+  const [allTags, setAllTags] = useState<Tag[]>([])
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
+  const [tagsLoading, setTagsLoading] = useState(false)
 
   const fetchListing = useCallback(async () => {
     setLoading(true)
@@ -50,6 +64,7 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
 
   const handleHide = async () => {
     setActionError(null)
+    setActionSuccess(null)
     setActionLoading(true)
     try {
       const token = await getIdToken()
@@ -68,6 +83,7 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
 
   const handleUnhide = async () => {
     setActionError(null)
+    setActionSuccess(null)
     setActionLoading(true)
     try {
       const token = await getIdToken()
@@ -78,6 +94,71 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
       await fetchListing()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to unhide')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleCategoryChange = async (newCategory: string) => {
+    if (!listing || newCategory === listing.category) return
+    setActionError(null)
+    setActionSuccess(null)
+    setActionLoading(true)
+    try {
+      const token = await getIdToken()
+      if (!token) throw new Error('Not authenticated')
+      await updateAdminListingCategory(token, listingId, newCategory)
+      setActionSuccess('Category updated successfully')
+      // Reset tag editor state so stale selections don't persist across categories
+      setEditingTags(false)
+      setSelectedTagIds(new Set())
+      await fetchListing()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to update category')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleEditTags = async () => {
+    setTagsLoading(true)
+    try {
+      const tags = await getTagVocabulary()
+      setAllTags(tags)
+      setSelectedTagIds(new Set(listing?.tags.map((t) => t.id) ?? []))
+      setEditingTags(true)
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to load tags')
+    } finally {
+      setTagsLoading(false)
+    }
+  }
+
+  const handleToggleTag = (tagId: string) => {
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(tagId)) {
+        next.delete(tagId)
+      } else {
+        next.add(tagId)
+      }
+      return next
+    })
+  }
+
+  const handleSaveTags = async () => {
+    setActionError(null)
+    setActionSuccess(null)
+    setActionLoading(true)
+    try {
+      const token = await getIdToken()
+      if (!token) throw new Error('Not authenticated')
+      await updateAdminListingTags(token, listingId, [...selectedTagIds])
+      setActionSuccess('Tags updated successfully')
+      setEditingTags(false)
+      await fetchListing()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to update tags')
     } finally {
       setActionLoading(false)
     }
@@ -101,6 +182,11 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
       </div>
     )
   }
+
+  // Filter tags relevant to the listing's category + cross-cutting tags
+  const relevantTags = allTags.filter(
+    (t) => t.category === null || t.category === listing.category,
+  )
 
   return (
     <div data-testid="admin-listing-detail" className="space-y-8">
@@ -177,7 +263,19 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
           </div>
           <div>
             <span className="text-muted-foreground">Category:</span>{' '}
-            <Badge>{listing.category}</Badge>
+            <select
+              data-testid="category-select"
+              value={listing.category}
+              onChange={(e) => void handleCategoryChange(e.target.value)}
+              disabled={actionLoading}
+              className="ml-2 rounded-md border border-border bg-transparent px-2 py-1 text-sm text-foreground"
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat.slug} value={cat.slug}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <span className="text-muted-foreground">Type:</span>{' '}
@@ -211,6 +309,79 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
             <span className="text-foreground">{new Date(listing.updatedAt).toLocaleDateString()}</span>
           </div>
         </div>
+      </div>
+
+      {/* Tags */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-medium text-muted-foreground">Tags</h2>
+          {!editingTags && (
+            <Button
+              data-testid="edit-tags-btn"
+              variant="ghost"
+              size="sm"
+              onClick={() => void handleEditTags()}
+              disabled={actionLoading || tagsLoading}
+            >
+              {tagsLoading ? 'Loading...' : 'Edit Tags'}
+            </Button>
+          )}
+        </div>
+
+        {!editingTags && (
+          <div data-testid="listing-tags" className="flex flex-wrap gap-2">
+            {listing.tags.length > 0 ? (
+              listing.tags.map((tag) => (
+                <Badge key={tag.id} className="bg-muted text-muted-foreground">{tag.label}</Badge>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground">No tags assigned</span>
+            )}
+          </div>
+        )}
+
+        {editingTags && (
+          <div data-testid="tag-editor" className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {relevantTags.map((tag) => (
+                <div key={tag.id} className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    id={`tag-${tag.id}`}
+                    type="checkbox"
+                    data-testid={`tag-checkbox-${tag.id}`}
+                    checked={selectedTagIds.has(tag.id)}
+                    onChange={() => handleToggleTag(tag.id)}
+                    className="rounded border-border"
+                  />
+                  <label htmlFor={`tag-${tag.id}`} className="cursor-pointer">
+                    {tag.label}
+                    {tag.category === null && (
+                      <span className="text-xs text-muted-foreground"> (style)</span>
+                    )}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                data-testid="save-tags-btn"
+                size="sm"
+                onClick={() => void handleSaveTags()}
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Saving...' : 'Save Tags'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingTags(false)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Actions */}
