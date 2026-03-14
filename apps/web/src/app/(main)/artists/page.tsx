@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getFeaturedArtists, ApiError } from '@/lib/api'
+import { getFeaturedArtists } from '@/lib/api'
 import { ArtistCard } from '@/components/ArtistCard'
 import { JsonLd } from '@/components/JsonLd'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
@@ -23,17 +23,16 @@ export const metadata: Metadata = {
   },
 }
 
+// CI builds use a placeholder API URL that doesn't resolve.
+// Return empty data during build so static generation succeeds;
+// the first real request fills the ISR cache with live data.
+// At runtime, errors propagate so ISR preserves the previous good page
+// via stale-while-revalidate instead of caching an empty state.
+const isBuildPlaceholder = process.env.NEXT_PUBLIC_API_URL?.includes('placeholder')
+
 async function fetchArtists() {
-  try {
-    return await getFeaturedArtists({ limit: 50 })
-  } catch (error) {
-    if (error instanceof ApiError) {
-      console.error(`API error fetching artists: ${error.status} ${error.message}`)
-    } else {
-      console.error('Unexpected error fetching artists:', error)
-    }
-    return []
-  }
+  if (isBuildPlaceholder) return []
+  return await getFeaturedArtists({ limit: 50 })
 }
 
 export default async function ArtistsPage() {
