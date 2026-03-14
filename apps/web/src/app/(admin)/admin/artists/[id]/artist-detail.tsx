@@ -63,6 +63,7 @@ export function AdminArtistDetail({ artistId }: { artistId: string }) {
 
   const handleSuspend = async () => {
     setActionError(null)
+    setActionSuccess(null)
     setActionLoading(true)
     try {
       const token = await getIdToken()
@@ -81,6 +82,7 @@ export function AdminArtistDetail({ artistId }: { artistId: string }) {
 
   const handleUnsuspend = async () => {
     setActionError(null)
+    setActionSuccess(null)
     setActionLoading(true)
     try {
       const token = await getIdToken()
@@ -98,6 +100,7 @@ export function AdminArtistDetail({ artistId }: { artistId: string }) {
 
   const handleSaveEdit = async () => {
     setActionError(null)
+    setActionSuccess(null)
     setActionLoading(true)
     try {
       const token = await getIdToken()
