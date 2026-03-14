@@ -38,10 +38,42 @@
       "WebFetch(domain:dmfu4c7s6z2cc.cloudfront.net)",
       "WebFetch(domain:d2agn4aoo0e7ji.cloudfront.net)",
       "Bash(git mv:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "mcp__claude_ai_Linear__list_issues",
+      "mcp__claude_ai_Linear__list_teams",
+      "mcp__claude_ai_Linear__list_issue_labels",
+      "mcp__claude_ai_Linear__save_issue",
+      "Bash(ls -la apps/web/src/app/\\\\\\(studio\\\\\\)/)",
+      "Bash(git ls-files:*)",
+      "mcp__claude_ai_Linear__get_issue",
+      "Read(//c/dev/src/surfaced-art/packages/db/**)",
+      "Bash(ls -R \"c:/dev/src/surfaced-art/apps/web/src/app/\\(admin\\)/\")",
+      "Bash(ls -R \"c:/dev/src/surfaced-art/apps/web/src/app/\\(main\\)/\")",
+      "Bash(ls -R \"c:/dev/src/surfaced-art/apps/web/src/app/\\(studio\\)/\")",
+      "Bash(ls \"c:/dev/src/surfaced-art/apps/web/src/app/\\(main\\)/\")",
+      "Bash(npx vitest:*)",
+      "Bash(npm run:*)",
+      "Bash(ls apps/web/src/app/\\\\\\(main\\\\\\)/dashboard/)",
+      "Bash(git diff:*)",
+      "Bash(gh pr:*)",
+      "Bash(npx eslint:*)",
+      "Bash(ls -la \"c:/dev/src/surfaced-art/apps/web/src/app/\\(studio\\)/\")",
+      "Bash(ls -la /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(studio\\\\\\)/)",
+      "Bash(ls -la /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/)",
+      "Bash(ls -la \"c:/dev/src/surfaced-art/apps/web/src/app/\\(studio\\)/[slug]/\")",
+      "Bash(ls -la /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/dashboard/profile/)",
+      "Bash(ls -la /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/dashboard/)",
+      "Bash(git rm:*)",
+      "Bash(ls c:/dev/src/surfaced-art/apps/web/src/app/\\\\\\(portfolio\\\\\\)/[slug]/)",
+      "Bash(head -100 /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/page.tsx)"
     ],
     "additionalDirectories": [
-      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio"
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio",
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)",
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio\\[slug]",
+      "c:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(portfolio)\\[slug]"
     ]
   }
 }

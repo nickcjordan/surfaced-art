@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ExternalLink } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
+import { BrandLogo } from '@/components/BrandLogo'
 
 export function AdminHeader() {
   const { user, signOut } = useAuth()
@@ -17,8 +18,9 @@ export function AdminHeader() {
     <header data-testid="admin-header" className="border-b border-border bg-surface">
       <div className="flex items-center justify-between h-14 px-6">
         <div className="flex items-center gap-4">
-          <Link href="/admin" className="font-semibold text-foreground">
-            Surfaced Art Admin
+          <Link href="/admin" className="flex items-center gap-2 font-semibold text-foreground">
+            <BrandLogo size="sm" />
+            Admin
           </Link>
         </div>
         <div className="flex items-center gap-4">

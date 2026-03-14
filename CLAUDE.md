@@ -352,7 +352,10 @@ Every major section of every page gets a `data-testid` attribute. These are the 
 | Page | Required `data-testid` values |
 |---|---|
 | Homepage | `hero`, `featured-artists`, `artist-card`, `featured-listings`, `listing-card`, `category-grid`, `waitlist`, `waitlist-email-input`, `waitlist-submit` |
-| Artist Profile | `artist-hero`, `artist-name`, `artist-bio`, `artist-location`, `artist-categories`, `artist-social-links`, `process-section`, `cv-section`, `available-work`, `archive-section`, `listing-card` |
+| Artist Profile (browse) | `artist-hero`, `artist-name`, `artist-bio`, `artist-location`, `artist-categories`, `artist-social-links`, `process-section`, `cv-section`, `available-work`, `archive-section`, `listing-card` |
+| Portfolio Work (`/{slug}`) | `portfolio-top-bar`, `portfolio-footer`, `portfolio-header`, `artist-name`, `artist-location`, `portfolio-nav`, `available-work`, `archive-section`, `listing-card` |
+| Portfolio About (`/{slug}/about`) | `portfolio-about`, `artist-bio`, `artist-social-links`, `process-section` |
+| Portfolio CV (`/{slug}/cv`) | `cv-section` |
 | Listing Detail | `listing-title`, `listing-price`, `listing-images`, `listing-description`, `listing-dimensions`, `listing-medium`, `artist-card`, `edition-info` |
 | Category Browse | `category-header`, `category-content`, `listing-card`, `category-nav` |
 | Search | `search-header`, `search-results-listings`, `search-results-artists`, `search-prompt`, `search-toggle`, `search-input`, `search-form`, `mobile-search-form`, `mobile-search-input` |
