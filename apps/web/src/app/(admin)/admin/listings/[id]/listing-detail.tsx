@@ -145,7 +145,7 @@ export function AdminListingDetail({ listingId }: { listingId: string }) {
           <h2 className="text-sm font-medium text-muted-foreground mb-3">Images</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {listing.images.map((img) => (
-              <div key={img.id} className="border border-border rounded-md overflow-hidden aspect-square bg-muted/30">
+              <div key={img.id} className="relative border border-border rounded-md overflow-hidden aspect-square bg-muted/30">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={img.url}
