@@ -31,7 +31,7 @@ export function Wordmark({ size = 'nav', className }: WordmarkProps) {
         width={width}
         height={height}
         unoptimized
-        className="dark:hidden"
+        className="block dark:hidden"
         priority
       />
       <Image
