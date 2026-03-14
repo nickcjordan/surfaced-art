@@ -187,3 +187,5 @@ apps/web/e2e/visual-qa/report/
 response.json
 
 .claude/worktrees/
+
+untracked
