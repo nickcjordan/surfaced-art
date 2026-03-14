@@ -16,9 +16,10 @@ describe('Footer', () => {
     ).toBeInTheDocument()
   })
 
-  it('should render the Surfaced Art brand name', () => {
+  it('should render the Surfaced Art brand wordmark', () => {
     render(<Footer />)
-    expect(screen.getByText('Surfaced Art')).toBeInTheDocument()
+    const wordmarks = screen.getAllByRole('img', { name: /surfaced art/i })
+    expect(wordmarks.length).toBeGreaterThanOrEqual(1)
   })
 
   it('should render all 9 category links', () => {
