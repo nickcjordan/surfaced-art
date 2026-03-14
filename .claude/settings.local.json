@@ -38,7 +38,11 @@
       "WebFetch(domain:dmfu4c7s6z2cc.cloudfront.net)",
       "WebFetch(domain:d2agn4aoo0e7ji.cloudfront.net)",
       "Bash(git mv:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(ls c:/dev/src/surfaced-art/apps/web/src/app/\\\\\\(portfolio\\\\\\)/[slug]/)",
+      "Bash(mv \"apps/web/src/app/\\(portfolio\\)/[slug]/layout.tsx\" \"apps/web/src/app/\\(portfolio\\)/[slug]/layout.tsx.bak\")",
+      "Bash(mv \"apps/web/src/app/\\(portfolio\\)/[slug]/about\" \"apps/web/src/app/\\(portfolio\\)/[slug]/about.bak\")",
+      "Bash(mv \"apps/web/src/app/\\(portfolio\\)/[slug]/cv\" \"apps/web/src/app/\\(portfolio\\)/[slug]/cv.bak\")"
     ],
     "additionalDirectories": [
       "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio"
