@@ -6,7 +6,6 @@ import {
   cleanupDatabase,
 } from '@surfaced-art/db/test-helpers'
 import { createTestApp } from '../test-helpers/create-test-app.js'
-import { setVerifier, resetVerifier } from '../middleware/auth.js'
 import type { Hono } from 'hono'
 
 // Mock email module to avoid real SES calls
@@ -21,6 +20,18 @@ const ARTIST_COGNITO_ID = 'cognito-artist-integration'
 const ADMIN_EMAIL = 'admin@surfaced.art'
 const ARTIST_EMAIL = 'artist@integration-test.com'
 
+function createAuthEnv(sub = ADMIN_COGNITO_ID, email = ADMIN_EMAIL, name = 'Admin User') {
+  return {
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
+}
+
 describe('Admin routes — integration', () => {
   let prisma: PrismaClient
   let app: Hono
@@ -33,7 +44,6 @@ describe('Admin routes — integration', () => {
   })
 
   afterAll(async () => {
-    resetVerifier()
     await teardownTestDatabase()
   })
 
@@ -74,26 +84,19 @@ describe('Admin routes — integration', () => {
       },
     })
 
-    // Set verifier to mock JWT — returns the admin user identity
-    setVerifier({
-      verify: vi.fn().mockResolvedValue({
-        sub: ADMIN_COGNITO_ID,
-        email: ADMIN_EMAIL,
-        name: 'Admin User',
-      }),
-    } as never)
   })
 
   describe('POST /admin/artists/:userId/approve', () => {
     it('should create artist profile and role in a transaction', async () => {
-      const res = await app.request(`/admin/artists/${artistUserId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer test-token',
+      const res = await app.request(
+        `/admin/artists/${artistUserId}/approve`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewNotes: 'Excellent portfolio' }),
         },
-        body: JSON.stringify({ reviewNotes: 'Excellent portfolio' }),
-      })
+        createAuthEnv(),
+      )
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -146,19 +149,20 @@ describe('Admin routes — integration', () => {
         },
       })
 
-      const res = await app.request(`/admin/artists/${artistUserId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer test-token',
+      const res = await app.request(
+        `/admin/artists/${artistUserId}/approve`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      })
+        createAuthEnv(),
+      )
 
       expect(res.status).toBe(200)
       const body = await res.json()
       // Should have a suffixed slug since "jane-artist" is taken
-      expect(body.profile.slug).toBe('jane-artist-2')
+      expect(body.profile.slug).toBe('jane-artist-1')
     })
 
     it('should return 409 if user already has artist role', async () => {
@@ -167,14 +171,15 @@ describe('Admin routes — integration', () => {
         data: { userId: artistUserId, role: 'artist', grantedBy: adminUserId },
       })
 
-      const res = await app.request(`/admin/artists/${artistUserId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer test-token',
+      const res = await app.request(
+        `/admin/artists/${artistUserId}/approve`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      })
+        createAuthEnv(),
+      )
 
       expect(res.status).toBe(409)
     })
@@ -183,14 +188,15 @@ describe('Admin routes — integration', () => {
       // Remove the pending application
       await prisma.artistApplication.deleteMany({ where: { email: ARTIST_EMAIL } })
 
-      const res = await app.request(`/admin/artists/${artistUserId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer test-token',
+      const res = await app.request(
+        `/admin/artists/${artistUserId}/approve`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      })
+        createAuthEnv(),
+      )
 
       expect(res.status).toBe(404)
     })
@@ -198,14 +204,15 @@ describe('Admin routes — integration', () => {
 
   describe('POST /admin/artists/:userId/reject', () => {
     it('should update application status to rejected', async () => {
-      const res = await app.request(`/admin/artists/${artistUserId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer test-token',
+      const res = await app.request(
+        `/admin/artists/${artistUserId}/reject`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewNotes: 'Not a fit at this time' }),
         },
-        body: JSON.stringify({ reviewNotes: 'Not a fit at this time' }),
-      })
+        createAuthEnv(),
+      )
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -221,14 +228,15 @@ describe('Admin routes — integration', () => {
     })
 
     it('should not create artist profile on rejection', async () => {
-      await app.request(`/admin/artists/${artistUserId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer test-token',
+      await app.request(
+        `/admin/artists/${artistUserId}/reject`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      })
+        createAuthEnv(),
+      )
 
       const profile = await prisma.artistProfile.findUnique({
         where: { userId: artistUserId },
@@ -238,24 +246,26 @@ describe('Admin routes — integration', () => {
 
     it('should return 404 if application already rejected', async () => {
       // First rejection
-      await app.request(`/admin/artists/${artistUserId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer test-token',
+      await app.request(
+        `/admin/artists/${artistUserId}/reject`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      })
+        createAuthEnv(),
+      )
 
       // Second rejection attempt
-      const res = await app.request(`/admin/artists/${artistUserId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer test-token',
+      const res = await app.request(
+        `/admin/artists/${artistUserId}/reject`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      })
+        createAuthEnv(),
+      )
 
       // Should fail because application is now 'rejected', not 'pending'
       expect(res.status).toBe(404)

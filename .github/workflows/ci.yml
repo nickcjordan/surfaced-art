@@ -34,24 +34,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        env:
-          NEXT_PUBLIC_SITE_URL: https://surfaced.art
-          NEXT_PUBLIC_API_URL: https://placeholder.execute-api.us-east-1.amazonaws.com/prod
-          NEXT_PUBLIC_CDN_DOMAINS: https://dmfu4c7s6z2cc.cloudfront.net
-        run: npm run build
-
-      - name: Type Check
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        run: npm run test
-
-      - name: Integration Tests
-        run: npm run test:integration
+      - name: Quality Gates
+        run: npm run check
 
   terraform-plan-dev:
     name: Terraform Plan (dev)

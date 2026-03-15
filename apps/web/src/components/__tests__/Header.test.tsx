@@ -9,9 +9,9 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 describe('Header', () => {
-  it('should render the Surfaced Art brand name', () => {
+  it('should render the Surfaced Art brand wordmark', () => {
     render(<Header />)
-    expect(screen.getByText('Surfaced Art')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /surfaced art/i })).toBeInTheDocument()
   })
 
   it('should have a link to the home page from the brand name', () => {
@@ -55,5 +55,11 @@ describe('Header', () => {
   it('should render a search toggle button', () => {
     render(<Header />)
     expect(screen.getByTestId('search-toggle')).toBeInTheDocument()
+  })
+
+  it('should render a For Artists link pointing to /for-artists', () => {
+    render(<Header />)
+    const link = screen.getByRole('link', { name: /for artists/i })
+    expect(link).toHaveAttribute('href', '/for-artists')
   })
 })

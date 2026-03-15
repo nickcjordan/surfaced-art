@@ -9,6 +9,10 @@ vi.mock('@/lib/auth', () => ({
   useAuth: () => ({
     user: { email: 'artist@test.com', name: 'Test Artist' },
     loading: false,
+    isArtist: true,
+    isAdmin: false,
+    roles: ['artist'],
+    hasRole: (role: string) => role === 'artist',
     signIn: vi.fn(),
     signUp: vi.fn(),
     confirmSignUp: vi.fn(),
@@ -17,6 +21,9 @@ vi.mock('@/lib/auth', () => ({
     forgotPassword: vi.fn(),
     confirmPassword: vi.fn(),
     getIdToken: mockGetIdToken,
+    completeNewPassword: vi.fn(),
+    completeMfa: vi.fn(),
+    pendingChallenge: null,
   }),
 }))
 
@@ -49,6 +56,7 @@ const baseDashboardData: DashboardResponse = {
     instagramUrl: null,
     profileImageUrl: 'https://cdn.example.com/profile.jpg',
     coverImageUrl: 'https://cdn.example.com/cover.jpg',
+    accentColor: null,
     status: 'approved',
     stripeAccountId: null,
     categories: ['ceramics'],
@@ -109,8 +117,9 @@ describe('Stripe CTA on Dashboard', () => {
 
     render(<DashboardPage />)
 
+    // Wait for ArtistOverview to load
     await waitFor(() => {
-      expect(screen.getByTestId('dashboard-content')).toBeInTheDocument()
+      expect(screen.getByTestId('artist-overview')).toBeInTheDocument()
     })
 
     expect(screen.queryByTestId('stripe-cta')).not.toBeInTheDocument()
@@ -147,7 +156,7 @@ describe('Stripe CTA on Dashboard', () => {
     render(<DashboardPage />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('dashboard-content')).toBeInTheDocument()
+      expect(screen.getByTestId('artist-overview')).toBeInTheDocument()
     })
 
     expect(screen.queryByTestId('stripe-cta')).not.toBeInTheDocument()

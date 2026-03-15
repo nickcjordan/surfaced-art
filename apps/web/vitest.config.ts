@@ -17,6 +17,7 @@ export default defineConfig({
       'next/image': path.resolve(__dirname, './src/test/mocks/next-image.tsx'),
       'next/cache': path.resolve(__dirname, './src/test/mocks/next-cache.ts'),
       'next/navigation': path.resolve(__dirname, './src/test/mocks/next-navigation.ts'),
+      'next-themes': path.resolve(__dirname, './src/test/mocks/next-themes.ts'),
     },
   },
 })

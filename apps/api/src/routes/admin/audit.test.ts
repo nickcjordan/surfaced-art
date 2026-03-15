@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { Hono } from 'hono'
 import { createAdminRoutes } from './index'
-import { setVerifier, resetVerifier } from '../../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock email module
@@ -13,9 +12,15 @@ vi.mock('@surfaced-art/email', () => ({
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
+function createAuthEnv(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
   return {
-    verify: vi.fn().mockResolvedValue({ sub, email, name }),
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
   }
 }
 
@@ -112,10 +117,6 @@ function createTestApp(prisma: PrismaClient) {
 }
 
 describe('Admin Audit Log Endpoints', () => {
-  afterEach(() => {
-    resetVerifier()
-  })
-
   // ─── Auth ──────────────────────────────────────────────────
 
   it('should return 401 without auth token', async () => {
@@ -126,25 +127,19 @@ describe('Admin Audit Log Endpoints', () => {
   })
 
   it('should return 403 for non-admin users', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma({ adminRoles: ['buyer'] })
     const app = createTestApp(prisma)
-    const res = await app.request('/admin/audit-log', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/admin/audit-log', {}, createAuthEnv())
     expect(res.status).toBe(403)
   })
 
   // ─── GET /admin/audit-log ──────────────────────────────────
 
   it('should return paginated audit log entries', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await app.request('/admin/audit-log', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/admin/audit-log', {}, createAuthEnv())
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -155,13 +150,10 @@ describe('Admin Audit Log Endpoints', () => {
   })
 
   it('should include admin fullName in each entry', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await app.request('/admin/audit-log', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/admin/audit-log', {}, createAuthEnv())
 
     const body = await res.json()
     expect(body.data[0].adminName).toBe('Admin User')
@@ -169,26 +161,20 @@ describe('Admin Audit Log Endpoints', () => {
   })
 
   it('should filter by adminId', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    await app.request(`/admin/audit-log?adminId=${ADMIN_USER_ID}`, {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    await app.request(`/admin/audit-log?adminId=${ADMIN_USER_ID}`, {}, createAuthEnv())
 
     const whereArg = (prisma.adminAuditLog.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0]?.where
     expect(whereArg.adminId).toBe(ADMIN_USER_ID)
   })
 
   it('should filter by targetType and targetId', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    await app.request(`/admin/audit-log?targetType=user&targetId=${TARGET_USER_ID}`, {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    await app.request(`/admin/audit-log?targetType=user&targetId=${TARGET_USER_ID}`, {}, createAuthEnv())
 
     const whereArg = (prisma.adminAuditLog.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0]?.where
     expect(whereArg.targetType).toBe('user')
@@ -196,28 +182,22 @@ describe('Admin Audit Log Endpoints', () => {
   })
 
   it('should filter by action', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    await app.request('/admin/audit-log?action=role_grant', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    await app.request('/admin/audit-log?action=role_grant', {}, createAuthEnv())
 
     const whereArg = (prisma.adminAuditLog.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0]?.where
     expect(whereArg.action).toBe('role_grant')
   })
 
   it('should filter by date range', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
     const dateFrom = '2025-03-01T00:00:00Z'
     const dateTo = '2025-03-03T00:00:00Z'
-    await app.request(`/admin/audit-log?dateFrom=${dateFrom}&dateTo=${dateTo}`, {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    await app.request(`/admin/audit-log?dateFrom=${dateFrom}&dateTo=${dateTo}`, {}, createAuthEnv())
 
     const whereArg = (prisma.adminAuditLog.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0]?.where
     expect(whereArg.createdAt).toBeDefined()
@@ -226,13 +206,10 @@ describe('Admin Audit Log Endpoints', () => {
   })
 
   it('should respect pagination params', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma({ auditLogCount: 50 })
     const app = createTestApp(prisma)
 
-    await app.request('/admin/audit-log?page=2&limit=10', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    await app.request('/admin/audit-log?page=2&limit=10', {}, createAuthEnv())
 
     const findManyArgs = (prisma.adminAuditLog.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(findManyArgs.skip).toBe(10) // (2-1) * 10
@@ -240,13 +217,10 @@ describe('Admin Audit Log Endpoints', () => {
   })
 
   it('should return details as-is from JSONB', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await app.request('/admin/audit-log', {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request('/admin/audit-log', {}, createAuthEnv())
 
     const body = await res.json()
     expect(body.data[0].details).toEqual({ role: 'artist' })
@@ -256,26 +230,20 @@ describe('Admin Audit Log Endpoints', () => {
   // ─── GET /admin/audit-log/user/:userId ─────────────────────
 
   it('should return audit logs filtered by userId as targetId', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    await app.request(`/admin/audit-log/user/${TARGET_USER_ID}`, {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    await app.request(`/admin/audit-log/user/${TARGET_USER_ID}`, {}, createAuthEnv())
 
     const whereArg = (prisma.adminAuditLog.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0]?.where
     expect(whereArg.targetId).toBe(TARGET_USER_ID)
   })
 
   it('should return paginated response for user audit log', async () => {
-    setVerifier(createMockVerifier())
     const prisma = createMockPrisma({ auditLogs: [mockAuditLogs[0]], auditLogCount: 1 })
     const app = createTestApp(prisma)
 
-    const res = await app.request(`/admin/audit-log/user/${TARGET_USER_ID}`, {
-      headers: { Authorization: 'Bearer valid-token' },
-    })
+    const res = await app.request(`/admin/audit-log/user/${TARGET_USER_ID}`, {}, createAuthEnv())
 
     expect(res.status).toBe(200)
     const body = await res.json()

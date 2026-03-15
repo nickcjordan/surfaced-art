@@ -21,14 +21,14 @@ describe('Home Page', () => {
     const Component = await Home()
     render(Component)
     const heading = screen.getByRole('heading', { level: 1 })
-    expect(heading).toHaveTextContent('A curated gallery')
+    expect(heading).toHaveTextContent('A better place')
   })
 
   it('should render the hero CTA links', async () => {
     const Component = await Home()
     render(Component)
-    expect(screen.getByRole('link', { name: /join the gallery/i })).toHaveAttribute('href', '/apply')
-    expect(screen.getByRole('link', { name: /learn more/i })).toHaveAttribute('href', '/for-artists')
+    expect(screen.getByRole('link', { name: /see how it works/i })).toHaveAttribute('href', '/for-artists')
+    expect(screen.getByRole('link', { name: /ready to apply/i })).toHaveAttribute('href', '/apply')
   })
 
   it('should render the waitlist section', async () => {

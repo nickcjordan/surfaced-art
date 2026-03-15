@@ -4,6 +4,9 @@ import { cn } from '@/lib/utils'
 import { formatCurrency } from '@surfaced-art/utils'
 import type { ListingStatusType, CategoryType } from '@surfaced-art/types'
 
+// Most portrait ratio allowed (height = 1.5x width) — clamps extreme portrait artwork
+const MIN_RATIO = 2 / 3
+
 type ListingCardProps = {
   listing: {
     id: string
@@ -17,7 +20,7 @@ type ListingCardProps = {
     primaryImageHeight?: number | null
   }
   artistName: string
-  variant?: 'browse' | 'profile' | 'studio'
+  variant?: 'browse' | 'profile' | 'portfolio'
   className?: string
 }
 
@@ -34,7 +37,6 @@ export function ListingCard({
   // Clamp extreme portrait ratios to 2:3 (w:h) so tall narrow artwork
   // doesn't blow out masonry columns.
   const hasNaturalRatio = listing.primaryImageWidth && listing.primaryImageHeight
-  const MIN_RATIO = 2 / 3 // most portrait allowed (height = 1.5× width)
   let aspectStyle: { aspectRatio: string } | undefined
   if (hasNaturalRatio) {
     const naturalRatio = listing.primaryImageWidth! / listing.primaryImageHeight!
@@ -51,7 +53,7 @@ export function ListingCard({
       href={href}
       data-testid="listing-card"
       className={cn(
-        'group block rounded-md bg-surface transition-[box-shadow,transform] duration-250 ease-in-out hover:shadow-md hover:-translate-y-0.5',
+        'group block rounded-md bg-surface shadow-sm transition-[box-shadow,transform] duration-250 ease-in-out hover:shadow-lg hover:-translate-y-0.5',
         className
       )}
     >
@@ -68,7 +70,7 @@ export function ListingCard({
             unoptimized
             className={cn(
               'object-cover rounded-sm transition-transform duration-300 ease-in-out',
-              (variant === 'profile' || variant === 'studio') && 'group-hover:scale-[1.02]'
+              (variant === 'profile' || variant === 'portfolio') && 'group-hover:scale-[1.02]'
             )}
           />
         ) : (
@@ -101,7 +103,7 @@ export function ListingCard({
         <h3 className="font-serif text-foreground text-sm truncate">
           {listing.title}
         </h3>
-        {variant !== 'studio' && (
+        {variant !== 'portfolio' && (
           <>
             <p className="text-muted-text text-sm truncate">
               {artistName}
@@ -117,7 +119,7 @@ export function ListingCard({
             </div>
           </>
         )}
-        {variant === 'studio' && isSold && (
+        {variant === 'portfolio' && isSold && (
           <span className="text-muted-text text-xs font-medium">Sold</span>
         )}
       </div>

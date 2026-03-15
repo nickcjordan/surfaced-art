@@ -48,6 +48,7 @@ const jordanConfig: ArtistSeedConfig = {
       artworkLength: 30, artworkWidth: 40, artworkHeight: 0,
       packedLength: 34, packedWidth: 44, packedHeight: 4,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'East Side Story No. 3',
@@ -60,6 +61,7 @@ const jordanConfig: ArtistSeedConfig = {
       artworkLength: 20, artworkWidth: 24, artworkHeight: 0,
       packedLength: 24, packedWidth: 28, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Object Lesson (Family Bible)',
@@ -72,6 +74,7 @@ const jordanConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 20, artworkHeight: 3,
       packedLength: 20, packedWidth: 24, packedHeight: 7,
       packedWeight: 6,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Barton Springs, August',
@@ -84,6 +87,7 @@ const jordanConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 24, artworkHeight: 0,
       packedLength: 20, packedWidth: 28, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Untitled (Grandmother\'s Hands)',
@@ -96,6 +100,7 @@ const jordanConfig: ArtistSeedConfig = {
       artworkLength: 24, artworkWidth: 30, artworkHeight: 0,
       packedLength: 28, packedWidth: 34, packedHeight: 4,
       packedWeight: 2.5,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -150,6 +155,7 @@ const tomokoConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 20, artworkHeight: 0,
       packedLength: 20, packedWidth: 24, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1024, imageHeight: 1024,
     },
     {
       title: 'Three Vessels',
@@ -162,6 +168,7 @@ const tomokoConfig: ArtistSeedConfig = {
       artworkLength: 14, artworkWidth: 14, artworkHeight: 0,
       packedLength: 18, packedWidth: 18, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1024, imageHeight: 1024,
     },
     {
       title: 'Chawan, ash glaze',
@@ -174,6 +181,7 @@ const tomokoConfig: ArtistSeedConfig = {
       artworkLength: 5, artworkWidth: 5, artworkHeight: 3.5,
       packedLength: 9, packedWidth: 9, packedHeight: 7.5,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Moss and Stone',
@@ -186,6 +194,7 @@ const tomokoConfig: ArtistSeedConfig = {
       artworkLength: 12, artworkWidth: 16, artworkHeight: 0,
       packedLength: 16, packedWidth: 20, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1024, imageHeight: 1024,
     },
     {
       title: 'Winter Light, Studio',
@@ -198,6 +207,7 @@ const tomokoConfig: ArtistSeedConfig = {
       artworkLength: 20, artworkWidth: 24, artworkHeight: 0,
       packedLength: 24, packedWidth: 28, packedHeight: 4,
       packedWeight: 2,
+      imageWidth: 1024, imageHeight: 1024,
     },
   ],
   processMedia: [
@@ -252,6 +262,7 @@ const gabrielaConfig: ArtistSeedConfig = {
       artworkLength: 20, artworkWidth: 24, artworkHeight: 0,
       packedLength: 24, packedWidth: 28, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Carnaval, Wynwood',
@@ -264,6 +275,7 @@ const gabrielaConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 20, artworkHeight: 0,
       packedLength: 20, packedWidth: 24, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Biscayne Bay, Pink Hour',
@@ -276,6 +288,7 @@ const gabrielaConfig: ArtistSeedConfig = {
       artworkLength: 24, artworkWidth: 36, artworkHeight: 0,
       packedLength: 28, packedWidth: 40, packedHeight: 4,
       packedWeight: 2.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Fruit Stand, Homestead',
@@ -288,6 +301,7 @@ const gabrielaConfig: ArtistSeedConfig = {
       artworkLength: 14, artworkWidth: 18, artworkHeight: 0,
       packedLength: 18, packedWidth: 22, packedHeight: 2,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Abuela\'s Garden',
@@ -300,6 +314,7 @@ const gabrielaConfig: ArtistSeedConfig = {
       artworkLength: 20, artworkWidth: 24, artworkHeight: 0,
       packedLength: 24, packedWidth: 28, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -354,6 +369,7 @@ const aidenConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 20, artworkHeight: 0,
       packedLength: 20, packedWidth: 24, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Cabin Blanket, Indigo and Walnut',
@@ -366,6 +382,7 @@ const aidenConfig: ArtistSeedConfig = {
       artworkLength: 60, artworkWidth: 80, artworkHeight: 1,
       packedLength: 16, packedWidth: 12, packedHeight: 8,
       packedWeight: 5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Blacksmith\'s Forge, Spruce Pine',
@@ -378,6 +395,7 @@ const aidenConfig: ArtistSeedConfig = {
       artworkLength: 16, artworkWidth: 20, artworkHeight: 0,
       packedLength: 20, packedWidth: 24, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Woven Scarf, Madder and Marigold',
@@ -390,6 +408,7 @@ const aidenConfig: ArtistSeedConfig = {
       artworkLength: 60, artworkWidth: 10, artworkHeight: 0.25,
       packedLength: 12, packedWidth: 8, packedHeight: 4,
       packedWeight: 0.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Potter\'s Wheel, Seagrove',
@@ -402,6 +421,7 @@ const aidenConfig: ArtistSeedConfig = {
       artworkLength: 20, artworkWidth: 24, artworkHeight: 0,
       packedLength: 24, packedWidth: 28, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1024, imageHeight: 1536,
     },
   ],
   processMedia: [

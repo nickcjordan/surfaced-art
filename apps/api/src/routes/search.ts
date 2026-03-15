@@ -68,6 +68,19 @@ export function createSearchRoutes(prisma: PrismaClient) {
           ARRAY(
             SELECT ac.category FROM artist_categories ac WHERE ac.artist_id = ap.id
           ) AS categories,
+          COALESCE(
+            (SELECT ARRAY_AGG(sub.url ORDER BY sub.rn)
+             FROM (
+               SELECT DISTINCT ON (l2.id) li.url, ROW_NUMBER() OVER (ORDER BY l2.created_at DESC) AS rn
+               FROM listings l2
+               JOIN listing_images li ON li.listing_id = l2.id AND li.is_process_photo = false
+               WHERE l2.artist_id = ap.id
+                 AND l2.status IN ('available', 'reserved_system')
+               ORDER BY l2.id, li.sort_order ASC
+             ) sub
+             WHERE sub.rn <= 4),
+            '{}'::text[]
+          ) AS "artworkImageUrls",
           ts_rank(ap.search_vector, plainto_tsquery('english', ${q})) AS rank,
           COUNT(*) OVER() AS "totalCount"
         FROM artist_profiles ap

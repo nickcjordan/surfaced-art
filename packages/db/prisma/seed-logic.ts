@@ -124,6 +124,8 @@ export async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) 
         url: cdnUrl(`${listingImageBase}/front`),
         isProcessPhoto: false,
         sortOrder: 0,
+        width: listingData.imageWidth ?? null,
+        height: listingData.imageHeight ?? null,
       },
     })
     await tx.listingImage.create({
@@ -132,6 +134,8 @@ export async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) 
         url: cdnUrl(`${listingImageBase}/angle`),
         isProcessPhoto: listingData.isDocumented,
         sortOrder: 1,
+        width: listingData.imageWidth ?? null,
+        height: listingData.imageHeight ?? null,
       },
     })
   }

@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import { createAdminRoutes } from './index'
-import { setVerifier, resetVerifier } from '../../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock email module (required by applications sub-router)
@@ -20,8 +19,16 @@ import { triggerRevalidation } from '../../lib/revalidation'
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
-  return { verify: vi.fn().mockResolvedValue({ sub, email, name }) }
+function createAuthEnv(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
+  return {
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
 }
 
 const ADMIN_USER_ID = 'admin-uuid-123'
@@ -50,6 +57,7 @@ const mockArtistProfile = {
   coverImageUrl: null,
   profileImageUrl: 'https://cdn.example.com/jane.jpg',
   applicationSource: null,
+  accentColor: null,
   isDemo: false,
   stripeAccountId: 'acct_123',
   createdAt: new Date('2025-01-01'),
@@ -144,46 +152,36 @@ function createTestApp(prisma: PrismaClient) {
   return app
 }
 
-function getArtists(app: ReturnType<typeof createTestApp>, query = '', token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/artists${query ? `?${query}` : ''}`, { headers })
+function getArtists(app: ReturnType<typeof createTestApp>, query = '', env?: Record<string, unknown>) {
+  return app.request(`/admin/artists${query ? `?${query}` : ''}`, {}, env)
 }
 
-function getArtistDetail(app: ReturnType<typeof createTestApp>, id: string, token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/artists/${id}`, { headers })
+function getArtistDetail(app: ReturnType<typeof createTestApp>, id: string, env?: Record<string, unknown>) {
+  return app.request(`/admin/artists/${id}`, {}, env)
 }
 
-function updateArtist(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, token?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function updateArtist(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, env?: Record<string, unknown>) {
   return app.request(`/admin/artists/${id}`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
-function suspendArtist(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, token?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function suspendArtist(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, env?: Record<string, unknown>) {
   return app.request(`/admin/artists/${id}/suspend`, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
-function unsuspendArtist(app: ReturnType<typeof createTestApp>, id: string, token?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function unsuspendArtist(app: ReturnType<typeof createTestApp>, id: string, env?: Record<string, unknown>) {
   return app.request(`/admin/artists/${id}/unsuspend`, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({}),
-  })
+  }, env)
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────
@@ -191,9 +189,7 @@ function unsuspendArtist(app: ReturnType<typeof createTestApp>, id: string, toke
 describe('GET /admin/artists', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -205,7 +201,7 @@ describe('GET /admin/artists', () => {
   it('should return paginated artist list', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await getArtists(app, '', 'valid-token')
+    const res = await getArtists(app, '', createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -219,7 +215,7 @@ describe('GET /admin/artists', () => {
   it('should include listing count', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await getArtists(app, '', 'valid-token')
+    const res = await getArtists(app, '', createAuthEnv())
     const body = await res.json()
     expect(body.data[0].listingCount).toBe(5)
   })
@@ -227,7 +223,7 @@ describe('GET /admin/artists', () => {
   it('should filter by status', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getArtists(app, 'status=suspended', 'valid-token')
+    await getArtists(app, 'status=suspended', createAuthEnv())
 
     expect(prisma.artistProfile.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -239,7 +235,7 @@ describe('GET /admin/artists', () => {
   it('should filter by search on displayName', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getArtists(app, 'search=jane', 'valid-token')
+    await getArtists(app, 'search=jane', createAuthEnv())
 
     expect(prisma.artistProfile.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -256,21 +252,19 @@ describe('GET /admin/artists', () => {
 describe('GET /admin/artists/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when artist not found', async () => {
     const prisma = createMockPrisma({ artistDetail: null })
     const app = createTestApp(prisma)
-    const res = await getArtistDetail(app, ARTIST_PROFILE_ID, 'valid-token')
+    const res = await getArtistDetail(app, ARTIST_PROFILE_ID, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should return full artist detail with admin-only fields', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await getArtistDetail(app, ARTIST_PROFILE_ID, 'valid-token')
+    const res = await getArtistDetail(app, ARTIST_PROFILE_ID, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -292,21 +286,19 @@ describe('GET /admin/artists/:id', () => {
 describe('PUT /admin/artists/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when artist not found', async () => {
     const prisma = createMockPrisma({ artistDetail: null })
     const app = createTestApp(prisma)
-    const res = await updateArtist(app, ARTIST_PROFILE_ID, { displayName: 'New Name' }, 'valid-token')
+    const res = await updateArtist(app, ARTIST_PROFILE_ID, { displayName: 'New Name' }, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should update artist profile', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await updateArtist(app, ARTIST_PROFILE_ID, { displayName: 'Updated Name' }, 'valid-token')
+    const res = await updateArtist(app, ARTIST_PROFILE_ID, { displayName: 'Updated Name' }, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -316,7 +308,7 @@ describe('PUT /admin/artists/:id', () => {
   it('should write audit log on update', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await updateArtist(app, ARTIST_PROFILE_ID, { displayName: 'Updated Name' }, 'valid-token')
+    await updateArtist(app, ARTIST_PROFILE_ID, { displayName: 'Updated Name' }, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -333,7 +325,7 @@ describe('PUT /admin/artists/:id', () => {
   it('should trigger ISR revalidation', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await updateArtist(app, ARTIST_PROFILE_ID, { displayName: 'Updated Name' }, 'valid-token')
+    await updateArtist(app, ARTIST_PROFILE_ID, { displayName: 'Updated Name' }, createAuthEnv())
 
     expect(triggerRevalidation).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -346,7 +338,7 @@ describe('PUT /admin/artists/:id', () => {
   it('should return validation error for invalid body', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await updateArtist(app, ARTIST_PROFILE_ID, { displayName: '' }, 'valid-token')
+    const res = await updateArtist(app, ARTIST_PROFILE_ID, { displayName: '' }, createAuthEnv())
     expect(res.status).toBe(400)
   })
 })
@@ -354,21 +346,19 @@ describe('PUT /admin/artists/:id', () => {
 describe('POST /admin/artists/:id/suspend', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when artist not found', async () => {
     const prisma = createMockPrisma({ artistDetail: null })
     const app = createTestApp(prisma)
-    const res = await suspendArtist(app, ARTIST_PROFILE_ID, { reason: 'Policy violation' }, 'valid-token')
+    const res = await suspendArtist(app, ARTIST_PROFILE_ID, { reason: 'Policy violation' }, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should suspend the artist', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await suspendArtist(app, ARTIST_PROFILE_ID, { reason: 'Policy violation' }, 'valid-token')
+    const res = await suspendArtist(app, ARTIST_PROFILE_ID, { reason: 'Policy violation' }, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -378,14 +368,14 @@ describe('POST /admin/artists/:id/suspend', () => {
   it('should require a reason', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await suspendArtist(app, ARTIST_PROFILE_ID, {}, 'valid-token')
+    const res = await suspendArtist(app, ARTIST_PROFILE_ID, {}, createAuthEnv())
     expect(res.status).toBe(400)
   })
 
   it('should write audit log on suspend', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await suspendArtist(app, ARTIST_PROFILE_ID, { reason: 'Policy violation' }, 'valid-token')
+    await suspendArtist(app, ARTIST_PROFILE_ID, { reason: 'Policy violation' }, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -402,14 +392,12 @@ describe('POST /admin/artists/:id/suspend', () => {
 describe('POST /admin/artists/:id/unsuspend', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when artist not found', async () => {
     const prisma = createMockPrisma({ artistDetail: null })
     const app = createTestApp(prisma)
-    const res = await unsuspendArtist(app, ARTIST_PROFILE_ID, 'valid-token')
+    const res = await unsuspendArtist(app, ARTIST_PROFILE_ID, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
@@ -417,7 +405,7 @@ describe('POST /admin/artists/:id/unsuspend', () => {
     const suspended = { ...mockArtistProfile, status: 'suspended' }
     const prisma = createMockPrisma({ artistDetail: suspended })
     const app = createTestApp(prisma)
-    const res = await unsuspendArtist(app, ARTIST_PROFILE_ID, 'valid-token')
+    const res = await unsuspendArtist(app, ARTIST_PROFILE_ID, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -428,7 +416,7 @@ describe('POST /admin/artists/:id/unsuspend', () => {
     const suspended = { ...mockArtistProfile, status: 'suspended' }
     const prisma = createMockPrisma({ artistDetail: suspended })
     const app = createTestApp(prisma)
-    await unsuspendArtist(app, ARTIST_PROFILE_ID, 'valid-token')
+    await unsuspendArtist(app, ARTIST_PROFILE_ID, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({

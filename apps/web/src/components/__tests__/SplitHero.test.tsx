@@ -19,9 +19,15 @@ describe('SplitHero', () => {
 
   it('should render the heading', () => {
     render(<SplitHero />)
-    expect(
-      screen.getByRole('heading', { level: 1, name: /a curated gallery/i })
-    ).toBeInTheDocument()
+    const heading = screen.getByRole('heading', { level: 1 })
+    expect(heading).toBeInTheDocument()
+    expect(heading).toHaveTextContent(/a better place/i)
+    expect(heading).toHaveTextContent(/to show your work/i)
+  })
+
+  it('should render the subline', () => {
+    render(<SplitHero />)
+    expect(screen.getByText(/stop selling in your dms/i)).toBeInTheDocument()
   })
 
   it('should render an artwork image with env-aware CDN URL', () => {
@@ -53,20 +59,15 @@ describe('SplitHero', () => {
     expect(src).not.toContain('karina-yanes')
   })
 
-  it('should render the primary CTA linking to /apply', () => {
+  it('should render the primary CTA linking to /for-artists', () => {
     render(<SplitHero />)
-    const cta = screen.getByRole('link', { name: /join the gallery/i })
-    expect(cta).toHaveAttribute('href', '/apply')
+    const cta = screen.getByRole('link', { name: /see how it works/i })
+    expect(cta).toHaveAttribute('href', '/for-artists')
   })
 
-  it('should render the secondary link to /for-artists', () => {
+  it('should render the secondary link to /apply', () => {
     render(<SplitHero />)
-    const link = screen.getByRole('link', { name: /learn more/i })
-    expect(link).toHaveAttribute('href', '/for-artists')
-  })
-
-  it('should render value proposition text', () => {
-    render(<SplitHero />)
-    expect(screen.getByText(/every artist is vetted/i)).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: /ready to apply/i })
+    expect(link).toHaveAttribute('href', '/apply')
   })
 })

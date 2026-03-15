@@ -48,6 +48,7 @@ const elenaConfig: ArtistSeedConfig = {
       artworkLength: 36, artworkWidth: 48, artworkHeight: 1.5,
       packedLength: 40, packedWidth: 52, packedHeight: 5,
       packedWeight: 12,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Acequia Study No. 3',
@@ -60,6 +61,7 @@ const elenaConfig: ArtistSeedConfig = {
       artworkLength: 12, artworkWidth: 16, artworkHeight: 1.5,
       packedLength: 16, packedWidth: 20, packedHeight: 5,
       packedWeight: 4,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Red Earth, Blue Shadow',
@@ -72,6 +74,7 @@ const elenaConfig: ArtistSeedConfig = {
       artworkLength: 30, artworkWidth: 40, artworkHeight: 1.5,
       packedLength: 34, packedWidth: 44, packedHeight: 5,
       packedWeight: 10,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Chamisa in October',
@@ -84,6 +87,7 @@ const elenaConfig: ArtistSeedConfig = {
       artworkLength: 10, artworkWidth: 14, artworkHeight: 1,
       packedLength: 14, packedWidth: 18, packedHeight: 4,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Madre Tierra (sold)',
@@ -96,6 +100,7 @@ const elenaConfig: ArtistSeedConfig = {
       artworkLength: 48, artworkWidth: 60, artworkHeight: 2,
       packedLength: 52, packedWidth: 64, packedHeight: 6,
       packedWeight: 18,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -150,6 +155,7 @@ const jamesConfig: ArtistSeedConfig = {
       artworkLength: 30, artworkWidth: 40, artworkHeight: 1.5,
       packedLength: 34, packedWidth: 44, packedHeight: 5,
       packedWeight: 10,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Corner Store',
@@ -162,6 +168,7 @@ const jamesConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 0,
       packedLength: 22, packedWidth: 28, packedHeight: 3,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Wash Day',
@@ -174,6 +181,7 @@ const jamesConfig: ArtistSeedConfig = {
       artworkLength: 24, artworkWidth: 30, artworkHeight: 1.5,
       packedLength: 28, packedWidth: 34, packedHeight: 5,
       packedWeight: 8,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Lunchtime, Decatur',
@@ -186,6 +194,7 @@ const jamesConfig: ArtistSeedConfig = {
       artworkLength: 9, artworkWidth: 12, artworkHeight: 0,
       packedLength: 13, packedWidth: 16, packedHeight: 3,
       packedWeight: 1,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Elders',
@@ -198,6 +207,7 @@ const jamesConfig: ArtistSeedConfig = {
       artworkLength: 36, artworkWidth: 48, artworkHeight: 1.5,
       packedLength: 40, packedWidth: 52, packedHeight: 5,
       packedWeight: 14,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -252,6 +262,7 @@ const priyaConfig: ArtistSeedConfig = {
       artworkLength: 22, artworkWidth: 30, artworkHeight: 0,
       packedLength: 26, packedWidth: 34, packedHeight: 4,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Migration Pattern No. 7',
@@ -264,6 +275,7 @@ const priyaConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 0,
       packedLength: 22, packedWidth: 28, packedHeight: 3,
       packedWeight: 1.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Spice Route',
@@ -276,6 +288,7 @@ const priyaConfig: ArtistSeedConfig = {
       artworkLength: 20, artworkWidth: 26, artworkHeight: 0,
       packedLength: 24, packedWidth: 30, packedHeight: 4,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Lattice Study, Amber',
@@ -288,6 +301,7 @@ const priyaConfig: ArtistSeedConfig = {
       artworkLength: 10, artworkWidth: 10, artworkHeight: 0,
       packedLength: 14, packedWidth: 14, packedHeight: 3,
       packedWeight: 1,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Monsoon',
@@ -300,6 +314,7 @@ const priyaConfig: ArtistSeedConfig = {
       artworkLength: 30, artworkWidth: 40, artworkHeight: 0,
       packedLength: 34, packedWidth: 44, packedHeight: 5,
       packedWeight: 4,
+      imageWidth: 1200, imageHeight: 800,
     },
   ],
   processMedia: [
@@ -354,6 +369,7 @@ const sunhiConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 1.5,
       packedLength: 22, packedWidth: 28, packedHeight: 5,
       packedWeight: 5,
+      imageWidth: 1024, imageHeight: 1024,
     },
     {
       title: 'Moon Jar, celadon',
@@ -366,6 +382,7 @@ const sunhiConfig: ArtistSeedConfig = {
       artworkLength: 8, artworkWidth: 8, artworkHeight: 10,
       packedLength: 12, packedWidth: 12, packedHeight: 14,
       packedWeight: 5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Grid Study No. 12',
@@ -378,6 +395,7 @@ const sunhiConfig: ArtistSeedConfig = {
       artworkLength: 10, artworkWidth: 10, artworkHeight: 1,
       packedLength: 14, packedWidth: 14, packedHeight: 4,
       packedWeight: 2,
+      imageWidth: 1024, imageHeight: 1024,
     },
     {
       title: 'Tea Cup Set, white',
@@ -390,6 +408,7 @@ const sunhiConfig: ArtistSeedConfig = {
       artworkLength: 3.5, artworkWidth: 3.5, artworkHeight: 3,
       packedLength: 12, packedWidth: 12, packedHeight: 7,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Bojagi Fragment',
@@ -402,6 +421,7 @@ const sunhiConfig: ArtistSeedConfig = {
       artworkLength: 14, artworkWidth: 18, artworkHeight: 1.5,
       packedLength: 18, packedWidth: 22, packedHeight: 5,
       packedWeight: 4,
+      imageWidth: 1024, imageHeight: 1024,
     },
   ],
   processMedia: [

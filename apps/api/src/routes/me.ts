@@ -5,7 +5,7 @@ import type { CategoriesUpdateResponse, CvEntryResponse, CvEntryListResponse, My
 import { fetchDashboard, fetchUserListings } from '../lib/artist-queries'
 import { categoriesUpdateBody, cvEntryBody, cvEntryReorderBody, listingAvailabilityBody, listingCreateBody, listingImageBody, listingImageReorderBody, listingTagsUpdateBody, listingUpdateBody, myListingsQuery, processMediaPhotoBody, processMediaVideoBody, processMediaReorderBody, profileUpdateBody, sanitizeText, tagsUpdateBody } from '@surfaced-art/types'
 import { logger, readImageDimensions } from '@surfaced-art/utils'
-import { authMiddleware, requireRole, type AuthUser } from '../middleware/auth'
+import { authMiddleware, requireRole, requireAnyRole, type AuthUser } from '../middleware/auth'
 import { notFound, badRequest, validationError, conflict, internalError } from '../errors'
 import { triggerRevalidation } from '../lib/revalidation'
 import { getStripeClient } from '../lib/stripe'
@@ -111,7 +111,7 @@ export function createMeRoutes(prisma: PrismaClient) {
   const me = new Hono<{ Variables: { user: AuthUser } }>()
 
   me.use('*', authMiddleware(prisma))
-  me.use('*', requireRole('artist'))
+  me.use('*', requireAnyRole(['artist', 'admin']))
 
   /**
    * GET /me/dashboard
@@ -205,6 +205,9 @@ export function createMeRoutes(prisma: PrismaClient) {
     if (parsed.data.coverImageUrl !== undefined) {
       updateData.coverImageUrl = parsed.data.coverImageUrl
     }
+    if (parsed.data.accentColor !== undefined) {
+      updateData.accentColor = parsed.data.accentColor
+    }
 
     const updated = await prisma.artistProfile.update({
       where: { id: artist.id },
@@ -221,6 +224,7 @@ export function createMeRoutes(prisma: PrismaClient) {
       instagramUrl: updated.instagramUrl,
       profileImageUrl: updated.profileImageUrl,
       coverImageUrl: updated.coverImageUrl,
+      accentColor: updated.accentColor,
       status: updated.status,
     }
 
@@ -1317,8 +1321,11 @@ export function createMeRoutes(prisma: PrismaClient) {
     let height: number | null = parsed.data.height ?? null
     if (width === null || height === null) {
       try {
-        const imgResponse = await fetch(parsed.data.url)
-        if (imgResponse.ok) {
+        const imgResponse = await fetch(parsed.data.url, {
+          headers: { Range: 'bytes=0-65535' },
+          signal: AbortSignal.timeout(5_000),
+        })
+        if (imgResponse.ok || imgResponse.status === 206) {
           const buffer = Buffer.from(await imgResponse.arrayBuffer())
           const dims = readImageDimensions(buffer)
           if (dims) {

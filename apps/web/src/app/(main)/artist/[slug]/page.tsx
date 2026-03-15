@@ -6,7 +6,9 @@ import { getArtistProfile, ApiError } from '@/lib/api'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ListingCard } from '@/components/ListingCard'
 import { MasonryGrid } from '@/components/MasonryGrid'
+import { estimateCardHeight } from '@/lib/masonry-utils'
 import { Badge } from '@/components/ui/badge'
+import { ProcessPhotoGrid } from '@/components/ProcessPhotoGrid'
 import { categoryLabels } from '@/lib/category-labels'
 import { JsonLd } from '@/components/JsonLd'
 import { ArtistProfileViewTracker } from '@/components/ArtistProfileViewTracker'
@@ -48,13 +50,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${artist.displayName} — Surfaced Art`,
       description,
       alternates: {
-        canonical: `/artist/${slug}`,
+        canonical: `/${slug}`,
       },
       openGraph: {
         title: `${artist.displayName} — Surfaced Art`,
         description,
         type: 'profile',
-        url: `${SITE_URL}/artist/${slug}`,
+        url: `${SITE_URL}/${slug}`,
         images: artist.profileImageUrl ? [{ url: artist.profileImageUrl, width: 400, height: 400 }] : [],
       },
       twitter: {
@@ -107,7 +109,7 @@ export default async function ArtistProfilePage({ params }: Props) {
         name: artist.displayName,
         jobTitle: 'Artist',
         description: artist.bio.length > 155 ? artist.bio.slice(0, 155) + '…' : artist.bio,
-        url: `${SITE_URL}/artist/${slug}`,
+        url: `${SITE_URL}/${slug}`,
         ...(artist.profileImageUrl && { image: artist.profileImageUrl }),
         ...(sameAs.length > 0 && { sameAs }),
       }} />
@@ -117,10 +119,10 @@ export default async function ArtistProfilePage({ params }: Props) {
           { label: artist.displayName },
         ]} />
         <Link
-          href={`/studio/${slug}`}
+          href={`/${slug}`}
           className="text-sm text-muted-text transition-colors hover:text-foreground shrink-0 ml-4"
         >
-          Visit {artist.displayName.split(' ')[0]}&apos;s Studio →
+          Visit {artist.displayName.split(' ')[0]}&apos;s Portfolio →
         </Link>
       </div>
 
@@ -131,7 +133,7 @@ export default async function ArtistProfilePage({ params }: Props) {
           {artist.coverImageUrl ? (
             <Image
               src={artist.coverImageUrl}
-              alt={`${artist.displayName}'s studio`}
+              alt={`${artist.displayName}'s portfolio`}
               fill
               unoptimized
               className="object-cover"
@@ -227,22 +229,10 @@ export default async function ArtistProfilePage({ params }: Props) {
 
           {/* Process photos grid */}
           {processPhotos.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {processPhotos.map((photo, index) => (
-                <div
-                  key={photo.id}
-                  className="relative aspect-square overflow-hidden rounded-md bg-surface"
-                >
-                  <Image
-                    src={photo.url!}
-                    alt={`${artist.displayName} process photo ${index + 1} of ${processPhotos.length}`}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+            <ProcessPhotoGrid
+              photos={processPhotos.map((p) => ({ id: p.id, url: p.url! }))}
+              artistName={artist.displayName}
+            />
           )}
         </section>
       )}
@@ -291,7 +281,12 @@ export default async function ArtistProfilePage({ params }: Props) {
       <section data-testid="available-work">
         <h2 className="mb-6 font-serif text-2xl text-foreground">Available Work</h2>
         {availableListings.length > 0 ? (
-          <MasonryGrid columns={[2, 2, 3, 3]}>
+          <MasonryGrid
+            columns={[2, 2, 3, 3]}
+            itemHeights={availableListings.map((l) =>
+              estimateCardHeight(l.images[0]?.width, l.images[0]?.height)
+            )}
+          >
             {availableListings.map((listing) => (
               <ListingCard
                 key={listing.id}
@@ -322,7 +317,13 @@ export default async function ArtistProfilePage({ params }: Props) {
       {soldListings.length > 0 && (
         <section data-testid="archive-section">
           <h2 className="mb-6 font-serif text-2xl text-foreground">Collection Archive</h2>
-          <MasonryGrid columns={[2, 2, 3, 3]} className="opacity-75">
+          <MasonryGrid
+            columns={[2, 2, 3, 3]}
+            className="opacity-75"
+            itemHeights={soldListings.map((l) =>
+              estimateCardHeight(l.images[0]?.width, l.images[0]?.height)
+            )}
+          >
             {soldListings.map((listing) => (
               <ListingCard
                 key={listing.id}

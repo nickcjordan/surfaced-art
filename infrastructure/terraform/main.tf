@@ -24,6 +24,24 @@ data "aws_subnets" "default" {
 
 data "aws_caller_identity" "current" {}
 
+# Route tables for the default VPC — needed by the S3 gateway endpoint
+data "aws_route_tables" "default" {
+  vpc_id = data.aws_vpc.default.id
+}
+
+# S3 gateway endpoint — allows VPC-attached Lambdas (migrate) to reach S3
+# without traversing a NAT gateway or the public internet.
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = data.aws_vpc.default.id
+  service_name      = "com.amazonaws.${var.aws_region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = data.aws_route_tables.default.ids
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-s3-endpoint"
+  }
+}
+
 # ECR repository for Lambda container images
 # Defined here (not in lambda-api module) so IAM can scope permissions to this ARN
 # without creating a circular dependency (lambda-api depends on iam for the role ARN).
@@ -283,6 +301,7 @@ module "lambda_migrate" {
   database_url          = module.rds.connection_string
   seed_cdn_base         = module.s3_cloudfront.cloudfront_url
   seed_mode             = var.seed_mode
+  s3_bucket_name        = module.s3_cloudfront.bucket_name
   timeout               = 300
 
   depends_on = [aws_ecr_repository_policy.migrate]

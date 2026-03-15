@@ -1,9 +1,23 @@
 import { cache } from 'react'
 import type {
+  AdminActionResponse,
+  AdminApplicationDetailResponse,
+  AdminApplicationListItem,
+  AdminApproveResponse,
+  AdminArtistDetailResponse,
+  AdminArtistListItem,
+  AdminListingDetailResponse,
+  AdminListingListItem,
+  AdminRejectResponse,
+  AdminWaitlistEntry,
+  AdminRoleGrantResponse,
+  AdminUserDetailResponse,
+  AdminUserListItem,
   ArtistProfileResponse,
   ArtistApplicationBody,
   ApplicationStatusType,
   ApplicationSubmitResponse,
+  AuthMeResponse,
   CategoriesUpdateResponse,
   CategoryType,
   CvEntryBody,
@@ -31,11 +45,10 @@ import type {
   StripeStatusResponse,
   Tag,
   TagsUpdateResponse,
+  UserRoleType,
 } from '@surfaced-art/types'
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://xl3aiyolr6.execute-api.us-east-1.amazonaws.com'
+import { API_URL as API_BASE_URL } from '@/lib/env'
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`
@@ -53,7 +66,21 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     })
 
     if (!response.ok) {
-      throw new ApiError(response.status, `API request failed: ${response.statusText}`)
+      // Parse error body to get a meaningful message.
+      // API Gateway returns { message: "Unauthorized" }
+      // Lambda returns { error: { code: "...", message: "..." } }
+      let message = response.statusText || `HTTP ${response.status}`
+      try {
+        const body = await response.json()
+        if (body?.error?.message) {
+          message = body.error.message
+        } else if (body?.message) {
+          message = body.message
+        }
+      } catch {
+        // Body not parseable — use statusText fallback
+      }
+      throw new ApiError(response.status, message)
     }
 
     return response.json() as Promise<T>
@@ -145,6 +172,12 @@ export async function submitApplication(
   return apiFetch<ApplicationSubmitResponse>('/artists/apply', {
     method: 'POST',
     body: JSON.stringify(data),
+  })
+}
+
+export async function getAuthMe(token: string): Promise<AuthMeResponse> {
+  return apiFetch<AuthMeResponse>('/auth/me', {
+    headers: { Authorization: `Bearer ${token}` },
   })
 }
 
@@ -473,6 +506,310 @@ export async function updateListingTags(
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify({ tagIds }),
+    },
+  )
+}
+
+// ─── Admin: User Management ─────────────────────────────────────────
+
+export async function getAdminUsers(
+  token: string,
+  params?: { search?: string; role?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<AdminUserListItem>> {
+  const qs = new URLSearchParams()
+  if (params?.search) qs.set('search', params.search)
+  if (params?.role) qs.set('role', params.role)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<AdminUserListItem>>(
+    `/admin/users${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function getAdminUser(
+  token: string,
+  id: string,
+): Promise<AdminUserDetailResponse> {
+  return apiFetch<AdminUserDetailResponse>(
+    `/admin/users/${encodeURIComponent(id)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function grantRole(
+  token: string,
+  userId: string,
+  role: UserRoleType,
+): Promise<AdminRoleGrantResponse> {
+  return apiFetch<AdminRoleGrantResponse>(
+    `/admin/users/${encodeURIComponent(userId)}/roles`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ role }),
+    },
+  )
+}
+
+export async function revokeRole(
+  token: string,
+  userId: string,
+  role: UserRoleType,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(role)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  )
+}
+
+// ─── Admin: Application Management ──────────────────────────────────
+
+export async function getAdminApplications(
+  token: string,
+  params?: { status?: string; search?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<AdminApplicationListItem>> {
+  const qs = new URLSearchParams()
+  if (params?.status) qs.set('status', params.status)
+  if (params?.search) qs.set('search', params.search)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<AdminApplicationListItem>>(
+    `/admin/applications${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function getAdminApplication(
+  token: string,
+  id: string,
+): Promise<AdminApplicationDetailResponse> {
+  return apiFetch<AdminApplicationDetailResponse>(
+    `/admin/applications/${encodeURIComponent(id)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function approveApplication(
+  token: string,
+  userId: string,
+  reviewNotes?: string,
+): Promise<AdminApproveResponse> {
+  return apiFetch<AdminApproveResponse>(
+    `/admin/artists/${encodeURIComponent(userId)}/approve`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ reviewNotes }),
+    },
+  )
+}
+
+export async function rejectApplication(
+  token: string,
+  userId: string,
+  reviewNotes?: string,
+): Promise<AdminRejectResponse> {
+  return apiFetch<AdminRejectResponse>(
+    `/admin/artists/${encodeURIComponent(userId)}/reject`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ reviewNotes }),
+    },
+  )
+}
+
+// ─── Admin: Artist Management ───────────────────────────────────────
+
+export async function getAdminArtists(
+  token: string,
+  params?: { status?: string; search?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<AdminArtistListItem>> {
+  const qs = new URLSearchParams()
+  if (params?.status) qs.set('status', params.status)
+  if (params?.search) qs.set('search', params.search)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<AdminArtistListItem>>(
+    `/admin/artists${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function getAdminArtist(
+  token: string,
+  id: string,
+): Promise<AdminArtistDetailResponse> {
+  return apiFetch<AdminArtistDetailResponse>(
+    `/admin/artists/${encodeURIComponent(id)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function updateAdminArtist(
+  token: string,
+  id: string,
+  data: Record<string, unknown>,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/artists/${encodeURIComponent(id)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    },
+  )
+}
+
+export async function suspendArtist(
+  token: string,
+  id: string,
+  reason: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/artists/${encodeURIComponent(id)}/suspend`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ reason }),
+    },
+  )
+}
+
+export async function unsuspendArtist(
+  token: string,
+  id: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/artists/${encodeURIComponent(id)}/unsuspend`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  )
+}
+
+// ─── Admin: Listing Management ──────────────────────────────────────
+
+export async function getAdminListings(
+  token: string,
+  params?: { status?: string; search?: string; category?: string; artistId?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<AdminListingListItem>> {
+  const qs = new URLSearchParams()
+  if (params?.status) qs.set('status', params.status)
+  if (params?.search) qs.set('search', params.search)
+  if (params?.category) qs.set('category', params.category)
+  if (params?.artistId) qs.set('artistId', params.artistId)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<AdminListingListItem>>(
+    `/admin/listings${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function getAdminListing(
+  token: string,
+  id: string,
+): Promise<AdminListingDetailResponse> {
+  return apiFetch<AdminListingDetailResponse>(
+    `/admin/listings/${encodeURIComponent(id)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function hideListing(
+  token: string,
+  id: string,
+  reason: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/listings/${encodeURIComponent(id)}/hide`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ reason }),
+    },
+  )
+}
+
+export async function unhideListing(
+  token: string,
+  id: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/listings/${encodeURIComponent(id)}/unhide`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  )
+}
+
+export async function updateAdminListingCategory(
+  token: string,
+  id: string,
+  category: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/listings/${encodeURIComponent(id)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ category }),
+    },
+  )
+}
+
+export async function updateAdminListingTags(
+  token: string,
+  id: string,
+  tagIds: string[],
+): Promise<TagsUpdateResponse> {
+  return apiFetch<TagsUpdateResponse>(
+    `/admin/listings/${encodeURIComponent(id)}/tags`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ tagIds }),
+    },
+  )
+}
+
+// ─── Admin: Waitlist Management ─────────────────────────────────────
+
+export async function getAdminWaitlist(
+  token: string,
+  params?: { search?: string; page?: number; limit?: number },
+): Promise<PaginatedResponse<AdminWaitlistEntry>> {
+  const qs = new URLSearchParams()
+  if (params?.search) qs.set('search', params.search)
+  if (params?.page) qs.set('page', String(params.page))
+  if (params?.limit) qs.set('limit', String(params.limit))
+  const query = qs.toString()
+  return apiFetch<PaginatedResponse<AdminWaitlistEntry>>(
+    `/admin/waitlist${query ? `?${query}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function deleteWaitlistEntry(
+  token: string,
+  id: string,
+): Promise<AdminActionResponse> {
+  return apiFetch<AdminActionResponse>(
+    `/admin/waitlist/${encodeURIComponent(id)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
     },
   )
 }

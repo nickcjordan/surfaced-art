@@ -65,6 +65,7 @@ const mockArtists: FeaturedArtistItem[] = [
     location: 'Portland, OR',
     profileImageUrl: null,
     coverImageUrl: null,
+    artworkImageUrls: [],
     categories: ['ceramics'],
   },
 ]

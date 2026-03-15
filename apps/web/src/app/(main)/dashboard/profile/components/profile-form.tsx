@@ -21,6 +21,7 @@ interface FormData {
   instagramUrl: string
   profileImageUrl: string | null
   coverImageUrl: string | null
+  accentColor: string | null
 }
 
 type FormState = 'idle' | 'submitting' | 'success' | 'error'
@@ -37,6 +38,7 @@ export function ProfileForm() {
     instagramUrl: '',
     profileImageUrl: null,
     coverImageUrl: null,
+    accentColor: null,
   })
   const [initialData, setInitialData] = useState<FormData | null>(null)
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>([])
@@ -69,6 +71,7 @@ export function ProfileForm() {
         instagramUrl: profile.instagramUrl ?? '',
         profileImageUrl: profile.profileImageUrl,
         coverImageUrl: profile.coverImageUrl,
+        accentColor: profile.accentColor,
       }
 
       setFormData(data)
@@ -146,6 +149,7 @@ export function ProfileForm() {
     if (formData.instagramUrl !== initialData.instagramUrl) changes.instagramUrl = formData.instagramUrl
     if (formData.profileImageUrl !== initialData.profileImageUrl) changes.profileImageUrl = formData.profileImageUrl
     if (formData.coverImageUrl !== initialData.coverImageUrl) changes.coverImageUrl = formData.coverImageUrl
+    if (formData.accentColor !== initialData.accentColor) changes.accentColor = formData.accentColor
 
     const hasCategoryChanges = categoriesChanged()
     const hasTagChanges = tagsChanged()
@@ -177,6 +181,7 @@ export function ProfileForm() {
           instagramUrl: updated.instagramUrl ?? '',
           profileImageUrl: updated.profileImageUrl,
           coverImageUrl: updated.coverImageUrl,
+          accentColor: updated.accentColor,
         }
 
         setFormData(newData)
@@ -376,6 +381,45 @@ export function ProfileForm() {
               onChange={(e) => updateField('instagramUrl', e.target.value)}
               placeholder="https://instagram.com/yourusername"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Portfolio Customization */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Portfolio Customization</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="accentColor">Accent Color</Label>
+            <p className="text-xs text-muted-foreground">
+              Choose a color to personalize your portfolio page. It will tint headings, links, and interactive elements.
+            </p>
+            <div className="flex items-center gap-3">
+              <input
+                id="accentColor"
+                data-testid="profile-accent-color"
+                type="color"
+                value={formData.accentColor ?? '#1a1a1a'}
+                onChange={(e) => updateField('accentColor', e.target.value)}
+                className="h-10 w-14 cursor-pointer rounded border border-border bg-transparent p-1"
+              />
+              <span className="text-sm text-muted-foreground font-mono">
+                {formData.accentColor ?? 'Default'}
+              </span>
+              {formData.accentColor && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => updateField('accentColor', null)}
+                  data-testid="profile-accent-color-reset"
+                >
+                  Reset to default
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

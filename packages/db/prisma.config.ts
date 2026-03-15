@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { defineConfig } from 'prisma/config'
 
 export default defineConfig({
@@ -6,8 +7,6 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    // Fallback allows prisma generate to run in CI without a live DATABASE_URL.
-    // Real connections require DATABASE_URL to be set in the environment.
-    url: process.env.DATABASE_URL ?? 'postgresql://localhost:5432/surfaced',
+    url: process.env.DATABASE_URL,
   },
 })

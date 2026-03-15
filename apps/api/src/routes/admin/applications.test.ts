@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import { createAdminRoutes } from './index'
-import { setVerifier, resetVerifier } from '../../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock email module
@@ -13,9 +12,15 @@ vi.mock('@surfaced-art/email', () => ({
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
+function createAuthEnv(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
   return {
-    verify: vi.fn().mockResolvedValue({ sub, email, name }),
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
   }
 }
 
@@ -124,16 +129,12 @@ function createTestApp(prisma: PrismaClient) {
   return app
 }
 
-function getApplications(app: ReturnType<typeof createTestApp>, query = '', token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/applications${query ? `?${query}` : ''}`, { headers })
+function getApplications(app: ReturnType<typeof createTestApp>, query = '', env?: Record<string, unknown>) {
+  return app.request(`/admin/applications${query ? `?${query}` : ''}`, {}, env)
 }
 
-function getApplicationDetail(app: ReturnType<typeof createTestApp>, id: string, token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/applications/${id}`, { headers })
+function getApplicationDetail(app: ReturnType<typeof createTestApp>, id: string, env?: Record<string, unknown>) {
+  return app.request(`/admin/applications/${id}`, {}, env)
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────
@@ -141,11 +142,6 @@ function getApplicationDetail(app: ReturnType<typeof createTestApp>, id: string,
 describe('GET /admin/applications', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
-  })
-
-  afterEach(() => {
-    resetVerifier()
   })
 
   it('should return 401 without auth token', async () => {
@@ -160,7 +156,7 @@ describe('GET /admin/applications', () => {
     const prisma = createMockPrisma({ adminRoles: ['buyer'] })
     const app = createTestApp(prisma)
 
-    const res = await getApplications(app, '', 'valid-token')
+    const res = await getApplications(app, '', createAuthEnv())
     expect(res.status).toBe(403)
   })
 
@@ -168,7 +164,7 @@ describe('GET /admin/applications', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await getApplications(app, '', 'valid-token')
+    const res = await getApplications(app, '', createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -185,7 +181,7 @@ describe('GET /admin/applications', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await getApplications(app, '', 'valid-token')
+    const res = await getApplications(app, '', createAuthEnv())
     const body = await res.json()
 
     const pending = body.data.find((a: { id: string }) => a.id === 'app-uuid-1')
@@ -199,7 +195,7 @@ describe('GET /admin/applications', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    await getApplications(app, 'status=pending', 'valid-token')
+    await getApplications(app, 'status=pending', createAuthEnv())
 
     expect(prisma.artistApplication.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -212,7 +208,7 @@ describe('GET /admin/applications', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    await getApplications(app, 'search=jane', 'valid-token')
+    await getApplications(app, 'search=jane', createAuthEnv())
 
     expect(prisma.artistApplication.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -230,7 +226,7 @@ describe('GET /admin/applications', () => {
     const prisma = createMockPrisma({ applicationCount: 50 })
     const app = createTestApp(prisma)
 
-    await getApplications(app, 'page=2&limit=10', 'valid-token')
+    await getApplications(app, 'page=2&limit=10', createAuthEnv())
 
     expect(prisma.artistApplication.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -244,7 +240,7 @@ describe('GET /admin/applications', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await getApplications(app, 'status=invalid', 'valid-token')
+    const res = await getApplications(app, 'status=invalid', createAuthEnv())
     expect(res.status).toBe(400)
   })
 })
@@ -252,11 +248,6 @@ describe('GET /admin/applications', () => {
 describe('GET /admin/applications/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
-  })
-
-  afterEach(() => {
-    resetVerifier()
   })
 
   it('should return 401 without auth token', async () => {
@@ -271,7 +262,7 @@ describe('GET /admin/applications/:id', () => {
     const prisma = createMockPrisma({ applicationDetail: null })
     const app = createTestApp(prisma)
 
-    const res = await getApplicationDetail(app, 'nonexistent-uuid', 'valid-token')
+    const res = await getApplicationDetail(app, 'nonexistent-uuid', createAuthEnv())
     expect(res.status).toBe(404)
   })
 
@@ -282,7 +273,7 @@ describe('GET /admin/applications/:id', () => {
     const prisma = createMockPrisma({ applicationDetail: detail })
     const app = createTestApp(prisma)
 
-    const res = await getApplicationDetail(app, 'app-uuid-1', 'valid-token')
+    const res = await getApplicationDetail(app, 'app-uuid-1', createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -301,7 +292,7 @@ describe('GET /admin/applications/:id', () => {
     const prisma = createMockPrisma({ applicationDetail: detail })
     const app = createTestApp(prisma)
 
-    const res = await getApplicationDetail(app, 'app-uuid-2', 'valid-token')
+    const res = await getApplicationDetail(app, 'app-uuid-2', createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()

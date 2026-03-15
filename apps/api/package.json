@@ -22,8 +22,7 @@
     "@surfaced-art/email": "^0.0.1",
     "@surfaced-art/types": "^0.0.1",
     "@surfaced-art/utils": "^0.0.1",
-    "aws-jwt-verify": "^5.1.1",
-    "hono": "^4.12.5",
+    "hono": "^4.12.7",
     "stripe": "^20.4.1",
     "zod": "^4.3.6"
   },

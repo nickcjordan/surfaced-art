@@ -6,7 +6,7 @@ export interface EmailConfig {
   fromAddress: string
   fromName: string
   replyToAddress: string
-  configurationSet: string
+  configurationSet: string | undefined
   region: string
 }
 
@@ -25,8 +25,9 @@ export function getEmailConfig(): EmailConfig {
     throw new Error('SES_FROM_ADDRESS must be set')
   }
 
-  const configurationSet = process.env.SES_CONFIGURATION_SET ?? ''
-  const region = process.env.AWS_REGION ?? 'us-east-1'
+  const configurationSet = process.env.SES_CONFIGURATION_SET
+  const region = process.env.AWS_REGION
+  if (!region) throw new Error('AWS_REGION must be set')
 
   return {
     fromAddress: `Surfaced Art <${fromAddress}>`,

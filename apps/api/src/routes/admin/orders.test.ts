@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import { createAdminRoutes } from './index'
-import { setVerifier, resetVerifier } from '../../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock email module (required by applications sub-router)
@@ -27,8 +26,16 @@ vi.mock('../../lib/stripe', () => ({
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
-  return { verify: vi.fn().mockResolvedValue({ sub, email, name }) }
+function createAuthEnv(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
+  return {
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
 }
 
 const ADMIN_USER_ID = 'admin-uuid-123'
@@ -150,36 +157,28 @@ function createTestApp(prisma: PrismaClient) {
   return app
 }
 
-function getOrders(app: ReturnType<typeof createTestApp>, query = '', token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/orders${query ? `?${query}` : ''}`, { headers })
+function getOrders(app: ReturnType<typeof createTestApp>, query = '', env?: Record<string, unknown>) {
+  return app.request(`/admin/orders${query ? `?${query}` : ''}`, {}, env)
 }
 
-function getOrderDetail(app: ReturnType<typeof createTestApp>, id: string, token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/orders/${id}`, { headers })
+function getOrderDetail(app: ReturnType<typeof createTestApp>, id: string, env?: Record<string, unknown>) {
+  return app.request(`/admin/orders/${id}`, {}, env)
 }
 
-function refundOrder(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, token?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function refundOrder(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, env?: Record<string, unknown>) {
   return app.request(`/admin/orders/${id}/refund`, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
-function updateOrderStatus(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, token?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function updateOrderStatus(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, env?: Record<string, unknown>) {
   return app.request(`/admin/orders/${id}/status`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────
@@ -187,9 +186,7 @@ function updateOrderStatus(app: ReturnType<typeof createTestApp>, id: string, bo
 describe('GET /admin/orders', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -201,7 +198,7 @@ describe('GET /admin/orders', () => {
   it('should return paginated order list', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await getOrders(app, '', 'valid-token')
+    const res = await getOrders(app, '', createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -216,7 +213,7 @@ describe('GET /admin/orders', () => {
   it('should filter by status', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getOrders(app, 'status=paid', 'valid-token')
+    await getOrders(app, 'status=paid', createAuthEnv())
 
     expect(prisma.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -228,7 +225,7 @@ describe('GET /admin/orders', () => {
   it('should filter by buyerId', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getOrders(app, `buyerId=${BUYER_ID}`, 'valid-token')
+    await getOrders(app, `buyerId=${BUYER_ID}`, createAuthEnv())
 
     expect(prisma.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -240,7 +237,7 @@ describe('GET /admin/orders', () => {
   it('should filter by artistId', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getOrders(app, `artistId=${ARTIST_ID}`, 'valid-token')
+    await getOrders(app, `artistId=${ARTIST_ID}`, createAuthEnv())
 
     expect(prisma.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -252,7 +249,7 @@ describe('GET /admin/orders', () => {
   it('should filter by date range', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getOrders(app, 'dateFrom=2026-01-01T00:00:00.000Z&dateTo=2026-02-01T00:00:00.000Z', 'valid-token')
+    await getOrders(app, 'dateFrom=2026-01-01T00:00:00.000Z&dateTo=2026-02-01T00:00:00.000Z', createAuthEnv())
 
     expect(prisma.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -270,14 +267,12 @@ describe('GET /admin/orders', () => {
 describe('GET /admin/orders/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when order not found', async () => {
     const prisma = createMockPrisma({ orderDetail: null })
     const app = createTestApp(prisma)
-    const res = await getOrderDetail(app, ORDER_ID, 'valid-token')
+    const res = await getOrderDetail(app, ORDER_ID, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
@@ -293,7 +288,7 @@ describe('GET /admin/orders/:id', () => {
     }
     const prisma = createMockPrisma({ orderDetail: orderWithReview })
     const app = createTestApp(prisma)
-    const res = await getOrderDetail(app, ORDER_ID, 'valid-token')
+    const res = await getOrderDetail(app, ORDER_ID, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -312,21 +307,19 @@ describe('GET /admin/orders/:id', () => {
 describe('POST /admin/orders/:id/refund', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when order not found', async () => {
     const prisma = createMockPrisma({ orderDetail: null })
     const app = createTestApp(prisma)
-    const res = await refundOrder(app, ORDER_ID, { reason: 'Damaged item' }, 'valid-token')
+    const res = await refundOrder(app, ORDER_ID, { reason: 'Damaged item' }, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should require a reason', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await refundOrder(app, ORDER_ID, {}, 'valid-token')
+    const res = await refundOrder(app, ORDER_ID, {}, createAuthEnv())
     expect(res.status).toBe(400)
   })
 
@@ -334,14 +327,14 @@ describe('POST /admin/orders/:id/refund', () => {
     const refundedOrder = { ...mockOrder, status: 'refunded' }
     const prisma = createMockPrisma({ orderDetail: refundedOrder })
     const app = createTestApp(prisma)
-    const res = await refundOrder(app, ORDER_ID, { reason: 'Duplicate' }, 'valid-token')
+    const res = await refundOrder(app, ORDER_ID, { reason: 'Duplicate' }, createAuthEnv())
     expect(res.status).toBe(400)
   })
 
   it('should initiate full refund via Stripe', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await refundOrder(app, ORDER_ID, { reason: 'Damaged item' }, 'valid-token')
+    const res = await refundOrder(app, ORDER_ID, { reason: 'Damaged item' }, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -359,7 +352,7 @@ describe('POST /admin/orders/:id/refund', () => {
     mockStripeRefundsCreate.mockResolvedValueOnce({ id: 're_partial', amount: 5000, status: 'succeeded' })
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await refundOrder(app, ORDER_ID, { reason: 'Partial damage', amount: 5000 }, 'valid-token')
+    const res = await refundOrder(app, ORDER_ID, { reason: 'Partial damage', amount: 5000 }, createAuthEnv())
     expect(res.status).toBe(200)
 
     expect(mockStripeRefundsCreate).toHaveBeenCalledWith({
@@ -373,14 +366,14 @@ describe('POST /admin/orders/:id/refund', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
     const totalAmount = mockOrder.artworkPrice + mockOrder.shippingCost + mockOrder.taxAmount
-    const res = await refundOrder(app, ORDER_ID, { reason: 'Too much', amount: totalAmount + 1 }, 'valid-token')
+    const res = await refundOrder(app, ORDER_ID, { reason: 'Too much', amount: totalAmount + 1 }, createAuthEnv())
     expect(res.status).toBe(400)
   })
 
   it('should update order status to refunded on full refund', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await refundOrder(app, ORDER_ID, { reason: 'Damaged item' }, 'valid-token')
+    await refundOrder(app, ORDER_ID, { reason: 'Damaged item' }, createAuthEnv())
 
     expect(prisma.order.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -393,7 +386,7 @@ describe('POST /admin/orders/:id/refund', () => {
   it('should write audit log on refund', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await refundOrder(app, ORDER_ID, { reason: 'Damaged item' }, 'valid-token')
+    await refundOrder(app, ORDER_ID, { reason: 'Damaged item' }, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -411,28 +404,26 @@ describe('POST /admin/orders/:id/refund', () => {
 describe('PUT /admin/orders/:id/status', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when order not found', async () => {
     const prisma = createMockPrisma({ orderDetail: null })
     const app = createTestApp(prisma)
-    const res = await updateOrderStatus(app, ORDER_ID, { status: 'shipped', reason: 'Test' }, 'valid-token')
+    const res = await updateOrderStatus(app, ORDER_ID, { status: 'shipped', reason: 'Test' }, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should require status and reason', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await updateOrderStatus(app, ORDER_ID, {}, 'valid-token')
+    const res = await updateOrderStatus(app, ORDER_ID, {}, createAuthEnv())
     expect(res.status).toBe(400)
   })
 
   it('should allow valid status transition (paid -> shipped)', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await updateOrderStatus(app, ORDER_ID, { status: 'shipped', reason: 'Shipped via USPS' }, 'valid-token')
+    const res = await updateOrderStatus(app, ORDER_ID, { status: 'shipped', reason: 'Shipped via USPS' }, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -442,7 +433,7 @@ describe('PUT /admin/orders/:id/status', () => {
   it('should reject invalid status transition (paid -> complete)', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await updateOrderStatus(app, ORDER_ID, { status: 'complete', reason: 'Skip ahead' }, 'valid-token')
+    const res = await updateOrderStatus(app, ORDER_ID, { status: 'complete', reason: 'Skip ahead' }, createAuthEnv())
     expect(res.status).toBe(400)
   })
 
@@ -450,14 +441,14 @@ describe('PUT /admin/orders/:id/status', () => {
     const refundedOrder = { ...mockOrder, status: 'refunded' }
     const prisma = createMockPrisma({ orderDetail: refundedOrder })
     const app = createTestApp(prisma)
-    const res = await updateOrderStatus(app, ORDER_ID, { status: 'paid', reason: 'Undo' }, 'valid-token')
+    const res = await updateOrderStatus(app, ORDER_ID, { status: 'paid', reason: 'Undo' }, createAuthEnv())
     expect(res.status).toBe(400)
   })
 
   it('should update order status in database', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await updateOrderStatus(app, ORDER_ID, { status: 'shipped', reason: 'Shipped via USPS' }, 'valid-token')
+    await updateOrderStatus(app, ORDER_ID, { status: 'shipped', reason: 'Shipped via USPS' }, createAuthEnv())
 
     expect(prisma.order.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -470,7 +461,7 @@ describe('PUT /admin/orders/:id/status', () => {
   it('should write audit log with old and new status', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await updateOrderStatus(app, ORDER_ID, { status: 'shipped', reason: 'Shipped via USPS' }, 'valid-token')
+    await updateOrderStatus(app, ORDER_ID, { status: 'shipped', reason: 'Shipped via USPS' }, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({

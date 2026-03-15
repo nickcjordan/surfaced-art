@@ -98,6 +98,7 @@ export default async function SearchPage({ searchParams }: Props) {
       location: item.location,
       profileImageUrl: item.profileImageUrl,
       coverImageUrl: item.coverImageUrl,
+      artworkImageUrls: item.artworkImageUrls,
       categories: item.categories,
     }))
   } catch (error) {

@@ -19,6 +19,7 @@ const mockApprovedArtist = {
   coverImageUrl: 'https://cdn.example.com/cover.jpg',
   profileImageUrl: 'https://cdn.example.com/profile.jpg',
   applicationSource: null,
+  accentColor: null,
   createdAt: new Date('2025-01-01T00:00:00Z'),
   updatedAt: new Date('2025-01-01T00:00:00Z'),
   categories: [
@@ -367,6 +368,11 @@ const mockArtistListData = [
       { id: 'cat-1', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'ceramics' },
       { id: 'cat-2', artistId: '550e8400-e29b-41d4-a716-446655440000', category: 'mixed_media_3d' },
     ],
+    listings: [
+      { images: [{ url: 'https://cdn.example.com/art1.jpg' }] },
+      { images: [{ url: 'https://cdn.example.com/art2.jpg' }] },
+      { images: [{ url: 'https://cdn.example.com/art3.jpg' }] },
+    ],
   },
   {
     slug: 'david-morrison',
@@ -377,6 +383,7 @@ const mockArtistListData = [
     categories: [
       { id: 'cat-3', artistId: '550e8400-e29b-41d4-a716-446655440003', category: 'drawing_painting' },
     ],
+    listings: [],
   },
 ]
 
@@ -413,13 +420,19 @@ describe('GET /artists', () => {
       expect(data[1].categories).toEqual(['drawing_painting'])
     })
 
-    it('should include coverImageUrl and profileImageUrl', async () => {
+    it('should include coverImageUrl, profileImageUrl, and artworkImageUrls', async () => {
       const res = await app.request('/artists')
       const data = await res.json()
 
       expect(data[0].coverImageUrl).toBe('https://cdn.example.com/cover1.jpg')
       expect(data[0].profileImageUrl).toBe('https://cdn.example.com/profile1.jpg')
+      expect(data[0].artworkImageUrls).toEqual([
+        'https://cdn.example.com/art1.jpg',
+        'https://cdn.example.com/art2.jpg',
+        'https://cdn.example.com/art3.jpg',
+      ])
       expect(data[1].coverImageUrl).toBeNull()
+      expect(data[1].artworkImageUrls).toEqual([])
     })
 
     it('should call Prisma with correct query for approved artists', async () => {
@@ -434,6 +447,19 @@ describe('GET /artists', () => {
           profileImageUrl: true,
           coverImageUrl: true,
           categories: true,
+          listings: {
+            where: { status: 'available' },
+            select: {
+              images: {
+                where: { isProcessPhoto: false },
+                select: { url: true },
+                orderBy: { sortOrder: 'asc' },
+                take: 1,
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 4,
+          },
         },
         orderBy: { createdAt: 'desc' },
         take: 4,

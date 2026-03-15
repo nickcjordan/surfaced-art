@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { Hono } from 'hono'
 import { createMeRoutes } from './me'
-import { setVerifier, resetVerifier } from '../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock the revalidation module so we can verify it's called
@@ -28,10 +27,16 @@ vi.mock('../lib/stripe', () => ({
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-123', email = 'artist@example.com', name = 'Test Artist') {
+function createAuthEnv(sub = 'cognito-123', email = 'artist@example.com', name = 'Test Artist') {
   return {
-    verify: vi.fn().mockResolvedValue({ sub, email, name }),
-  } as unknown as ReturnType<typeof setVerifier extends (v: infer T) => void ? () => T : never>
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
 }
 
 const mockArtistProfile = {
@@ -50,6 +55,7 @@ const mockArtistProfile = {
   coverImageUrl: 'https://cdn.example.com/cover.jpg',
   profileImageUrl: 'https://cdn.example.com/profile.jpg',
   applicationSource: 'direct',
+  accentColor: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   categories: [{ id: 'cat-1', artistId: 'artist-uuid-123', category: 'ceramics' }],
@@ -177,181 +183,151 @@ function createTestApp(prisma: PrismaClient) {
 
 function getDashboard(
   app: ReturnType<typeof createTestApp>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request('/me/dashboard', { method: 'GET', headers })
+  return app.request('/me/dashboard', { method: 'GET' }, env)
 }
 
 function putProfile(
   app: ReturnType<typeof createTestApp>,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/profile', {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function putCategories(
   app: ReturnType<typeof createTestApp>,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/categories', {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function getCvEntries(
   app: ReturnType<typeof createTestApp>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request('/me/cv-entries', { method: 'GET', headers })
+  return app.request('/me/cv-entries', { method: 'GET' }, env)
 }
 
 function postCvEntry(
   app: ReturnType<typeof createTestApp>,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/cv-entries', {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function putCvEntry(
   app: ReturnType<typeof createTestApp>,
   id: string,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/cv-entries/${id}`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function deleteCvEntry(
   app: ReturnType<typeof createTestApp>,
   id: string,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/cv-entries/${id}`, {
     method: 'DELETE',
-    headers,
-  })
+  }, env)
 }
 
 function putCvEntryReorder(
   app: ReturnType<typeof createTestApp>,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/cv-entries/reorder', {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function getProcessMedia(
   app: ReturnType<typeof createTestApp>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request('/me/process-media', { method: 'GET', headers })
+  return app.request('/me/process-media', { method: 'GET' }, env)
 }
 
 function postProcessMediaPhoto(
   app: ReturnType<typeof createTestApp>,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/process-media/photo', {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function postProcessMediaVideo(
   app: ReturnType<typeof createTestApp>,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/process-media/video', {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function deleteProcessMedia(
   app: ReturnType<typeof createTestApp>,
   id: string,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/process-media/${id}`, {
     method: 'DELETE',
-    headers,
-  })
+  }, env)
 }
 
 function putProcessMediaReorder(
   app: ReturnType<typeof createTestApp>,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/process-media/reorder', {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
+
+const authEnv = createAuthEnv()
 
 // ─── Tests ───────────────────────────────────────────────────────────
 
 describe('GET /me/dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   describe('authentication and authorization', () => {
     it('should return 401 without auth token', async () => {
@@ -369,7 +345,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ roles: ['buyer'] })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       expect(res.status).toBe(403)
 
       const body = await res.json()
@@ -380,7 +356,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ roles: ['artist'] })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       expect(res.status).toBe(200)
     })
 
@@ -388,7 +364,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ roles: ['buyer', 'artist'] })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       expect(res.status).toBe(200)
     })
   })
@@ -398,7 +374,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ artistProfile: null })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       expect(res.status).toBe(404)
 
       const body = await res.json()
@@ -411,7 +387,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       expect(body.profile).toEqual({
@@ -424,6 +400,7 @@ describe('GET /me/dashboard', () => {
         instagramUrl: null,
         profileImageUrl: 'https://cdn.example.com/profile.jpg',
         coverImageUrl: 'https://cdn.example.com/cover.jpg',
+        accentColor: null,
         status: 'approved',
         stripeAccountId: null,
         categories: ['ceramics'],
@@ -434,7 +411,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       expect(body.profile).not.toHaveProperty('userId')
@@ -448,7 +425,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       expect(body.completion.percentage).toBe(100)
@@ -466,7 +443,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ artistProfile: partialProfile })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       // 3 of 6 fields complete: bio, location, categories
@@ -482,7 +459,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ artistProfile: partialProfile })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       const fieldMap = Object.fromEntries(
@@ -505,7 +482,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ artistProfile: emptyBioProfile })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       const bioField = body.completion.fields.find((f: { label: string }) => f.label === 'Bio')
@@ -520,7 +497,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ artistProfile: whitespaceBioProfile })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       const bioField = body.completion.fields.find((f: { label: string }) => f.label === 'Bio')
@@ -533,7 +510,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ listingCounts: [10, 7, 3] })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       expect(body.stats.totalListings).toBe(10)
@@ -545,7 +522,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma({ listingCounts: [0, 0, 0] })
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       expect(body.stats.totalListings).toBe(0)
@@ -557,7 +534,7 @@ describe('GET /me/dashboard', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await getDashboard(app, 'valid-token')
+      const res = await getDashboard(app, authEnv)
       const body = await res.json()
 
       expect(body.stats.totalViews).toBe(0)
@@ -570,12 +547,10 @@ describe('GET /me/dashboard', () => {
 describe('PUT /me/profile', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
     process.env.CLOUDFRONT_DOMAIN = 'd2agn4aoo0e7ji.cloudfront.net'
   })
 
   afterEach(() => {
-    resetVerifier()
     delete process.env.CLOUDFRONT_DOMAIN
   })
 
@@ -592,7 +567,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ roles: ['buyer'] })
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { bio: 'Updated bio' }, 'valid-token')
+      const res = await putProfile(app, { bio: 'Updated bio' }, authEnv)
       expect(res.status).toBe(403)
     })
   })
@@ -602,7 +577,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ artistProfile: null })
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { bio: 'Updated bio' }, 'valid-token')
+      const res = await putProfile(app, { bio: 'Updated bio' }, authEnv)
       expect(res.status).toBe(404)
 
       const body = await res.json()
@@ -615,7 +590,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { bio: 'x'.repeat(5001) }, 'valid-token')
+      const res = await putProfile(app, { bio: 'x'.repeat(5001) }, authEnv)
       expect(res.status).toBe(400)
 
       const body = await res.json()
@@ -626,7 +601,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { location: 'x'.repeat(201) }, 'valid-token')
+      const res = await putProfile(app, { location: 'x'.repeat(201) }, authEnv)
       expect(res.status).toBe(400)
 
       const body = await res.json()
@@ -637,7 +612,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { websiteUrl: 'not-a-url' }, 'valid-token')
+      const res = await putProfile(app, { websiteUrl: 'not-a-url' }, authEnv)
       expect(res.status).toBe(400)
 
       const body = await res.json()
@@ -648,7 +623,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { instagramUrl: 'not-a-url' }, 'valid-token')
+      const res = await putProfile(app, { instagramUrl: 'not-a-url' }, authEnv)
       expect(res.status).toBe(400)
 
       const body = await res.json()
@@ -659,7 +634,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { profileImageUrl: 'https://evil.com/image.jpg' }, 'valid-token')
+      const res = await putProfile(app, { profileImageUrl: 'https://evil.com/image.jpg' }, authEnv)
       expect(res.status).toBe(400)
 
       const body = await res.json()
@@ -671,7 +646,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { coverImageUrl: 'https://evil.com/cover.jpg' }, 'valid-token')
+      const res = await putProfile(app, { coverImageUrl: 'https://evil.com/cover.jpg' }, authEnv)
       expect(res.status).toBe(400)
 
       const body = await res.json()
@@ -685,7 +660,7 @@ describe('PUT /me/profile', () => {
       const res = await putProfile(
         app,
         { profileImageUrl: 'https://evil.cloudfront.net.attacker.com/image.jpg' },
-        'valid-token'
+        authEnv
       )
       expect(res.status).toBe(400)
     })
@@ -697,7 +672,7 @@ describe('PUT /me/profile', () => {
       const res = await putProfile(
         app,
         { profileImageUrl: 'https://evil.com/.cloudfront.net/image.jpg' },
-        'valid-token'
+        authEnv
       )
       expect(res.status).toBe(400)
     })
@@ -709,7 +684,7 @@ describe('PUT /me/profile', () => {
       const res = await putProfile(
         app,
         { profileImageUrl: 'https://attacker.com/d2agn4aoo0e7ji.cloudfront.net/image.jpg' },
-        'valid-token'
+        authEnv
       )
       expect(res.status).toBe(400)
     })
@@ -721,7 +696,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ updatedProfile })
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { bio: 'New bio text' }, 'valid-token')
+      const res = await putProfile(app, { bio: 'New bio text' }, authEnv)
       expect(res.status).toBe(200)
 
       const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -733,7 +708,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ updatedProfile })
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { location: 'Brooklyn, NY' }, 'valid-token')
+      const res = await putProfile(app, { location: 'Brooklyn, NY' }, authEnv)
       expect(res.status).toBe(200)
 
       const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -745,7 +720,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ updatedProfile })
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { bio: 'New bio', location: 'NYC' }, 'valid-token')
+      const res = await putProfile(app, { bio: 'New bio', location: 'NYC' }, authEnv)
       expect(res.status).toBe(200)
 
       const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -758,7 +733,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ updatedProfile })
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { websiteUrl: '' }, 'valid-token')
+      const res = await putProfile(app, { websiteUrl: '' }, authEnv)
       expect(res.status).toBe(200)
 
       const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -770,7 +745,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ updatedProfile })
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { profileImageUrl: null }, 'valid-token')
+      const res = await putProfile(app, { profileImageUrl: null }, authEnv)
       expect(res.status).toBe(200)
 
       const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -781,7 +756,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, {}, 'valid-token')
+      const res = await putProfile(app, {}, authEnv)
       expect(res.status).toBe(200)
     })
 
@@ -791,7 +766,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ updatedProfile })
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { profileImageUrl: cfUrl }, 'valid-token')
+      const res = await putProfile(app, { profileImageUrl: cfUrl }, authEnv)
       expect(res.status).toBe(200)
     })
   })
@@ -801,7 +776,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ updatedProfile: { ...mockArtistProfile, bio: 'Clean bio' } })
       const app = createTestApp(prisma)
 
-      await putProfile(app, { bio: '<script>alert("xss")</script>Clean bio' }, 'valid-token')
+      await putProfile(app, { bio: '<script>alert("xss")</script>Clean bio' }, authEnv)
 
       const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
       expect(updateCall.data.bio).not.toContain('<script>')
@@ -812,7 +787,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma({ updatedProfile: { ...mockArtistProfile, location: 'Portland, OR' } })
       const app = createTestApp(prisma)
 
-      await putProfile(app, { location: '<b>Portland</b>, OR' }, 'valid-token')
+      await putProfile(app, { location: '<b>Portland</b>, OR' }, authEnv)
 
       const updateCall = (prisma.artistProfile.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
       expect(updateCall.data.location).not.toContain('<b>')
@@ -824,7 +799,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { bio: 'Updated' }, 'valid-token')
+      const res = await putProfile(app, { bio: 'Updated' }, authEnv)
       const body = await res.json()
 
       expect(body).toHaveProperty('id')
@@ -843,7 +818,7 @@ describe('PUT /me/profile', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putProfile(app, { bio: 'Updated' }, 'valid-token')
+      const res = await putProfile(app, { bio: 'Updated' }, authEnv)
       const body = await res.json()
 
       expect(body).not.toHaveProperty('userId')
@@ -859,12 +834,8 @@ describe('PUT /me/profile', () => {
 describe('PUT /me/categories', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   describe('authentication and authorization', () => {
     it('should return 401 without auth token', async () => {
@@ -879,7 +850,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma({ roles: ['buyer'] })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['ceramics'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['ceramics'] }, authEnv)
       expect(res.status).toBe(403)
     })
   })
@@ -889,7 +860,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma({ artistProfile: null })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['ceramics'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['ceramics'] }, authEnv)
       expect(res.status).toBe(404)
 
       const body = await res.json()
@@ -902,7 +873,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: [] }, 'valid-token')
+      const res = await putCategories(app, { categories: [] }, authEnv)
       expect(res.status).toBe(400)
 
       const body = await res.json()
@@ -913,7 +884,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['not_a_category'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['not_a_category'] }, authEnv)
       expect(res.status).toBe(400)
 
       const body = await res.json()
@@ -924,7 +895,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, {}, 'valid-token')
+      const res = await putCategories(app, {}, authEnv)
       expect(res.status).toBe(400)
 
       const body = await res.json()
@@ -935,15 +906,11 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma()
       const app = createTestApp(prisma)
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer valid-token',
-      }
       const res = await app.request('/me/categories', {
         method: 'PUT',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: 'not json',
-      })
+      }, authEnv)
       expect(res.status).toBe(400)
     })
   })
@@ -957,7 +924,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['drawing_painting', 'ceramics'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['drawing_painting', 'ceramics'] }, authEnv)
       expect(res.status).toBe(200)
 
       // Transaction was used
@@ -986,7 +953,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['mixed_media_3d'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['mixed_media_3d'] }, authEnv)
       expect(res.status).toBe(200)
     })
 
@@ -1002,7 +969,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: allCategories }, 'valid-token')
+      const res = await putCategories(app, { categories: allCategories }, authEnv)
       expect(res.status).toBe(200)
     })
 
@@ -1013,7 +980,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['ceramics', 'ceramics'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['ceramics', 'ceramics'] }, authEnv)
       expect(res.status).toBe(200)
 
       const createCall = (prisma.artistCategory.createMany as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -1030,7 +997,7 @@ describe('PUT /me/categories', () => {
       const prisma = createMockPrisma({ categoryResults })
       const app = createTestApp(prisma)
 
-      const res = await putCategories(app, { categories: ['drawing_painting', 'ceramics'] }, 'valid-token')
+      const res = await putCategories(app, { categories: ['drawing_painting', 'ceramics'] }, authEnv)
       const body = await res.json()
 
       expect(body).toHaveProperty('categories')
@@ -1069,12 +1036,8 @@ const mockCvEntry2 = {
 describe('GET /me/cv-entries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -1088,7 +1051,7 @@ describe('GET /me/cv-entries', () => {
     const prisma = createMockPrisma({ roles: ['buyer'] })
     const app = createTestApp(prisma)
 
-    const res = await getCvEntries(app, 'valid-token')
+    const res = await getCvEntries(app, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -1096,7 +1059,7 @@ describe('GET /me/cv-entries', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await getCvEntries(app, 'valid-token')
+    const res = await getCvEntries(app, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1104,7 +1067,7 @@ describe('GET /me/cv-entries', () => {
     const prisma = createMockPrisma({ cvEntries: [] })
     const app = createTestApp(prisma)
 
-    const res = await getCvEntries(app, 'valid-token')
+    const res = await getCvEntries(app, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -1115,7 +1078,7 @@ describe('GET /me/cv-entries', () => {
     const prisma = createMockPrisma({ cvEntries: [mockCvEntry, mockCvEntry2] })
     const app = createTestApp(prisma)
 
-    const res = await getCvEntries(app, 'valid-token')
+    const res = await getCvEntries(app, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -1128,7 +1091,7 @@ describe('GET /me/cv-entries', () => {
     const prisma = createMockPrisma({ cvEntries: [mockCvEntry] })
     const app = createTestApp(prisma)
 
-    const res = await getCvEntries(app, 'valid-token')
+    const res = await getCvEntries(app, authEnv)
     const body = await res.json()
 
     expect(body.cvEntries[0]).not.toHaveProperty('artistId')
@@ -1138,7 +1101,7 @@ describe('GET /me/cv-entries', () => {
     const prisma = createMockPrisma({ cvEntries: [] })
     const app = createTestApp(prisma)
 
-    await getCvEntries(app, 'valid-token')
+    await getCvEntries(app, authEnv)
 
     const findManyCall = (prisma.artistCvEntry.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(findManyCall.where).toEqual({ artistId: 'artist-uuid-123' })
@@ -1149,12 +1112,8 @@ describe('GET /me/cv-entries', () => {
 describe('POST /me/cv-entries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -1168,7 +1127,7 @@ describe('POST /me/cv-entries', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 2025 }, 'valid-token')
+    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 2025 }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1176,7 +1135,7 @@ describe('POST /me/cv-entries', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postCvEntry(app, { type: 'exhibition', year: 2025 }, 'valid-token')
+    const res = await postCvEntry(app, { type: 'exhibition', year: 2025 }, authEnv)
     expect(res.status).toBe(400)
 
     const body = await res.json()
@@ -1187,7 +1146,7 @@ describe('POST /me/cv-entries', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postCvEntry(app, { type: 'exhibition', title: 'x'.repeat(201), year: 2025 }, 'valid-token')
+    const res = await postCvEntry(app, { type: 'exhibition', title: 'x'.repeat(201), year: 2025 }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1195,7 +1154,7 @@ describe('POST /me/cv-entries', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postCvEntry(app, { type: 'invalid', title: 'Show', year: 2025 }, 'valid-token')
+    const res = await postCvEntry(app, { type: 'invalid', title: 'Show', year: 2025 }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1203,7 +1162,7 @@ describe('POST /me/cv-entries', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 1899 }, 'valid-token')
+    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 1899 }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1211,7 +1170,7 @@ describe('POST /me/cv-entries', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 2101 }, 'valid-token')
+    const res = await postCvEntry(app, { type: 'exhibition', title: 'Show', year: 2101 }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1221,7 +1180,7 @@ describe('POST /me/cv-entries', () => {
 
     const res = await postCvEntry(app, {
       type: 'exhibition', title: 'Show', year: 2025, description: 'x'.repeat(2001),
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1229,15 +1188,11 @@ describe('POST /me/cv-entries', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer valid-token',
-    }
     const res = await app.request('/me/cv-entries', {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: 'not json',
-    })
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1251,7 +1206,7 @@ describe('POST /me/cv-entries', () => {
     const res = await postCvEntry(app, {
       type: 'exhibition', title: 'Solo Show', institution: 'Portland Art Museum',
       year: 2025, description: 'My first solo show.',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(201)
 
     const createCall = (prisma.artistCvEntry.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -1267,7 +1222,7 @@ describe('POST /me/cv-entries', () => {
     await postCvEntry(app, {
       type: 'exhibition', title: '<b>Clean</b> Title', year: 2025,
       description: '<script>alert("x")</script>Clean desc',
-    }, 'valid-token')
+    }, authEnv)
 
     const createCall = (prisma.artistCvEntry.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(createCall.data.title).not.toContain('<b>')
@@ -1281,7 +1236,7 @@ describe('POST /me/cv-entries', () => {
 
     const res = await postCvEntry(app, {
       type: 'exhibition', title: 'Solo Show', year: 2025,
-    }, 'valid-token')
+    }, authEnv)
 
     const body = await res.json()
     expect(body).toHaveProperty('id')
@@ -1295,12 +1250,8 @@ describe('POST /me/cv-entries', () => {
 describe('PUT /me/cv-entries/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -1316,7 +1267,7 @@ describe('PUT /me/cv-entries/:id', () => {
 
     const res = await putCvEntry(app, CV_ENTRY_ID_1, {
       type: 'exhibition', title: 'Updated', year: 2025,
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1327,7 +1278,7 @@ describe('PUT /me/cv-entries/:id', () => {
 
     const res = await putCvEntry(app, '99999999-9999-4999-8999-999999999999', {
       type: 'exhibition', title: 'Updated', year: 2025,
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1339,7 +1290,7 @@ describe('PUT /me/cv-entries/:id', () => {
 
     const res = await putCvEntry(app, CV_ENTRY_ID_1, {
       type: 'exhibition', title: 'Updated', year: 2025,
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -1350,7 +1301,7 @@ describe('PUT /me/cv-entries/:id', () => {
 
     const res = await putCvEntry(app, CV_ENTRY_ID_1, {
       type: 'invalid', title: 'Show', year: 2025,
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1362,7 +1313,7 @@ describe('PUT /me/cv-entries/:id', () => {
 
     const res = await putCvEntry(app, CV_ENTRY_ID_1, {
       type: 'exhibition', title: 'Updated Show', year: 2025,
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -1378,7 +1329,7 @@ describe('PUT /me/cv-entries/:id', () => {
 
     await putCvEntry(app, CV_ENTRY_ID_1, {
       type: 'exhibition', title: 'Show', year: 2025, institution: '',
-    }, 'valid-token')
+    }, authEnv)
 
     const updateCall = (prisma.artistCvEntry.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(updateCall.data.institution).toBeNull()
@@ -1388,12 +1339,8 @@ describe('PUT /me/cv-entries/:id', () => {
 describe('DELETE /me/cv-entries/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -1407,7 +1354,7 @@ describe('DELETE /me/cv-entries/:id', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await deleteCvEntry(app, CV_ENTRY_ID_1, 'valid-token')
+    const res = await deleteCvEntry(app, CV_ENTRY_ID_1, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1416,7 +1363,7 @@ describe('DELETE /me/cv-entries/:id', () => {
     ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const app = createTestApp(prisma)
 
-    const res = await deleteCvEntry(app, '99999999-9999-4999-8999-999999999999', 'valid-token')
+    const res = await deleteCvEntry(app, '99999999-9999-4999-8999-999999999999', authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1426,7 +1373,7 @@ describe('DELETE /me/cv-entries/:id', () => {
     ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherEntry)
     const app = createTestApp(prisma)
 
-    const res = await deleteCvEntry(app, CV_ENTRY_ID_1, 'valid-token')
+    const res = await deleteCvEntry(app, CV_ENTRY_ID_1, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -1435,7 +1382,7 @@ describe('DELETE /me/cv-entries/:id', () => {
     ;(prisma.artistCvEntry.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockCvEntry)
     const app = createTestApp(prisma)
 
-    const res = await deleteCvEntry(app, CV_ENTRY_ID_1, 'valid-token')
+    const res = await deleteCvEntry(app, CV_ENTRY_ID_1, authEnv)
     expect(res.status).toBe(204)
 
     expect(prisma.artistCvEntry.delete).toHaveBeenCalledWith({
@@ -1447,12 +1394,8 @@ describe('DELETE /me/cv-entries/:id', () => {
 describe('PUT /me/cv-entries/reorder', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -1466,7 +1409,7 @@ describe('PUT /me/cv-entries/reorder', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await putCvEntryReorder(app, { orderedIds: [CV_ENTRY_ID_1] }, 'valid-token')
+    const res = await putCvEntryReorder(app, { orderedIds: [CV_ENTRY_ID_1] }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1474,7 +1417,7 @@ describe('PUT /me/cv-entries/reorder', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await putCvEntryReorder(app, { orderedIds: [] }, 'valid-token')
+    const res = await putCvEntryReorder(app, { orderedIds: [] }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1482,7 +1425,7 @@ describe('PUT /me/cv-entries/reorder', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await putCvEntryReorder(app, { orderedIds: ['not-a-uuid'] }, 'valid-token')
+    const res = await putCvEntryReorder(app, { orderedIds: ['not-a-uuid'] }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1495,7 +1438,7 @@ describe('PUT /me/cv-entries/reorder', () => {
 
     const res = await putCvEntryReorder(app, {
       orderedIds: [CV_ENTRY_ID_2, CV_ENTRY_ID_1],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(200)
 
     expect(prisma.$transaction).toHaveBeenCalled()
@@ -1509,7 +1452,7 @@ describe('PUT /me/cv-entries/reorder', () => {
 
     const res = await putCvEntryReorder(app, {
       orderedIds: [CV_ENTRY_ID_1, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1521,7 +1464,7 @@ describe('PUT /me/cv-entries/reorder', () => {
 
     const res = await putCvEntryReorder(app, {
       orderedIds: [CV_ENTRY_ID_1],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
     const body = await res.json()
     expect(body.error.message).toContain('all entry IDs')
@@ -1541,7 +1484,7 @@ describe('PUT /me/cv-entries/reorder', () => {
 
     const res = await putCvEntryReorder(app, {
       orderedIds: [CV_ENTRY_ID_2, CV_ENTRY_ID_1],
-    }, 'valid-token')
+    }, authEnv)
 
     const body = await res.json()
     expect(body.cvEntries).toHaveLength(2)
@@ -1580,12 +1523,8 @@ const mockProcessMediaVideo = {
 describe('GET /me/process-media', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -1597,21 +1536,21 @@ describe('GET /me/process-media', () => {
   it('should return 403 for buyer-only role', async () => {
     const prisma = createMockPrisma({ roles: ['buyer'] })
     const app = createTestApp(prisma)
-    const res = await getProcessMedia(app, 'valid-token')
+    const res = await getProcessMedia(app, authEnv)
     expect(res.status).toBe(403)
   })
 
   it('should return 404 when artist profile not found', async () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
-    const res = await getProcessMedia(app, 'valid-token')
+    const res = await getProcessMedia(app, authEnv)
     expect(res.status).toBe(404)
   })
 
   it('should return empty list when no process media exists', async () => {
     const prisma = createMockPrisma({ processMedia: [] })
     const app = createTestApp(prisma)
-    const res = await getProcessMedia(app, 'valid-token')
+    const res = await getProcessMedia(app, authEnv)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.processMedia).toEqual([])
@@ -1622,7 +1561,7 @@ describe('GET /me/process-media', () => {
       processMedia: [mockProcessMediaPhoto, mockProcessMediaVideo],
     })
     const app = createTestApp(prisma)
-    const res = await getProcessMedia(app, 'valid-token')
+    const res = await getProcessMedia(app, authEnv)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.processMedia).toHaveLength(2)
@@ -1634,12 +1573,10 @@ describe('GET /me/process-media', () => {
 describe('POST /me/process-media/photo', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
     process.env.CLOUDFRONT_DOMAIN = 'd2agn4aoo0e7ji.cloudfront.net'
   })
 
   afterEach(() => {
-    resetVerifier()
     delete process.env.CLOUDFRONT_DOMAIN
   })
 
@@ -1653,7 +1590,7 @@ describe('POST /me/process-media/photo', () => {
   it('should return 400 for invalid URL', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await postProcessMediaPhoto(app, { url: 'not-a-url' }, 'valid-token')
+    const res = await postProcessMediaPhoto(app, { url: 'not-a-url' }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1662,7 +1599,7 @@ describe('POST /me/process-media/photo', () => {
     const app = createTestApp(prisma)
     const res = await postProcessMediaPhoto(app, {
       url: 'https://evil.example.com/photo.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1671,7 +1608,7 @@ describe('POST /me/process-media/photo', () => {
     const app = createTestApp(prisma)
     const res = await postProcessMediaPhoto(app, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/photo.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1681,7 +1618,7 @@ describe('POST /me/process-media/photo', () => {
     const app = createTestApp(prisma)
     const res = await postProcessMediaPhoto(app, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/process/photo1.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body.type).toBe('photo')
@@ -1692,12 +1629,8 @@ describe('POST /me/process-media/photo', () => {
 describe('POST /me/process-media/video', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -1714,7 +1647,7 @@ describe('POST /me/process-media/video', () => {
     const app = createTestApp(prisma)
     const res = await postProcessMediaVideo(app, {
       videoProvider: 'mux',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1724,7 +1657,7 @@ describe('POST /me/process-media/video', () => {
     const res = await postProcessMediaVideo(app, {
       videoPlaybackId: 'abc123',
       videoProvider: 'youtube',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1734,7 +1667,7 @@ describe('POST /me/process-media/video', () => {
     const res = await postProcessMediaVideo(app, {
       videoPlaybackId: 'abc123',
       videoProvider: 'mux',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1745,7 +1678,7 @@ describe('POST /me/process-media/video', () => {
     const res = await postProcessMediaVideo(app, {
       videoPlaybackId: 'abc123playback',
       videoProvider: 'mux',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body.type).toBe('video')
@@ -1757,12 +1690,8 @@ describe('POST /me/process-media/video', () => {
 describe('DELETE /me/process-media/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -1775,7 +1704,7 @@ describe('DELETE /me/process-media/:id', () => {
     const prisma = createMockPrisma({ processMedia: [] })
     ;(prisma.artistProcessMedia.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const app = createTestApp(prisma)
-    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1, 'valid-token')
+    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -1783,14 +1712,14 @@ describe('DELETE /me/process-media/:id', () => {
     const otherEntry = { ...mockProcessMediaPhoto, artistId: 'other-artist-uuid' }
     const prisma = createMockPrisma({ processMedia: [otherEntry] })
     const app = createTestApp(prisma)
-    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1, 'valid-token')
+    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1, authEnv)
     expect(res.status).toBe(403)
   })
 
   it('should return 204 on successful delete', async () => {
     const prisma = createMockPrisma({ processMedia: [mockProcessMediaPhoto] })
     const app = createTestApp(prisma)
-    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1, 'valid-token')
+    const res = await deleteProcessMedia(app, PROCESS_MEDIA_ID_1, authEnv)
     expect(res.status).toBe(204)
   })
 })
@@ -1798,12 +1727,8 @@ describe('DELETE /me/process-media/:id', () => {
 describe('PUT /me/process-media/reorder', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -1819,7 +1744,7 @@ describe('PUT /me/process-media/reorder', () => {
     const app = createTestApp(prisma)
     const res = await putProcessMediaReorder(app, {
       orderedIds: [],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1828,7 +1753,7 @@ describe('PUT /me/process-media/reorder', () => {
     const app = createTestApp(prisma)
     const res = await putProcessMediaReorder(app, {
       orderedIds: ['not-a-uuid'],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1838,7 +1763,7 @@ describe('PUT /me/process-media/reorder', () => {
     const app = createTestApp(prisma)
     const res = await putProcessMediaReorder(app, {
       orderedIds: [PROCESS_MEDIA_ID_1, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -1849,7 +1774,7 @@ describe('PUT /me/process-media/reorder', () => {
     const app = createTestApp(prisma)
     const res = await putProcessMediaReorder(app, {
       orderedIds: [PROCESS_MEDIA_ID_1],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
     const body = await res.json()
     expect(body.error.message).toContain('all media IDs')
@@ -1869,7 +1794,7 @@ describe('PUT /me/process-media/reorder', () => {
 
     const res = await putProcessMediaReorder(app, {
       orderedIds: [PROCESS_MEDIA_ID_2, PROCESS_MEDIA_ID_1],
-    }, 'valid-token')
+    }, authEnv)
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -1949,64 +1874,53 @@ const validListingCreateBody = {
 function getMyListings(
   app: ReturnType<typeof createTestApp>,
   query?: string,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
   const url = query ? `/me/listings?${query}` : '/me/listings'
-  return app.request(url, { method: 'GET', headers })
+  return app.request(url, { method: 'GET' }, env)
 }
 
 function postListing(
   app: ReturnType<typeof createTestApp>,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/listings', {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function getMyListing(
   app: ReturnType<typeof createTestApp>,
   id: string,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/me/listings/${id}`, { method: 'GET', headers })
+  return app.request(`/me/listings/${id}`, { method: 'GET' }, env)
 }
 
 function putListing(
   app: ReturnType<typeof createTestApp>,
   id: string,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/listings/${id}`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function deleteListing(
   app: ReturnType<typeof createTestApp>,
   id: string,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/listings/${id}`, {
     method: 'DELETE',
-    headers,
-  })
+  }, env)
 }
 
 // ─── GET /me/listings ─────────────────────────────────────────────────
@@ -2014,12 +1928,8 @@ function deleteListing(
 describe('GET /me/listings', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -2033,7 +1943,7 @@ describe('GET /me/listings', () => {
     const prisma = createMockPrisma({ roles: ['buyer'] })
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, undefined, 'valid-token')
+    const res = await getMyListings(app, undefined, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -2041,7 +1951,7 @@ describe('GET /me/listings', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, undefined, 'valid-token')
+    const res = await getMyListings(app, undefined, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -2053,7 +1963,7 @@ describe('GET /me/listings', () => {
     ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([])
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, undefined, 'valid-token')
+    const res = await getMyListings(app, undefined, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -2070,7 +1980,7 @@ describe('GET /me/listings', () => {
     ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue(listings)
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, undefined, 'valid-token')
+    const res = await getMyListings(app, undefined, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -2086,7 +1996,7 @@ describe('GET /me/listings', () => {
     ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, 'status=available', 'valid-token')
+    const res = await getMyListings(app, 'status=available', authEnv)
     expect(res.status).toBe(200)
 
     // Verify the where clause includes status filter
@@ -2101,7 +2011,7 @@ describe('GET /me/listings', () => {
     ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, 'category=ceramics', 'valid-token')
+    const res = await getMyListings(app, 'category=ceramics', authEnv)
     expect(res.status).toBe(200)
 
     const countCall = (prisma.listing.count as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -2112,7 +2022,7 @@ describe('GET /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, 'status=invalid_status', 'valid-token')
+    const res = await getMyListings(app, 'status=invalid_status', authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2120,7 +2030,7 @@ describe('GET /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, 'category=invalid_category', 'valid-token')
+    const res = await getMyListings(app, 'category=invalid_category', authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2131,7 +2041,7 @@ describe('GET /me/listings', () => {
     ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, 'page=2&limit=10', 'valid-token')
+    const res = await getMyListings(app, 'page=2&limit=10', authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -2152,7 +2062,7 @@ describe('GET /me/listings', () => {
     ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, undefined, 'valid-token')
+    const res = await getMyListings(app, undefined, authEnv)
     const body = await res.json()
 
     expect(body.data[0]).not.toHaveProperty('artistId')
@@ -2165,7 +2075,7 @@ describe('GET /me/listings', () => {
     ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockListingDb])
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, undefined, 'valid-token')
+    const res = await getMyListings(app, undefined, authEnv)
     const body = await res.json()
 
     // Decimal fields should be plain numbers, not objects
@@ -2179,7 +2089,7 @@ describe('GET /me/listings', () => {
     ;(prisma.listing.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([])
     const app = createTestApp(prisma)
 
-    const res = await getMyListings(app, 'limit=500', 'valid-token')
+    const res = await getMyListings(app, 'limit=500', authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -2192,12 +2102,8 @@ describe('GET /me/listings', () => {
 describe('POST /me/listings', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -2211,7 +2117,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma({ roles: ['buyer'] })
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, validListingCreateBody, 'valid-token')
+    const res = await postListing(app, validListingCreateBody, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -2219,7 +2125,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, validListingCreateBody, 'valid-token')
+    const res = await postListing(app, validListingCreateBody, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -2228,7 +2134,7 @@ describe('POST /me/listings', () => {
     const app = createTestApp(prisma)
 
     const { title: _, ...bodyWithoutTitle } = validListingCreateBody
-    const res = await postListing(app, bodyWithoutTitle, 'valid-token')
+    const res = await postListing(app, bodyWithoutTitle, authEnv)
     expect(res.status).toBe(400)
 
     const body = await res.json()
@@ -2240,7 +2146,7 @@ describe('POST /me/listings', () => {
     const app = createTestApp(prisma)
 
     const { description: _, ...bodyWithout } = validListingCreateBody
-    const res = await postListing(app, bodyWithout, 'valid-token')
+    const res = await postListing(app, bodyWithout, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2249,7 +2155,7 @@ describe('POST /me/listings', () => {
     const app = createTestApp(prisma)
 
     const { medium: _, ...bodyWithout } = validListingCreateBody
-    const res = await postListing(app, bodyWithout, 'valid-token')
+    const res = await postListing(app, bodyWithout, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2257,7 +2163,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, { ...validListingCreateBody, category: 'invalid' }, 'valid-token')
+    const res = await postListing(app, { ...validListingCreateBody, category: 'invalid' }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2265,7 +2171,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, { ...validListingCreateBody, type: 'invalid' }, 'valid-token')
+    const res = await postListing(app, { ...validListingCreateBody, type: 'invalid' }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2273,7 +2179,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, { ...validListingCreateBody, price: 0 }, 'valid-token')
+    const res = await postListing(app, { ...validListingCreateBody, price: 0 }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2281,7 +2187,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, { ...validListingCreateBody, price: -100 }, 'valid-token')
+    const res = await postListing(app, { ...validListingCreateBody, price: -100 }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2289,7 +2195,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, { ...validListingCreateBody, price: 99.99 }, 'valid-token')
+    const res = await postListing(app, { ...validListingCreateBody, price: 99.99 }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2298,7 +2204,7 @@ describe('POST /me/listings', () => {
     const app = createTestApp(prisma)
 
     const { packedLength: _, ...bodyWithout } = validListingCreateBody
-    const res = await postListing(app, bodyWithout, 'valid-token')
+    const res = await postListing(app, bodyWithout, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2306,7 +2212,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, { ...validListingCreateBody, packedWeight: 0 }, 'valid-token')
+    const res = await postListing(app, { ...validListingCreateBody, packedWeight: 0 }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2314,7 +2220,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, { ...validListingCreateBody, title: 'x'.repeat(201) }, 'valid-token')
+    const res = await postListing(app, { ...validListingCreateBody, title: 'x'.repeat(201) }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2322,7 +2228,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, { ...validListingCreateBody, description: 'x'.repeat(5001) }, 'valid-token')
+    const res = await postListing(app, { ...validListingCreateBody, description: 'x'.repeat(5001) }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2330,15 +2236,11 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer valid-token',
-    }
     const res = await app.request('/me/listings', {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: 'not json',
-    })
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2347,7 +2249,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma({ createdListing: created })
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, validListingCreateBody, 'valid-token')
+    const res = await postListing(app, validListingCreateBody, authEnv)
     expect(res.status).toBe(201)
 
     const body = await res.json()
@@ -2367,7 +2269,7 @@ describe('POST /me/listings', () => {
       title: '<b>Clean</b> Title',
       description: '<script>alert("x")</script>Clean desc',
       medium: '<em>Clay</em>',
-    }, 'valid-token')
+    }, authEnv)
 
     const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(createCall.data.title).not.toContain('<b>')
@@ -2380,7 +2282,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma({ createdListing: created })
     const app = createTestApp(prisma)
 
-    await postListing(app, { ...validListingCreateBody, quantityTotal: 5 }, 'valid-token')
+    await postListing(app, { ...validListingCreateBody, quantityTotal: 5 }, authEnv)
 
     const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(createCall.data.quantityRemaining).toBe(5)
@@ -2392,7 +2294,7 @@ describe('POST /me/listings', () => {
     const app = createTestApp(prisma)
 
     const { quantityTotal: _, ...bodyWithout } = validListingCreateBody
-    await postListing(app, bodyWithout, 'valid-token')
+    await postListing(app, bodyWithout, authEnv)
 
     const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(createCall.data.quantityTotal).toBe(1)
@@ -2409,7 +2311,7 @@ describe('POST /me/listings', () => {
       artworkLength: 8,
       artworkWidth: 8,
       artworkHeight: 12,
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(201)
 
     const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -2425,7 +2327,7 @@ describe('POST /me/listings', () => {
       ...validListingCreateBody,
       editionNumber: 3,
       editionTotal: 10,
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(201)
   })
 
@@ -2434,7 +2336,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma({ createdListing: created })
     const app = createTestApp(prisma)
 
-    const res = await postListing(app, validListingCreateBody, 'valid-token')
+    const res = await postListing(app, validListingCreateBody, authEnv)
     const body = await res.json()
 
     expect(body).not.toHaveProperty('artistId')
@@ -2445,7 +2347,7 @@ describe('POST /me/listings', () => {
     const prisma = createMockPrisma({ createdListing: created })
     const app = createTestApp(prisma)
 
-    await postListing(app, validListingCreateBody, 'valid-token')
+    await postListing(app, validListingCreateBody, authEnv)
 
     const createCall = (prisma.listing.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(createCall.data.status).toBe('available')
@@ -2457,12 +2359,8 @@ describe('POST /me/listings', () => {
 describe('GET /me/listings/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -2476,7 +2374,7 @@ describe('GET /me/listings/:id', () => {
     const prisma = createMockPrisma({ roles: ['buyer'] })
     const app = createTestApp(prisma)
 
-    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const res = await getMyListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -2484,7 +2382,7 @@ describe('GET /me/listings/:id', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const res = await getMyListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -2493,7 +2391,7 @@ describe('GET /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const app = createTestApp(prisma)
 
-    const res = await getMyListing(app, '99999999-9999-4999-8999-999999999999', 'valid-token')
+    const res = await getMyListing(app, '99999999-9999-4999-8999-999999999999', authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -2503,7 +2401,7 @@ describe('GET /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherListing)
     const app = createTestApp(prisma)
 
-    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const res = await getMyListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -2512,7 +2410,7 @@ describe('GET /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const res = await getMyListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -2526,7 +2424,7 @@ describe('GET /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const res = await getMyListing(app, LISTING_ID_1, authEnv)
     const body = await res.json()
 
     expect(body).not.toHaveProperty('artistId')
@@ -2537,7 +2435,7 @@ describe('GET /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const res = await getMyListing(app, LISTING_ID_1, authEnv)
     const body = await res.json()
 
     expect(typeof body.packedLength).toBe('number')
@@ -2551,7 +2449,7 @@ describe('GET /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const res = await getMyListing(app, LISTING_ID_1, authEnv)
     const body = await res.json()
 
     expect(typeof body.createdAt).toBe('string')
@@ -2574,7 +2472,7 @@ describe('GET /me/listings/:id', () => {
     ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updatedListing)
     const app = createTestApp(prisma)
 
-    const res = await getMyListing(app, LISTING_ID_1, 'valid-token')
+    const res = await getMyListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -2599,12 +2497,8 @@ describe('GET /me/listings/:id', () => {
 describe('PUT /me/listings/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -2618,7 +2512,7 @@ describe('PUT /me/listings/:id', () => {
     const prisma = createMockPrisma({ roles: ['buyer'] })
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -2626,7 +2520,7 @@ describe('PUT /me/listings/:id', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -2635,7 +2529,7 @@ describe('PUT /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, '99999999-9999-4999-8999-999999999999', { title: 'Updated' }, 'valid-token')
+    const res = await putListing(app, '99999999-9999-4999-8999-999999999999', { title: 'Updated' }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -2645,7 +2539,7 @@ describe('PUT /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherListing)
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -2653,15 +2547,11 @@ describe('PUT /me/listings/:id', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer valid-token',
-    }
     const res = await app.request(`/me/listings/${LISTING_ID_1}`, {
       method: 'PUT',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: 'not json',
-    })
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2670,7 +2560,7 @@ describe('PUT /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { category: 'invalid' }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { category: 'invalid' }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2678,7 +2568,7 @@ describe('PUT /me/listings/:id', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { title: 'x'.repeat(201) }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { title: 'x'.repeat(201) }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2686,7 +2576,7 @@ describe('PUT /me/listings/:id', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { price: 0 }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { price: 0 }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -2697,7 +2587,7 @@ describe('PUT /me/listings/:id', () => {
     ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { title: 'Updated Vase' }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated Vase' }, authEnv)
     expect(res.status).toBe(200)
 
     const updateCall = (prisma.listing.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -2716,7 +2606,7 @@ describe('PUT /me/listings/:id', () => {
 
     await putListing(app, LISTING_ID_1, {
       title: '<script>Clean</script> Title',
-    }, 'valid-token')
+    }, authEnv)
 
     const updateCall = (prisma.listing.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(updateCall.data.title).not.toContain('<script>')
@@ -2729,7 +2619,7 @@ describe('PUT /me/listings/:id', () => {
     ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { title: 'Updated' }, authEnv)
     const body = await res.json()
 
     expect(body).toHaveProperty('id')
@@ -2744,7 +2634,7 @@ describe('PUT /me/listings/:id', () => {
     ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, {}, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, {}, authEnv)
     expect(res.status).toBe(200)
   })
 
@@ -2756,7 +2646,7 @@ describe('PUT /me/listings/:id', () => {
     ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { quantityTotal: 5 }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { quantityTotal: 5 }, authEnv)
     expect(res.status).toBe(200)
 
     const updateCall = (prisma.listing.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -2772,7 +2662,7 @@ describe('PUT /me/listings/:id', () => {
     ;(prisma.listing.update as ReturnType<typeof vi.fn>).mockResolvedValue(updated)
     const app = createTestApp(prisma)
 
-    const res = await putListing(app, LISTING_ID_1, { quantityTotal: 10 }, 'valid-token')
+    const res = await putListing(app, LISTING_ID_1, { quantityTotal: 10 }, authEnv)
     expect(res.status).toBe(200)
 
     const updateCall = (prisma.listing.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -2786,12 +2676,8 @@ describe('PUT /me/listings/:id', () => {
 describe('DELETE /me/listings/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -2805,7 +2691,7 @@ describe('DELETE /me/listings/:id', () => {
     const prisma = createMockPrisma({ roles: ['buyer'] })
     const app = createTestApp(prisma)
 
-    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    const res = await deleteListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -2813,7 +2699,7 @@ describe('DELETE /me/listings/:id', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    const res = await deleteListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -2822,7 +2708,7 @@ describe('DELETE /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const app = createTestApp(prisma)
 
-    const res = await deleteListing(app, '99999999-9999-4999-8999-999999999999', 'valid-token')
+    const res = await deleteListing(app, '99999999-9999-4999-8999-999999999999', authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -2832,7 +2718,7 @@ describe('DELETE /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherListing)
     const app = createTestApp(prisma)
 
-    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    const res = await deleteListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -2841,7 +2727,7 @@ describe('DELETE /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    const res = await deleteListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(409)
 
     const body = await res.json()
@@ -2853,7 +2739,7 @@ describe('DELETE /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    const res = await deleteListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(204)
 
     expect(prisma.listing.delete).toHaveBeenCalledWith({
@@ -2866,7 +2752,7 @@ describe('DELETE /me/listings/:id', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await deleteListing(app, LISTING_ID_1, 'valid-token')
+    const res = await deleteListing(app, LISTING_ID_1, authEnv)
     expect(res.status).toBe(204)
   })
 })
@@ -2900,44 +2786,37 @@ function postListingImage(
   app: ReturnType<typeof createTestApp>,
   listingId: string,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/listings/${listingId}/images`, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function deleteListingImage(
   app: ReturnType<typeof createTestApp>,
   listingId: string,
   imageId: string,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/listings/${listingId}/images/${imageId}`, {
     method: 'DELETE',
-    headers,
-  })
+  }, env)
 }
 
 function putListingImageReorder(
   app: ReturnType<typeof createTestApp>,
   listingId: string,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/listings/${listingId}/images/reorder`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 // ─── POST /me/listings/:id/images ─────────────────────────────────────
@@ -2945,12 +2824,10 @@ function putListingImageReorder(
 describe('POST /me/listings/:id/images', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
     process.env.CLOUDFRONT_DOMAIN = 'd2agn4aoo0e7ji.cloudfront.net'
   })
 
   afterEach(() => {
-    resetVerifier()
     delete process.env.CLOUDFRONT_DOMAIN
   })
 
@@ -2970,7 +2847,7 @@ describe('POST /me/listings/:id/images', () => {
 
     const res = await postListingImage(app, LISTING_ID_1, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -2980,7 +2857,7 @@ describe('POST /me/listings/:id/images', () => {
 
     const res = await postListingImage(app, LISTING_ID_1, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -2991,7 +2868,7 @@ describe('POST /me/listings/:id/images', () => {
 
     const res = await postListingImage(app, '99999999-9999-4999-8999-999999999999', {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -3003,7 +2880,7 @@ describe('POST /me/listings/:id/images', () => {
 
     const res = await postListingImage(app, LISTING_ID_1, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -3014,7 +2891,7 @@ describe('POST /me/listings/:id/images', () => {
 
     const res = await postListingImage(app, LISTING_ID_1, {
       url: 'not-a-url',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3025,7 +2902,7 @@ describe('POST /me/listings/:id/images', () => {
 
     const res = await postListingImage(app, LISTING_ID_1, {
       url: 'https://evil.example.com/img.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3033,15 +2910,11 @@ describe('POST /me/listings/:id/images', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer valid-token',
-    }
     const res = await app.request(`/me/listings/${LISTING_ID_1}/images`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: 'not json',
-    })
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3054,7 +2927,7 @@ describe('POST /me/listings/:id/images', () => {
 
     const res = await postListingImage(app, LISTING_ID_1, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(201)
 
     const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -3071,7 +2944,7 @@ describe('POST /me/listings/:id/images', () => {
 
     const res = await postListingImage(app, LISTING_ID_1, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(201)
 
     const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -3087,7 +2960,7 @@ describe('POST /me/listings/:id/images', () => {
     const res = await postListingImage(app, LISTING_ID_1, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
       isProcessPhoto: true,
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(201)
 
     // Should update listing.isDocumented to true
@@ -3105,7 +2978,7 @@ describe('POST /me/listings/:id/images', () => {
 
     const res = await postListingImage(app, LISTING_ID_1, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
-    }, 'valid-token')
+    }, authEnv)
     const body = await res.json()
 
     expect(body).toHaveProperty('id')
@@ -3137,7 +3010,7 @@ describe('POST /me/listings/:id/images', () => {
 
       const res = await postListingImage(app, LISTING_ID_1, {
         url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
-      }, 'valid-token')
+      }, authEnv)
       expect(res.status).toBe(201)
 
       const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -3160,7 +3033,7 @@ describe('POST /me/listings/:id/images', () => {
 
       const res = await postListingImage(app, LISTING_ID_1, {
         url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
-      }, 'valid-token')
+      }, authEnv)
       expect(res.status).toBe(201)
 
       const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -3186,7 +3059,7 @@ describe('POST /me/listings/:id/images', () => {
 
       const res = await postListingImage(app, LISTING_ID_1, {
         url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
-      }, 'valid-token')
+      }, authEnv)
       expect(res.status).toBe(201)
 
       const createCall = (prisma.listingImage.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -3203,12 +3076,8 @@ describe('POST /me/listings/:id/images', () => {
 describe('DELETE /me/listings/:id/images/:imageId', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -3222,7 +3091,7 @@ describe('DELETE /me/listings/:id/images/:imageId', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, 'valid-token')
+    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -3231,7 +3100,7 @@ describe('DELETE /me/listings/:id/images/:imageId', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const app = createTestApp(prisma)
 
-    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, 'valid-token')
+    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -3241,7 +3110,7 @@ describe('DELETE /me/listings/:id/images/:imageId', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherListing)
     const app = createTestApp(prisma)
 
-    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, 'valid-token')
+    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -3251,7 +3120,7 @@ describe('DELETE /me/listings/:id/images/:imageId', () => {
     ;(prisma.listingImage.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const app = createTestApp(prisma)
 
-    const res = await deleteListingImage(app, LISTING_ID_1, '99999999-9999-4999-8999-999999999999', 'valid-token')
+    const res = await deleteListingImage(app, LISTING_ID_1, '99999999-9999-4999-8999-999999999999', authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -3262,7 +3131,7 @@ describe('DELETE /me/listings/:id/images/:imageId', () => {
     ;(prisma.listingImage.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherImage)
     const app = createTestApp(prisma)
 
-    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, 'valid-token')
+    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -3274,7 +3143,7 @@ describe('DELETE /me/listings/:id/images/:imageId', () => {
     ;(prisma.listingImage.count as ReturnType<typeof vi.fn>).mockResolvedValue(0)
     const app = createTestApp(prisma)
 
-    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, 'valid-token')
+    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, authEnv)
     expect(res.status).toBe(204)
 
     expect(prisma.listingImage.delete).toHaveBeenCalledWith({
@@ -3292,7 +3161,7 @@ describe('DELETE /me/listings/:id/images/:imageId', () => {
     ;(prisma.listingImage.count as ReturnType<typeof vi.fn>).mockResolvedValue(0)
     const app = createTestApp(prisma)
 
-    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, 'valid-token')
+    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, authEnv)
     expect(res.status).toBe(204)
 
     expect(prisma.listing.update).toHaveBeenCalledWith({
@@ -3311,7 +3180,7 @@ describe('DELETE /me/listings/:id/images/:imageId', () => {
     ;(prisma.listingImage.count as ReturnType<typeof vi.fn>).mockResolvedValue(2)
     const app = createTestApp(prisma)
 
-    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, 'valid-token')
+    const res = await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, authEnv)
     expect(res.status).toBe(204)
 
     // Should NOT update isDocumented since process photos still exist
@@ -3324,12 +3193,8 @@ describe('DELETE /me/listings/:id/images/:imageId', () => {
 describe('PUT /me/listings/:id/images/reorder', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -3347,7 +3212,7 @@ describe('PUT /me/listings/:id/images/reorder', () => {
 
     const res = await putListingImageReorder(app, LISTING_ID_1, {
       orderedIds: [LISTING_IMAGE_ID_1],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -3358,7 +3223,7 @@ describe('PUT /me/listings/:id/images/reorder', () => {
 
     const res = await putListingImageReorder(app, LISTING_ID_1, {
       orderedIds: [LISTING_IMAGE_ID_1],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -3370,7 +3235,7 @@ describe('PUT /me/listings/:id/images/reorder', () => {
 
     const res = await putListingImageReorder(app, LISTING_ID_1, {
       orderedIds: [LISTING_IMAGE_ID_1],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -3381,7 +3246,7 @@ describe('PUT /me/listings/:id/images/reorder', () => {
 
     const res = await putListingImageReorder(app, LISTING_ID_1, {
       orderedIds: [],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3392,7 +3257,7 @@ describe('PUT /me/listings/:id/images/reorder', () => {
 
     const res = await putListingImageReorder(app, LISTING_ID_1, {
       orderedIds: ['not-a-uuid'],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3405,7 +3270,7 @@ describe('PUT /me/listings/:id/images/reorder', () => {
 
     const res = await putListingImageReorder(app, LISTING_ID_1, {
       orderedIds: [LISTING_IMAGE_ID_1, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3418,7 +3283,7 @@ describe('PUT /me/listings/:id/images/reorder', () => {
 
     const res = await putListingImageReorder(app, LISTING_ID_1, {
       orderedIds: [LISTING_IMAGE_ID_1],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(400)
     const body = await res.json()
     expect(body.error.message).toContain('all image IDs')
@@ -3428,15 +3293,11 @@ describe('PUT /me/listings/:id/images/reorder', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer valid-token',
-    }
     const res = await app.request(`/me/listings/${LISTING_ID_1}/images/reorder`, {
       method: 'PUT',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: 'not json',
-    })
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3455,7 +3316,7 @@ describe('PUT /me/listings/:id/images/reorder', () => {
 
     const res = await putListingImageReorder(app, LISTING_ID_1, {
       orderedIds: [LISTING_IMAGE_ID_2, LISTING_IMAGE_ID_1],
-    }, 'valid-token')
+    }, authEnv)
     expect(res.status).toBe(200)
 
     expect(prisma.$transaction).toHaveBeenCalled()
@@ -3471,26 +3332,20 @@ function putListingAvailability(
   app: ReturnType<typeof createTestApp>,
   listingId: string,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/listings/${listingId}/availability`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 describe('PUT /me/listings/:id/availability', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -3504,7 +3359,7 @@ describe('PUT /me/listings/:id/availability', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -3513,7 +3368,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -3523,7 +3378,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(otherListing)
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -3532,7 +3387,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'sold' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'sold' }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3541,7 +3396,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_system' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_system' }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3551,7 +3406,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(soldListing)
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'available' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'available' }, authEnv)
     expect(res.status).toBe(409)
   })
 
@@ -3561,7 +3416,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(reservedListing)
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'available' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'available' }, authEnv)
     expect(res.status).toBe(409)
   })
 
@@ -3571,7 +3426,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -3594,7 +3449,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(reservedListing)
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'available' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'available' }, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -3605,15 +3460,11 @@ describe('PUT /me/listings/:id/availability', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer valid-token',
-    }
     const res = await app.request(`/me/listings/${LISTING_ID_1}/availability`, {
       method: 'PUT',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: 'not json',
-    })
+    }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -3623,7 +3474,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, 'valid-token')
+    await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, authEnv)
 
     expect(triggerRevalidation).toHaveBeenCalledWith({
       type: 'listing',
@@ -3639,7 +3490,7 @@ describe('PUT /me/listings/:id/availability', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, 'valid-token')
+    const res = await putListingAvailability(app, LISTING_ID_1, { status: 'reserved_artist' }, authEnv)
     const body = await res.json()
     expect(body).not.toHaveProperty('artistId')
   })
@@ -3650,12 +3501,10 @@ describe('PUT /me/listings/:id/availability', () => {
 describe('Revalidation wiring on listing mutations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
     process.env.CLOUDFRONT_DOMAIN = 'd2agn4aoo0e7ji.cloudfront.net'
   })
 
   afterEach(() => {
-    resetVerifier()
     delete process.env.CLOUDFRONT_DOMAIN
   })
 
@@ -3664,7 +3513,7 @@ describe('Revalidation wiring on listing mutations', () => {
     const prisma = createMockPrisma({ createdListing: created })
     const app = createTestApp(prisma)
 
-    await postListing(app, validListingCreateBody, 'valid-token')
+    await postListing(app, validListingCreateBody, authEnv)
 
     expect(triggerRevalidation).toHaveBeenCalledWith({
       type: 'listing',
@@ -3680,7 +3529,7 @@ describe('Revalidation wiring on listing mutations', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    await putListing(app, LISTING_ID_1, { title: 'Updated Vase' }, 'valid-token')
+    await putListing(app, LISTING_ID_1, { title: 'Updated Vase' }, authEnv)
 
     expect(triggerRevalidation).toHaveBeenCalledWith({
       type: 'listing',
@@ -3695,7 +3544,7 @@ describe('Revalidation wiring on listing mutations', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockListingDb)
     const app = createTestApp(prisma)
 
-    await deleteListing(app, LISTING_ID_1, 'valid-token')
+    await deleteListing(app, LISTING_ID_1, authEnv)
 
     expect(triggerRevalidation).toHaveBeenCalledWith({
       type: 'listing',
@@ -3713,7 +3562,7 @@ describe('Revalidation wiring on listing mutations', () => {
 
     await postListingImage(app, LISTING_ID_1, {
       url: 'https://d2agn4aoo0e7ji.cloudfront.net/uploads/listing/img1.jpg',
-    }, 'valid-token')
+    }, authEnv)
 
     expect(triggerRevalidation).toHaveBeenCalledWith({
       type: 'listing',
@@ -3730,7 +3579,7 @@ describe('Revalidation wiring on listing mutations', () => {
     ;(prisma.listingImage.count as ReturnType<typeof vi.fn>).mockResolvedValue(0)
     const app = createTestApp(prisma)
 
-    await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, 'valid-token')
+    await deleteListingImage(app, LISTING_ID_1, LISTING_IMAGE_ID_1, authEnv)
 
     expect(triggerRevalidation).toHaveBeenCalledWith({
       type: 'listing',
@@ -3745,32 +3594,25 @@ describe('Revalidation wiring on listing mutations', () => {
 
 function postStripeOnboarding(
   app: ReturnType<typeof createTestApp>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request('/me/stripe/onboarding', { method: 'POST', headers })
+  return app.request('/me/stripe/onboarding', { method: 'POST' }, env)
 }
 
 function getStripeStatus(
   app: ReturnType<typeof createTestApp>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request('/me/stripe/status', { method: 'GET', headers })
+  return app.request('/me/stripe/status', { method: 'GET' }, env)
 }
 
 describe('POST /me/stripe/onboarding', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    const verifier = createMockVerifier()
-    setVerifier(verifier)
     vi.stubEnv('FRONTEND_URL', 'https://surfaced.art')
   })
 
   afterEach(() => {
-    resetVerifier()
     vi.unstubAllEnvs()
   })
 
@@ -3789,7 +3631,7 @@ describe('POST /me/stripe/onboarding', () => {
     mockStripeAccountsCreate.mockResolvedValue({ id: 'acct_test_123' })
     mockStripeAccountLinksCreate.mockResolvedValue({ url: 'https://connect.stripe.com/setup/s/test-link' })
 
-    const res = await postStripeOnboarding(app, 'valid-token')
+    const res = await postStripeOnboarding(app, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -3824,7 +3666,7 @@ describe('POST /me/stripe/onboarding', () => {
 
     mockStripeAccountLinksCreate.mockResolvedValue({ url: 'https://connect.stripe.com/setup/s/continue-link' })
 
-    const res = await postStripeOnboarding(app, 'valid-token')
+    const res = await postStripeOnboarding(app, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -3850,7 +3692,7 @@ describe('POST /me/stripe/onboarding', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await postStripeOnboarding(app, 'valid-token')
+    const res = await postStripeOnboarding(app, authEnv)
     expect(res.status).toBe(500)
   })
 
@@ -3860,7 +3702,7 @@ describe('POST /me/stripe/onboarding', () => {
 
     mockStripeAccountsCreate.mockRejectedValue(new Error('Stripe API error'))
 
-    const res = await postStripeOnboarding(app, 'valid-token')
+    const res = await postStripeOnboarding(app, authEnv)
     expect(res.status).toBe(500)
 
     const body = await res.json()
@@ -3875,7 +3717,7 @@ describe('POST /me/stripe/onboarding', () => {
 
     mockStripeAccountLinksCreate.mockRejectedValue(new Error('Stripe API error'))
 
-    const res = await postStripeOnboarding(app, 'valid-token')
+    const res = await postStripeOnboarding(app, authEnv)
     expect(res.status).toBe(500)
 
     const body = await res.json()
@@ -3886,13 +3728,8 @@ describe('POST /me/stripe/onboarding', () => {
 describe('GET /me/stripe/status', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    const verifier = createMockVerifier()
-    setVerifier(verifier)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth', async () => {
     const prisma = createMockPrisma()
@@ -3906,7 +3743,7 @@ describe('GET /me/stripe/status', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await getStripeStatus(app, 'valid-token')
+    const res = await getStripeStatus(app, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -3925,7 +3762,7 @@ describe('GET /me/stripe/status', () => {
       charges_enabled: true,
     })
 
-    const res = await getStripeStatus(app, 'valid-token')
+    const res = await getStripeStatus(app, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -3944,7 +3781,7 @@ describe('GET /me/stripe/status', () => {
       charges_enabled: false,
     })
 
-    const res = await getStripeStatus(app, 'valid-token')
+    const res = await getStripeStatus(app, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -3960,7 +3797,7 @@ describe('GET /me/stripe/status', () => {
 
     mockStripeAccountsRetrieve.mockRejectedValue(new Error('Stripe API unavailable'))
 
-    const res = await getStripeStatus(app, 'valid-token')
+    const res = await getStripeStatus(app, authEnv)
     expect(res.status).toBe(500)
 
     const body = await res.json()
@@ -3972,40 +3809,34 @@ describe('GET /me/stripe/status', () => {
 
 function getTags(
   app: ReturnType<typeof createTestApp>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request('/me/tags', { method: 'GET', headers })
+  return app.request('/me/tags', { method: 'GET' }, env)
 }
 
 function putTags(
   app: ReturnType<typeof createTestApp>,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request('/me/tags', {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 function putListingTags(
   app: ReturnType<typeof createTestApp>,
   listingId: string,
   body: Record<string, unknown>,
-  token?: string,
+  env?: Record<string, unknown>,
 ) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
   return app.request(`/me/listings/${listingId}/tags`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
 // ─── GET /me/tags ───────────────────────────────────────────────────
@@ -4013,12 +3844,8 @@ function putListingTags(
 describe('GET /me/tags', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -4032,7 +3859,7 @@ describe('GET /me/tags', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await getTags(app, 'valid-token')
+    const res = await getTags(app, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -4044,7 +3871,7 @@ describe('GET /me/tags', () => {
     const prisma = createMockPrisma({ tagResults })
     const app = createTestApp(prisma)
 
-    const res = await getTags(app, 'valid-token')
+    const res = await getTags(app, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -4059,12 +3886,8 @@ describe('GET /me/tags', () => {
 describe('PUT /me/tags', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -4078,7 +3901,7 @@ describe('PUT /me/tags', () => {
     const prisma = createMockPrisma({ roles: ['buyer'] })
     const app = createTestApp(prisma)
 
-    const res = await putTags(app, { tagIds: [] }, 'valid-token')
+    const res = await putTags(app, { tagIds: [] }, authEnv)
     expect(res.status).toBe(403)
   })
 
@@ -4086,7 +3909,7 @@ describe('PUT /me/tags', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await putTags(app, { tagIds: [] }, 'valid-token')
+    const res = await putTags(app, { tagIds: [] }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -4094,7 +3917,7 @@ describe('PUT /me/tags', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await putTags(app, { tagIds: ['not-a-uuid'] }, 'valid-token')
+    const res = await putTags(app, { tagIds: ['not-a-uuid'] }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -4102,7 +3925,7 @@ describe('PUT /me/tags', () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
 
-    const res = await putTags(app, {}, 'valid-token')
+    const res = await putTags(app, {}, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -4114,7 +3937,7 @@ describe('PUT /me/tags', () => {
     const prisma = createMockPrisma({ tagResults, allTags })
     const app = createTestApp(prisma)
 
-    const res = await putTags(app, { tagIds: ['550e8400-e29b-41d4-a716-446655440000'] }, 'valid-token')
+    const res = await putTags(app, { tagIds: ['550e8400-e29b-41d4-a716-446655440000'] }, authEnv)
     expect(res.status).toBe(200)
 
     expect(prisma.$transaction).toHaveBeenCalled()
@@ -4125,7 +3948,7 @@ describe('PUT /me/tags', () => {
     const prisma = createMockPrisma({ tagResults: [] })
     const app = createTestApp(prisma)
 
-    const res = await putTags(app, { tagIds: [] }, 'valid-token')
+    const res = await putTags(app, { tagIds: [] }, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -4141,7 +3964,7 @@ describe('PUT /me/tags', () => {
     const prisma = createMockPrisma({ tagResults, allTags })
     const app = createTestApp(prisma)
 
-    const res = await putTags(app, { tagIds: [tagId, tagId] }, 'valid-token')
+    const res = await putTags(app, { tagIds: [tagId, tagId] }, authEnv)
     expect(res.status).toBe(200)
 
     const createCall = ((prisma.artistTag as unknown as { createMany: ReturnType<typeof vi.fn> }).createMany).mock.calls[0][0]
@@ -4156,12 +3979,8 @@ describe('PUT /me/listings/:id/tags', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
 
-  afterEach(() => {
-    resetVerifier()
-  })
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -4175,7 +3994,7 @@ describe('PUT /me/listings/:id/tags', () => {
     const prisma = createMockPrisma({ artistProfile: null })
     const app = createTestApp(prisma)
 
-    const res = await putListingTags(app, listingId, { tagIds: [] }, 'valid-token')
+    const res = await putListingTags(app, listingId, { tagIds: [] }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -4187,7 +4006,7 @@ describe('PUT /me/listings/:id/tags', () => {
     ;(prisma.listing.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const app = createTestApp(prisma)
 
-    const res = await putListingTags(app, listingId, { tagIds: [] }, 'valid-token')
+    const res = await putListingTags(app, listingId, { tagIds: [] }, authEnv)
     expect(res.status).toBe(404)
   })
 
@@ -4196,7 +4015,7 @@ describe('PUT /me/listings/:id/tags', () => {
     const prisma = createMockPrisma({ listings: [listing] })
     const app = createTestApp(prisma)
 
-    const res = await putListingTags(app, listingId, { tagIds: ['bad'] }, 'valid-token')
+    const res = await putListingTags(app, listingId, { tagIds: ['bad'] }, authEnv)
     expect(res.status).toBe(400)
   })
 
@@ -4210,7 +4029,7 @@ describe('PUT /me/listings/:id/tags', () => {
     const prisma = createMockPrisma({ listings: [listing], listingTagResults, allTags })
     const app = createTestApp(prisma)
 
-    const res = await putListingTags(app, listingId, { tagIds: [tagId] }, 'valid-token')
+    const res = await putListingTags(app, listingId, { tagIds: [tagId] }, authEnv)
     expect(res.status).toBe(200)
 
     expect(prisma.$transaction).toHaveBeenCalled()
@@ -4223,7 +4042,7 @@ describe('PUT /me/listings/:id/tags', () => {
     const prisma = createMockPrisma({ listings: [listing], listingTagResults: [] })
     const app = createTestApp(prisma)
 
-    const res = await putListingTags(app, listingId, { tagIds: [] }, 'valid-token')
+    const res = await putListingTags(app, listingId, { tagIds: [] }, authEnv)
     expect(res.status).toBe(200)
 
     const body = await res.json()

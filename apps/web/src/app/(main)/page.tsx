@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getCategories, getListings, getFeaturedArtists, ApiError } from '@/lib/api'
+import { getCategories, getListings, getFeaturedArtists } from '@/lib/api'
 import { SplitHero } from '@/components/SplitHero'
 import { ArtistCard } from '@/components/ArtistCard'
 import { ListingCard } from '@/components/ListingCard'
 import { MasonryGrid } from '@/components/MasonryGrid'
+import { estimateCardHeight } from '@/lib/masonry-utils'
 import { CategoryGrid } from '@/components/CategoryGrid'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { JsonLd } from '@/components/JsonLd'
@@ -26,22 +27,21 @@ export const metadata: Metadata = {
   },
 }
 
+// CI builds use a placeholder API URL that doesn't resolve.
+// Return empty data during build so static generation succeeds;
+// the first real request fills the ISR cache with live data.
+// At runtime, errors propagate so ISR preserves the previous good page
+// via stale-while-revalidate instead of caching an empty state.
+const isBuildPlaceholder = process.env.NEXT_PUBLIC_API_URL?.includes('placeholder')
+
 async function fetchHomeData() {
-  try {
-    const [categories, listingsResponse, featuredArtists] = await Promise.all([
-      getCategories(),
-      getListings({ status: 'available', limit: 6 }),
-      getFeaturedArtists({ limit: 4 }),
-    ])
-    return { categories, listings: listingsResponse.data, artists: featuredArtists }
-  } catch (error) {
-    if (error instanceof ApiError) {
-      console.error(`API error fetching home data: ${error.status} ${error.message}`)
-    } else {
-      console.error('Unexpected error fetching home data:', error)
-    }
-    return { categories: [], listings: [], artists: [] }
-  }
+  if (isBuildPlaceholder) return { categories: [], listings: [], artists: [] }
+  const [categories, listingsResponse, featuredArtists] = await Promise.all([
+    getCategories(),
+    getListings({ status: 'available', limit: 6 }),
+    getFeaturedArtists({ limit: 4 }),
+  ])
+  return { categories, listings: listingsResponse.data, artists: featuredArtists }
 }
 
 export default async function Home() {
@@ -97,7 +97,12 @@ export default async function Home() {
               Browse all
             </Link>
           </div>
-          <MasonryGrid columns={[2, 2, 3, 3]}>
+          <MasonryGrid
+            columns={[2, 2, 3, 3]}
+            itemHeights={listings.map((l) =>
+              estimateCardHeight(l.primaryImage?.width, l.primaryImage?.height)
+            )}
+          >
             {listings.map((listing) => (
               <ListingCard
                 key={listing.id}

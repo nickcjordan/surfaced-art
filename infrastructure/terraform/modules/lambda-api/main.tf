@@ -4,7 +4,7 @@ resource "aws_security_group" "lambda" {
   description = "Security group for Lambda functions"
   vpc_id      = var.vpc_id
 
-  # Allow HTTPS outbound for AWS service APIs (S3, Cognito, SES, etc.)
+  # Allow HTTPS outbound for AWS service APIs (S3, SES, Stripe, etc.)
   # trivy:ignore:AVD-AWS-0104 - HTTPS to 0.0.0.0/0 required for AWS service endpoint calls
   egress {
     from_port   = 443
@@ -56,8 +56,6 @@ resource "aws_lambda_function" "api" {
     variables = {
       NODE_ENV              = var.environment
       DATABASE_URL          = var.database_url
-      COGNITO_USER_POOL_ID  = var.cognito_user_pool_id
-      COGNITO_CLIENT_ID     = var.cognito_client_id
       S3_BUCKET_NAME        = var.s3_bucket_name
       CLOUDFRONT_URL        = var.cloudfront_url
       CLOUDFRONT_DOMAIN     = var.cloudfront_domain
@@ -144,7 +142,52 @@ resource "aws_apigatewayv2_integration" "lambda" {
   payload_format_version = "2.0"
 }
 
-# Catch-all route
+# JWT authorizer — validates Cognito tokens at the API Gateway layer.
+# Protected routes use this authorizer so Lambda never needs to contact Cognito.
+resource "aws_apigatewayv2_authorizer" "jwt" {
+  api_id           = aws_apigatewayv2_api.main.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "${var.project_name}-${var.environment}-jwt"
+
+  jwt_configuration {
+    issuer   = "https://cognito-idp.${var.aws_region}.amazonaws.com/${var.cognito_user_pool_id}"
+    audience = [var.cognito_client_id]
+  }
+}
+
+# Protected routes — per-method route keys with JWT authorization.
+# OPTIONS is intentionally excluded: API Gateway's built-in CORS configuration
+# (cors_configuration block on the HTTP API) handles OPTIONS preflight requests
+# automatically. Using ANY would match OPTIONS, the JWT authorizer would reject
+# it (no Authorization header on preflight), and CORS would break.
+locals {
+  jwt_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+  jwt_prefixes = {
+    auth    = "/auth/{proxy+}"
+    me      = "/me/{proxy+}"
+    admin   = "/admin/{proxy+}"
+    uploads = "/uploads/{proxy+}"
+  }
+  jwt_routes = merge([
+    for name, path in local.jwt_prefixes : {
+      for method in local.jwt_methods :
+      "${name}_${lower(method)}" => "${method} ${path}"
+    }
+  ]...)
+}
+
+resource "aws_apigatewayv2_route" "protected" {
+  for_each = local.jwt_routes
+
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = each.value
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+}
+
+# Catch-all route — public endpoints (no authorizer)
 resource "aws_apigatewayv2_route" "catch_all" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "$default"

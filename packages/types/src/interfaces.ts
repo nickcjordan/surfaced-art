@@ -61,6 +61,7 @@ export interface ArtistProfile {
   coverImageUrl: string | null
   profileImageUrl: string | null
   applicationSource: string | null
+  accentColor: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -327,6 +328,8 @@ export interface FeaturedArtistItem {
   location: string
   profileImageUrl: string | null
   coverImageUrl: string | null
+  /** Up to 4 front-image URLs from the artist's listings, for the card mosaic grid */
+  artworkImageUrls: string[]
   categories: CategoryType[]
 }
 
@@ -459,6 +462,7 @@ export interface DashboardResponse {
     instagramUrl: string | null
     profileImageUrl: string | null
     coverImageUrl: string | null
+    accentColor: string | null
     status: ArtistStatusType
     stripeAccountId: string | null
     categories: CategoryType[]
@@ -491,6 +495,7 @@ export interface ProfileUpdateResponse {
   instagramUrl: string | null
   profileImageUrl: string | null
   coverImageUrl: string | null
+  accentColor: string | null
   status: ArtistStatusType
 }
 
@@ -686,6 +691,7 @@ export interface AdminArtistDetailResponse {
   coverImageUrl: string | null
   profileImageUrl: string | null
   applicationSource: string | null
+  accentColor: string | null
   isDemo: boolean
   hasStripeAccount: boolean
   createdAt: string
@@ -713,6 +719,7 @@ export interface AdminListingListItem extends Listing {
  */
 export interface AdminListingDetailResponse extends Listing {
   images: ListingImage[]
+  tags: Tag[]
   artist: { id: string; displayName: string; slug: string; status: ArtistStatusType }
   orderCount: number
   reviewCount: number
@@ -905,6 +912,8 @@ export interface SearchArtistItem {
   location: string
   profileImageUrl: string | null
   coverImageUrl: string | null
+  /** Up to 4 front-image URLs from the artist's listings, for the card mosaic grid */
+  artworkImageUrls: string[]
   categories: CategoryType[]
   rank: number
 }
@@ -1010,4 +1019,17 @@ export interface ApiError {
     message: string // Human-readable description
     details?: unknown // Field-level validation errors when applicable
   }
+}
+
+// ─── Auth Response Types ────────────────────────────────────────────
+
+/**
+ * Response from GET /auth/me — authenticated user profile with roles.
+ * Available to any authenticated user (no role requirement).
+ */
+export interface AuthMeResponse {
+  id: string
+  email: string
+  fullName: string
+  roles: UserRoleType[]
 }

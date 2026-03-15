@@ -22,9 +22,8 @@ describe('site-config', () => {
     expect(SITE_URL).toBe('https://dev.surfaced.art')
   })
 
-  it('falls back to production URL when NEXT_PUBLIC_SITE_URL is not set', async () => {
+  it('throws when NEXT_PUBLIC_SITE_URL is not set', async () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', '')
-    const { SITE_URL } = await import('../site-config')
-    expect(SITE_URL).toBe('https://surfaced.art')
+    await expect(import('../site-config')).rejects.toThrow('NEXT_PUBLIC_SITE_URL')
   })
 })

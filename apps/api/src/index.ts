@@ -19,6 +19,7 @@ import { createUploadRoutes } from './routes/uploads'
 import { createMeRoutes } from './routes/me'
 import { createAdminRoutes } from './routes/admin'
 import { createTagRoutes } from './routes/tags'
+import { createAuthRoutes } from './routes/auth'
 import { createSearchRoutes } from './routes/search'
 import { createWebhookRoutes } from './routes/webhooks'
 
@@ -66,6 +67,7 @@ app.use('/waitlist', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
 app.use('/artists/apply', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
 app.use('/uploads/*', rateLimiter({ maxRequests: 10, windowMs: 60_000 }))
 app.use('/me/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
+app.use('/auth/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
 app.use('/admin/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
 app.use('/search', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
 app.use('/webhooks/*', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
@@ -85,6 +87,7 @@ app.use('/health', cacheControl('no-store'))
 
 // Cache-control — protected endpoints
 app.use('/me/*', cacheControl('private, no-cache'))
+app.use('/auth/*', cacheControl('private, no-cache'))
 app.use('/admin/*', cacheControl('private, no-cache'))
 
 // Mount routes — /artists/apply MUST be before /artists to avoid /:slug collision
@@ -97,6 +100,7 @@ app.route('/tags', createTagRoutes(prisma))
 app.route('/search', createSearchRoutes(prisma))
 app.route('/waitlist', createWaitlistRoutes(prisma))
 app.route('/uploads', createUploadRoutes(prisma))
+app.route('/auth', createAuthRoutes(prisma))
 app.route('/me', createMeRoutes(prisma))
 app.route('/admin', createAdminRoutes(prisma))
 app.route('/webhooks', createWebhookRoutes(prisma))

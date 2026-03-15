@@ -157,6 +157,7 @@ model ArtistProfile {
   profileImageUrl String?          @map("profile_image_url")
   applicationSource String?        @map("application_source")
   isDemo          Boolean          @default(false) @map("is_demo")
+  accentColor     String?          @map("accent_color") @db.Char(7)
   searchVector    Unsupported("tsvector")? @map("search_vector")
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")

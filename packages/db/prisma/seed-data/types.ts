@@ -58,6 +58,8 @@ export interface SeedListing {
   packedWidth: number
   packedHeight: number
   packedWeight: number
+  imageWidth?: number
+  imageHeight?: number
 }
 
 export interface SeedProcessMedia {

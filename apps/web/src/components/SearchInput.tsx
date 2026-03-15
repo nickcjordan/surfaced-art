@@ -3,12 +3,16 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+type SearchInputProps = {
+  onOpenChange?: (open: boolean) => void
+}
+
 /**
  * Expandable search input for the site header.
  * Desktop: magnifying glass icon → expands to text input inline.
  * Enter navigates to /search?q=..., Escape/X collapses.
  */
-export function SearchInput() {
+export function SearchInput({ onOpenChange }: SearchInputProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -16,12 +20,14 @@ export function SearchInput() {
 
   const open = useCallback(() => {
     setIsOpen(true)
-  }, [])
+    onOpenChange?.(true)
+  }, [onOpenChange])
 
   const close = useCallback(() => {
     setIsOpen(false)
     setQuery('')
-  }, [])
+    onOpenChange?.(false)
+  }, [onOpenChange])
 
   // Focus input when opened
   useEffect(() => {
@@ -47,6 +53,15 @@ export function SearchInput() {
       if (e.key === 'Escape') {
         close()
       }
+    },
+    [close],
+  )
+
+  const handleBlur = useCallback(
+    (e: React.FocusEvent) => {
+      // If focus is moving to another element within the form, don't close
+      if (e.currentTarget.contains(e.relatedTarget as Node)) return
+      close()
     },
     [close],
   )
@@ -81,6 +96,7 @@ export function SearchInput() {
   return (
     <form
       onSubmit={handleSubmit}
+      onBlur={handleBlur}
       data-testid="search-form"
       className="flex items-center gap-2"
     >

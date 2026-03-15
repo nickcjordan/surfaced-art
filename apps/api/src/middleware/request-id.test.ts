@@ -43,6 +43,16 @@ describe('requestId middleware', () => {
     expect(res.headers.get('X-Request-Id')).toBe(incomingId)
   })
 
+  it('should store the request ID in context via c.set()', async () => {
+    const app = new Hono()
+    app.use('*', requestId())
+    app.get('/test', (c) => c.json({ requestId: c.get('requestId') }))
+    const res = await app.request('/test')
+    const body = await res.json()
+    const headerId = res.headers.get('X-Request-Id')
+    expect(body.requestId).toBe(headerId)
+  })
+
   it('should not interfere with the response body', async () => {
     const app = createTestApp()
     const res = await app.request('/test')

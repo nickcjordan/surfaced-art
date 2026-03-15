@@ -48,6 +48,7 @@ const fatimaConfig: ArtistSeedConfig = {
       artworkLength: 36, artworkWidth: 48, artworkHeight: 1,
       packedLength: 14, packedWidth: 14, packedHeight: 8,
       packedWeight: 6,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Cedar and Sage Scarf',
@@ -60,6 +61,7 @@ const fatimaConfig: ArtistSeedConfig = {
       artworkLength: 72, artworkWidth: 12, artworkHeight: 0.25,
       packedLength: 12, packedWidth: 8, packedHeight: 4,
       packedWeight: 0.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Window Fragment',
@@ -72,6 +74,7 @@ const fatimaConfig: ArtistSeedConfig = {
       artworkLength: 24, artworkWidth: 18, artworkHeight: 3,
       packedLength: 28, packedWidth: 22, packedHeight: 7,
       packedWeight: 5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Table Runner, Pomegranate',
@@ -84,6 +87,7 @@ const fatimaConfig: ArtistSeedConfig = {
       artworkLength: 54, artworkWidth: 14, artworkHeight: 0.25,
       packedLength: 14, packedWidth: 10, packedHeight: 4,
       packedWeight: 1,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Levantine Blue',
@@ -96,6 +100,7 @@ const fatimaConfig: ArtistSeedConfig = {
       artworkLength: 40, artworkWidth: 56, artworkHeight: 1,
       packedLength: 14, packedWidth: 14, packedHeight: 10,
       packedWeight: 7,
+      imageWidth: 1024, imageHeight: 1536,
     },
   ],
   processMedia: [
@@ -150,6 +155,7 @@ const yolandaConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 24, artworkHeight: 1,
       packedLength: 22, packedWidth: 28, packedHeight: 5,
       packedWeight: 3,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Papel Picado Study, ink',
@@ -162,6 +168,7 @@ const yolandaConfig: ArtistSeedConfig = {
       artworkLength: 11, artworkWidth: 14, artworkHeight: 0,
       packedLength: 15, packedWidth: 18, packedHeight: 2,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Hill Country Wildflowers',
@@ -174,6 +181,7 @@ const yolandaConfig: ArtistSeedConfig = {
       artworkLength: 14, artworkWidth: 18, artworkHeight: 1,
       packedLength: 18, packedWidth: 22, packedHeight: 5,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Embroidered Pillow, Rose',
@@ -186,6 +194,7 @@ const yolandaConfig: ArtistSeedConfig = {
       artworkLength: 18, artworkWidth: 18, artworkHeight: 5,
       packedLength: 22, packedWidth: 22, packedHeight: 9,
       packedWeight: 2,
+      imageWidth: 1024, imageHeight: 1024,
     },
     {
       title: 'Lotería: El Corazón',
@@ -198,6 +207,7 @@ const yolandaConfig: ArtistSeedConfig = {
       artworkLength: 20, artworkWidth: 26, artworkHeight: 1,
       packedLength: 24, packedWidth: 30, packedHeight: 5,
       packedWeight: 3,
+      imageWidth: 1024, imageHeight: 1536,
     },
   ],
   processMedia: [
@@ -252,6 +262,7 @@ const keikoConfig: ArtistSeedConfig = {
       artworkLength: 36, artworkWidth: 54, artworkHeight: 0.5,
       packedLength: 14, packedWidth: 14, packedHeight: 6,
       packedWeight: 3,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Raku Tea Bowl, Copper',
@@ -264,6 +275,7 @@ const keikoConfig: ArtistSeedConfig = {
       artworkLength: 5, artworkWidth: 5, artworkHeight: 3.5,
       packedLength: 9, packedWidth: 9, packedHeight: 7.5,
       packedWeight: 2,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Sashiko Coasters, Set of Six',
@@ -276,6 +288,7 @@ const keikoConfig: ArtistSeedConfig = {
       artworkLength: 4, artworkWidth: 4, artworkHeight: 0.25,
       packedLength: 8, packedWidth: 8, packedHeight: 4.25,
       packedWeight: 0.5,
+      imageWidth: 1200, imageHeight: 800,
     },
     {
       title: 'Indigo Scarf, Itajime',
@@ -288,6 +301,7 @@ const keikoConfig: ArtistSeedConfig = {
       artworkLength: 72, artworkWidth: 14, artworkHeight: 0.1,
       packedLength: 10, packedWidth: 8, packedHeight: 4,
       packedWeight: 0.5,
+      imageWidth: 1024, imageHeight: 1536,
     },
     {
       title: 'Raku Vessel, Moon',
@@ -300,6 +314,7 @@ const keikoConfig: ArtistSeedConfig = {
       artworkLength: 6, artworkWidth: 6, artworkHeight: 12,
       packedLength: 10, packedWidth: 10, packedHeight: 16,
       packedWeight: 4,
+      imageWidth: 1024, imageHeight: 1536,
     },
   ],
   processMedia: [

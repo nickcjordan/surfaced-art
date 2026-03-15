@@ -1,11 +1,13 @@
 'use client'
 
+import { RoleGuard } from '../components/role-guard'
 import { ProfileForm } from './components/profile-form'
 import { CvEntryList } from './components/cv-entry-list'
 import { ProcessMediaGrid } from './components/process-media-grid'
 
 export default function ProfilePage() {
   return (
+    <RoleGuard requiredRole="artist">
     <div data-testid="profile-editor" className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Edit Profile</h1>
@@ -17,5 +19,6 @@ export default function ProfilePage() {
       <CvEntryList />
       <ProcessMediaGrid />
     </div>
+    </RoleGuard>
   )
 }

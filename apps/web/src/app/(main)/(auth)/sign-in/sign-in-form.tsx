@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export function SignInForm() {
   const { signIn, pendingChallenge, completeNewPassword, completeMfa } = useAuth()
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   const [email, setEmail] = useState('')
@@ -28,7 +27,18 @@ export function SignInForm() {
 
   const verified = searchParams.get('verified') === 'true'
   const reset = searchParams.get('reset') === 'true'
-  const redirect = searchParams.get('redirect') ?? '/dashboard'
+  const explicitRedirect = searchParams.get('redirect')
+  const defaultRedirect = '/dashboard'
+
+  /** Pick redirect target based on roles — admin goes to /admin unless an explicit redirect was given. */
+  function getRedirectForRoles(roles: string[]): string {
+    // Only allow relative path redirects to prevent open redirect attacks
+    if (explicitRedirect && explicitRedirect.startsWith('/') && !explicitRedirect.startsWith('//')) {
+      return explicitRedirect
+    }
+    if (roles.includes('admin')) return '/admin'
+    return defaultRedirect
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,15 +46,16 @@ export function SignInForm() {
     setSubmitting(true)
 
     try {
-      const success = await signIn(email, password)
-      if (success) {
-        router.push(redirect)
+      const result = await signIn(email, password)
+      if (result.authenticated) {
+        // Full navigation (not router.push) ensures clean state after auth
+        window.location.href = getRedirectForRoles(result.roles)
         return
       }
       // Challenge was set — form will re-render to show challenge UI
     } catch (err) {
       if (err instanceof Error && err.name === 'UserNotConfirmedException') {
-        router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+        window.location.href = `/verify-email?email=${encodeURIComponent(email)}`
         return
       }
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
@@ -65,8 +76,8 @@ export function SignInForm() {
     setSubmitting(true)
 
     try {
-      await completeNewPassword(newPassword)
-      router.push(redirect)
+      const result = await completeNewPassword(newPassword)
+      window.location.href = getRedirectForRoles(result.roles)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
@@ -80,8 +91,8 @@ export function SignInForm() {
     setSubmitting(true)
 
     try {
-      await completeMfa(mfaCode)
-      router.push(redirect)
+      const result = await completeMfa(mfaCode)
+      window.location.href = getRedirectForRoles(result.roles)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {

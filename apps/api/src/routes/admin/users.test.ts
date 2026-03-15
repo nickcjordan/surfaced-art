@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import { createAdminRoutes } from './index'
-import { setVerifier, resetVerifier } from '../../middleware/auth'
 import type { PrismaClient } from '@surfaced-art/db'
 
 // Mock email module (required by applications sub-router)
@@ -13,8 +12,16 @@ vi.mock('@surfaced-art/email', () => ({
 
 // ─── Test helpers ────────────────────────────────────────────────────
 
-function createMockVerifier(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
-  return { verify: vi.fn().mockResolvedValue({ sub, email, name }) }
+function createAuthEnv(sub = 'cognito-admin', email = 'admin@surfaced.art', name = 'Admin User') {
+  return {
+    requestContext: {
+      authorizer: {
+        jwt: {
+          claims: { sub, email, name },
+        },
+      },
+    },
+  }
 }
 
 const ADMIN_USER_ID = 'admin-uuid-123'
@@ -116,35 +123,26 @@ function createTestApp(prisma: PrismaClient) {
   return app
 }
 
-function getUsers(app: ReturnType<typeof createTestApp>, query = '', token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/users${query ? `?${query}` : ''}`, { headers })
+function getUsers(app: ReturnType<typeof createTestApp>, query = '', env?: Record<string, unknown>) {
+  return app.request(`/admin/users${query ? `?${query}` : ''}`, {}, env)
 }
 
-function getUserDetail(app: ReturnType<typeof createTestApp>, id: string, token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return app.request(`/admin/users/${id}`, { headers })
+function getUserDetail(app: ReturnType<typeof createTestApp>, id: string, env?: Record<string, unknown>) {
+  return app.request(`/admin/users/${id}`, {}, env)
 }
 
-function grantRole(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, token?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function grantRole(app: ReturnType<typeof createTestApp>, id: string, body: Record<string, unknown>, env?: Record<string, unknown>) {
   return app.request(`/admin/users/${id}/roles`, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, env)
 }
 
-function revokeRole(app: ReturnType<typeof createTestApp>, id: string, role: string, token?: string) {
-  const headers: Record<string, string> = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
+function revokeRole(app: ReturnType<typeof createTestApp>, id: string, role: string, env?: Record<string, unknown>) {
   return app.request(`/admin/users/${id}/roles/${role}`, {
     method: 'DELETE',
-    headers,
-  })
+  }, env)
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────
@@ -152,9 +150,7 @@ function revokeRole(app: ReturnType<typeof createTestApp>, id: string, role: str
 describe('GET /admin/users', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 401 without auth token', async () => {
     const prisma = createMockPrisma()
@@ -166,14 +162,14 @@ describe('GET /admin/users', () => {
   it('should return 403 without admin role', async () => {
     const prisma = createMockPrisma({ adminRoles: ['buyer'] })
     const app = createTestApp(prisma)
-    const res = await getUsers(app, '', 'valid-token')
+    const res = await getUsers(app, '', createAuthEnv())
     expect(res.status).toBe(403)
   })
 
   it('should return paginated user list', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await getUsers(app, '', 'valid-token')
+    const res = await getUsers(app, '', createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -184,7 +180,7 @@ describe('GET /admin/users', () => {
   it('should include user roles and hasArtistProfile', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await getUsers(app, '', 'valid-token')
+    const res = await getUsers(app, '', createAuthEnv())
     const body = await res.json()
 
     expect(body.data[0].roles).toEqual(['buyer'])
@@ -194,7 +190,7 @@ describe('GET /admin/users', () => {
   it('should filter by role', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getUsers(app, 'role=artist', 'valid-token')
+    await getUsers(app, 'role=artist', createAuthEnv())
 
     expect(prisma.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -208,7 +204,7 @@ describe('GET /admin/users', () => {
   it('should filter by search on fullName and email', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await getUsers(app, 'search=buyer', 'valid-token')
+    await getUsers(app, 'search=buyer', createAuthEnv())
 
     expect(prisma.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -226,21 +222,19 @@ describe('GET /admin/users', () => {
 describe('GET /admin/users/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when user not found', async () => {
     const prisma = createMockPrisma({ targetUser: null })
     const app = createTestApp(prisma)
-    const res = await getUserDetail(app, TARGET_USER_ID, 'valid-token')
+    const res = await getUserDetail(app, TARGET_USER_ID, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should return full user detail with stats', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await getUserDetail(app, TARGET_USER_ID, 'valid-token')
+    const res = await getUserDetail(app, TARGET_USER_ID, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -263,28 +257,26 @@ describe('GET /admin/users/:id', () => {
 describe('POST /admin/users/:id/roles', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when user not found', async () => {
     const prisma = createMockPrisma({ targetUser: null })
     const app = createTestApp(prisma)
-    const res = await grantRole(app, TARGET_USER_ID, { role: 'artist' }, 'valid-token')
+    const res = await grantRole(app, TARGET_USER_ID, { role: 'artist' }, createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should return 400 for invalid role', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await grantRole(app, TARGET_USER_ID, { role: 'superadmin' }, 'valid-token')
+    const res = await grantRole(app, TARGET_USER_ID, { role: 'superadmin' }, createAuthEnv())
     expect(res.status).toBe(400)
   })
 
   it('should return 403 when admin tries to self-grant admin', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await grantRole(app, ADMIN_USER_ID, { role: 'admin' }, 'valid-token')
+    const res = await grantRole(app, ADMIN_USER_ID, { role: 'admin' }, createAuthEnv())
     expect(res.status).toBe(403)
 
     const body = await res.json()
@@ -296,14 +288,14 @@ describe('POST /admin/users/:id/roles', () => {
       existingRole: { id: 'role-1', userId: TARGET_USER_ID, role: 'artist' },
     })
     const app = createTestApp(prisma)
-    const res = await grantRole(app, TARGET_USER_ID, { role: 'artist' }, 'valid-token')
+    const res = await grantRole(app, TARGET_USER_ID, { role: 'artist' }, createAuthEnv())
     expect(res.status).toBe(409)
   })
 
   it('should grant role successfully', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await grantRole(app, TARGET_USER_ID, { role: 'artist' }, 'valid-token')
+    const res = await grantRole(app, TARGET_USER_ID, { role: 'artist' }, createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -316,7 +308,7 @@ describe('POST /admin/users/:id/roles', () => {
   it('should write audit log on role grant', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    await grantRole(app, TARGET_USER_ID, { role: 'artist' }, 'valid-token')
+    await grantRole(app, TARGET_USER_ID, { role: 'artist' }, createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -334,21 +326,19 @@ describe('POST /admin/users/:id/roles', () => {
 describe('DELETE /admin/users/:id/roles/:role', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    setVerifier(createMockVerifier() as never)
   })
-  afterEach(() => resetVerifier())
 
   it('should return 404 when user not found', async () => {
     const prisma = createMockPrisma({ targetUser: null })
     const app = createTestApp(prisma)
-    const res = await revokeRole(app, TARGET_USER_ID, 'artist', 'valid-token')
+    const res = await revokeRole(app, TARGET_USER_ID, 'artist', createAuthEnv())
     expect(res.status).toBe(404)
   })
 
   it('should return 403 when admin tries to remove own admin role', async () => {
     const prisma = createMockPrisma()
     const app = createTestApp(prisma)
-    const res = await revokeRole(app, ADMIN_USER_ID, 'admin', 'valid-token')
+    const res = await revokeRole(app, ADMIN_USER_ID, 'admin', createAuthEnv())
     expect(res.status).toBe(403)
 
     const body = await res.json()
@@ -358,7 +348,7 @@ describe('DELETE /admin/users/:id/roles/:role', () => {
   it('should return 404 when role not found on user', async () => {
     const prisma = createMockPrisma({ existingRole: null })
     const app = createTestApp(prisma)
-    const res = await revokeRole(app, TARGET_USER_ID, 'artist', 'valid-token')
+    const res = await revokeRole(app, TARGET_USER_ID, 'artist', createAuthEnv())
     expect(res.status).toBe(404)
   })
 
@@ -367,7 +357,7 @@ describe('DELETE /admin/users/:id/roles/:role', () => {
       existingRole: { id: 'role-1', userId: TARGET_USER_ID, role: 'artist' },
     })
     const app = createTestApp(prisma)
-    const res = await revokeRole(app, TARGET_USER_ID, 'artist', 'valid-token')
+    const res = await revokeRole(app, TARGET_USER_ID, 'artist', createAuthEnv())
     expect(res.status).toBe(200)
 
     const body = await res.json()
@@ -379,7 +369,7 @@ describe('DELETE /admin/users/:id/roles/:role', () => {
       existingRole: { id: 'role-1', userId: TARGET_USER_ID, role: 'artist' },
     })
     const app = createTestApp(prisma)
-    await revokeRole(app, TARGET_USER_ID, 'artist', 'valid-token')
+    await revokeRole(app, TARGET_USER_ID, 'artist', createAuthEnv())
 
     expect(prisma.adminAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
