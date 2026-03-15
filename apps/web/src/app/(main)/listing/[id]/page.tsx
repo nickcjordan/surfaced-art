@@ -117,7 +117,7 @@ export default async function ListingDetailPage({ params }: Props) {
           <div>
             <h1
               data-testid="listing-title"
-              className="font-serif text-3xl text-foreground"
+              className="font-heading text-3xl text-foreground"
             >
               {listing.title}
             </h1>
@@ -135,7 +135,7 @@ export default async function ListingDetailPage({ params }: Props) {
           {/* Price */}
           <p
             data-testid="listing-price"
-            className="font-serif text-2xl text-foreground"
+            className="font-heading text-2xl text-foreground"
           >
             {formatCurrency(listing.price)}
           </p>
@@ -235,7 +235,7 @@ export default async function ListingDetailPage({ params }: Props) {
             size="md"
           />
           <div>
-            <p className="font-serif text-base text-foreground">
+            <p className="font-heading text-base text-foreground">
               {listing.artist.displayName}
             </p>
             <p className="text-sm text-muted-text">{listing.artist.location}</p>

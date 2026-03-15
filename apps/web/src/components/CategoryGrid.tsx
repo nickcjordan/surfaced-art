@@ -19,7 +19,7 @@ export function CategoryGrid({ counts }: CategoryGridProps) {
             href={cat.href}
             className="group flex flex-col items-center justify-center rounded-md border border-border bg-surface p-6 text-center transition-[border-color,box-shadow] duration-250 ease-in-out hover:border-accent-primary hover:shadow-sm"
           >
-            <span className="font-serif text-base text-foreground group-hover:text-accent-primary transition-colors duration-250">
+            <span className="font-heading text-base text-foreground group-hover:text-accent-primary transition-colors duration-250">
               {cat.label}
             </span>
             <span className="mt-1 text-xs text-muted-text">

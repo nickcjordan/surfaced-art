@@ -11,6 +11,26 @@ process.env.NEXT_PUBLIC_POSTHOG_KEY = 'phc_test'
 process.env.NEXT_PUBLIC_POSTHOG_HOST = 'https://us.i.posthog.com'
 process.env.NEXT_PUBLIC_POSTHOG_ENV = 'test'
 
+// IntersectionObserver is not implemented in jsdom. Provide a minimal stub.
+global.IntersectionObserver = class IntersectionObserver {
+  private callback: IntersectionObserverCallback
+
+  constructor(callback: IntersectionObserverCallback) {
+    this.callback = callback
+  }
+
+  observe() {
+    // Fire immediately with isIntersecting: true (element is visible)
+    this.callback(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      this as unknown as globalThis.IntersectionObserver,
+    )
+  }
+
+  unobserve() {}
+  disconnect() {}
+} as unknown as typeof globalThis.IntersectionObserver
+
 // ResizeObserver is not implemented in jsdom. Provide a stub that:
 // 1. Fires the callback immediately when observation begins (mirrors real browser behavior)
 // 2. Re-fires on window resize events so resize-triggered tests work

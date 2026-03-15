@@ -21,24 +21,24 @@ describe('SplitHero', () => {
     render(<SplitHero />)
     const heading = screen.getByRole('heading', { level: 1 })
     expect(heading).toBeInTheDocument()
-    expect(heading).toHaveTextContent(/a better place/i)
-    expect(heading).toHaveTextContent(/to show your work/i)
+    expect(heading).toHaveTextContent(/a place for artists/i)
   })
 
-  it('should render the subline', () => {
+  it('should render the four feature pillars', () => {
     render(<SplitHero />)
-    expect(screen.getByText(/stop selling in your dms/i)).toBeInTheDocument()
+    expect(screen.getByText('Portfolio')).toBeInTheDocument()
+    expect(screen.getByText('Sales')).toBeInTheDocument()
+    expect(screen.getByText('Community')).toBeInTheDocument()
+    expect(screen.getByText('Discovery')).toBeInTheDocument()
   })
 
-  it('should render an artwork image with env-aware CDN URL', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
+  it('should render artwork images with env-aware CDN URLs', () => {
     render(<SplitHero />)
     const images = screen.getAllByRole('img')
-    expect(images.length).toBeGreaterThanOrEqual(1)
-    expect(images[0]).toHaveAttribute(
-      'src',
-      expect.stringContaining('test.cloudfront.net')
-    )
+    expect(images.length).toBeGreaterThanOrEqual(4)
+    for (const img of images) {
+      expect(img.getAttribute('src')).toContain('test.cloudfront.net')
+    }
   })
 
   it('should not contain hardcoded prod CloudFront URLs', () => {
@@ -50,13 +50,14 @@ describe('SplitHero', () => {
   })
 
   it('should use demo artist slugs, not real artist slugs', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0)
     render(<SplitHero />)
-    const img = screen.getAllByRole('img')[0]
-    const src = img.getAttribute('src') || ''
-    expect(src).not.toContain('abbey-peters')
-    expect(src).not.toContain('david-morrison')
-    expect(src).not.toContain('karina-yanes')
+    const images = screen.getAllByRole('img')
+    for (const img of images) {
+      const src = img.getAttribute('src') || ''
+      expect(src).not.toContain('abbey-peters')
+      expect(src).not.toContain('david-morrison')
+      expect(src).not.toContain('karina-yanes')
+    }
   })
 
   it('should render the primary CTA linking to /for-artists', () => {
@@ -69,5 +70,11 @@ describe('SplitHero', () => {
     render(<SplitHero />)
     const link = screen.getByRole('link', { name: /ready to apply/i })
     expect(link).toHaveAttribute('href', '/apply')
+  })
+
+  it('should respect prefers-reduced-motion', () => {
+    render(<SplitHero />)
+    const track = screen.getByTestId('hero-scroll-track')
+    expect(track).toBeInTheDocument()
   })
 })

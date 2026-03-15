@@ -42,7 +42,7 @@ export function ProfilePhoto({
         />
       ) : (
         <div className="flex size-full items-center justify-center text-muted-text">
-          <span className="font-serif text-lg">
+          <span className="font-heading text-lg">
             {alt.trim().charAt(0).toUpperCase() || '?'}
           </span>
         </div>

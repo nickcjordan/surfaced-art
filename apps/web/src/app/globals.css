@@ -7,7 +7,7 @@
  *
  * Palette: Forest + Amber — deep forest green with warm amber.
  * Rich, natural, frames artwork like a well-lit gallery in the woods.
- * Typography: serif headings (DM Serif Display), clean sans body (DM Sans).
+ * Typography: sans headings (Josefin Sans), clean sans body (DM Sans).
  * Variable names follow ShadCN/ui conventions for component compatibility.
  *
  * Source: docs/Surfaced_Art_Brand_Design_System_v2_0.md
@@ -57,9 +57,9 @@
   --sidebar-border: var(--border);
   --sidebar-ring: var(--accent-primary);
 
-  /* Font stacks — next/font injects --font-dm-serif and --font-dm-sans */
+  /* Font stacks — next/font injects --font-heading and --font-dm-sans */
   --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
-  --active-font-serif: var(--font-dm-serif, 'DM Serif Display', serif);
+  --active-font-heading: var(--font-heading, 'Josefin Sans', sans-serif);
 }
 
 .dark {
@@ -107,7 +107,7 @@
 
   /* Font stacks (same as light mode) */
   --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
-  --active-font-serif: var(--font-dm-serif, 'DM Serif Display', serif);
+  --active-font-heading: var(--font-heading, 'Josefin Sans', sans-serif);
 }
 
 @theme inline {
@@ -162,7 +162,7 @@
 
   /* Font stacks — role-based with fallbacks */
   --font-sans: var(--active-font-sans);
-  --font-serif: var(--active-font-serif);
+  --font-heading: var(--active-font-heading);
 }
 
 @layer base {
@@ -184,17 +184,17 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Heading styles — DM Serif Display with type scale specs */
+  /* Heading styles — Josefin Sans with weight progression for hierarchy */
   h1 {
-    font-family: var(--active-font-serif);
+    font-family: var(--active-font-heading);
     font-size: 3rem;
-    font-weight: 400;
+    font-weight: 300;
     line-height: 1.1;
     letter-spacing: -0.02em;
   }
 
   h2 {
-    font-family: var(--active-font-serif);
+    font-family: var(--active-font-heading);
     font-size: 2.25rem;
     font-weight: 400;
     line-height: 1.15;
@@ -202,23 +202,24 @@
   }
 
   h3 {
-    font-family: var(--active-font-serif);
+    font-family: var(--active-font-heading);
     font-size: 1.75rem;
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.2;
     letter-spacing: -0.01em;
   }
 
   h4 {
-    font-family: var(--active-font-serif);
+    font-family: var(--active-font-heading);
     font-size: 1.375rem;
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.25;
     letter-spacing: 0;
   }
 
   h5, h6 {
-    font-family: var(--active-font-serif);
+    font-family: var(--active-font-heading);
+    font-weight: 500;
   }
 
   /*
@@ -243,15 +244,15 @@
 /* Type scale utility classes — Brand Design System v2.0 Section 3 */
 @layer components {
   .text-heading-1 {
-    font-family: var(--active-font-serif);
+    font-family: var(--active-font-heading);
     font-size: 3rem;
-    font-weight: 400;
+    font-weight: 300;
     line-height: 1.1;
     letter-spacing: -0.02em;
   }
 
   .text-heading-2 {
-    font-family: var(--active-font-serif);
+    font-family: var(--active-font-heading);
     font-size: 2.25rem;
     font-weight: 400;
     line-height: 1.15;
@@ -259,17 +260,17 @@
   }
 
   .text-heading-3 {
-    font-family: var(--active-font-serif);
+    font-family: var(--active-font-heading);
     font-size: 1.75rem;
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.2;
     letter-spacing: -0.01em;
   }
 
   .text-heading-4 {
-    font-family: var(--active-font-serif);
+    font-family: var(--active-font-heading);
     font-size: 1.375rem;
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.25;
     letter-spacing: 0;
   }

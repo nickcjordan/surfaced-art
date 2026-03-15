@@ -21,7 +21,7 @@ describe('Home Page', () => {
     const Component = await Home()
     render(Component)
     const heading = screen.getByRole('heading', { level: 1 })
-    expect(heading).toHaveTextContent('A better place')
+    expect(heading).toHaveTextContent('A Place for Artists')
   })
 
   it('should render the hero CTA links', async () => {

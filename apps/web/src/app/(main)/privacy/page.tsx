@@ -44,7 +44,7 @@ export default function PrivacyPage() {
 
       {/* Hero */}
       <section data-testid="privacy-hero" className="max-w-2xl">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
+        <h1 className="font-heading text-4xl tracking-tight text-foreground sm:text-5xl">
           Privacy Policy
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
 
       {/* Data Collected */}
       <section data-testid="privacy-data-collected" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Information We Collect</h2>
+        <h2 className="font-heading text-2xl text-foreground">Information We Collect</h2>
         <p className="text-base leading-relaxed text-muted-text">
           We collect information you provide directly to us, such as when you create an account,
           apply to become an artist, or make a purchase:
@@ -78,7 +78,7 @@ export default function PrivacyPage() {
 
       {/* Third-Party Services */}
       <section data-testid="privacy-third-party" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Third-Party Services</h2>
+        <h2 className="font-heading text-2xl text-foreground">Third-Party Services</h2>
         <p className="text-base leading-relaxed text-muted-text">
           We use the following third-party services, each with their own privacy policies:
         </p>
@@ -122,7 +122,7 @@ export default function PrivacyPage() {
 
       {/* Cookies and Analytics */}
       <section data-testid="privacy-cookies" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Cookies and Analytics</h2>
+        <h2 className="font-heading text-2xl text-foreground">Cookies and Analytics</h2>
         <p className="text-base leading-relaxed text-muted-text">
           We use cookies and similar technologies to maintain your session, remember your preferences,
           and improve the platform experience. Specifically:
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
 
       {/* Data Retention */}
       <section data-testid="privacy-retention" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Data Retention</h2>
+        <h2 className="font-heading text-2xl text-foreground">Data Retention</h2>
         <p className="text-base leading-relaxed text-muted-text">
           We retain your personal data for as long as your account is active or as needed to provide
           you with our services. Specifically:
@@ -154,7 +154,7 @@ export default function PrivacyPage() {
 
       {/* Your Rights */}
       <section data-testid="privacy-rights" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Your Rights</h2>
+        <h2 className="font-heading text-2xl text-foreground">Your Rights</h2>
         <p className="text-base leading-relaxed text-muted-text">
           Depending on your location, you may have the following rights regarding your personal data:
         </p>
@@ -173,7 +173,7 @@ export default function PrivacyPage() {
 
       {/* Contact */}
       <section data-testid="privacy-contact" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Contact Us</h2>
+        <h2 className="font-heading text-2xl text-foreground">Contact Us</h2>
         <p className="text-base leading-relaxed text-muted-text">
           If you have questions about this privacy policy or how we handle your data, please contact us:
         </p>

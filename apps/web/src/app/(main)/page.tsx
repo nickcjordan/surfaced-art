@@ -71,7 +71,7 @@ export default async function Home() {
       {artists.length > 0 && (
         <section data-testid="featured-artists">
           <div className="mb-8 flex items-baseline justify-between">
-            <h2 className="font-serif text-2xl text-foreground">Featured Artists</h2>
+            <h2 className="font-heading text-2xl text-foreground">Featured Artists</h2>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {artists.map((artist) => (
@@ -89,7 +89,7 @@ export default async function Home() {
       {listings.length > 0 && (
         <section data-testid="featured-listings">
           <div className="mb-8 flex items-baseline justify-between">
-            <h2 className="font-serif text-2xl text-foreground">Recent Work</h2>
+            <h2 className="font-heading text-2xl text-foreground">Recent Work</h2>
             <Link
               href="/search"
               className="text-sm text-muted-text transition-colors hover:text-foreground"
@@ -126,7 +126,7 @@ export default async function Home() {
 
       {/* Category Grid */}
       <section data-testid="category-grid-section">
-        <h2 className="mb-8 font-serif text-2xl text-foreground text-center">
+        <h2 className="mb-8 font-heading text-2xl text-foreground text-center">
           Browse by Category
         </h2>
         <CategoryGrid counts={categories} />
@@ -139,7 +139,7 @@ export default async function Home() {
       >
         <CanvasDotOverlay />
         <div className="relative">
-          <h2 className="font-serif text-2xl text-foreground">
+          <h2 className="font-heading text-2xl text-foreground">
             Be the first to know
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-muted-text">

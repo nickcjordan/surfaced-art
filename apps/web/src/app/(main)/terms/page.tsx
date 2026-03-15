@@ -44,7 +44,7 @@ export default function TermsPage() {
 
       {/* Hero */}
       <section data-testid="terms-hero" className="max-w-2xl">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
+        <h1 className="font-heading text-4xl tracking-tight text-foreground sm:text-5xl">
           Terms of Service
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">
@@ -59,7 +59,7 @@ export default function TermsPage() {
 
       {/* Eligibility */}
       <section data-testid="terms-eligibility" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Eligibility</h2>
+        <h2 className="font-heading text-2xl text-foreground">Eligibility</h2>
         <p className="text-base leading-relaxed text-muted-text">
           You must be at least 18 years of age to use the Platform. By using the Platform, you represent
           and warrant that you meet this requirement. If you are using the Platform on behalf of a
@@ -75,7 +75,7 @@ export default function TermsPage() {
 
       {/* Account Responsibilities */}
       <section data-testid="terms-account" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Account Responsibilities</h2>
+        <h2 className="font-heading text-2xl text-foreground">Account Responsibilities</h2>
         <p className="text-base leading-relaxed text-muted-text">
           You are responsible for maintaining the confidentiality of your account credentials and for
           all activity that occurs under your account. You agree to:
@@ -91,7 +91,7 @@ export default function TermsPage() {
 
       {/* Commission Structure */}
       <section data-testid="terms-commission" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Commission Structure</h2>
+        <h2 className="font-heading text-2xl text-foreground">Commission Structure</h2>
         <p className="text-base leading-relaxed text-muted-text">
           Surfaced Art charges a 30% commission on all sales completed through the Platform. This
           commission is deducted automatically from the sale price before the remaining 70% is
@@ -107,7 +107,7 @@ export default function TermsPage() {
 
       {/* Prohibited Conduct */}
       <section data-testid="terms-prohibited" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Prohibited Conduct</h2>
+        <h2 className="font-heading text-2xl text-foreground">Prohibited Conduct</h2>
         <p className="text-base leading-relaxed text-muted-text">
           You agree not to use the Platform to:
         </p>
@@ -129,7 +129,7 @@ export default function TermsPage() {
 
       {/* IP Ownership */}
       <section data-testid="terms-ip" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Intellectual Property</h2>
+        <h2 className="font-heading text-2xl text-foreground">Intellectual Property</h2>
         <p className="text-base leading-relaxed text-muted-text">
           Artists retain full ownership of the intellectual property rights in their artwork. By
           listing on Surfaced Art, you grant us a limited, non-exclusive, royalty-free license to
@@ -146,7 +146,7 @@ export default function TermsPage() {
 
       {/* Dispute Resolution */}
       <section data-testid="terms-disputes" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Dispute Resolution</h2>
+        <h2 className="font-heading text-2xl text-foreground">Dispute Resolution</h2>
         <p className="text-base leading-relaxed text-muted-text">
           If a dispute arises between you and another user of the Platform, we encourage you to
           resolve it directly. If you are unable to do so, you may contact us and we will attempt
@@ -166,7 +166,7 @@ export default function TermsPage() {
 
       {/* Limitation of Liability */}
       <section data-testid="terms-liability" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Limitation of Liability</h2>
+        <h2 className="font-heading text-2xl text-foreground">Limitation of Liability</h2>
         <p className="text-base leading-relaxed text-muted-text">
           To the maximum extent permitted by law, Surfaced Art and its officers, directors, employees,
           and agents shall not be liable for any indirect, incidental, special, consequential, or
@@ -186,7 +186,7 @@ export default function TermsPage() {
 
       {/* Modifications */}
       <section data-testid="terms-modifications" className="max-w-2xl space-y-4">
-        <h2 className="font-serif text-2xl text-foreground">Modifications to These Terms</h2>
+        <h2 className="font-heading text-2xl text-foreground">Modifications to These Terms</h2>
         <p className="text-base leading-relaxed text-muted-text">
           We reserve the right to modify these Terms at any time. When we make changes, we will
           update the &ldquo;last updated&rdquo; date at the top of this page. For material changes, we will

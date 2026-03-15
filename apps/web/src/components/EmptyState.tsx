@@ -24,7 +24,7 @@ export function EmptyState({
         className
       )}
     >
-      <p className="font-serif text-lg text-foreground">{title}</p>
+      <p className="font-heading text-lg text-foreground">{title}</p>
       <p className="mt-2 text-sm text-muted-text">{description}</p>
       {action && (
         <Link
