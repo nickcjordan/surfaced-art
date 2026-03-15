@@ -98,6 +98,7 @@ const PALETTES = [
 ] as const
 
 const STORAGE_KEY = 'sa-theme-palette'
+const OVERRIDE_PROPS = ['--accent-primary', '--accent-primary-hover', '--accent-secondary', '--accent-secondary-hover']
 
 // Track client-side mount without useState/useEffect
 const emptySubscribe = () => () => {}
@@ -107,6 +108,12 @@ function useMounted() {
     () => true,
     () => false
   )
+}
+
+function getStoredPaletteId(): string | null {
+  if (typeof window === 'undefined') return null
+  const saved = localStorage.getItem(STORAGE_KEY)
+  return saved && PALETTES.some(p => p.id === saved) ? saved : null
 }
 
 function applyPalette(id: string, isDark: boolean) {
@@ -123,8 +130,7 @@ function applyPalette(id: string, isDark: boolean) {
 
 function clearPaletteOverrides() {
   const root = document.documentElement
-  const props = ['--accent-primary', '--accent-primary-hover', '--accent-secondary', '--accent-secondary-hover']
-  for (const prop of props) {
+  for (const prop of OVERRIDE_PROPS) {
     root.style.removeProperty(prop)
   }
 }
@@ -132,16 +138,9 @@ function clearPaletteOverrides() {
 export function ThemePicker() {
   const mounted = useMounted()
   const [isOpen, setIsOpen] = useState(false)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  // Lazy initializer reads localStorage synchronously — no setState-in-effect needed
+  const [activeId, setActiveId] = useState<string | null>(getStoredPaletteId)
   const menuRef = useRef<HTMLDivElement>(null)
-
-  // Load saved palette on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved && PALETTES.some(p => p.id === saved)) {
-      setActiveId(saved)
-    }
-  }, [])
 
   // Apply palette whenever activeId or dark/light mode changes
   useEffect(() => {
