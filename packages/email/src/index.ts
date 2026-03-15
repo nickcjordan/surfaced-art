@@ -5,7 +5,7 @@ export { sendEmail } from './send.js'
 export type { SendEmailOptions, SendEmailResult } from './send.js'
 
 // Config
-export { getEmailConfig, ADMIN_EMAIL } from './config.js'
+export { getEmailConfig, getAdminEmail } from './config.js'
 export type { EmailConfig } from './config.js'
 
 // Client (for testing)

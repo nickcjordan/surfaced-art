@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { getEmailConfig, ADMIN_EMAIL } from './config.js'
+import { getEmailConfig, getAdminEmail } from './config.js'
 
 describe('getEmailConfig', () => {
   const originalEnv = { ...process.env }
 
   beforeEach(() => {
-    process.env.SES_FROM_ADDRESS = 'support@surfaced.art'
-    process.env.SES_CONFIGURATION_SET = 'surfaced-art-prod'
-    process.env.AWS_REGION = 'us-east-1'
+    process.env.EMAIL_FROM_ADDRESS = 'support@surfaced.art'
+    process.env.POSTMARK_SERVER_TOKEN = 'test-postmark-token'
   })
 
   afterEach(() => {
@@ -20,32 +19,38 @@ describe('getEmailConfig', () => {
     expect(config.fromAddress).toBe('Surfaced Art <support@surfaced.art>')
     expect(config.fromName).toBe('Surfaced Art')
     expect(config.replyToAddress).toBe('support@surfaced.art')
-    expect(config.configurationSet).toBe('surfaced-art-prod')
-    expect(config.region).toBe('us-east-1')
+    expect(config.postmarkToken).toBe('test-postmark-token')
   })
 
-  it('should throw when SES_FROM_ADDRESS is not set', () => {
-    delete process.env.SES_FROM_ADDRESS
+  it('should throw when EMAIL_FROM_ADDRESS is not set', () => {
+    delete process.env.EMAIL_FROM_ADDRESS
 
-    expect(() => getEmailConfig()).toThrow('SES_FROM_ADDRESS must be set')
+    expect(() => getEmailConfig()).toThrow('EMAIL_FROM_ADDRESS must be set')
   })
 
-  it('should throw when AWS_REGION is not set', () => {
-    delete process.env.AWS_REGION
+  it('should throw when POSTMARK_SERVER_TOKEN is not set', () => {
+    delete process.env.POSTMARK_SERVER_TOKEN
 
-    expect(() => getEmailConfig()).toThrow('AWS_REGION must be set')
-  })
-
-  it('should return undefined configurationSet when SES_CONFIGURATION_SET is not set', () => {
-    delete process.env.SES_CONFIGURATION_SET
-
-    const config = getEmailConfig()
-    expect(config.configurationSet).toBeUndefined()
+    expect(() => getEmailConfig()).toThrow('POSTMARK_SERVER_TOKEN must be set')
   })
 })
 
-describe('ADMIN_EMAIL', () => {
-  it('should be the hardcoded admin email address', () => {
-    expect(ADMIN_EMAIL).toBe('surfacedartllc@gmail.com')
+describe('getAdminEmail', () => {
+  const originalEnv = { ...process.env }
+
+  afterEach(() => {
+    process.env = { ...originalEnv }
+  })
+
+  it('should return the admin email from env var', () => {
+    process.env.ADMIN_EMAIL = 'admin@surfaced.art'
+
+    expect(getAdminEmail()).toBe('admin@surfaced.art')
+  })
+
+  it('should throw when ADMIN_EMAIL is not set', () => {
+    delete process.env.ADMIN_EMAIL
+
+    expect(() => getAdminEmail()).toThrow('ADMIN_EMAIL must be set')
   })
 })
