@@ -99,6 +99,14 @@ describe('MobileNav', () => {
     expect(inactiveLink).not.toHaveAttribute('aria-current')
   })
 
+  it('should render a For Artists link when opened', async () => {
+    render(<MobileNav />)
+    await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+
+    const link = screen.getByRole('link', { name: /for artists/i })
+    expect(link).toHaveAttribute('href', '/for-artists')
+  })
+
   describe('authenticated user links', () => {
     beforeEach(() => {
       mockAuth.user = { email: 'user@test.com', name: 'Test User' }

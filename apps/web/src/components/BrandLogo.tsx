@@ -1,3 +1,7 @@
+'use client'
+
+import { useSyncExternalStore } from 'react'
+import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
@@ -12,30 +16,37 @@ type BrandLogoProps = {
   className?: string
 }
 
+const emptySubscribe = () => () => {}
+function useMounted() {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false)
+}
+
 /**
  * Renders the Surfaced Art logo mark (frame + crimson circle).
- * Switches between light/dark variants based on theme.
+ * Switches between light/dark variants based on resolved theme.
  */
 export function BrandLogo({ size = 'md', className }: BrandLogoProps) {
+  const mounted = useMounted()
+  const { resolvedTheme } = useTheme()
   const dims = sizeMap[size]
+
+  if (!mounted) {
+    return <span className={cn('inline-block', className)} style={{ width: dims.width, height: dims.height }} />
+  }
+
+  const src =
+    resolvedTheme === 'dark'
+      ? '/brand/surfaced_logo_dark.svg'
+      : '/brand/surfaced_logo.svg'
 
   return (
     <span className={cn('inline-block', className)}>
       <Image
-        src="/brand/surfaced_logo.svg"
+        src={src}
         alt="Surfaced Art"
         width={dims.width}
         height={dims.height}
         unoptimized
-        className="block dark:hidden"
-      />
-      <Image
-        src="/brand/surfaced_logo_dark.svg"
-        alt="Surfaced Art"
-        width={dims.width}
-        height={dims.height}
-        unoptimized
-        className="hidden dark:block"
       />
     </span>
   )

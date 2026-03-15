@@ -73,4 +73,34 @@ describe('SearchInput', () => {
 
     expect(mockPush).not.toHaveBeenCalled()
   })
+
+  it('should call onOpenChange when opened and closed', async () => {
+    const onOpenChange = vi.fn()
+    const user = userEvent.setup()
+    render(<SearchInput onOpenChange={onOpenChange} />)
+
+    await user.click(screen.getByTestId('search-toggle'))
+    expect(onOpenChange).toHaveBeenCalledWith(true)
+
+    await user.click(screen.getByRole('button', { name: 'Close search' }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('should collapse when focus leaves the search form', async () => {
+    const user = userEvent.setup()
+    render(
+      <div>
+        <SearchInput />
+        <button data-testid="outside">Outside</button>
+      </div>
+    )
+
+    await user.click(screen.getByTestId('search-toggle'))
+    expect(screen.getByTestId('search-input')).toBeInTheDocument()
+
+    // Click outside the form
+    await user.click(screen.getByTestId('outside'))
+    expect(screen.queryByTestId('search-input')).not.toBeInTheDocument()
+    expect(screen.getByTestId('search-toggle')).toBeInTheDocument()
+  })
 })
