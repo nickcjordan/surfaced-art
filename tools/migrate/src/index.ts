@@ -2,7 +2,7 @@ import { execSync } from 'child_process'
 import fs from 'node:fs'
 
 interface MigrateEvent {
-  command: 'migrate' | 'force-reapply-baseline' | 'reset-baseline' | 'resolve-rolled-back' | 'seed' | 'backfill-dimensions' | 'bootstrap-admin'
+  command: 'migrate' | 'force-reapply-baseline' | 'reset-baseline' | 'resolve-rolled-back' | 'seed' | 'bootstrap-admin'
   migration?: string
   email?: string
 }
@@ -13,7 +13,7 @@ interface MigrateResult {
 }
 
 export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
-  const validCommands = ['migrate', 'force-reapply-baseline', 'reset-baseline', 'resolve-rolled-back', 'seed', 'backfill-dimensions', 'bootstrap-admin']
+  const validCommands = ['migrate', 'force-reapply-baseline', 'reset-baseline', 'resolve-rolled-back', 'seed', 'bootstrap-admin']
   if (!validCommands.includes(event.command)) {
     return { success: false, error: `Unknown command: ${event.command}` }
   }
@@ -69,36 +69,6 @@ export const handler = async (event: MigrateEvent): Promise<MigrateResult> => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('Seed failed:', message)
-      return { success: false, error: message }
-    }
-  }
-
-  // backfill-dimensions: reads actual pixel dimensions from CloudFront image
-  // URLs and updates listing_images rows that have NULL width/height. This
-  // runs after seeding so that seed-created images get real dimensions from
-  // the CDN rather than derived-from-artwork approximations. Idempotent —
-  // only processes rows where width IS NULL.
-  if (event.command === 'backfill-dimensions') {
-    try {
-      const tsxPath = `${LAMBDA_ROOT}/node_modules/.bin/tsx`
-      const backfillScript = `${LAMBDA_ROOT}/prisma/backfill-dimensions.ts`
-
-      if (!fs.existsSync(backfillScript)) {
-        return {
-          success: false,
-          error: `Backfill script not found at ${backfillScript}. Ensure the Dockerfile copies prisma/backfill-dimensions.ts.`,
-        }
-      }
-
-      const output = execSync(
-        `node ${tsxPath} ${backfillScript}`,
-        { ...execOpts, timeout: 300000 } // 5 minute timeout for fetching images
-      )
-      console.log('Backfill output:', output)
-      return { success: true }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err)
-      console.error('Backfill dimensions failed:', message)
       return { success: false, error: message }
     }
   }
