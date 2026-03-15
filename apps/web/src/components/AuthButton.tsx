@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -35,16 +36,15 @@ export function AuthButton() {
 
   return (
     <div data-testid="user-menu">
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <button
             data-testid="user-menu-trigger"
-            className="flex items-center gap-2 text-sm text-foreground hover:text-accent-primary transition-colors outline-none"
+            className="flex items-center gap-1.5 text-sm text-foreground hover:text-accent-primary transition-colors outline-none"
           >
             <span className="flex items-center justify-center h-7 w-7 rounded-full bg-accent-primary/10 text-accent-primary text-xs font-semibold">
               {initial}
             </span>
-            <span className="hidden sm:inline">{user.name}</span>
             <svg
               width="12"
               height="12"
@@ -62,6 +62,10 @@ export function AuthButton() {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuLabel data-testid="menu-user-name">
+            {user.name || user.email}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
           <DropdownMenuItem asChild data-testid="menu-dashboard">
             <Link href="/dashboard">Dashboard</Link>
           </DropdownMenuItem>

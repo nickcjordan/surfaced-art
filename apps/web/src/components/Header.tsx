@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Navigation } from './Navigation'
 import { MobileNav } from './MobileNav'
@@ -15,20 +15,25 @@ import { cn } from '@/lib/utils'
 const SCROLL_THRESHOLD = 50
 
 /**
- * Global site header with brand name, category navigation, and mobile menu.
+ * Global site header — single-row layout.
  *
  * Layout:
- * - Top bar: brand name (left), sign-in + search + theme toggle (right), mobile hamburger (right on small screens)
- * - Below top bar: horizontal category nav (desktop only)
+ * - Left: brand wordmark + category navigation (desktop)
+ * - Right: search + auth + theme toggle + mobile hamburger
  *
- * On scroll, the header condenses: wordmark shrinks, vertical padding reduces,
- * and categories tuck closer to the top.
+ * On scroll, the header condenses: wordmark shrinks and vertical padding reduces.
+ * When search is open, category navigation hides to make room.
  */
 export function Header() {
   const [isCondensed, setIsCondensed] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+  const handleSearchOpenChange = useCallback((open: boolean) => {
+    setIsSearchOpen(open)
+  }, [])
 
   useEffect(() => {
-    function handleScroll() {
+    const handleScroll = () => {
       setIsCondensed(window.scrollY > SCROLL_THRESHOLD)
     }
 
@@ -45,30 +50,52 @@ export function Header() {
     <header
       data-testid="site-header"
       className={cn(
-        'sticky top-0 z-30 bg-background/95 backdrop-blur-sm transition-all duration-300',
+        'sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border transition-all duration-300',
         isCondensed && 'shadow-sm'
       )}
     >
-      {/* Top bar */}
       <Container>
         <div
           className={cn(
             'flex items-center justify-between transition-all duration-300',
-            isCondensed ? 'h-10 md:h-11' : 'h-12 md:h-14'
+            isCondensed ? 'h-11 md:h-12' : 'h-14 md:h-16'
           )}
         >
-          {/* Brand wordmark */}
-          <Link
-            href="/"
-            className="hover:opacity-80 transition-opacity"
-          >
-            <Wordmark size={isCondensed ? 'nav-condensed' : 'nav'} />
-          </Link>
+          {/* Left: logo + category nav */}
+          <div className="flex items-center">
+            <Link
+              href="/"
+              className="shrink-0 hover:opacity-80 transition-opacity"
+            >
+              <Wordmark size={isCondensed ? 'nav-condensed' : 'nav'} />
+            </Link>
 
-          {/* Right side: search + auth + theme toggle + mobile nav */}
+            <div
+              className={cn(
+                'hidden md:flex items-center gap-10 overflow-hidden transition-all duration-300 ease-in-out',
+                isSearchOpen
+                  ? 'max-w-0 opacity-0 ml-0'
+                  : 'max-w-[800px] opacity-100 ml-10'
+              )}
+            >
+              <div className="h-5 border-l border-border shrink-0" aria-hidden="true" />
+              <Navigation condensed={isCondensed} />
+            </div>
+          </div>
+
+          {/* Right: for-artists link + search + auth + theme toggle + mobile nav */}
           <div className="flex items-center gap-2">
+            <Link
+              href="/for-artists"
+              className={cn(
+                'hidden md:block text-sm font-medium text-accent-primary transition-colors hover:text-foreground',
+                isSearchOpen && 'md:hidden'
+              )}
+            >
+              For Artists
+            </Link>
             <div className="hidden md:block">
-              <SearchInput />
+              <SearchInput onOpenChange={handleSearchOpenChange} />
             </div>
             <div className="hidden md:block">
               <AuthButton />
@@ -78,9 +105,6 @@ export function Header() {
           </div>
         </div>
       </Container>
-
-      {/* Desktop category navigation */}
-      <Navigation condensed={isCondensed} />
     </header>
     </>
   )

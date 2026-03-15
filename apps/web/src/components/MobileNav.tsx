@@ -166,6 +166,17 @@ export function MobileNav() {
               </ul>
             </nav>
 
+            {/* For Artists link */}
+            <div className="px-6 mt-4">
+              <Link
+                href="/for-artists"
+                onClick={close}
+                className="block py-3 text-base font-medium tracking-wide text-accent-primary transition-colors hover:text-foreground"
+              >
+                For Artists
+              </Link>
+            </div>
+
             {/* Auth-aware links */}
             {user && (
               <nav data-testid="mobile-auth-nav" aria-label="Account navigation" className="px-6 mt-6">

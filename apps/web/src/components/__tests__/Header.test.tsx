@@ -56,4 +56,10 @@ describe('Header', () => {
     render(<Header />)
     expect(screen.getByTestId('search-toggle')).toBeInTheDocument()
   })
+
+  it('should render a For Artists link pointing to /for-artists', () => {
+    render(<Header />)
+    const link = screen.getByRole('link', { name: /for artists/i })
+    expect(link).toHaveAttribute('href', '/for-artists')
+  })
 })

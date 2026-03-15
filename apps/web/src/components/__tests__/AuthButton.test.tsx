@@ -57,6 +57,28 @@ describe('AuthButton', () => {
   })
 
   describe('dropdown menu items', () => {
+    it('should show user name label in dropdown', async () => {
+      mockAuth.user = { email: 'buyer@test.com', name: 'Test Buyer' }
+      const user = userEvent.setup()
+
+      render(<AuthButton />)
+      await user.click(screen.getByTestId('user-menu-trigger'))
+
+      const nameLabel = screen.getByTestId('menu-user-name')
+      expect(nameLabel).toBeInTheDocument()
+      expect(nameLabel).toHaveTextContent('Test Buyer')
+    })
+
+    it('should fall back to email when name is missing', async () => {
+      mockAuth.user = { email: 'buyer@test.com', name: '' }
+      const user = userEvent.setup()
+
+      render(<AuthButton />)
+      await user.click(screen.getByTestId('user-menu-trigger'))
+
+      expect(screen.getByTestId('menu-user-name')).toHaveTextContent('buyer@test.com')
+    })
+
     it('should show Dashboard and Settings for all authenticated users', async () => {
       mockAuth.user = { email: 'buyer@test.com', name: 'Test Buyer' }
       const user = userEvent.setup()
