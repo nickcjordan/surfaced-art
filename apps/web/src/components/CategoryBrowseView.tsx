@@ -62,7 +62,7 @@ export function CategoryBrowseView({
       <section data-testid="category-header">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="font-serif text-3xl text-foreground sm:text-4xl">
+            <h1 className="font-heading text-3xl text-foreground sm:text-4xl">
               {categoryLabel}
             </h1>
             <p className="mt-2 text-sm text-muted-text">{countLabel}</p>

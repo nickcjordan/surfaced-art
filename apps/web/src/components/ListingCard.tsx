@@ -87,7 +87,7 @@ export function ListingCard({
         {/* Browse variant: hover overlay */}
         {variant === 'browse' && (
           <div className="absolute inset-x-0 bottom-0 translate-y-full bg-gradient-to-t from-[rgba(26,26,26,0.7)] to-transparent p-4 pt-12 transition-transform duration-300 ease-in-out group-hover:translate-y-0">
-            <p className="font-serif text-sm text-white truncate">
+            <p className="font-heading text-sm text-white truncate">
               {listing.title}
             </p>
             <p className="text-xs text-white/80 truncate">{artistName}</p>
@@ -100,7 +100,7 @@ export function ListingCard({
 
       {/* Card info */}
       <div className="p-3">
-        <h3 className="font-serif text-foreground text-sm truncate">
+        <h3 className="font-heading text-foreground text-sm truncate">
           {listing.title}
         </h3>
         {variant !== 'portfolio' && (

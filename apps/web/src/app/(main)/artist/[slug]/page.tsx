@@ -156,7 +156,7 @@ export default async function ArtistProfilePage({ params }: Props) {
           <div className="flex-1">
             <h1
               data-testid="artist-name"
-              className="font-serif text-3xl text-foreground sm:text-4xl"
+              className="font-heading text-3xl text-foreground sm:text-4xl"
             >
               {artist.displayName}
             </h1>
@@ -212,7 +212,7 @@ export default async function ArtistProfilePage({ params }: Props) {
       {/* Process Section */}
       {(processPhotos.length > 0 || processVideo) && (
         <section data-testid="process-section">
-          <h2 className="mb-6 font-serif text-2xl text-foreground">The Process</h2>
+          <h2 className="mb-6 font-heading text-2xl text-foreground">The Process</h2>
 
           {/* Process video */}
           {processVideo && processVideo.videoPlaybackId && (
@@ -240,7 +240,7 @@ export default async function ArtistProfilePage({ params }: Props) {
       {/* CV / History */}
       {cvByType.size > 0 && (
         <section data-testid="cv-section">
-          <h2 className="mb-6 font-serif text-2xl text-foreground">Background</h2>
+          <h2 className="mb-6 font-heading text-2xl text-foreground">Background</h2>
           <div className="space-y-8">
             {Array.from(cvByType.entries()).map(([type, entries]) => (
               <div key={type}>
@@ -279,7 +279,7 @@ export default async function ArtistProfilePage({ params }: Props) {
 
       {/* Available Work */}
       <section data-testid="available-work">
-        <h2 className="mb-6 font-serif text-2xl text-foreground">Available Work</h2>
+        <h2 className="mb-6 font-heading text-2xl text-foreground">Available Work</h2>
         {availableListings.length > 0 ? (
           <MasonryGrid
             columns={[2, 2, 3, 3]}
@@ -316,7 +316,7 @@ export default async function ArtistProfilePage({ params }: Props) {
       {/* Archive (Sold) */}
       {soldListings.length > 0 && (
         <section data-testid="archive-section">
-          <h2 className="mb-6 font-serif text-2xl text-foreground">Collection Archive</h2>
+          <h2 className="mb-6 font-heading text-2xl text-foreground">Collection Archive</h2>
           <MasonryGrid
             columns={[2, 2, 3, 3]}
             className="opacity-75"

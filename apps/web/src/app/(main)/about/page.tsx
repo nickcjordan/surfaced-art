@@ -44,7 +44,7 @@ export default function AboutPage() {
 
       {/* Hero */}
       <section data-testid="about-hero" className="max-w-2xl">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
+        <h1 className="font-heading text-4xl tracking-tight text-foreground sm:text-5xl">
           About Surfaced Art
         </h1>
         <p className="mt-6 text-lg leading-relaxed text-muted-text">
@@ -55,7 +55,7 @@ export default function AboutPage() {
 
       {/* What makes us different */}
       <section data-testid="about-gallery" className="max-w-2xl space-y-6">
-        <h2 className="font-serif text-2xl text-foreground">
+        <h2 className="font-heading text-2xl text-foreground">
           A gallery, not a marketplace
         </h2>
         <p className="text-base leading-relaxed text-muted-text">
@@ -74,7 +74,7 @@ export default function AboutPage() {
 
       {/* For artists */}
       <section data-testid="about-artists" className="max-w-2xl space-y-6">
-        <h2 className="font-serif text-2xl text-foreground">
+        <h2 className="font-heading text-2xl text-foreground">
           For artists
         </h2>
         <p className="text-base leading-relaxed text-muted-text">
@@ -88,7 +88,7 @@ export default function AboutPage() {
 
       {/* For buyers */}
       <section data-testid="about-buyers" className="max-w-2xl space-y-6">
-        <h2 className="font-serif text-2xl text-foreground">
+        <h2 className="font-heading text-2xl text-foreground">
           For buyers
         </h2>
         <p className="text-base leading-relaxed text-muted-text">

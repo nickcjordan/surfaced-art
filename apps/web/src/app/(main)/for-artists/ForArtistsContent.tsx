@@ -318,7 +318,7 @@ function BlobMarker({ size = 24, color = 'var(--accent-primary)', index = 0, chi
         <path d={path} fill={color} />
       </svg>
       {children && (
-        <span className="relative z-10 text-center font-serif font-medium leading-none" style={{ fontSize: size * 0.38 }}>
+        <span className="relative z-10 text-center font-heading font-medium leading-none" style={{ fontSize: size * 0.38 }}>
           {children}
         </span>
       )}
@@ -376,7 +376,7 @@ function HorizontalTimeline() {
                       <span style={{ color: isActive ? 'var(--primary-foreground)' : 'var(--muted)' }}>{step.num}</span>
                     </BlobMarker>
                   </div>
-                  <p className="font-serif text-base transition-colors duration-500" style={{ color: isActive ? 'var(--foreground)' : 'var(--muted)' }}>{step.title}</p>
+                  <p className="font-heading text-base transition-colors duration-500" style={{ color: isActive ? 'var(--foreground)' : 'var(--muted)' }}>{step.title}</p>
                   <p className="text-body-small mt-1 transition-colors duration-500" style={{ color: isActive ? 'var(--muted)' : 'color-mix(in srgb, var(--muted) 50%, var(--background))' }}>{step.desc}</p>
                 </div>
               )
@@ -392,7 +392,7 @@ function HorizontalTimeline() {
                 <span style={{ color: 'var(--primary-foreground)' }}>{step.num}</span>
               </BlobMarker>
               <div className="pt-0.5">
-                <p className="font-serif text-lg text-foreground">{step.title}</p>
+                <p className="font-heading text-lg text-foreground">{step.title}</p>
                 <p className="text-body-default mt-1 text-muted-text">{step.desc}</p>
               </div>
             </div>
@@ -435,7 +435,7 @@ function CardFan({ cards }: { cards: { icon: 'analytics' | 'venue' | 'commission
                   <RoadmapIcon type={card.icon} />
                 </div>
                 <div>
-                  <p className="font-serif text-base text-foreground">{card.title}</p>
+                  <p className="font-heading text-base text-foreground">{card.title}</p>
                   <p className="text-body-small mt-1.5 text-muted-text">{card.desc}</p>
                 </div>
               </div>
@@ -496,7 +496,7 @@ function PainPointIcon({ type }: { type: 'dms' | 'website' | 'invisible' | 'trus
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         {/* Question mark in a shield outline = no credibility */}
         <path d="M16 3L5 8v8c0 7.5 4.7 12.5 11 15 6.3-2.5 11-7.5 11-15V8L16 3z" stroke="var(--foreground)" strokeWidth="1.5" opacity="0.1" fill="none" />
-        <text x="16" y="20" textAnchor="middle" fontSize="13" fontFamily="var(--active-font-serif)" fill="var(--foreground)" opacity="0.15">?</text>
+        <text x="16" y="20" textAnchor="middle" fontSize="13" fontFamily="var(--active-font-heading)" fill="var(--foreground)" opacity="0.15">?</text>
       </svg>
     ),
   }
@@ -749,7 +749,7 @@ export default function ForArtistsContent() {
             ].map((card, i) => (
               <FadeIn key={card.label} delay={i * 100}>
                 <div className="rounded-lg border border-border bg-background/90 p-6 backdrop-blur-sm">
-                  <p className="font-serif text-lg text-foreground">{card.label}</p>
+                  <p className="font-heading text-lg text-foreground">{card.label}</p>
                   <p className="text-body-small mt-2 text-muted-text">{card.detail}</p>
                 </div>
               </FadeIn>
@@ -930,7 +930,7 @@ export default function ForArtistsContent() {
                   <div className="flex gap-5 bg-background p-6 md:p-8">
                     <div className="flex-shrink-0 pt-1">{feature.icon}</div>
                     <div>
-                      <p className="font-serif text-lg text-foreground">{feature.title}</p>
+                      <p className="font-heading text-lg text-foreground">{feature.title}</p>
                       <p className="text-body-small mt-1.5 text-muted-text">{feature.desc}</p>
                     </div>
                   </div>
@@ -967,7 +967,7 @@ export default function ForArtistsContent() {
               ].map((stat, i) => (
                 <FadeIn key={stat.label} delay={i * 100}>
                   <div className="text-center">
-                    <p className="font-serif text-5xl tracking-tight md:text-6xl" style={{ color: 'var(--accent-primary)' }}>
+                    <p className="font-heading text-5xl tracking-tight md:text-6xl" style={{ color: 'var(--accent-primary)' }}>
                       {stat.prefix}{stat.value}
                     </p>
                     <p className="mt-2 font-medium text-foreground">{stat.label}</p>
@@ -1128,7 +1128,7 @@ export default function ForArtistsContent() {
                       <RoadmapIcon type={item.icon} />
                     </div>
                     <div>
-                      <p className="font-serif text-base text-foreground">{item.title}</p>
+                      <p className="font-heading text-base text-foreground">{item.title}</p>
                       <p className="text-body-small mt-1 text-muted-text">{item.desc}</p>
                     </div>
                   </div>

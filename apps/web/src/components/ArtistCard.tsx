@@ -77,7 +77,7 @@ export function ArtistCard({ artist, className, 'data-testid': testId }: ArtistC
       <div className="flex items-center gap-3 px-4 py-3.5">
         <ProfilePhoto src={artist.profileImageUrl} alt={artist.displayName} size="md" />
         <div className="min-w-0 flex-1">
-          <h3 className="font-serif text-foreground text-base truncate">{artist.displayName}</h3>
+          <h3 className="font-heading text-foreground text-base truncate">{artist.displayName}</h3>
           <p className="text-muted-text text-sm truncate">{artist.location}</p>
         </div>
       </div>

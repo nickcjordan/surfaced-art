@@ -60,7 +60,7 @@ export default async function PortfolioWorkPage({ params }: Props) {
       {/* Archive — sold work */}
       {soldListings.length > 0 && (
         <section data-testid="archive-section" className="mt-16">
-          <h2 className="mb-6 font-serif text-2xl text-muted-text">Archive</h2>
+          <h2 className="mb-6 font-heading text-2xl text-muted-text">Archive</h2>
           <MasonryGrid
             columns={[2, 2, 3, 3]}
             className="opacity-60 grayscale-[20%]"

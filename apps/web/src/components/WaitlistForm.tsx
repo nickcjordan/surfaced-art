@@ -61,7 +61,7 @@ export function WaitlistForm({ artistName, source, artistId, listingId }: Waitli
   if (state === 'success') {
     return (
       <div data-testid="waitlist-success" className="text-center">
-        <p className="font-serif text-lg text-foreground">You&rsquo;re on the list.</p>
+        <p className="font-heading text-lg text-foreground">You&rsquo;re on the list.</p>
         <p className="mt-2 text-sm text-muted-text">
           {artistName
             ? `We\u2019ll notify you when ${artistName} lists new work.`

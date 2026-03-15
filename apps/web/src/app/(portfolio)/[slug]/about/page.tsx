@@ -86,7 +86,7 @@ export default async function PortfolioAboutPage({ params }: Props) {
       {/* Process Section */}
       {(processPhotos.length > 0 || processVideo) && (
         <section data-testid="process-section">
-          <h2 className="mb-6 font-serif text-2xl text-foreground">
+          <h2 className="mb-6 font-heading text-2xl text-foreground">
             The Process
           </h2>
 

@@ -1,15 +1,15 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { DM_Serif_Display, DM_Sans } from 'next/font/google'
+import { Josefin_Sans, DM_Sans } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '@/lib/auth'
 import { AnalyticsProvider, PostHogPageView } from '@/lib/analytics'
 import { SITE_URL } from '@/lib/site-config'
 import './globals.css'
 
-const dmSerifDisplay = DM_Serif_Display({
-  variable: '--font-dm-serif',
-  weight: '400',
+const josefinSans = Josefin_Sans({
+  variable: '--font-heading',
+  weight: ['300', '400', '500', '600', '700'],
   subsets: ['latin'],
   display: 'swap',
 })
@@ -48,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${dmSerifDisplay.variable} ${dmSans.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${josefinSans.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <body className="antialiased min-h-screen flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>

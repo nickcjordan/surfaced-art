@@ -53,13 +53,22 @@
       "Bash(gh pr:*)",
       "Bash(npx eslint:*)",
       "Bash(git rm:*)",
-      "Bash(ls c:/dev/src/surfaced-art/apps/web/src/app/\\\\\\(portfolio\\\\\\)/[slug]/)"
+      "Bash(ls c:/dev/src/surfaced-art/apps/web/src/app/\\\\\\(portfolio\\\\\\)/[slug]/)",
+      "WebFetch(domain:www.fontpair.co)",
+      "WebFetch(domain:fontforge.io)",
+      "WebFetch(domain:fonts.google.com)",
+      "Bash(while read:*)",
+      "Bash(ls -la /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/color-demo/)",
+      "Bash(ls -la /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/font-demo/ /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/hero-concepts/)"
     ],
     "additionalDirectories": [
       "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio",
       "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)",
       "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio\\[slug]",
-      "c:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(portfolio)\\[slug]"
+      "c:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(portfolio)\\[slug]",
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(portfolio)\\[slug]\\about.bak",
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(portfolio)\\[slug]\\cv.bak",
+      "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(portfolio)\\[slug]"
     ]
   }
 }
