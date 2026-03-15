@@ -191,7 +191,6 @@ module "iam" {
   aws_region   = var.aws_region
 
   s3_bucket_arn              = module.s3_cloudfront.bucket_arn
-  ses_domain                 = var.ses_domain
   lambda_ecr_repository_arns = [aws_ecr_repository.api.arn, aws_ecr_repository.migrate.arn, aws_ecr_repository.image_processor.arn]
 }
 
@@ -238,15 +237,6 @@ module "cognito" {
   apple_private_key    = var.apple_private_key
 }
 
-# SES module
-module "ses" {
-  source = "./modules/ses"
-
-  project_name = var.project_name
-  environment  = var.environment
-  domain       = var.ses_domain
-}
-
 # Lambda + API Gateway module
 # depends_on ensures the ECR repository policy exists before Lambda is created,
 # so the function can pull its container image. This replaces the need for
@@ -275,8 +265,9 @@ module "lambda_api" {
   s3_bucket_name             = module.s3_cloudfront.bucket_name
   cloudfront_url             = module.s3_cloudfront.cloudfront_url
   cloudfront_domain          = module.s3_cloudfront.cloudfront_domain_name
-  ses_from_address           = "support@${var.ses_domain}"
-  ses_configuration_set_name = module.ses.configuration_set_name
+  email_from_address         = "support@surfaced.art"
+  postmark_server_token      = var.postmark_server_token
+  admin_email                = var.admin_email
   stripe_secret_key          = var.stripe_secret_key
   stripe_webhook_secret      = var.stripe_webhook_secret
   cache_disabled             = var.cache_disabled

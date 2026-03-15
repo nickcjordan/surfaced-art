@@ -2,7 +2,7 @@
  * Email-specific rate limiter.
  *
  * Sliding window counter that limits email sends per Lambda instance.
- * Prevents exceeding SES sending limits.
+ * Prevents exceeding Postmark sending limits.
  */
 
 interface RateLimitState {

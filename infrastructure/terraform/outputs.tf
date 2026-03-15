@@ -34,11 +34,6 @@ output "cognito_domain" {
   value       = module.cognito.domain
 }
 
-output "ses_domain_identity_arn" {
-  description = "SES domain identity ARN"
-  value       = module.ses.domain_identity_arn
-}
-
 output "lambda_function_name" {
   description = "Lambda function name for deployments"
   value       = module.lambda_api.function_name

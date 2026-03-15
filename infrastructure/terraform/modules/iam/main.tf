@@ -112,28 +112,3 @@ resource "aws_iam_role_policy" "lambda_ecr" {
     ]
   })
 }
-
-# SES access policy
-resource "aws_iam_role_policy" "lambda_ses" {
-  name = "${var.project_name}-${var.environment}-lambda-ses"
-  role = aws_iam_role.lambda_execution.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ses:SendEmail",
-          "ses:SendRawEmail"
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "ses:FromAddress" = "*@${var.ses_domain}"
-          }
-        }
-      }
-    ]
-  })
-}

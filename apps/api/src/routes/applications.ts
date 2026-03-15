@@ -6,7 +6,7 @@ import {
   sendEmail,
   ArtistApplicationConfirmation,
   AdminApplicationNotification,
-  ADMIN_EMAIL,
+  getAdminEmail,
 } from '@surfaced-art/email'
 import { artistApplicationBody, checkEmailQuery, sanitizeText } from '@surfaced-art/types'
 import { badRequest, validationError, conflict, internalError } from '../errors'
@@ -169,7 +169,7 @@ export function createApplicationRoutes(prisma: PrismaClient) {
 
       // Send notification email to admin team (fire-and-forget)
       sendEmailAsync({
-        to: ADMIN_EMAIL,
+        to: getAdminEmail(),
         subject: `New Artist Application: ${sanitizedFullName}`,
         template: createElement(AdminApplicationNotification, {
           artistName: sanitizedFullName,

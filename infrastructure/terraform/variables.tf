@@ -97,11 +97,17 @@ variable "stripe_webhook_secret" {
   default     = ""
 }
 
-# SES variables
-variable "ses_domain" {
-  description = "Domain for SES email sending"
+# Email variables
+variable "postmark_server_token" {
+  description = "Postmark Server API token for transactional email"
   type        = string
-  default     = "surfaced.art"
+  sensitive   = true
+}
+
+variable "admin_email" {
+  description = "Admin email for internal notifications (e.g., new artist applications)"
+  type        = string
+  default     = "surfacedartllc@gmail.com"
 }
 
 # Seed mode

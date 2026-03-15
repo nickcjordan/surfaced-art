@@ -96,6 +96,7 @@ jobs:
             -var="alert_email_address=plan@placeholder.com" \
             -var="stripe_secret_key=plan-placeholder" \
             -var="stripe_webhook_secret=plan-placeholder" \
+            -var="postmark_server_token=plan-placeholder" \
             -var="placeholder_image_uri=public.ecr.aws/lambda/nodejs:20" \
             2>&1 | tee /tmp/plan.txt
           echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"

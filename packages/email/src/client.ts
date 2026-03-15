@@ -1,29 +1,29 @@
 /**
- * SES client singleton — lazy-initialized on first use.
+ * Postmark client singleton — lazy-initialized on first use.
  *
  * Follows the same pattern as the Cognito verifier in
  * apps/api/src/middleware/auth.ts (getVerifier/setVerifier/resetVerifier).
  */
 
-import { SESClient } from '@aws-sdk/client-ses'
+import { ServerClient } from 'postmark'
+import { getEmailConfig } from './config.js'
 
-let client: SESClient | null = null
+let client: ServerClient | null = null
 
-export function getSESClient(): SESClient {
+export function getPostmarkClient(): ServerClient {
   if (!client) {
-    const region = process.env.AWS_REGION
-    if (!region) throw new Error('AWS_REGION is not set')
-    client = new SESClient({ region })
+    const config = getEmailConfig()
+    client = new ServerClient(config.postmarkToken)
   }
   return client
 }
 
-/** Override the SES client — used for testing with mocks. */
-export function setSESClient(c: SESClient): void {
+/** Override the Postmark client — used for testing with mocks. */
+export function setPostmarkClient(c: ServerClient): void {
   client = c
 }
 
-/** Reset the SES client singleton — used by tests. */
-export function resetSESClient(): void {
+/** Reset the Postmark client singleton — used by tests. */
+export function resetPostmarkClient(): void {
   client = null
 }
