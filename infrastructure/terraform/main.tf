@@ -24,23 +24,8 @@ data "aws_subnets" "default" {
 
 data "aws_caller_identity" "current" {}
 
-# Route tables for the default VPC — needed by the S3 gateway endpoint
-data "aws_route_tables" "default" {
-  vpc_id = data.aws_vpc.default.id
-}
-
-# S3 gateway endpoint — allows VPC-attached Lambdas (migrate) to reach S3
-# without traversing a NAT gateway or the public internet.
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id            = data.aws_vpc.default.id
-  service_name      = "com.amazonaws.${var.aws_region}.s3"
-  vpc_endpoint_type = "Gateway"
-  route_table_ids   = data.aws_route_tables.default.ids
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-s3-endpoint"
-  }
-}
+# Note: VPC-scoped singletons (S3 gateway endpoint) are managed in
+# infrastructure/terraform/shared/ — see shared/main.tf.
 
 # ECR repository for Lambda container images
 # Defined here (not in lambda-api module) so IAM can scope permissions to this ARN
