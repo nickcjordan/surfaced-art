@@ -5,8 +5,8 @@
 /*
  * Surfaced Art — Design tokens (Brand Design System v2.0)
  *
- * Palette: warm neutrals — moderately muted, warm but identifiable hues.
- * The artwork provides vibrancy; the platform is a quiet, warm frame.
+ * Palette: Forest + Amber — deep forest green with warm amber.
+ * Rich, natural, frames artwork like a well-lit gallery in the woods.
  * Typography: serif headings (DM Serif Display), clean sans body (DM Sans).
  * Variable names follow ShadCN/ui conventions for component compatibility.
  *
@@ -20,42 +20,42 @@
   --foreground: #1A1A1A;
   --muted: #6B6460;
   --border: #E5E0DB;
-  --accent-primary: #B8956A;
-  --accent-primary-hover: #A6845C;
-  --accent-secondary: #C4775A;
-  --accent-secondary-hover: #B5694D;
+  --accent-primary: #4A6B5A;
+  --accent-primary-hover: #3D5A4C;
+  --accent-secondary: #C49A5A;
+  --accent-secondary-hover: #B58A4D;
   --error: #C4534A;
   --success: #6B8F6B;
   --warning: #D4A054;
   --overlay: rgba(26, 26, 26, 0.6);
 
-  /* ShadCN alias tokens — Light Mode */
-  --card: #F2F0ED;
-  --card-foreground: #1A1A1A;
-  --popover: #FAFAF8;
-  --popover-foreground: #1A1A1A;
-  --primary: #B8956A;
+  /* ShadCN alias tokens — Light Mode (derived from brand tokens above) */
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--background);
+  --popover-foreground: var(--foreground);
+  --primary: var(--accent-primary);
   --primary-foreground: #FFFFFF;
-  --secondary: #F2F0ED;
-  --secondary-foreground: #1A1A1A;
-  --muted-foreground: #6B6460;
-  --accent: #F2F0ED;
-  --accent-foreground: #1A1A1A;
-  --destructive: #C4534A;
+  --secondary: var(--surface);
+  --secondary-foreground: var(--foreground);
+  --muted-foreground: var(--muted);
+  --accent: var(--surface);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--error);
   --destructive-foreground: #FFFFFF;
-  --input: #E5E0DB;
-  --ring: #B8956A;
+  --input: var(--border);
+  --ring: var(--accent-primary);
   --radius: 5px;
 
-  /* Sidebar — Light Mode */
-  --sidebar: #F2F0ED;
-  --sidebar-foreground: #1A1A1A;
-  --sidebar-primary: #B8956A;
+  /* Sidebar — Light Mode (derived from brand tokens above) */
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--accent-primary);
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F2F0ED;
-  --sidebar-accent-foreground: #1A1A1A;
-  --sidebar-border: #E5E0DB;
-  --sidebar-ring: #B8956A;
+  --sidebar-accent: var(--surface);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--accent-primary);
 
   /* Font stacks — next/font injects --font-dm-serif and --font-dm-sans */
   --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
@@ -69,41 +69,41 @@
   --foreground: #F5F2EE;
   --muted: #9C9590;
   --border: #3D3835;
-  --accent-primary: #C9A678;
-  --accent-primary-hover: #D4B48A;
-  --accent-secondary: #D08A6E;
-  --accent-secondary-hover: #DC9A7E;
+  --accent-primary: #6B9B7A;
+  --accent-primary-hover: #7DAE8C;
+  --accent-secondary: #D4AA6A;
+  --accent-secondary-hover: #E0BA7A;
   --error: #D4645C;
   --success: #7FA37F;
   --warning: #E0B060;
   --overlay: rgba(0, 0, 0, 0.7);
 
-  /* ShadCN alias tokens — Dark Mode */
-  --card: #282420;
-  --card-foreground: #F5F2EE;
-  --popover: #1C1917;
-  --popover-foreground: #F5F2EE;
-  --primary: #C9A678;
-  --primary-foreground: #1C1917;
-  --secondary: #282420;
-  --secondary-foreground: #F5F2EE;
-  --muted-foreground: #9C9590;
-  --accent: #282420;
-  --accent-foreground: #F5F2EE;
-  --destructive: #D4645C;
-  --destructive-foreground: #1C1917;
-  --input: #3D3835;
-  --ring: #C9A678;
+  /* ShadCN alias tokens — Dark Mode (derived from brand tokens above) */
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--background);
+  --popover-foreground: var(--foreground);
+  --primary: var(--accent-primary);
+  --primary-foreground: var(--background);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--foreground);
+  --muted-foreground: var(--muted);
+  --accent: var(--surface);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--error);
+  --destructive-foreground: var(--background);
+  --input: var(--border);
+  --ring: var(--accent-primary);
 
-  /* Sidebar — Dark Mode */
-  --sidebar: #282420;
-  --sidebar-foreground: #F5F2EE;
-  --sidebar-primary: #C9A678;
-  --sidebar-primary-foreground: #1C1917;
-  --sidebar-accent: #282420;
-  --sidebar-accent-foreground: #F5F2EE;
-  --sidebar-border: #3D3835;
-  --sidebar-ring: #C9A678;
+  /* Sidebar — Dark Mode (derived from brand tokens above) */
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--accent-primary);
+  --sidebar-primary-foreground: var(--background);
+  --sidebar-accent: var(--surface);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--accent-primary);
 
   /* Font stacks (same as light mode) */
   --active-font-sans: var(--font-dm-sans, 'DM Sans', sans-serif);
