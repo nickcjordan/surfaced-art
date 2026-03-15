@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { SendEmailCommand } from '@aws-sdk/client-ses'
 import { sendEmail } from './send.js'
-import { setSESClient, resetSESClient } from './client.js'
+import { setPostmarkClient, resetPostmarkClient } from './client.js'
 import { resetRateLimit, configureRateLimit } from './rate-limiter.js'
+import type { ServerClient } from 'postmark'
 import React from 'react'
 
 // Minimal React element for testing — a plain text node
@@ -10,8 +10,8 @@ function TestTemplate() {
   return React.createElement('div', null, 'Test email content')
 }
 
-const mockSend = vi.fn()
-const mockSESClient = { send: mockSend } as unknown as import('@aws-sdk/client-ses').SESClient
+const mockSendEmail = vi.fn()
+const mockPostmarkClient = { sendEmail: mockSendEmail } as unknown as ServerClient
 
 describe('sendEmail', () => {
   const originalEnv = { ...process.env }
@@ -20,15 +20,15 @@ describe('sendEmail', () => {
     vi.clearAllMocks()
     resetRateLimit()
     configureRateLimit({ maxPerSecond: 100, windowMs: 1000 })
-    setSESClient(mockSESClient)
-    process.env.SES_FROM_ADDRESS = 'support@surfaced.art'
-    process.env.SES_CONFIGURATION_SET = 'surfaced-art-prod'
-    process.env.AWS_REGION = 'us-east-1'
-    mockSend.mockResolvedValue({ MessageId: 'test-message-id-123' })
+    setPostmarkClient(mockPostmarkClient)
+    process.env.EMAIL_FROM_ADDRESS = 'support@surfaced.art'
+    process.env.POSTMARK_SERVER_TOKEN = 'test-postmark-token'
+    process.env.ADMIN_EMAIL = 'admin@surfaced.art'
+    mockSendEmail.mockResolvedValue({ MessageID: 'test-message-id-123' })
   })
 
   afterEach(() => {
-    resetSESClient()
+    resetPostmarkClient()
     process.env = { ...originalEnv }
   })
 
@@ -44,27 +44,27 @@ describe('sendEmail', () => {
     expect(result.error).toBeUndefined()
   })
 
-  it('should call SES with correct SendEmailCommand params', async () => {
+  it('should call Postmark with correct params', async () => {
     await sendEmail({
       to: 'artist@example.com',
       subject: 'Welcome',
       template: React.createElement(TestTemplate),
     })
 
-    expect(mockSend).toHaveBeenCalledOnce()
+    expect(mockSendEmail).toHaveBeenCalledOnce()
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        From: 'Surfaced Art <support@surfaced.art>',
+        To: 'artist@example.com',
+        Subject: 'Welcome',
+        ReplyTo: 'support@surfaced.art',
+        MessageStream: 'outbound',
+      }),
+    )
 
-    const command = mockSend.mock.calls[0]![0] as SendEmailCommand
-    const input = command.input
-
-    expect(input.Source).toBe('Surfaced Art <support@surfaced.art>')
-    expect(input.Destination?.ToAddresses).toEqual(['artist@example.com'])
-    expect(input.Message?.Subject?.Data).toBe('Welcome')
-    expect(input.Message?.Subject?.Charset).toBe('UTF-8')
-    expect(input.Message?.Body?.Html?.Data).toContain('Test email content')
-    expect(input.Message?.Body?.Html?.Charset).toBe('UTF-8')
-    expect(input.Message?.Body?.Text?.Charset).toBe('UTF-8')
-    expect(input.ReplyToAddresses).toEqual(['support@surfaced.art'])
-    expect(input.ConfigurationSetName).toBe('surfaced-art-prod')
+    const callArgs = mockSendEmail.mock.calls[0]![0]
+    expect(callArgs.HtmlBody).toContain('Test email content')
+    expect(callArgs.TextBody).toBeTruthy()
   })
 
   it('should support multiple recipients via array', async () => {
@@ -74,15 +74,15 @@ describe('sendEmail', () => {
       template: React.createElement(TestTemplate),
     })
 
-    const command = mockSend.mock.calls[0]![0] as SendEmailCommand
-    expect(command.input.Destination?.ToAddresses).toEqual([
-      'a@example.com',
-      'b@example.com',
-    ])
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        To: 'a@example.com, b@example.com',
+      }),
+    )
   })
 
-  it('should return error when SES send fails', async () => {
-    mockSend.mockRejectedValue(new Error('SES throttled'))
+  it('should return error when Postmark send fails', async () => {
+    mockSendEmail.mockRejectedValue(new Error('Postmark rate limited'))
 
     const result = await sendEmail({
       to: 'artist@example.com',
@@ -91,7 +91,7 @@ describe('sendEmail', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error).toBe('SES throttled')
+    expect(result.error).toBe('Postmark rate limited')
     expect(result.messageId).toBeUndefined()
   })
 
@@ -114,12 +114,12 @@ describe('sendEmail', () => {
 
     expect(result.success).toBe(false)
     expect(result.error).toBe('Rate limit exceeded')
-    // SES client should NOT have been called for the rate-limited request
-    expect(mockSend).toHaveBeenCalledOnce()
+    // Postmark client should NOT have been called for the rate-limited request
+    expect(mockSendEmail).toHaveBeenCalledOnce()
   })
 
-  it('should return error when SES_FROM_ADDRESS is missing', async () => {
-    delete process.env.SES_FROM_ADDRESS
+  it('should return error when EMAIL_FROM_ADDRESS is missing', async () => {
+    delete process.env.EMAIL_FROM_ADDRESS
 
     const result = await sendEmail({
       to: 'artist@example.com',
@@ -128,20 +128,21 @@ describe('sendEmail', () => {
     })
 
     expect(result.success).toBe(false)
-    expect(result.error).toBe('SES_FROM_ADDRESS must be set')
-    expect(mockSend).not.toHaveBeenCalled()
+    expect(result.error).toBe('EMAIL_FROM_ADDRESS must be set')
+    expect(mockSendEmail).not.toHaveBeenCalled()
   })
 
-  it('should omit ConfigurationSetName when not configured', async () => {
-    delete process.env.SES_CONFIGURATION_SET
+  it('should return error when POSTMARK_SERVER_TOKEN is missing', async () => {
+    delete process.env.POSTMARK_SERVER_TOKEN
 
-    await sendEmail({
+    const result = await sendEmail({
       to: 'artist@example.com',
       subject: 'Test',
       template: React.createElement(TestTemplate),
     })
 
-    const command = mockSend.mock.calls[0]![0] as SendEmailCommand
-    expect(command.input.ConfigurationSetName).toBeUndefined()
+    expect(result.success).toBe(false)
+    expect(result.error).toBe('POSTMARK_SERVER_TOKEN must be set')
+    expect(mockSendEmail).not.toHaveBeenCalled()
   })
 })
