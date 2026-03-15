@@ -141,6 +141,7 @@ jobs:
             -var="alert_email_address=${{ secrets.TF_VAR_alert_email_address }}" \
             -var="stripe_secret_key=${{ secrets.TF_VAR_stripe_secret_key }}" \
             -var="stripe_webhook_secret=${{ secrets.TF_VAR_stripe_webhook_secret }}" \
+            -var="postmark_server_token=${{ secrets.TF_VAR_postmark_server_token }}" \
             -var="placeholder_image_uri=${{ env.LAMBDA_BOOTSTRAP_IMAGE }}" \
             -out=bootstrap.tfplan
           EXIT_CODE=$?
@@ -222,6 +223,7 @@ jobs:
             -var="alert_email_address=${{ secrets.TF_VAR_alert_email_address }}" \
             -var="stripe_secret_key=${{ secrets.TF_VAR_stripe_secret_key }}" \
             -var="stripe_webhook_secret=${{ secrets.TF_VAR_stripe_webhook_secret }}" \
+            -var="postmark_server_token=${{ secrets.TF_VAR_postmark_server_token }}" \
             -var="placeholder_image_uri=${{ steps.bootstrap.outputs.placeholder_uri }}" \
             -out=tfplan
           EXIT_CODE=$?
