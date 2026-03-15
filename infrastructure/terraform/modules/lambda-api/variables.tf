@@ -97,13 +97,19 @@ variable "api_gateway_log_group_arn" {
   type        = string
 }
 
-variable "ses_from_address" {
-  description = "SES sender email address (e.g. support@surfaced.art)"
+variable "email_from_address" {
+  description = "Sender email address (e.g. support@surfaced.art)"
   type        = string
 }
 
-variable "ses_configuration_set_name" {
-  description = "SES configuration set name for email tracking"
+variable "postmark_server_token" {
+  description = "Postmark Server API token for transactional email"
+  type        = string
+  sensitive   = true
+}
+
+variable "admin_email" {
+  description = "Admin email for internal notifications"
   type        = string
 }
 
