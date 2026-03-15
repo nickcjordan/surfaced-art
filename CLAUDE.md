@@ -492,6 +492,9 @@ Required in `.env` files (never commit these):
 DATABASE_URL=postgresql://[user]:[password]@[host]:5432/[dbname]
 AWS_REGION=us-east-1
 REVALIDATION_SECRET=[random-secret]  # Vercel env var — protects POST /api/revalidate
+EMAIL_FROM_ADDRESS=support@surfaced.art  # Postmark sender address
+POSTMARK_SERVER_TOKEN=[server-token]  # Postmark Server API token
+ADMIN_EMAIL=surfacedartllc@gmail.com  # Admin notification recipient
 ```
 
 ## No Shortcuts Policy
