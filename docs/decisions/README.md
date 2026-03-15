@@ -36,3 +36,4 @@ This directory contains Architecture Decision Records (ADRs) for the Surfaced Ar
 | [005](./005-prisma-driver-adapter-pattern.md) | Prisma driver adapter pattern (@prisma/adapter-pg) | Accepted | 2026-02-24 |
 | [006](./006-on-demand-isr.md) | On-demand ISR over build-time SSG | Accepted | 2026-02-26 |
 | [007](./007-venue-ready-data-model.md) | Venue-ready data model architecture | Accepted | 2026-03-01 |
+| [009](./009-postmark-over-ses.md) | Postmark over AWS SES for transactional email | Accepted | 2026-03-15 |
