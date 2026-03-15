@@ -9,7 +9,7 @@ export { getEmailConfig, getAdminEmail } from './config.js'
 export type { EmailConfig } from './config.js'
 
 // Client (for testing)
-export { getSESClient, setSESClient, resetSESClient } from './client.js'
+export { getPostmarkClient, setPostmarkClient, resetPostmarkClient } from './client.js'
 
 // Rate limiter
 export { checkRateLimit, configureRateLimit, resetRateLimit } from './rate-limiter.js'
