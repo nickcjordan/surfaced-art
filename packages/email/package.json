@@ -20,7 +20,7 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@react-email/components": "^1.0.8",
+    "@react-email/components": "^1.0.9",
     "@react-email/render": "^2.0.4",
     "@surfaced-art/utils": "^0.0.1",
     "postmark": "^4.0.5"
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "typescript": "^5.7.0",
-    "vitest": "^4.0.18",
+    "vitest": "^4.1.0",
     "@types/react": "^19.0.0"
   }
 }
