@@ -13,7 +13,10 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 # full dependency graph.
 COPY package.json package-lock.json ./
 COPY tools/migrate/package.json ./tools/migrate/package.json
+COPY tools/artist-scraper/package.json ./tools/artist-scraper/package.json
+COPY tools/recruit/package.json ./tools/recruit/package.json
 COPY packages/db/package.json ./packages/db/package.json
+COPY packages/email/package.json ./packages/email/package.json
 COPY packages/types/package.json ./packages/types/package.json
 COPY packages/utils/package.json ./packages/utils/package.json
 COPY apps/api/package.json ./apps/api/package.json
@@ -42,6 +45,6 @@ COPY packages/db/prisma.config.ts ./
 # runs via tsx at runtime) can resolve its `../src/generated/prisma/client`
 # import. The generated directory is gitignored, so it can't be COPYed
 # from the build context — we must generate it here.
-RUN node node_modules/.bin/prisma generate --schema=prisma/schema.prisma
+RUN npx prisma generate --schema=prisma/schema.prisma
 
 CMD ["index.handler"]
