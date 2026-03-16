@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Images, BadgeDollarSign, Users, Search } from 'lucide-react'
@@ -95,37 +95,34 @@ function ScrollRow({
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const setARef = useRef<HTMLDivElement>(null)
-  const offsetRef = useRef(0)
-  const rafRef = useRef<number>(0)
-  const lastTimeRef = useRef<number>(0)
 
-  const tick = useCallback(
-    (now: number) => {
-      if (lastTimeRef.current === 0) {
-        lastTimeRef.current = now
+  useEffect(() => {
+    let offset = 0
+    let lastTime = 0
+    let raf = 0
+
+    const tick = (now: number) => {
+      if (lastTime === 0) {
+        lastTime = now
       }
 
-      const delta = now - lastTimeRef.current
-      lastTimeRef.current = now
+      const delta = now - lastTime
+      lastTime = now
 
       if (visible.current && trackRef.current && setARef.current) {
         const setWidth = setARef.current.offsetWidth
         if (setWidth > 0) {
-          offsetRef.current =
-            (offsetRef.current + (delta / 1000) * SCROLL_PX_PER_S * speedMultiplier) % setWidth
-          trackRef.current.style.transform = `translateX(-${offsetRef.current}px)`
+          offset = (offset + (delta / 1000) * SCROLL_PX_PER_S * speedMultiplier) % setWidth
+          trackRef.current.style.transform = `translateX(-${offset}px)`
         }
       }
 
-      rafRef.current = requestAnimationFrame(tick)
-    },
-    [speedMultiplier, visible],
-  )
+      raf = requestAnimationFrame(tick)
+    }
 
-  useEffect(() => {
-    rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [tick])
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [speedMultiplier, visible])
 
   function renderSet(keyPrefix: string) {
     return (
