@@ -7,25 +7,17 @@ FROM public.ecr.aws/lambda/nodejs:20
 
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# Copy ALL workspace package manifests — npm ci requires every manifest
-# referenced by the workspaces field in root package.json, even for
-# workspaces this image doesn't use, because the lockfile encodes the
-# full dependency graph.
-COPY package.json package-lock.json ./
-COPY tools/migrate/package.json ./tools/migrate/package.json
-COPY packages/db/package.json ./packages/db/package.json
-COPY packages/types/package.json ./packages/types/package.json
-COPY packages/utils/package.json ./packages/utils/package.json
-COPY apps/api/package.json ./apps/api/package.json
-COPY apps/image-processor/package.json ./apps/image-processor/package.json
-COPY apps/web/package.json ./apps/web/package.json
-
-# Install dependencies. prisma is a direct dependency of @surfaced-art/migrate
-# so it resolves at the standard node_modules/prisma/ path — no symlink hacks.
-RUN npm ci
+# Install production dependencies using migrate's own package.json.
+# This is a standalone install — no workspace resolution, no root
+# lockfile, no need to keep a manifest list in sync with the monorepo.
+# Prisma's native migration engine binary is resolved automatically
+# because we're inside an Amazon Linux container.
+COPY tools/migrate/package.json ./
+RUN npm install --omit=dev && \
+    npm cache clean --force && \
+    rm -f package-lock.json
 
 # Copy the pre-built migration handler (produced by tsup in CI).
-# Root package.json "type": "module" (copied above) ensures ESM loading.
 COPY tools/migrate/dist/index.js ./index.js
 
 # Copy Prisma files needed by `prisma migrate deploy` and `seed`:
@@ -38,10 +30,8 @@ COPY tools/migrate/dist/index.js ./index.js
 COPY packages/db/prisma/ ./prisma/
 COPY packages/db/prisma.config.ts ./
 
-# Generate the Prisma client inside the container so seed-safe.ts (which
-# runs via tsx at runtime) can resolve its `../src/generated/prisma/client`
-# import. The generated directory is gitignored, so it can't be COPYed
-# from the build context — we must generate it here.
-RUN node node_modules/.bin/prisma generate --schema=prisma/schema.prisma
+# Generate the Prisma client inside the container so seed scripts can
+# resolve their `../src/generated/prisma/client` import.
+RUN npx prisma generate --schema=prisma/schema.prisma
 
 CMD ["index.handler"]

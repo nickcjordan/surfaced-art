@@ -61,8 +61,9 @@ resource "aws_lambda_function" "api" {
       CLOUDFRONT_DOMAIN     = var.cloudfront_domain
       FRONTEND_URL              = var.frontend_url
       ADDITIONAL_CORS_ORIGINS   = join(",", var.additional_cors_origins)
-      SES_FROM_ADDRESS      = var.ses_from_address
-      SES_CONFIGURATION_SET = var.ses_configuration_set_name
+      EMAIL_FROM_ADDRESS     = var.email_from_address
+      POSTMARK_SERVER_TOKEN  = var.postmark_server_token
+      ADMIN_EMAIL            = var.admin_email
       STRIPE_SECRET_KEY      = var.stripe_secret_key
       STRIPE_WEBHOOK_SECRET  = var.stripe_webhook_secret
       CACHE_DISABLED         = tostring(var.cache_disabled)

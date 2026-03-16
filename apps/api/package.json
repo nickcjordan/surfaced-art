@@ -14,15 +14,15 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1004.0",
-    "@aws-sdk/s3-presigned-post": "^3.1004.0",
+    "@aws-sdk/client-s3": "^3.1009.0",
+    "@aws-sdk/s3-presigned-post": "^3.1009.0",
     "@hono/node-server": "^1.19.11",
     "@hono/zod-validator": "^0.7.6",
     "@surfaced-art/db": "^0.0.1",
     "@surfaced-art/email": "^0.0.1",
     "@surfaced-art/types": "^0.0.1",
     "@surfaced-art/utils": "^0.0.1",
-    "hono": "^4.12.7",
+    "hono": "^4.12.8",
     "stripe": "^20.4.1",
     "zod": "^4.3.6"
   },
@@ -30,12 +30,12 @@
     "@faker-js/faker": "^10.3.0",
     "@testcontainers/postgresql": "^11.12.0",
     "@types/aws-lambda": "^8.10.161",
-    "@types/node": "^25.3.5",
-    "msw": "^2.12.10",
+    "@types/node": "^25.5.0",
+    "msw": "^2.12.11",
     "testcontainers": "^11.12.0",
     "tsup": "^8.4.0",
     "tsx": "^4.20.0",
     "typescript": "^5.7.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   }
 }

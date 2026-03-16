@@ -1,14 +1,13 @@
 /**
  * Core email sending utility.
  *
- * Renders a React Email template to HTML + plaintext, then sends via SES.
+ * Renders a React Email template to HTML + plaintext, then sends via Postmark.
  * Includes rate limiting and structured logging.
  */
 
-import { SendEmailCommand } from '@aws-sdk/client-ses'
 import { render } from '@react-email/render'
 import { logger } from '@surfaced-art/utils'
-import { getSESClient } from './client.js'
+import { getPostmarkClient } from './client.js'
 import { getEmailConfig } from './config.js'
 import { checkRateLimit } from './rate-limiter.js'
 import type { ReactElement } from 'react'
@@ -48,17 +47,17 @@ export async function sendEmail(
     }
   }
 
-  let client: ReturnType<typeof getSESClient>
+  let client: ReturnType<typeof getPostmarkClient>
   try {
-    client = getSESClient()
+    client = getPostmarkClient()
   } catch (err) {
-    logger.error('SES client initialization error', {
+    logger.error('Postmark client initialization error', {
       errorMessage: err instanceof Error ? err.message : String(err),
       subject: options.subject,
     })
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'SES client error',
+      error: err instanceof Error ? err.message : 'Postmark client error',
     }
   }
 
@@ -66,29 +65,25 @@ export async function sendEmail(
   const html = await render(options.template)
   const text = await render(options.template, { plainText: true })
 
-  const toAddresses = Array.isArray(options.to) ? options.to : [options.to]
-
-  const command = new SendEmailCommand({
-    Source: config.fromAddress,
-    Destination: { ToAddresses: toAddresses },
-    Message: {
-      Subject: { Data: options.subject, Charset: 'UTF-8' },
-      Body: {
-        Html: { Data: html, Charset: 'UTF-8' },
-        Text: { Data: text, Charset: 'UTF-8' },
-      },
-    },
-    ReplyToAddresses: [config.replyToAddress],
-    ConfigurationSetName: config.configurationSet || undefined,
-  })
+  const toAddress = Array.isArray(options.to)
+    ? options.to.join(', ')
+    : options.to
 
   try {
-    const result = await client.send(command)
+    const result = await client.sendEmail({
+      From: config.fromAddress,
+      To: toAddress,
+      Subject: options.subject,
+      HtmlBody: html,
+      TextBody: text,
+      ReplyTo: config.replyToAddress,
+      MessageStream: 'outbound',
+    })
     logger.info('Email sent', {
-      messageId: result.MessageId,
+      messageId: result.MessageID,
       subject: options.subject,
     })
-    return { success: true, messageId: result.MessageId }
+    return { success: true, messageId: result.MessageID }
   } catch (err) {
     logger.error('Email send failed', {
       errorMessage: err instanceof Error ? err.message : String(err),

@@ -24,23 +24,8 @@ data "aws_subnets" "default" {
 
 data "aws_caller_identity" "current" {}
 
-# Route tables for the default VPC — needed by the S3 gateway endpoint
-data "aws_route_tables" "default" {
-  vpc_id = data.aws_vpc.default.id
-}
-
-# S3 gateway endpoint — allows VPC-attached Lambdas (migrate) to reach S3
-# without traversing a NAT gateway or the public internet.
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id            = data.aws_vpc.default.id
-  service_name      = "com.amazonaws.${var.aws_region}.s3"
-  vpc_endpoint_type = "Gateway"
-  route_table_ids   = data.aws_route_tables.default.ids
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-s3-endpoint"
-  }
-}
+# Note: VPC-scoped singletons (S3 gateway endpoint) are managed in
+# infrastructure/terraform/shared/ — see shared/main.tf.
 
 # ECR repository for Lambda container images
 # Defined here (not in lambda-api module) so IAM can scope permissions to this ARN
@@ -191,7 +176,6 @@ module "iam" {
   aws_region   = var.aws_region
 
   s3_bucket_arn              = module.s3_cloudfront.bucket_arn
-  ses_domain                 = var.ses_domain
   lambda_ecr_repository_arns = [aws_ecr_repository.api.arn, aws_ecr_repository.migrate.arn, aws_ecr_repository.image_processor.arn]
 }
 
@@ -238,15 +222,6 @@ module "cognito" {
   apple_private_key    = var.apple_private_key
 }
 
-# SES module
-module "ses" {
-  source = "./modules/ses"
-
-  project_name = var.project_name
-  environment  = var.environment
-  domain       = var.ses_domain
-}
-
 # Lambda + API Gateway module
 # depends_on ensures the ECR repository policy exists before Lambda is created,
 # so the function can pull its container image. This replaces the need for
@@ -275,8 +250,9 @@ module "lambda_api" {
   s3_bucket_name             = module.s3_cloudfront.bucket_name
   cloudfront_url             = module.s3_cloudfront.cloudfront_url
   cloudfront_domain          = module.s3_cloudfront.cloudfront_domain_name
-  ses_from_address           = "support@${var.ses_domain}"
-  ses_configuration_set_name = module.ses.configuration_set_name
+  email_from_address         = "support@surfaced.art"
+  postmark_server_token      = var.postmark_server_token
+  admin_email                = var.admin_email
   stripe_secret_key          = var.stripe_secret_key
   stripe_webhook_secret      = var.stripe_webhook_secret
   cache_disabled             = var.cache_disabled

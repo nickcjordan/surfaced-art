@@ -106,7 +106,7 @@ export default async function PortfolioSlugLayout({ params, children }: Props) {
       <header data-testid="portfolio-header" className="mx-auto max-w-6xl px-6 pt-8 pb-4">
         <h1
           data-testid="artist-name"
-          className="font-serif text-4xl text-foreground sm:text-5xl"
+          className="font-heading text-4xl text-foreground sm:text-5xl"
         >
           {artist.displayName}
         </h1>

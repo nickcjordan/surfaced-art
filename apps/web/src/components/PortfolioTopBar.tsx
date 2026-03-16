@@ -12,7 +12,7 @@ export function PortfolioTopBar({ artistName, artistSlug }: PortfolioTopBarProps
   return (
     <header data-testid="portfolio-top-bar" className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="mx-auto max-w-6xl px-6 flex items-center justify-between h-14">
-        <span className="font-serif text-foreground tracking-wide text-base truncate">
+        <span className="font-heading text-foreground tracking-wide text-base truncate">
           {artistName}
         </span>
         <div className="flex items-center gap-4 shrink-0 ml-4">

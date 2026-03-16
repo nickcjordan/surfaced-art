@@ -36,14 +36,15 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "@notionhq/client": "^5.11.1",
+    "@notionhq/client": "^5.13.0",
     "@typescript-eslint/eslint-plugin": "^8.57.0",
     "@typescript-eslint/parser": "^8.57.0",
     "eslint": "^9.0.0",
     "prettier": "^3.5.0",
-    "turbo": "^2.8.14",
+    "turbo": "^2.8.17",
     "typescript-eslint": "^8.57.0",
-    "vitest": "^4.0.18"
+    "jsdom": "^29.0.0",
+    "vitest": "^4.1.0"
   },
   "overrides": {
     "minimatch": ">=10.2.1",

@@ -18,11 +18,6 @@ variable "s3_bucket_arn" {
   type        = string
 }
 
-variable "ses_domain" {
-  description = "Domain for SES email sending"
-  type        = string
-}
-
 variable "lambda_ecr_repository_arns" {
   description = "ARNs of the ECR repositories used by Lambda container images"
   type        = list(string)

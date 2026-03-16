@@ -7,41 +7,8 @@
 # retention policies and naming are consistent across the platform.
 #
 
-# -----------------------------------------------------------------------------
-# API Gateway CloudWatch Logging — IAM Role & Account
-# -----------------------------------------------------------------------------
-# API Gateway requires a regional account-level setting to push logs to
-# CloudWatch. This is a one-time configuration per AWS account per region.
-# The IAM role grants API Gateway permission to create log streams and
-# put log events into any CloudWatch log group.
-
-resource "aws_iam_role" "api_gateway_cloudwatch" {
-  name = "${var.project_name}-${var.environment}-${var.aws_region}-api-gateway-cloudwatch"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "apigateway.amazonaws.com"
-      }
-    }]
-  })
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-${var.aws_region}-api-gateway-cloudwatch"
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
-  role       = aws_iam_role.api_gateway_cloudwatch.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
-}
-
-resource "aws_api_gateway_account" "main" {
-  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
-}
+# Note: API Gateway CloudWatch account-level config (aws_api_gateway_account,
+# IAM role) is managed in infrastructure/terraform/shared/ — see shared/main.tf.
 
 # -----------------------------------------------------------------------------
 # SNS Topic for Alarm Notifications

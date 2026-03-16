@@ -7,7 +7,7 @@ vi.mock('@surfaced-art/email', () => ({
   sendEmail: vi.fn().mockResolvedValue({ success: true, messageId: 'msg-123' }),
   ArtistApplicationConfirmation: vi.fn(() => null),
   AdminApplicationNotification: vi.fn(() => null),
-  ADMIN_EMAIL: 'surfacedartllc@gmail.com',
+  getAdminEmail: vi.fn(() => 'surfacedartllc@gmail.com'),
 }))
 
 const validApplication = {

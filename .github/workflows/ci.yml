@@ -37,6 +37,109 @@ jobs:
       - name: Quality Gates
         run: npm run check
 
+  terraform-plan-shared:
+    name: Terraform Plan (shared)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check for infrastructure changes
+        id: infra_changes
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            const hasInfra = files.some(f => f.filename.startsWith('infrastructure/'));
+            core.setOutput('changed', hasInfra ? 'true' : 'false');
+
+      - name: Setup Terraform
+        if: steps.infra_changes.outputs.changed == 'true'
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: '1.5'
+          terraform_wrapper: false
+
+      - name: Configure AWS Credentials
+        if: steps.infra_changes.outputs.changed == 'true'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init (shared)
+        if: steps.infra_changes.outputs.changed == 'true'
+        working-directory: infrastructure/terraform/shared
+        run: terraform init
+
+      - name: Terraform Plan (shared)
+        if: steps.infra_changes.outputs.changed == 'true'
+        id: shared_plan
+        working-directory: infrastructure/terraform/shared
+        run: |
+          set -o pipefail
+          terraform plan -no-color \
+            2>&1 | tee /tmp/shared-plan.txt
+          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Post shared plan as PR comment
+        if: steps.infra_changes.outputs.changed == 'true' && always()
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('/tmp/shared-plan.txt', 'utf8');
+            const truncated = plan.length > 60000 ? plan.slice(-60000) + '\n\n[...truncated — see full run for details]' : plan;
+
+            const body = [
+              '## Terraform Plan (shared)',
+              '',
+              '<details><summary>Show plan</summary>',
+              '',
+              '```terraform',
+              truncated,
+              '```',
+              '',
+              '</details>',
+              '',
+              `Plan generated from commit ${context.sha.substring(0, 7)}.`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.startsWith('## Terraform Plan (shared)')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body,
+              });
+            }
+
   terraform-plan-dev:
     name: Terraform Plan (dev)
     runs-on: ubuntu-latest
@@ -96,6 +199,7 @@ jobs:
             -var="alert_email_address=plan@placeholder.com" \
             -var="stripe_secret_key=plan-placeholder" \
             -var="stripe_webhook_secret=plan-placeholder" \
+            -var="postmark_server_token=plan-placeholder" \
             -var="placeholder_image_uri=public.ecr.aws/lambda/nodejs:20" \
             2>&1 | tee /tmp/plan.txt
           echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
