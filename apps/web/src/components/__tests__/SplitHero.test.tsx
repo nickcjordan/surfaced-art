@@ -5,11 +5,35 @@ import { SplitHero } from '../SplitHero'
 describe('SplitHero', () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_CDN_DOMAINS = 'https://test.cloudfront.net'
+
+    // Mock APIs unavailable in test environment
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({
+        matches: false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }),
+    )
+    vi.stubGlobal('requestAnimationFrame', vi.fn().mockReturnValue(1))
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe = vi.fn()
+        disconnect = vi.fn()
+        constructor(
+          _cb: IntersectionObserverCallback,
+          _opts?: IntersectionObserverInit,
+        ) {}
+      },
+    )
   })
 
   afterEach(() => {
     delete process.env.NEXT_PUBLIC_CDN_DOMAINS
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('should render the hero section with data-testid', () => {
