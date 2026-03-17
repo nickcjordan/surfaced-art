@@ -334,18 +334,20 @@ export function ThemePicker() {
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Switch color palette"
         aria-expanded={isOpen}
+        aria-haspopup="menu"
         className="inline-flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:text-foreground transition-colors"
       >
         <Palette className="h-5 w-5" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-52 rounded-lg border border-border bg-background shadow-lg z-50 py-1">
+        <div role="menu" className="absolute right-0 top-full mt-2 w-52 rounded-lg border border-border bg-background shadow-lg z-50 py-1">
           <p className="px-3 py-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             Color Palette
           </p>
           {PALETTES.map(p => (
             <button
+              role="menuitem"
               key={p.id}
               type="button"
               onClick={() => selectPalette(p.id)}
