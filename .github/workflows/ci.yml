@@ -51,13 +51,25 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { data: files } = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100,
-            });
-            const hasInfra = files.some(f => f.filename.startsWith('infrastructure/'));
+            const perPage = 100;
+            const totalChanged = context.payload.pull_request.changed_files;
+            const totalPages = Math.ceil(totalChanged / perPage);
+
+            let hasInfra = false;
+            let page = 1;
+
+            while (page <= totalPages && !hasInfra) {
+              const { data: files } = await github.rest.pulls.listFiles({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                per_page: perPage,
+                page,
+              });
+              hasInfra = files.some(f => f.filename.startsWith('infrastructure/'));
+              page += 1;
+            }
+
             core.setOutput('changed', hasInfra ? 'true' : 'false');
 
       - name: Setup Terraform
@@ -88,7 +100,9 @@ jobs:
           set -o pipefail
           terraform plan -no-color \
             2>&1 | tee /tmp/shared-plan.txt
-          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          PLAN_EXIT=${PIPESTATUS[0]}
+          echo "exitcode=${PLAN_EXIT}" >> "$GITHUB_OUTPUT"
+          exit $PLAN_EXIT
 
       - name: Post shared plan as PR comment
         if: steps.infra_changes.outputs.changed == 'true' && always()
@@ -154,13 +168,25 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { data: files } = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100,
-            });
-            const hasInfra = files.some(f => f.filename.startsWith('infrastructure/'));
+            const perPage = 100;
+            const totalChanged = context.payload.pull_request.changed_files;
+            const totalPages = Math.ceil(totalChanged / perPage);
+
+            let hasInfra = false;
+            let page = 1;
+
+            while (page <= totalPages && !hasInfra) {
+              const { data: files } = await github.rest.pulls.listFiles({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                per_page: perPage,
+                page,
+              });
+              hasInfra = files.some(f => f.filename.startsWith('infrastructure/'));
+              page += 1;
+            }
+
             core.setOutput('changed', hasInfra ? 'true' : 'false');
 
       - name: Setup Terraform
@@ -200,9 +226,12 @@ jobs:
             -var="stripe_secret_key=plan-placeholder" \
             -var="stripe_webhook_secret=plan-placeholder" \
             -var="postmark_server_token=plan-placeholder" \
+            -var="email_from_address=plan@placeholder.com" \
             -var="placeholder_image_uri=public.ecr.aws/lambda/nodejs:20" \
             2>&1 | tee /tmp/plan.txt
-          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          PLAN_EXIT=${PIPESTATUS[0]}
+          echo "exitcode=${PLAN_EXIT}" >> "$GITHUB_OUTPUT"
+          exit $PLAN_EXIT
 
       - name: Post plan as PR comment
         if: steps.infra_changes.outputs.changed == 'true' && always()
