@@ -353,7 +353,7 @@ function HorizontalTimeline() {
     { num: '1', title: 'Apply', desc: 'Show us what you make and how you make it' },
     { num: '2', title: 'Get reviewed', desc: 'A real person looks at your work, not an algorithm' },
     { num: '3', title: 'Set up your page', desc: 'Photos, bio, pricing. About 20 minutes' },
-    { num: '4', title: 'Start selling', desc: 'Share your link and let the gallery do the rest' },
+    { num: '4', title: 'Start selling', desc: 'Your work is live. Share your link, and buyers can find you from here.' },
   ]
 
   return (
@@ -541,7 +541,7 @@ export default function ForArtistsContent() {
                 Every other profession has a platform that takes it seriously.
               </p>
               <p className="text-body-large mx-auto mt-2 max-w-xl font-medium text-foreground">
-                Now you do too!
+                Now there&apos;s one for artists.
               </p>
 
               <div className="mt-8 flex justify-center">
@@ -584,8 +584,8 @@ export default function ForArtistsContent() {
             <div className="mx-auto max-w-3xl text-center">
               <p className="text-body-small mb-3 font-medium uppercase tracking-widest" style={{ color: 'var(--accent-secondary)' }}>Your Artist Portfolio</p>
               <h2 className="text-foreground">
-                A website for your art.{' '}
-                <span className="relative inline-block"><ShimmerText>No building required</ShimmerText><HandwrittenUnderline color="var(--accent-secondary)" /></span>
+                Your work, on a page that{' '}
+                <span className="relative inline-block"><ShimmerText>actually looks like art</ShimmerText><HandwrittenUnderline color="var(--accent-secondary)" /></span>
               </h2>
               <p className="text-body-default mx-auto mt-5 max-w-2xl text-muted-text">
                 Your portfolio page is a standalone website dedicated entirely to you and your work. No ads, no links to other artists, no distractions. Just your name and your art.
@@ -602,7 +602,7 @@ export default function ForArtistsContent() {
                 <div className="hidden flex-col justify-center gap-6 pt-16 lg:flex">
                   {[
                     { title: 'Your clean URL', desc: 'surfaced.art/your-name. A short, memorable link that goes straight to your portfolio', accent: 'var(--accent-primary)' },
-                    { title: 'Replace your website', desc: 'Bio, CV, artist statement, process photos. Everything a custom site would have, zero maintenance', accent: 'var(--accent-secondary)' },
+                    { title: 'Everything a portfolio site has', desc: 'Bio, CV, artist statement, process photos. Already built. Zero maintenance.', accent: 'var(--accent-secondary)' },
                     { title: 'Pure showcase', desc: 'No ads, no competitor links, no prices on the page. Just your work. Visitors who want to buy click through to the listing', accent: 'var(--accent-primary)' },
                   ].map((item, i) => (
                     <div key={item.title} className="text-right">
@@ -695,7 +695,7 @@ export default function ForArtistsContent() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:hidden">
                   {[
                     { title: 'Your clean URL', desc: 'A memorable link you can share anywhere' },
-                    { title: 'Replace your website', desc: 'Bio, CV, process photos. Zero maintenance' },
+                    { title: 'Everything a portfolio site has', desc: 'Bio, CV, process photos. Zero maintenance' },
                     { title: 'Pure showcase', desc: 'No ads, no competitor links. Just your work' },
                     { title: 'Sold work stays visible', desc: 'Archive builds your full portfolio' },
                     { title: 'Always up to date', desc: 'New pieces appear on your page instantly' },
@@ -734,7 +734,7 @@ export default function ForArtistsContent() {
             <div className="mx-auto max-w-3xl text-center">
               <p className="text-body-small mb-3 font-medium uppercase tracking-widest" style={{ color: 'var(--accent-primary)' }}>Curated Gallery</p>
               <h2 className="text-foreground">
-                Every artist here was chosen
+                Every artist here made something real
               </h2>
               <p className="text-body-default mx-auto mt-6 max-w-xl text-muted-text">
                 Every application is reviewed by hand. When you&apos;re accepted, you join a community of{' '}
@@ -956,7 +956,7 @@ export default function ForArtistsContent() {
                   <HighlightMarker>30% commission</HighlightMarker>, and only when something sells
                 </h2>
                 <p className="text-body-default mx-auto mt-5 max-w-xl text-muted-text">
-                  Covers the platform, payment processing, and customer support. Most physical galleries take 40–50%. No listing fees, no monthly subscriptions.
+                  Covers the platform, payment processing, and customer support. Most physical galleries take 40–50%. And we never take a cut of your shipping costs — that goes straight to you.
                 </p>
               </div>
             </FadeIn>
@@ -1153,7 +1153,7 @@ export default function ForArtistsContent() {
               <div className="rounded-2xl border-2 bg-background p-10 text-center shadow-xl md:p-14" style={{ borderColor: 'color-mix(in srgb, var(--accent-primary) 30%, var(--border))' }}>
                 <h2 className="text-foreground">Your work deserves a <ShimmerText>home</ShimmerText></h2>
                 <p className="text-body-default mx-auto mt-4 max-w-md text-muted-text">
-                  Not another marketplace. Not another social feed. A real place for your art, built for the way you work. Applications are open!
+                  Not another marketplace. Not another social feed. A real place for your art, built for the way you work. Applications are open.
                 </p>
                 <div className="mt-8">
                   <Link
