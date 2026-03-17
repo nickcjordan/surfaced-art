@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-03-15
 
-**Context:** Surfaced Art needs production-ready transactional email for artist application confirmations, approval/rejection notices, and future order-related emails. AWS SES was initially implemented (packages/email/ workspace, Terraform module, IAM policies) but was never fully activated — DNS records were never added to the domain registrar, and the account remained in sandbox mode. With real artist onboarding approaching, we evaluated the email landscape for a solution that provides reliable delivery, a non-technical-friendly dashboard for the COO, and automatic bounce/complaint handling.
+**Context:** Surfaced Art needs production-ready transactional email for artist application confirmations, approval/rejection notices, and future order-related emails. AWS SES was initially implemented (packages/email/ workspace, Terraform module, IAM policies) but was never fully activated — DNS records were never added to the domain registrar, and the account remained in sandbox mode. With real artist onboarding approaching, we evaluated the email landscape for a solution that provides reliable delivery, a dashboard accessible to non-technical stakeholders (the COO), and automatic bounce/complaint handling.
 
 **Decision:** Replace AWS SES with Postmark for all transactional email. The existing `sendEmail()` abstraction in `packages/email/` means only the transport layer changes — React Email templates, API route integrations, and the public package API remain unchanged. Marketing email (newsletters, campaigns) is deferred to a separate service (Kit/ConvertKit is the leading candidate) when needed.
 
