@@ -3,6 +3,11 @@ import { Hono } from 'hono'
 import { Prisma } from '@surfaced-art/db'
 import { createWaitlistRoutes } from './waitlist'
 
+vi.mock('@surfaced-art/email', () => ({
+  sendEmail: vi.fn().mockResolvedValue({ success: true, messageId: 'msg-123' }),
+  WaitlistWelcome: vi.fn(),
+}))
+
 function createMockPrisma(overrides?: {
   create?: unknown
   createError?: Error
@@ -242,6 +247,77 @@ describe('POST /waitlist', () => {
       const body = await res.json()
       expect(body.error.code).toBe('INTERNAL_ERROR')
       expect(body.error.message).toBe('Internal server error')
+    })
+  })
+
+  describe('welcome email', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+      mockPrisma = createMockPrisma()
+      app = createTestApp(mockPrisma)
+    })
+
+    it('should send welcome email on successful signup', async () => {
+      const { sendEmail } = await import('@surfaced-art/email')
+
+      await app.request('/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'newuser@example.com' }),
+      })
+
+      expect(sendEmail).toHaveBeenCalledOnce()
+      expect(sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'newuser@example.com',
+          subject: expect.stringContaining('Surfaced Art'),
+        })
+      )
+    })
+
+    it('should not send email on duplicate signup', async () => {
+      vi.clearAllMocks()
+      const uniqueError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`email`)',
+        { code: 'P2002', clientVersion: '5.0.0' }
+      )
+      mockPrisma = createMockPrisma({ createError: uniqueError })
+      app = createTestApp(mockPrisma)
+
+      const { sendEmail } = await import('@surfaced-art/email')
+
+      await app.request('/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'existing@example.com' }),
+      })
+
+      expect(sendEmail).not.toHaveBeenCalled()
+    })
+
+    it('should not send email on validation failure', async () => {
+      const { sendEmail } = await import('@surfaced-art/email')
+
+      await app.request('/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'bad' }),
+      })
+
+      expect(sendEmail).not.toHaveBeenCalled()
+    })
+
+    it('should not fail the request if email sending throws', async () => {
+      const { sendEmail } = await import('@surfaced-art/email')
+      vi.mocked(sendEmail).mockRejectedValue(new Error('Postmark unavailable'))
+
+      const res = await app.request('/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'newuser@example.com' }),
+      })
+
+      expect(res.status).toBe(201)
     })
   })
 })
