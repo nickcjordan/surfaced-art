@@ -219,7 +219,7 @@ export function SplitHero() {
       {/* Frosted-glass CTA overlay */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div
-          className="mx-6 max-w-md rounded-xl px-8 py-10 text-center"
+          className="mx-6 max-w-md rounded-xl bg-background/90 px-8 py-10 text-center"
           style={{
             backgroundColor: 'color-mix(in srgb, var(--background) 82%, transparent)',
             backdropFilter: 'blur(24px) saturate(1.2)',

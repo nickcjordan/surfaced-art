@@ -250,7 +250,7 @@ module "lambda_api" {
   s3_bucket_name             = module.s3_cloudfront.bucket_name
   cloudfront_url             = module.s3_cloudfront.cloudfront_url
   cloudfront_domain          = module.s3_cloudfront.cloudfront_domain_name
-  email_from_address         = "support@surfaced.art"
+  email_from_address         = var.email_from_address
   postmark_server_token      = var.postmark_server_token
   admin_email                = var.admin_email
   stripe_secret_key          = var.stripe_secret_key

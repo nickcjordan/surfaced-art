@@ -104,6 +104,11 @@ variable "postmark_server_token" {
   sensitive   = true
 }
 
+variable "email_from_address" {
+  description = "Sender email address for transactional email (e.g., support@surfaced.art)"
+  type        = string
+}
+
 variable "admin_email" {
   description = "Admin email for internal notifications (e.g., new artist applications)"
   type        = string

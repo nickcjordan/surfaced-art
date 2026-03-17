@@ -54,6 +54,7 @@ export function createWaitlistRoutes(prisma: PrismaClient) {
       }).catch((err) => {
         logger.error('Failed to send waitlist welcome email', {
           error: err,
+          email: normalizedEmail,
         })
       })
 
