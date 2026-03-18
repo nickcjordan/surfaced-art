@@ -178,6 +178,7 @@ jobs:
             -var="stripe_secret_key=${{ secrets.TF_VAR_stripe_secret_key }}" \
             -var="stripe_webhook_secret=${{ secrets.TF_VAR_stripe_webhook_secret }}" \
             -var="postmark_server_token=${{ secrets.TF_VAR_postmark_server_token }}" \
+            -var="email_from_address=${{ secrets.TF_VAR_email_from_address }}" \
             -var="placeholder_image_uri=${{ env.LAMBDA_BOOTSTRAP_IMAGE }}" \
             -out=bootstrap.tfplan
           EXIT_CODE=$?
