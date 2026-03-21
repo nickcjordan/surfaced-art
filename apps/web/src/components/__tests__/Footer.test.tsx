@@ -52,6 +52,12 @@ describe('Footer', () => {
     expect(link).toHaveAttribute('href', '/for-artists')
   })
 
+  it('should render the Artist Agreement link', () => {
+    render(<Footer />)
+    const link = screen.getByRole('link', { name: 'Artist Agreement' })
+    expect(link).toHaveAttribute('href', '/artist-agreement')
+  })
+
   it('should render copyright text', () => {
     render(<Footer />)
     expect(

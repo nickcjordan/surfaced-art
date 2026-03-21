@@ -32,6 +32,21 @@ export function ArtistAcceptance({ artistName }: ArtistAcceptanceProps) {
           vetted, and we are honored to have you among them.
         </Text>
         <Text style={bodyStyle}>
+          Our standard commission is 30% of the sale price of each piece — you
+          keep 70%. Shipping costs are passed through to you in full with no
+          commission taken. Full details are in our{' '}
+          <a
+            href="https://surfaced.art/artist-agreement"
+            style={{
+              color: BRAND.colors.accent,
+              textDecoration: 'underline',
+            }}
+          >
+            Artist Agreement
+          </a>
+          .
+        </Text>
+        <Text style={bodyStyle}>
           Your next step is to set up your artist profile. This is where
           collectors will discover your story, your process, and your available
           work.

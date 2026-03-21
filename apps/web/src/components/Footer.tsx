@@ -119,6 +119,12 @@ export function Footer() {
             >
               Terms of Service
             </Link>
+            <Link
+              href="/artist-agreement"
+              className="text-xs text-muted-foreground/60 transition-colors hover:text-foreground"
+            >
+              Artist Agreement
+            </Link>
           </nav>
         </div>
       </Container>
