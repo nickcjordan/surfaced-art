@@ -1007,6 +1007,40 @@ export interface AdminOrderRefundResponse {
   }
 }
 
+// ─── Admin Financial Reporting Response Types ───────────────────────
+
+/**
+ * Platform financial summary for GET /admin/financials/summary
+ */
+export interface AdminFinancialSummaryResponse {
+  totalGmv: number
+  totalCommission: number
+  totalArtistPayouts: number
+  totalShipping: number
+  totalTax: number
+  orderCount: number
+}
+
+/**
+ * Per-artist financial breakdown item for GET /admin/financials/artists
+ */
+export interface AdminArtistFinancialItem {
+  artistId: string
+  displayName: string
+  slug: string
+  orderCount: number
+  totalArtworkRevenue: number
+  totalCommission: number
+  totalArtistPayout: number
+}
+
+/**
+ * Response for GET /admin/financials/artists
+ */
+export interface AdminArtistFinancialsResponse {
+  data: AdminArtistFinancialItem[]
+}
+
 // ─── API Error Types ──────────────────────────────────────────────────
 
 /**

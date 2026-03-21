@@ -1,0 +1,46 @@
+meta {
+  name: Financial Artists
+  type: http
+  seq: 40
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/financials/artists
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+params:query {
+  ~from: 2026-01-01
+  ~to: 2026-12-31
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("should return per-artist financials", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("data");
+    expect(body.data).to.be.an("array");
+  });
+
+  test("each artist item should have required fields", function() {
+    const artists = res.getBody().data;
+    if (artists.length > 0) {
+      const artist = artists[0];
+      expect(artist).to.have.property("artistId");
+      expect(artist).to.have.property("displayName");
+      expect(artist).to.have.property("slug");
+      expect(artist).to.have.property("orderCount");
+      expect(artist).to.have.property("totalArtworkRevenue");
+      expect(artist).to.have.property("totalCommission");
+      expect(artist).to.have.property("totalArtistPayout");
+    }
+  });
+}

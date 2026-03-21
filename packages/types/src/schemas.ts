@@ -567,6 +567,18 @@ export const adminOrderStatusUpdateBody = z.object({
   reason: z.string().min(1, 'Reason is required').max(2000),
 })
 
+/** GET /admin/financials/summary query params */
+export const adminFinancialSummaryQuery = z.object({
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
+})
+
+/** GET /admin/financials/artists query params */
+export const adminArtistFinancialsQuery = z.object({
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
+})
+
 /** POST /admin/listings/bulk-status body */
 export const adminBulkListingStatusBody = z.object({
   listingIds: z
@@ -627,5 +639,7 @@ export type AdminWaitlistQuery = z.infer<typeof adminWaitlistQuery>
 export type AdminOrdersQuery = z.infer<typeof adminOrdersQuery>
 export type AdminOrderRefundBody = z.infer<typeof adminOrderRefundBody>
 export type AdminOrderStatusUpdateBody = z.infer<typeof adminOrderStatusUpdateBody>
+export type AdminFinancialSummaryQuery = z.infer<typeof adminFinancialSummaryQuery>
+export type AdminArtistFinancialsQuery = z.infer<typeof adminArtistFinancialsQuery>
 export type AdminBulkListingStatusBody = z.infer<typeof adminBulkListingStatusBody>
 export type AdminBulkRoleGrantBody = z.infer<typeof adminBulkRoleGrantBody>

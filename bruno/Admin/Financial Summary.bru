@@ -1,0 +1,39 @@
+meta {
+  name: Financial Summary
+  type: http
+  seq: 39
+}
+
+get {
+  url: {{sa_baseUrl}}/admin/financials/summary
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+params:query {
+  ~from: 2026-01-01
+  ~to: 2026-12-31
+}
+
+assert {
+  res.status: eq 200
+  res.body.totalGmv: isNumber
+  res.body.totalCommission: isNumber
+  res.body.orderCount: isNumber
+}
+
+tests {
+  test("should return financial summary", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("totalGmv");
+    expect(body).to.have.property("totalCommission");
+    expect(body).to.have.property("totalArtistPayouts");
+    expect(body).to.have.property("totalShipping");
+    expect(body).to.have.property("totalTax");
+    expect(body).to.have.property("orderCount");
+  });
+}
