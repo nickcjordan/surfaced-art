@@ -31,6 +31,13 @@ describe('ArtistAcceptance template', () => {
     expect(html).toContain('selected your work')
   })
 
+  it('should include commission terms', async () => {
+    const html = await render(<ArtistAcceptance {...props} />)
+
+    expect(html).toContain('30%')
+    expect(html).toContain('artist-agreement')
+  })
+
   it('should include a CTA button linking to dashboard', async () => {
     const html = await render(<ArtistAcceptance {...props} />)
 
