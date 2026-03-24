@@ -37,26 +37,28 @@ This is the single reference for every visual decision in the Surfaced Art platf
 
 All colors are defined as CSS custom properties and mapped to Tailwind theme tokens via `@theme inline`. The architecture supports light and dark mode via a class toggle.
 
-**Palette philosophy**: Moderately muted — warm but identifiable hues. The artwork provides vibrancy; the platform is a quiet, warm frame.
-**Saturation**: Moderate. Not monochromatic, not bold. Accent colors are clearly colors, but recessive enough that artwork remains the star.
-**Avoided color families**: No blue, no neon, no purple, no bright pink, no teal. Nothing that feels digital-first or competes with artwork.
+**Palette philosophy**: Warm monochrome — charcoal, warm grays, cream whites. The UI disappears entirely; the artwork is the only color on the page. Like a well-lit white-walled gallery where the frame never competes with the work.
+**Saturation**: None. The palette is fully achromatic with warm undertones. The logo red (#AA1D45) appears sparingly as a rare punctuation mark on the single highest-priority CTA per page (e.g., "Explore Gallery" on the homepage, "Add to Cart" on a listing page).
+**Avoided color families**: No blue, no neon, no purple, no bright pink, no teal, no green, no amber/gold. Nothing that feels digital-first or competes with artwork. The logo red is the only chromatic color in the entire UI.
 
 ### Light Mode (Default)
 
 | Token | Hex | Usage |
 |---|---|---|
-| `--background` | `#FAFAF8` | Main page background. Warm off-white, like gallery walls. |
-| `--surface` | `#F2F0ED` | Cards, panels, elevated sections. Warm linen. Subtle layering without harsh contrast. |
+| `--background` | `#FAF9F7` | Main page background. Warm off-white, like gallery walls. |
+| `--surface` | `#F0EEEB` | Cards, panels, elevated sections. Warm linen. Subtle layering without harsh contrast. |
 | `--foreground` | `#1A1A1A` | Primary text — headings, body copy, all primary content. Near-black, softer than pure black. |
-| `--muted` | `#6B6460` | Secondary text — dates, captions, metadata, helper text. Warm medium gray with brown undertone. |
-| `--border` | `#E5E0DB` | Lines, card edges, input outlines, section dividers. Barely visible, warm. Prefer whitespace over borders where possible. |
-| `--accent-primary` | `#B8956A` | Primary brand color. Muted gold — brass, warmth, understated luxury. Used for primary buttons, active links, focus rings, selected states. |
-| `--accent-primary-hover` | `#A6845C` | Darkened primary for hover states. |
-| `--accent-secondary` | `#C4775A` | Secondary accent. Terracotta. Used sparingly for secondary visual variety. Supporting character, not co-lead. |
-| `--accent-secondary-hover` | `#B5694D` | Darkened secondary for hover states. |
-| `--error` | `#C4534A` | Error messages, form validation, destructive actions. Muted warm red — urgent but native to the palette. |
+| `--muted` | `#6B6560` | Secondary text — dates, captions, metadata, helper text. Warm medium gray with taupe undertone. |
+| `--border` | `#E0DBD6` | Lines, card edges, input outlines, section dividers. Barely visible, warm. Prefer whitespace over borders where possible. |
+| `--accent-primary` | `#2C2926` | Primary brand color. Dark warm charcoal. Used for primary buttons, active links, focus rings, selected states. High contrast, zero color distraction. |
+| `--accent-primary-hover` | `#1A1816` | Darkened charcoal for hover states. |
+| `--accent-secondary` | `#8A8480` | Secondary accent. Warm medium gray. Used for secondary buttons, tags, supporting UI elements. Blends into the background. |
+| `--accent-secondary-hover` | `#7A7470` | Darkened warm gray for hover states. |
+| `--accent-red` | `#AA1D45` | Logo red punctuation color. Used ONLY on the single highest-priority CTA per page (e.g., "Explore Gallery", "Add to Cart"). Never on destructive actions, never on multiple elements per page. |
+| `--accent-red-hover` | `#921838` | Darkened logo red for hover states. |
+| `--error` | `#C4534A` | Error messages, form validation, destructive actions. Muted warm red — distinct from logo red accent. |
 | `--success` | `#6B8F6B` | Success messages, confirmations. Muted sage green. |
-| `--warning` | `#D4A054` | Warnings, caution states. Warm amber — distinct from the muted gold primary accent. |
+| `--warning` | `#D4A054` | Warnings, caution states. Warm amber. |
 | `--overlay` | `rgba(26, 26, 26, 0.6)` | Modal backdrop. |
 
 ### Dark Mode
@@ -65,15 +67,17 @@ Dark mode uses warm dark tones — dimly lit gallery, not a tech product. Same h
 
 | Token | Hex | Usage |
 |---|---|---|
-| `--background` | `#1C1917` | Warm dark charcoal. |
-| `--surface` | `#282420` | Slightly lighter for card layering. |
-| `--foreground` | `#F5F2EE` | Warm off-white text. |
-| `--muted` | `#9C9590` | Warm medium gray for secondary text. |
-| `--border` | `#3D3835` | Subtle warm borders. |
-| `--accent-primary` | `#C9A678` | Slightly brighter gold for contrast on dark backgrounds. |
-| `--accent-primary-hover` | `#D4B48A` | Lighter gold hover. |
-| `--accent-secondary` | `#D08A6E` | Slightly brighter terracotta. |
-| `--accent-secondary-hover` | `#DC9A7E` | Lighter terracotta hover. |
+| `--background` | `#1A1816` | Warm dark charcoal. |
+| `--surface` | `#26231F` | Slightly lighter for card layering. |
+| `--foreground` | `#F2EFEB` | Warm off-white text. |
+| `--muted` | `#9A9590` | Warm medium gray for secondary text. |
+| `--border` | `#3A3530` | Subtle warm borders. |
+| `--accent-primary` | `#E8E4E0` | Light warm gray for primary elements on dark backgrounds. |
+| `--accent-primary-hover` | `#F2EFEB` | Lighter hover state. |
+| `--accent-secondary` | `#9A9490` | Medium warm gray for secondary elements. |
+| `--accent-secondary-hover` | `#AAA4A0` | Lighter secondary hover. |
+| `--accent-red` | `#D4446A` | Brighter logo red for dark backgrounds. Same sparingly-used role as light mode. |
+| `--accent-red-hover` | `#E0587C` | Lighter logo red hover. |
 | `--error` | `#D4645C` | Lighter warm red. |
 | `--success` | `#7FA37F` | Lighter sage. |
 | `--warning` | `#E0B060` | Lighter amber. |
@@ -87,54 +91,54 @@ ShadCN components consume their own token names. These alias our brand tokens so
 
 | ShadCN Token | Value | Maps To |
 |---|---|---|
-| `--card` | `#F2F0ED` | `--surface` |
+| `--card` | `#F0EEEB` | `--surface` |
 | `--card-foreground` | `#1A1A1A` | `--foreground` |
-| `--popover` | `#FAFAF8` | `--background` |
+| `--popover` | `#FAF9F7` | `--background` |
 | `--popover-foreground` | `#1A1A1A` | `--foreground` |
-| `--primary` | `#B8956A` | `--accent-primary` |
+| `--primary` | `#2C2926` | `--accent-primary` |
 | `--primary-foreground` | `#FFFFFF` | White text on primary buttons |
-| `--secondary` | `#F2F0ED` | `--surface` |
+| `--secondary` | `#F0EEEB` | `--surface` |
 | `--secondary-foreground` | `#1A1A1A` | `--foreground` |
-| `--muted-foreground` | `#6B6460` | `--muted` |
-| `--accent` | `#F2F0ED` | `--surface` |
+| `--muted-foreground` | `#6B6560` | `--muted` |
+| `--accent` | `#F0EEEB` | `--surface` |
 | `--accent-foreground` | `#1A1A1A` | `--foreground` |
 | `--destructive` | `#C4534A` | `--error` |
 | `--destructive-foreground` | `#FFFFFF` | White text on destructive buttons |
-| `--input` | `#E5E0DB` | `--border` |
-| `--ring` | `#B8956A` | `--accent-primary` (focus rings) |
+| `--input` | `#E0DBD6` | `--border` |
+| `--ring` | `#2C2926` | `--accent-primary` (focus rings) |
 
 #### Dark Mode
 
 | ShadCN Token | Value | Maps To |
 |---|---|---|
-| `--card` | `#282420` | `--surface` |
-| `--card-foreground` | `#F5F2EE` | `--foreground` |
-| `--popover` | `#1C1917` | `--background` |
-| `--popover-foreground` | `#F5F2EE` | `--foreground` |
-| `--primary` | `#C9A678` | `--accent-primary` |
-| `--primary-foreground` | `#1C1917` | Dark text on primary buttons |
-| `--secondary` | `#282420` | `--surface` |
-| `--secondary-foreground` | `#F5F2EE` | `--foreground` |
-| `--muted-foreground` | `#9C9590` | `--muted` |
-| `--accent` | `#282420` | `--surface` |
-| `--accent-foreground` | `#F5F2EE` | `--foreground` |
+| `--card` | `#26231F` | `--surface` |
+| `--card-foreground` | `#F2EFEB` | `--foreground` |
+| `--popover` | `#1A1816` | `--background` |
+| `--popover-foreground` | `#F2EFEB` | `--foreground` |
+| `--primary` | `#E8E4E0` | `--accent-primary` |
+| `--primary-foreground` | `#1A1816` | Dark text on primary buttons |
+| `--secondary` | `#26231F` | `--surface` |
+| `--secondary-foreground` | `#F2EFEB` | `--foreground` |
+| `--muted-foreground` | `#9A9590` | `--muted` |
+| `--accent` | `#26231F` | `--surface` |
+| `--accent-foreground` | `#F2EFEB` | `--foreground` |
 | `--destructive` | `#D4645C` | `--error` |
-| `--destructive-foreground` | `#1C1917` | Dark text on destructive buttons |
-| `--input` | `#3D3835` | `--border` |
-| `--ring` | `#C9A678` | `--accent-primary` (focus rings) |
+| `--destructive-foreground` | `#1A1816` | Dark text on destructive buttons |
+| `--input` | `#3A3530` | `--border` |
+| `--ring` | `#E8E4E0` | `--accent-primary` (focus rings) |
 
 #### Sidebar Tokens
 
 | Token | Light | Dark |
 |---|---|---|
-| `--sidebar` | `#F2F0ED` | `#282420` |
-| `--sidebar-foreground` | `#1A1A1A` | `#F5F2EE` |
-| `--sidebar-primary` | `#B8956A` | `#C9A678` |
-| `--sidebar-primary-foreground` | `#FFFFFF` | `#1C1917` |
-| `--sidebar-accent` | `#F2F0ED` | `#282420` |
-| `--sidebar-accent-foreground` | `#1A1A1A` | `#F5F2EE` |
-| `--sidebar-border` | `#E5E0DB` | `#3D3835` |
-| `--sidebar-ring` | `#B8956A` | `#C9A678` |
+| `--sidebar` | `#F0EEEB` | `#26231F` |
+| `--sidebar-foreground` | `#1A1A1A` | `#F2EFEB` |
+| `--sidebar-primary` | `#2C2926` | `#E8E4E0` |
+| `--sidebar-primary-foreground` | `#FFFFFF` | `#1A1816` |
+| `--sidebar-accent` | `#F0EEEB` | `#26231F` |
+| `--sidebar-accent-foreground` | `#1A1A1A` | `#F2EFEB` |
+| `--sidebar-border` | `#E0DBD6` | `#3A3530` |
+| `--sidebar-ring` | `#2C2926` | `#E8E4E0` |
 
 ### CSS Implementation
 
@@ -146,36 +150,38 @@ ShadCN components consume their own token names. These alias our brand tokens so
 
 :root {
   /* Surfaced Art — Light Mode */
-  --background: #FAFAF8;
-  --surface: #F2F0ED;
+  --background: #FAF9F7;
+  --surface: #F0EEEB;
   --foreground: #1A1A1A;
-  --muted: #6B6460;
-  --border: #E5E0DB;
-  --accent-primary: #B8956A;
-  --accent-primary-hover: #A6845C;
-  --accent-secondary: #C4775A;
-  --accent-secondary-hover: #B5694D;
+  --muted: #6B6560;
+  --border: #E0DBD6;
+  --accent-primary: #2C2926;
+  --accent-primary-hover: #1A1816;
+  --accent-secondary: #8A8480;
+  --accent-secondary-hover: #7A7470;
+  --accent-red: #AA1D45;
+  --accent-red-hover: #921838;
   --error: #C4534A;
   --success: #6B8F6B;
   --warning: #D4A054;
   --overlay: rgba(26, 26, 26, 0.6);
 
   /* ShadCN alias tokens */
-  --card: #F2F0ED;
+  --card: #F0EEEB;
   --card-foreground: #1A1A1A;
-  --popover: #FAFAF8;
+  --popover: #FAF9F7;
   --popover-foreground: #1A1A1A;
-  --primary: #B8956A;
+  --primary: #2C2926;
   --primary-foreground: #FFFFFF;
-  --secondary: #F2F0ED;
+  --secondary: #F0EEEB;
   --secondary-foreground: #1A1A1A;
-  --muted-foreground: #6B6460;
-  --accent: #F2F0ED;
+  --muted-foreground: #6B6560;
+  --accent: #F0EEEB;
   --accent-foreground: #1A1A1A;
   --destructive: #C4534A;
   --destructive-foreground: #FFFFFF;
-  --input: #E5E0DB;
-  --ring: #B8956A;
+  --input: #E0DBD6;
+  --ring: #2C2926;
   --radius: 5px;
 
   /* Sidebar */
@@ -194,44 +200,46 @@ ShadCN components consume their own token names. These alias our brand tokens so
 }
 
 .dark {
-  --background: #1C1917;
-  --surface: #282420;
-  --foreground: #F5F2EE;
-  --muted: #9C9590;
-  --border: #3D3835;
-  --accent-primary: #C9A678;
-  --accent-primary-hover: #D4B48A;
-  --accent-secondary: #D08A6E;
-  --accent-secondary-hover: #DC9A7E;
+  --background: #1A1816;
+  --surface: #26231F;
+  --foreground: #F2EFEB;
+  --muted: #9A9590;
+  --border: #3A3530;
+  --accent-primary: #E8E4E0;
+  --accent-primary-hover: #F2EFEB;
+  --accent-secondary: #9A9490;
+  --accent-secondary-hover: #AAA4A0;
+  --accent-red: #D4446A;
+  --accent-red-hover: #E0587C;
   --error: #D4645C;
   --success: #7FA37F;
   --warning: #E0B060;
   --overlay: rgba(0, 0, 0, 0.7);
 
-  --card: #282420;
-  --card-foreground: #F5F2EE;
-  --popover: #1C1917;
-  --popover-foreground: #F5F2EE;
-  --primary: #C9A678;
-  --primary-foreground: #1C1917;
-  --secondary: #282420;
-  --secondary-foreground: #F5F2EE;
-  --muted-foreground: #9C9590;
-  --accent: #282420;
-  --accent-foreground: #F5F2EE;
+  --card: #26231F;
+  --card-foreground: #F2EFEB;
+  --popover: #1A1816;
+  --popover-foreground: #F2EFEB;
+  --primary: #E8E4E0;
+  --primary-foreground: #1A1816;
+  --secondary: #26231F;
+  --secondary-foreground: #F2EFEB;
+  --muted-foreground: #9A9590;
+  --accent: #26231F;
+  --accent-foreground: #F2EFEB;
   --destructive: #D4645C;
-  --destructive-foreground: #1C1917;
-  --input: #3D3835;
-  --ring: #C9A678;
+  --destructive-foreground: #1A1816;
+  --input: #3A3530;
+  --ring: #E8E4E0;
 
-  --sidebar: #282420;
-  --sidebar-foreground: #F5F2EE;
-  --sidebar-primary: #C9A678;
-  --sidebar-primary-foreground: #1C1917;
-  --sidebar-accent: #282420;
-  --sidebar-accent-foreground: #F5F2EE;
-  --sidebar-border: #3D3835;
-  --sidebar-ring: #C9A678;
+  --sidebar: #26231F;
+  --sidebar-foreground: #F2EFEB;
+  --sidebar-primary: #E8E4E0;
+  --sidebar-primary-foreground: #1A1816;
+  --sidebar-accent: #26231F;
+  --sidebar-accent-foreground: #F2EFEB;
+  --sidebar-border: #3A3530;
+  --sidebar-ring: #E8E4E0;
 
   --active-font-sans: var(--font-dm-sans), 'DM Sans', sans-serif;
   --active-font-serif: var(--font-dm-serif), 'DM Serif Display', serif;

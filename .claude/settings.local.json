@@ -59,7 +59,12 @@
       "WebFetch(domain:fonts.google.com)",
       "Bash(while read:*)",
       "Bash(ls -la /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/color-demo/)",
-      "Bash(ls -la /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/font-demo/ /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/hero-concepts/)"
+      "Bash(ls -la /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/font-demo/ /c/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/hero-concepts/)",
+      "Bash(grep '\"\"vite\"\"' apps/web/package.json)",
+      "Bash(grep -r '\"\"vite\"\"' package.json apps/*/package.json packages/*/package.json)",
+      "Bash(grep '\"\"type\"\"' tools/migrate/package.json)",
+      "Bash(ls c:/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/)",
+      "Bash(ls \"c:/dev/src/surfaced-art/apps/web/src/app/\\(main\\)/hero-concepts/\")"
     ],
     "additionalDirectories": [
       "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio",

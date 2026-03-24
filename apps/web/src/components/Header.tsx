@@ -6,7 +6,6 @@ import { Navigation } from './Navigation'
 import { MobileNav } from './MobileNav'
 import { SearchInput } from './SearchInput'
 import { ThemeToggle } from './ThemeToggle'
-import { ThemePicker } from './ThemePicker'
 import { AuthButton } from './AuthButton'
 import { Wordmark } from './Wordmark'
 import { SkipToContent } from './SkipToContent'
@@ -101,7 +100,6 @@ export function Header() {
             <div className="hidden md:block">
               <AuthButton />
             </div>
-            <ThemePicker />
             <ThemeToggle />
             <MobileNav />
           </div>

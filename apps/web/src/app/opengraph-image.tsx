@@ -24,7 +24,7 @@ export default function OgImage() {
           justifyContent: 'center',
           width: '100%',
           height: '100%',
-          backgroundColor: '#1A1A1A',
+          backgroundColor: '#1A1816',
           padding: '80px',
         }}
       >

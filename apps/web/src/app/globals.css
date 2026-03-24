@@ -5,8 +5,10 @@
 /*
  * Surfaced Art — Design tokens (Brand Design System v2.0)
  *
- * Palette: Forest + Amber — deep forest green with warm amber.
- * Rich, natural, frames artwork like a well-lit gallery in the woods.
+ * Palette: Warm Gray + Red Punctuation — charcoal primary on warm gray
+ * neutrals. The UI disappears; the art is the only color on the page.
+ * Logo red (#AA1D45) appears sparingly as a rare accent on the single
+ * highest-priority CTA per page.
  * Typography: sans headings (Josefin Sans), clean sans body (DM Sans).
  * Variable names follow ShadCN/ui conventions for component compatibility.
  *
@@ -15,15 +17,17 @@
 
 :root {
   /* Brand palette — Light Mode */
-  --background: #FAFAF8;
-  --surface: #F2F0ED;
+  --background: #FAF9F7;
+  --surface: #F0EEEB;
   --foreground: #1A1A1A;
-  --muted: #6B6460;
-  --border: #E5E0DB;
-  --accent-primary: #4A6B5A;
-  --accent-primary-hover: #3D5A4C;
-  --accent-secondary: #C49A5A;
-  --accent-secondary-hover: #B58A4D;
+  --muted: #6B6560;
+  --border: #E0DBD6;
+  --accent-primary: #2C2926;
+  --accent-primary-hover: #1A1816;
+  --accent-secondary: #8A8480;
+  --accent-secondary-hover: #7A7470;
+  --accent-red: #AA1D45;
+  --accent-red-hover: #921838;
   --error: #C4534A;
   --success: #6B8F6B;
   --warning: #D4A054;
@@ -64,15 +68,17 @@
 
 .dark {
   /* Brand palette — Dark Mode */
-  --background: #1C1917;
-  --surface: #282420;
-  --foreground: #F5F2EE;
-  --muted: #9C9590;
-  --border: #3D3835;
-  --accent-primary: #6B9B7A;
-  --accent-primary-hover: #7DAE8C;
-  --accent-secondary: #D4AA6A;
-  --accent-secondary-hover: #E0BA7A;
+  --background: #1A1816;
+  --surface: #26231F;
+  --foreground: #F2EFEB;
+  --muted: #9A9590;
+  --border: #3A3530;
+  --accent-primary: #E8E4E0;
+  --accent-primary-hover: #F2EFEB;
+  --accent-secondary: #9A9490;
+  --accent-secondary-hover: #AAA4A0;
+  --accent-red: #D4446A;
+  --accent-red-hover: #E0587C;
   --error: #D4645C;
   --success: #7FA37F;
   --warning: #E0B060;
@@ -139,6 +145,8 @@
   --color-accent-primary-hover: var(--accent-primary-hover);
   --color-accent-secondary: var(--accent-secondary);
   --color-accent-secondary-hover: var(--accent-secondary-hover);
+  --color-accent-red: var(--accent-red);
+  --color-accent-red-hover: var(--accent-red-hover);
   --color-error: var(--error);
   --color-success: var(--success);
   --color-warning: var(--warning);

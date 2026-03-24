@@ -14,12 +14,12 @@ import type { ReactNode } from 'react'
 /** Brand constants for email templates — inlined values, not CSS vars. */
 export const BRAND = {
   colors: {
-    background: '#FAFAF8',
+    background: '#FAF9F7',
     text: '#1A1A1A',
-    muted: '#6B6460',
-    accent: '#B8956A',
-    accentHover: '#A6845C',
-    border: '#E5E0DB',
+    muted: '#6B6560',
+    accent: '#2C2926',
+    accentHover: '#1A1816',
+    border: '#E0DBD6',
     success: '#6B8F6B',
   },
   fonts: {

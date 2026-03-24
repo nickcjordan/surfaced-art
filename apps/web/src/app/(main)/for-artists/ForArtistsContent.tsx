@@ -189,15 +189,12 @@ function HandwrittenUnderline({ color = 'var(--accent-primary)' }: { color?: str
   )
 }
 
-/* Shimmer gradient text: animated flowing gradient for accented headings */
-function ShimmerText({ children, className = '' }: { children: ReactNode; className?: string }) {
+/* Accent text: accent color for emphasis within headings */
+function AccentText({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <span
-      className={`bg-clip-text text-transparent motion-safe:animate-[text-shimmer_6s_ease_infinite] ${className}`}
-      style={{
-        backgroundImage: 'linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 30%, var(--accent-primary) 50%, var(--accent-secondary) 70%, var(--accent-primary) 100%)',
-        backgroundSize: '300% 100%',
-      }}
+      className={className}
+      style={{ color: 'var(--accent-secondary)' }}
     >
       {children}
     </span>
@@ -524,7 +521,7 @@ export default function ForArtistsContent() {
         <MorphingBlob className="absolute -left-20 -top-16 h-72 w-72 md:h-96 md:w-96" color="var(--accent-secondary)" />
 
         <div
-          className="relative h-1 w-full motion-safe:animate-[gradient-shift_6s_ease_infinite]"
+          className="relative h-1 w-full"
           style={{ background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary), var(--accent-primary))', backgroundSize: '200% 100%' }}
         />
 
@@ -532,7 +529,7 @@ export default function ForArtistsContent() {
           <div className="mx-auto max-w-3xl text-center">
             <FadeIn>
               <h1 className="text-foreground">
-                The platform <ShimmerText>built for artists</ShimmerText>
+                The platform <AccentText>built for artists</AccentText>
               </h1>
             </FadeIn>
 
@@ -551,7 +548,7 @@ export default function ForArtistsContent() {
               <div className="mt-10">
                 <Link
                   href="/apply"
-                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full px-10 py-4 text-lg font-medium tracking-wide text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.05] active:scale-[0.97] motion-safe:animate-[btn-shimmer_3s_ease_infinite]"
+                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full px-10 py-4 text-lg font-medium tracking-wide text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.05] active:scale-[0.97]"
                   style={{
                     backgroundImage: 'linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 20%, color-mix(in srgb, var(--accent-primary) 70%, #fff) 40%, var(--accent-secondary) 60%, var(--accent-primary) 80%, var(--accent-secondary) 100%)',
                     backgroundSize: '400% 100%',
@@ -585,7 +582,7 @@ export default function ForArtistsContent() {
               <p className="text-body-small mb-3 font-medium uppercase tracking-widest" style={{ color: 'var(--accent-secondary)' }}>Your Artist Portfolio</p>
               <h2 className="text-foreground">
                 Your work, on a page that{' '}
-                <span className="relative inline-block"><ShimmerText>actually looks like art</ShimmerText><HandwrittenUnderline color="var(--accent-secondary)" /></span>
+                <span className="relative inline-block"><AccentText>actually looks like art</AccentText><HandwrittenUnderline color="var(--accent-secondary)" /></span>
               </h2>
               <p className="text-body-default mx-auto mt-5 max-w-2xl text-muted-text">
                 Your portfolio page is a standalone website dedicated entirely to you and your work. No ads, no links to other artists, no distractions. Just your name and your art.
@@ -1151,14 +1148,14 @@ export default function ForArtistsContent() {
               {/* Glow behind card */}
               <div className="absolute -inset-8 -z-10 rounded-3xl opacity-30 blur-3xl" style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }} aria-hidden="true" />
               <div className="rounded-2xl border-2 bg-background p-10 text-center shadow-xl md:p-14" style={{ borderColor: 'color-mix(in srgb, var(--accent-primary) 30%, var(--border))' }}>
-                <h2 className="text-foreground">Your work deserves a <ShimmerText>home</ShimmerText></h2>
+                <h2 className="text-foreground">Your work deserves a <AccentText>home</AccentText></h2>
                 <p className="text-body-default mx-auto mt-4 max-w-md text-muted-text">
                   Not another marketplace. Not another social feed. A real place for your art, built for the way you work. Applications are open.
                 </p>
                 <div className="mt-8">
                   <Link
                     href="/apply"
-                    className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full px-10 py-4 text-lg font-medium tracking-wide text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.05] active:scale-[0.97] motion-safe:animate-[btn-shimmer_3s_ease_infinite]"
+                    className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full px-10 py-4 text-lg font-medium tracking-wide text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.05] active:scale-[0.97]"
                     style={{
                       backgroundImage: 'linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 20%, color-mix(in srgb, var(--accent-primary) 70%, #fff) 40%, var(--accent-secondary) 60%, var(--accent-primary) 80%, var(--accent-secondary) 100%)',
                       backgroundSize: '400% 100%',
@@ -1178,9 +1175,6 @@ export default function ForArtistsContent() {
 
       {/* Keyframes */}
       <style>{`
-        @keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-        @keyframes text-shimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-        @keyframes btn-shimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         @keyframes float-1 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(6px, -8px); } 50% { transform: translate(-4px, -14px); } 75% { transform: translate(8px, -6px); } }
         @keyframes float-2 { 0%, 100% { transform: translate(0, 0); } 33% { transform: translate(-10px, 5px); } 66% { transform: translate(8px, -8px); } }
         @keyframes float-3 { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(10px, 6px); } 50% { transform: translate(4px, -10px); } 75% { transform: translate(-8px, 4px); } }
