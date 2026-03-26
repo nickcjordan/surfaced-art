@@ -26,6 +26,8 @@ export interface SeedProfile {
   location: string
   websiteUrl: string | null
   instagramUrl: string | null
+  contactEmail: string | null
+  contactEnabled: boolean
   originZip: string
   status: ArtistStatusType
   commissionsOpen: boolean

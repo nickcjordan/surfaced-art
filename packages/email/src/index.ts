@@ -20,6 +20,7 @@ export { ArtistAcceptance } from './templates/artist-acceptance.js'
 export { AdminApplicationNotification } from './templates/admin-application-notification.js'
 export { ArtistRejection } from './templates/artist-rejection.js'
 export { WaitlistWelcome } from './templates/waitlist-welcome.js'
+export { ArtistContactMessage } from './templates/artist-contact-message.js'
 
 // Layout (for custom templates)
 export { Layout, BRAND } from './templates/components/Layout.js'

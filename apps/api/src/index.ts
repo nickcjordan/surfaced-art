@@ -11,6 +11,7 @@ import { rateLimiter } from './middleware/rate-limiter'
 import { cacheControl } from './middleware/cache-control'
 import { createHealthRoutes } from './routes/health'
 import { createArtistRoutes } from './routes/artists'
+import { createArtistContactRoutes } from './routes/artist-contact'
 import { createListingRoutes } from './routes/listings'
 import { createCategoryRoutes } from './routes/categories'
 import { createWaitlistRoutes } from './routes/waitlist'
@@ -65,6 +66,7 @@ app.use(
 // Rate limiting for sensitive endpoints
 app.use('/waitlist', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
 app.use('/artists/apply', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
+app.use('/artists/*/contact', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
 app.use('/uploads/*', rateLimiter({ maxRequests: 10, windowMs: 60_000 }))
 app.use('/me/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
 app.use('/auth/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
@@ -76,6 +78,7 @@ app.use('/webhooks/*', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
 // /artists/apply has a GET that checks real-time status — exclude from public caching
 app.use('/artists/apply/*', cacheControl('private, no-cache'))
 app.use('/artists/apply', cacheControl('private, no-cache'))
+app.use('/artists/*/contact', cacheControl('private, no-cache'))
 app.use('/artists/*', cacheControl('public, max-age=300'))
 app.use('/artists', cacheControl('public, max-age=300'))
 app.use('/listings/*', cacheControl('public, max-age=300'))
@@ -93,6 +96,7 @@ app.use('/admin/*', cacheControl('private, no-cache'))
 // Mount routes — /artists/apply MUST be before /artists to avoid /:slug collision
 app.route('/health', createHealthRoutes(prisma))
 app.route('/artists/apply', createApplicationRoutes(prisma))
+app.route('/artists', createArtistContactRoutes(prisma))
 app.route('/artists', createArtistRoutes(prisma))
 app.route('/listings', createListingRoutes(prisma))
 app.route('/categories', createCategoryRoutes(prisma))

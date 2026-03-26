@@ -53,6 +53,13 @@ export function conflict(c: Context, message: string) {
 }
 
 /**
+ * 429 Too Many Requests
+ */
+export function tooManyRequests(c: Context, message: string) {
+  return c.json(errorBody('RATE_LIMITED', message), 429)
+}
+
+/**
  * 500 Internal Server Error
  */
 export function internalError(c: Context) {
