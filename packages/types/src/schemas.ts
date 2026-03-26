@@ -134,6 +134,38 @@ export const checkEmailQuery = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
 })
 
+/** POST /artists/:slug/contact body */
+export const contactArtistBody = z.object({
+  firstName: z
+    .string()
+    .min(1, 'First name is required')
+    .max(100, 'First name must be at most 100 characters')
+    .transform((v) => sanitizeText(v))
+    .pipe(z.string().min(1, 'First name is required')),
+  lastName: z
+    .string()
+    .min(1, 'Last name is required')
+    .max(100, 'Last name must be at most 100 characters')
+    .transform((v) => sanitizeText(v))
+    .pipe(z.string().min(1, 'Last name is required')),
+  email: z.string().min(1, 'Email is required').email('Invalid email address').max(320),
+  subject: z
+    .string()
+    .min(1, 'Subject is required')
+    .max(200, 'Subject must be at most 200 characters')
+    .transform((v) => sanitizeText(v))
+    .pipe(z.string().min(1, 'Subject is required')),
+  message: z
+    .string()
+    .min(10, 'Message must be at least 10 characters')
+    .max(5000, 'Message must be at most 5000 characters')
+    .transform((v) => sanitizeText(v))
+    .pipe(z.string().min(10, 'Message must be at least 10 characters')),
+  // Honeypot field — bots fill this, humans leave it empty.
+  // Accept any value at the schema level; the route handler silently rejects non-empty.
+  website: z.string().optional().default(''),
+})
+
 /** POST /uploads/presigned-url body */
 export const presignedUrlBody = z.object({
   context: z.enum(['profile', 'cover', 'listing', 'process']),
@@ -608,6 +640,7 @@ export type ListingsQuery = z.infer<typeof listingsQuery>
 export type WaitlistBody = z.infer<typeof waitlistBody>
 export type ArtistApplicationBody = z.infer<typeof artistApplicationBody>
 export type CheckEmailQuery = z.infer<typeof checkEmailQuery>
+export type ContactArtistBody = z.infer<typeof contactArtistBody>
 export type PresignedUrlBody = z.infer<typeof presignedUrlBody>
 export type ProfileUpdateBody = z.infer<typeof profileUpdateBody>
 export type CategoriesUpdateBody = z.infer<typeof categoriesUpdateBody>

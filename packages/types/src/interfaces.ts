@@ -54,6 +54,8 @@ export interface ArtistProfile {
   location: string
   websiteUrl: string | null
   instagramUrl: string | null
+  contactEmail: string | null // Public-facing contact email (not account email)
+  contactEnabled: boolean // Whether the artist accepts contact messages
   stripeAccountId: string | null // Set after Stripe Connect onboarding
   originZip: string // Required for shipping rate calculation
   status: ArtistStatusType
@@ -310,7 +312,8 @@ export interface ListingWithImages extends Listing {
  * Full artist profile response for GET /artists/:slug
  * Contains the profile plus all related data needed to render the page
  */
-export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 'stripeAccountId' | 'originZip' | 'applicationSource'> {
+export interface ArtistProfileResponse extends Omit<ArtistProfile, 'userId' | 'stripeAccountId' | 'originZip' | 'applicationSource' | 'contactEmail' | 'contactEnabled'> {
+  hasContactForm: boolean
   categories: CategoryType[]
   tags: Tag[]
   cvEntries: ArtistCvEntry[]
@@ -685,6 +688,8 @@ export interface AdminArtistDetailResponse {
   location: string
   websiteUrl: string | null
   instagramUrl: string | null
+  contactEmail: string | null
+  contactEnabled: boolean
   originZip: string
   status: ArtistStatusType
   commissionsOpen: boolean
@@ -1039,6 +1044,15 @@ export interface AdminArtistFinancialItem {
  */
 export interface AdminArtistFinancialsResponse {
   data: AdminArtistFinancialItem[]
+}
+
+// ─── Contact Message Types ────────────────────────────────────────────
+
+/**
+ * Response from POST /artists/:slug/contact
+ */
+export interface ContactArtistResponse {
+  message: string
 }
 
 // ─── API Error Types ──────────────────────────────────────────────────

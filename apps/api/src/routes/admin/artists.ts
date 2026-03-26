@@ -125,6 +125,8 @@ export function createAdminArtistRoutes(prisma: PrismaClient) {
       location: artist.location,
       websiteUrl: artist.websiteUrl,
       instagramUrl: artist.instagramUrl,
+      contactEmail: artist.contactEmail,
+      contactEnabled: artist.contactEnabled,
       originZip: artist.originZip,
       status: artist.status,
       commissionsOpen: artist.commissionsOpen,

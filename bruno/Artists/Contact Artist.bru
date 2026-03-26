@@ -1,0 +1,33 @@
+meta {
+  name: Contact Artist
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{sa_baseUrl}}/artists/{{sa_artistSlug}}/contact
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane@example.com",
+    "subject": "Commission inquiry",
+    "message": "I love your ceramic work and would like to discuss a possible commission piece."
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: eq Your message has been sent
+}
+
+tests {
+  test("should return success message", function() {
+    const body = res.getBody();
+    expect(body.message).to.equal("Your message has been sent");
+  });
+}

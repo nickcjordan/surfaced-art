@@ -97,6 +97,7 @@ export type {
   SearchListingItem,
   SearchArtistItem,
   SearchResponse,
+  ContactArtistResponse,
 } from './interfaces'
 
 // Validation schemas
@@ -113,6 +114,7 @@ export {
   sanitizeText,
   artistApplicationBody,
   checkEmailQuery,
+  contactArtistBody,
   presignedUrlBody,
   hexColor,
   profileUpdateBody,
@@ -149,6 +151,7 @@ export {
   type WaitlistBody,
   type ArtistApplicationBody,
   type CheckEmailQuery,
+  type ContactArtistBody,
   type PresignedUrlBody,
   type ProfileUpdateBody,
   type CategoriesUpdateBody,

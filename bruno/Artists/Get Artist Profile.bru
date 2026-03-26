@@ -59,11 +59,19 @@ tests {
     expect(res.getBody().processMedia).to.be.an("array");
   });
 
+  test("should include hasContactForm boolean", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("hasContactForm");
+    expect(body.hasContactForm).to.be.a("boolean");
+  });
+
   test("should omit private fields", function() {
     const body = res.getBody();
     expect(body).to.not.have.property("userId");
     expect(body).to.not.have.property("stripeAccountId");
     expect(body).to.not.have.property("originZip");
     expect(body).to.not.have.property("applicationSource");
+    expect(body).to.not.have.property("contactEmail");
+    expect(body).to.not.have.property("contactEnabled");
   });
 }

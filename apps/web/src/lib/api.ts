@@ -156,6 +156,26 @@ export const getListingDetail = cache(async (id: string): Promise<ListingDetailR
   return apiFetch<ListingDetailResponse>(`/listings/${encodeURIComponent(id)}`)
 })
 
+export async function contactArtist(
+  slug: string,
+  data: {
+    firstName: string
+    lastName: string
+    email: string
+    subject: string
+    message: string
+    website?: string
+  },
+): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(
+    `/artists/${encodeURIComponent(slug)}/contact`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+  )
+}
+
 export async function joinWaitlist(
   email: string,
   context?: { source?: string; artistId?: string; listingId?: string },

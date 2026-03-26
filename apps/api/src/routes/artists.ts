@@ -136,6 +136,7 @@ export function createArtistRoutes(prisma: PrismaClient) {
       location: artist.location,
       websiteUrl: artist.websiteUrl,
       instagramUrl: artist.instagramUrl,
+      hasContactForm: !!(artist.contactEmail && artist.contactEnabled),
       status: artist.status,
       commissionsOpen: artist.commissionsOpen,
       coverImageUrl: artist.coverImageUrl,

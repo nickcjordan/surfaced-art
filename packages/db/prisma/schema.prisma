@@ -149,6 +149,8 @@ model ArtistProfile {
   location        String
   websiteUrl      String?          @map("website_url")
   instagramUrl    String?          @map("instagram_url")
+  contactEmail    String?          @map("contact_email")
+  contactEnabled  Boolean          @default(true) @map("contact_enabled")
   stripeAccountId String?          @map("stripe_account_id")
   originZip       String           @map("origin_zip")
   status          ArtistStatusType @default(pending)
@@ -172,9 +174,29 @@ model ArtistProfile {
   ordersAsArtist  Order[]
   reviewsAsArtist Review[]
   followers       Follow[]
+  contactMessages ContactMessage[]
 
   @@index([status])
   @@map("artist_profiles")
+}
+
+/// Contact message sent to an artist through the platform
+model ContactMessage {
+  id          String   @id @default(uuid()) @db.Uuid
+  artistId    String   @map("artist_id") @db.Uuid
+  senderName  String   @map("sender_name") @db.VarChar(200)
+  senderEmail String   @map("sender_email") @db.VarChar(320)
+  subject     String   @db.VarChar(200)
+  message     String   @db.Text
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  sentAt      DateTime @default(now()) @map("sent_at")
+
+  // Relations
+  artist ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@index([artistId])
+  @@index([senderEmail, artistId, sentAt])
+  @@map("contact_messages")
 }
 
 /// Category assignment for an artist
