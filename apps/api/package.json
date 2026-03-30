@@ -14,9 +14,9 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1014.0",
-    "@aws-sdk/s3-presigned-post": "^3.1014.0",
-    "@hono/node-server": "^1.19.11",
+    "@aws-sdk/client-s3": "^3.1019.0",
+    "@aws-sdk/s3-presigned-post": "^3.1019.0",
+    "@hono/node-server": "^1.19.12",
     "@hono/zod-validator": "^0.7.6",
     "@surfaced-art/db": "^0.0.1",
     "@surfaced-art/email": "^0.0.1",
@@ -27,15 +27,15 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@faker-js/faker": "^10.3.0",
+    "@faker-js/faker": "^10.4.0",
     "@testcontainers/postgresql": "^11.13.0",
     "@types/aws-lambda": "^8.10.161",
     "@types/node": "^25.5.0",
-    "msw": "^2.12.14",
+    "msw": "^2.12.11",
     "testcontainers": "^11.12.0",
     "tsup": "^8.4.0",
     "tsx": "^4.20.0",
     "typescript": "^5.7.0",
-    "vitest": "^4.1.1"
+    "vitest": "^4.1.2"
   }
 }
