@@ -1,3 +1,92 @@
 headers {
   Content-Type: application/json
 }
+
+script:pre-request {
+  const axios = require('axios');
+
+  /**
+   * Auto-authenticate with Cognito using USER_PASSWORD_AUTH flow.
+   * Caches tokens and only refreshes when expired.
+   *
+   * Required env vars (set as secrets in environment):
+   *   sa_authEmail    — Cognito user email
+   *   sa_authPassword — Cognito user password
+   *
+   * Required env vars (set in environment):
+   *   sa_cognitoRegion     — AWS region (e.g. us-east-1)
+   *   sa_cognitoClientId   — Cognito app client ID
+   *
+   * Populates: sa_authToken (ID token for Authorization header)
+   *
+   * For buyer token: set sa_buyerAuthEmail + sa_buyerAuthPassword
+   * Populates: sa_buyerAuthToken
+   */
+
+  async function authenticateCognito(email, password, region, clientId) {
+    const url = `https://cognito-idp.${region}.amazonaws.com/`;
+
+    const response = await axios.post(url, {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: clientId,
+      AuthParameters: {
+        USERNAME: email,
+        PASSWORD: password,
+      },
+    }, {
+      headers: {
+        'Content-Type': 'application/x-amz-json-1.1',
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+      },
+    });
+
+    const result = response.data.AuthenticationResult;
+    return {
+      idToken: result.IdToken,
+      expiresAt: Date.now() + (result.ExpiresIn * 1000) - 60000, // 1 min buffer
+    };
+  }
+
+  function isTokenExpired(expiresAtKey) {
+    const expiresAt = bru.getVar(expiresAtKey);
+    if (!expiresAt) return true;
+    return Date.now() >= Number(expiresAt);
+  }
+
+  const region = bru.getEnvVar('sa_cognitoRegion');
+  const clientId = bru.getEnvVar('sa_cognitoClientId');
+
+  // --- Primary auth token (artist/admin) ---
+  const authEmail = bru.getEnvVar('sa_authEmail');
+  const authPassword = bru.getEnvVar('sa_authPassword');
+
+  if (authEmail && authPassword && region && clientId) {
+    if (isTokenExpired('sa_authTokenExpiresAt')) {
+      try {
+        const auth = await authenticateCognito(authEmail, authPassword, region, clientId);
+        bru.setVar('sa_authToken', auth.idToken);
+        bru.setVar('sa_authTokenExpiresAt', String(auth.expiresAt));
+        console.log('✓ sa_authToken refreshed');
+      } catch (err) {
+        console.error('✗ Failed to authenticate (sa_authToken):', err.response?.data?.message || err.message);
+      }
+    }
+  }
+
+  // --- Buyer auth token ---
+  const buyerEmail = bru.getEnvVar('sa_buyerAuthEmail');
+  const buyerPassword = bru.getEnvVar('sa_buyerAuthPassword');
+
+  if (buyerEmail && buyerPassword && region && clientId) {
+    if (isTokenExpired('sa_buyerAuthTokenExpiresAt')) {
+      try {
+        const auth = await authenticateCognito(buyerEmail, buyerPassword, region, clientId);
+        bru.setVar('sa_buyerAuthToken', auth.idToken);
+        bru.setVar('sa_buyerAuthTokenExpiresAt', String(auth.expiresAt));
+        console.log('✓ sa_buyerAuthToken refreshed');
+      } catch (err) {
+        console.error('✗ Failed to authenticate (sa_buyerAuthToken):', err.response?.data?.message || err.message);
+      }
+    }
+  }
+}
