@@ -98,18 +98,18 @@ describe('Header', () => {
       expect(screen.queryByRole('link', { name: /for artists/i })).not.toBeInTheDocument()
     })
 
-    it('should show Studio link for artists', () => {
+    it('should show Dashboard link for artists', () => {
       mockAuth.user = { email: 'artist@test.com', name: 'Test Artist' }
       mockAuth.isArtist = true
       render(<Header />)
-      const link = screen.getByTestId('nav-studio')
+      const link = screen.getByTestId('nav-dashboard')
       expect(link).toHaveAttribute('href', '/dashboard')
     })
 
-    it('should not show Studio link for non-artists', () => {
+    it('should not show Dashboard link for non-artists', () => {
       mockAuth.user = { email: 'buyer@test.com', name: 'Test Buyer' }
       render(<Header />)
-      expect(screen.queryByTestId('nav-studio')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('nav-dashboard')).not.toBeInTheDocument()
     })
 
     it('should show Admin link for admins', () => {
@@ -131,7 +131,7 @@ describe('Header', () => {
       mockAuth.isArtist = true
       mockAuth.isAdmin = true
       render(<Header />)
-      expect(screen.getByTestId('nav-studio')).toBeInTheDocument()
+      expect(screen.getByTestId('nav-dashboard')).toBeInTheDocument()
       expect(screen.getByTestId('nav-admin')).toBeInTheDocument()
     })
   })
