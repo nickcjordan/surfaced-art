@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
-import { getAdminApplications } from '@/lib/api'
+import { getAdminApplications, getApplicationStats } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { AdminApplicationListItem, PaginatedResponse } from '@surfaced-art/types'
@@ -15,8 +16,20 @@ export function AdminApplicationList() {
   const [data, setData] = useState<PaginatedResponse<AdminApplicationListItem> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState<{ pending: number; approved: number; rejected: number } | null>(null)
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const token = await getIdToken()
+      if (!token) return
+      const result = await getApplicationStats(token)
+      setStats(result)
+    } catch {
+      // Stats are non-critical — fail silently
+    }
+  }, [getIdToken])
 
   const fetchApplications = useCallback(async (params: { status?: string; page?: number }) => {
     setLoading(true)
@@ -38,8 +51,9 @@ export function AdminApplicationList() {
   }, [getIdToken])
 
   useEffect(() => {
+    void fetchStats()
     void fetchApplications({ status: statusFilter, page })
-  }, [fetchApplications, statusFilter, page])
+  }, [fetchStats, fetchApplications, statusFilter, page])
 
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value)
@@ -66,6 +80,48 @@ export function AdminApplicationList() {
 
   return (
     <div data-testid="admin-application-list">
+      {/* KPI Stats */}
+      {stats && (
+        <div data-testid="application-stats" className="grid grid-cols-3 gap-4 mb-6">
+          <button
+            onClick={() => handleStatusFilter('pending')}
+            className={cn(
+              'rounded-md border p-4 text-center transition-colors',
+              statusFilter === 'pending'
+                ? 'border-warning bg-warning/5'
+                : 'border-border hover:border-warning/50',
+            )}
+          >
+            <p data-testid="stat-pending" className="text-2xl font-semibold text-warning">{stats.pending}</p>
+            <p className="text-xs text-muted-foreground mt-1">Pending</p>
+          </button>
+          <button
+            onClick={() => handleStatusFilter('approved')}
+            className={cn(
+              'rounded-md border p-4 text-center transition-colors',
+              statusFilter === 'approved'
+                ? 'border-success bg-success/5'
+                : 'border-border hover:border-success/50',
+            )}
+          >
+            <p data-testid="stat-approved" className="text-2xl font-semibold text-success">{stats.approved}</p>
+            <p className="text-xs text-muted-foreground mt-1">Approved</p>
+          </button>
+          <button
+            onClick={() => handleStatusFilter('rejected')}
+            className={cn(
+              'rounded-md border p-4 text-center transition-colors',
+              statusFilter === 'rejected'
+                ? 'border-error bg-error/5'
+                : 'border-border hover:border-error/50',
+            )}
+          >
+            <p data-testid="stat-rejected" className="text-2xl font-semibold text-error">{stats.rejected}</p>
+            <p className="text-xs text-muted-foreground mt-1">Rejected</p>
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <select
           data-testid="admin-applications-status-filter"

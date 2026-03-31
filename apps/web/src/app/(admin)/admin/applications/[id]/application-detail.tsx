@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
-import { getAdminApplication, getAdminUsers, approveApplication, rejectApplication } from '@/lib/api'
+import { useRouter } from 'next/navigation'
+import { getAdminApplication, getAdminUsers, approveApplication, rejectApplication, deleteApplication } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -18,8 +19,10 @@ export function AdminApplicationDetail({ applicationId }: { applicationId: strin
   const [actionLoading, setActionLoading] = useState(false)
   const [showApproveConfirm, setShowApproveConfirm] = useState(false)
   const [showRejectConfirm, setShowRejectConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [rejectNotes, setRejectNotes] = useState('')
   const [actionSuccess, setActionSuccess] = useState<string | null>(null)
+  const router = useRouter()
 
   const fetchApp = useCallback(async () => {
     setLoading(true)
@@ -83,6 +86,22 @@ export function AdminApplicationDetail({ applicationId }: { applicationId: strin
       await fetchApp()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to reject')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!app) return
+    setActionError(null)
+    setActionLoading(true)
+    try {
+      const token = await getIdToken()
+      if (!token) throw new Error('Not authenticated')
+      await deleteApplication(token, app.id)
+      router.push('/admin/applications')
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to delete')
     } finally {
       setActionLoading(false)
     }
@@ -206,26 +225,39 @@ export function AdminApplicationDetail({ applicationId }: { applicationId: strin
       </div>
 
       {/* Actions */}
-      {isPending && (
+      {(isPending || app.status === 'rejected') && (
         <div className="border border-border rounded-md p-4 space-y-4">
           <h2 className="text-sm font-medium text-muted-foreground">Actions</h2>
 
-          {!showApproveConfirm && !showRejectConfirm && (
+          {!showApproveConfirm && !showRejectConfirm && !showDeleteConfirm && (
             <div className="flex gap-3">
+              {isPending && (
+                <>
+                  <Button
+                    data-testid="approve-btn"
+                    onClick={() => setShowApproveConfirm(true)}
+                    disabled={actionLoading}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    data-testid="reject-btn"
+                    variant="destructive"
+                    onClick={() => setShowRejectConfirm(true)}
+                    disabled={actionLoading}
+                  >
+                    Reject
+                  </Button>
+                </>
+              )}
               <Button
-                data-testid="approve-btn"
-                onClick={() => setShowApproveConfirm(true)}
+                data-testid="delete-btn"
+                variant="ghost"
+                className="text-error hover:text-error"
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={actionLoading}
               >
-                Approve
-              </Button>
-              <Button
-                data-testid="reject-btn"
-                variant="destructive"
-                onClick={() => setShowRejectConfirm(true)}
-                disabled={actionLoading}
-              >
-                Reject
+                Delete
               </Button>
             </div>
           )}
@@ -278,6 +310,31 @@ export function AdminApplicationDetail({ applicationId }: { applicationId: strin
                 <Button
                   variant="ghost"
                   onClick={() => { setShowRejectConfirm(false); setRejectNotes('') }}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {showDeleteConfirm && (
+            <div className="space-y-3">
+              <p className="text-sm text-foreground">
+                Permanently delete <strong>{app.fullName}</strong>&apos;s application? This cannot be undone.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  data-testid="confirm-delete-btn"
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Deleting...' : 'Confirm Delete'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowDeleteConfirm(false)}
                   disabled={actionLoading}
                 >
                   Cancel
