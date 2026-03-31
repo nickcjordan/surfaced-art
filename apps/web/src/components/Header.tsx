@@ -109,13 +109,13 @@ export function Header() {
             {isArtist && (
               <Link
                 href="/dashboard"
-                data-testid="nav-studio"
+                data-testid="nav-dashboard"
                 className={cn(
                   'hidden md:block text-sm font-medium text-accent-primary transition-colors hover:text-foreground',
                   isSearchOpen && 'md:hidden'
                 )}
               >
-                Studio
+                Dashboard
               </Link>
             )}
             {isAdmin && (
