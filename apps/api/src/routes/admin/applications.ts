@@ -413,9 +413,17 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
       return conflict(c, 'Cannot delete an approved application. The associated artist profile must be removed first.')
     }
 
-    await prisma.artistApplication.delete({
-      where: { id },
-    })
+    try {
+      await prisma.artistApplication.delete({
+        where: { id },
+      })
+    } catch (err) {
+      // Handle race condition: another admin deleted between findUnique and delete
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        return notFound(c, 'Application not found')
+      }
+      throw err
+    }
 
     // Audit log (fire-and-forget)
     void logAdminAction(prisma, {
