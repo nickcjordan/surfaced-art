@@ -79,9 +79,9 @@ export function ListingCard({
           </div>
         )}
 
-        {/* Sold indicator dot */}
+        {/* Sold indicator dot — brand red (#AA1D45), bottom-right like traditional art sales */}
         {isSold && (
-          <div className="absolute top-2 right-2 size-2.5 rounded-full bg-error" />
+          <div className="absolute bottom-2 right-2 size-2.5 rounded-full bg-accent-red" />
         )}
 
         {/* Browse variant: hover overlay */}
