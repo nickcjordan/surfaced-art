@@ -1,0 +1,25 @@
+meta {
+  name: Delete Application (Not Found)
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{sa_baseUrl}}/admin/applications/00000000-0000-0000-0000-000000000000
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 404
+}
+
+tests {
+  test("should return 404 for nonexistent application", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

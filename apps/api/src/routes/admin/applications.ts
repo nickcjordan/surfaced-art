@@ -116,6 +116,20 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
   })
 
   /**
+   * GET /admin/applications/stats
+   * Counts of applications by status for KPI display.
+   */
+  app.get('/applications/stats', async (c) => {
+    const [pending, approved, rejected] = await Promise.all([
+      prisma.artistApplication.count({ where: { status: 'pending' } }),
+      prisma.artistApplication.count({ where: { status: 'approved' } }),
+      prisma.artistApplication.count({ where: { status: 'rejected' } }),
+    ])
+
+    return c.json({ pending, approved, rejected })
+  })
+
+  /**
    * GET /admin/applications/:id
    * Full detail of a single application, including reviewer name.
    */
@@ -374,6 +388,51 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
       })
       return internalError(c)
     }
+  })
+
+  /**
+   * DELETE /admin/applications/:id
+   * Permanently delete an application. Only pending or rejected applications can be deleted.
+   * Approved applications cannot be deleted because they have associated artist profiles.
+   */
+  app.delete('/applications/:id', async (c) => {
+    const start = Date.now()
+    const adminUser = c.get('user')
+    const { id } = c.req.param()
+
+    const application = await prisma.artistApplication.findUnique({
+      where: { id },
+    })
+
+    if (!application) {
+      return notFound(c, 'Application not found')
+    }
+
+    if (application.status === 'approved') {
+      return conflict(c, 'Cannot delete an approved application. The associated artist profile must be removed first.')
+    }
+
+    await prisma.artistApplication.delete({
+      where: { id },
+    })
+
+    // Audit log (fire-and-forget)
+    void logAdminAction(prisma, {
+      adminId: adminUser.id,
+      action: 'application_delete',
+      targetType: 'application',
+      targetId: id,
+      details: { email: application.email, fullName: application.fullName, status: application.status },
+    })
+
+    logger.info('Admin application deleted', {
+      applicationId: id,
+      email: application.email,
+      deletedBy: adminUser.id,
+      durationMs: Date.now() - start,
+    })
+
+    return c.json({ message: 'Application deleted successfully' })
   })
 
   return app

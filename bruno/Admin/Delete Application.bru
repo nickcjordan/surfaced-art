@@ -1,0 +1,27 @@
+meta {
+  name: Delete Application
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{sa_baseUrl}}/admin/applications/{{sa_applicationId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sa_authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.message: isDefined
+}
+
+tests {
+  test("should delete application successfully", function() {
+    const body = res.getBody();
+    expect(body.message).to.include("deleted");
+  });
+}

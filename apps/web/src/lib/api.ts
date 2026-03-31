@@ -645,6 +645,28 @@ export async function rejectApplication(
   )
 }
 
+export async function getApplicationStats(
+  token: string,
+): Promise<{ pending: number; approved: number; rejected: number }> {
+  return apiFetch<{ pending: number; approved: number; rejected: number }>(
+    '/admin/applications/stats',
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+}
+
+export async function deleteApplication(
+  token: string,
+  applicationId: string,
+): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(
+    `/admin/applications/${encodeURIComponent(applicationId)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  )
+}
+
 // ─── Admin: Artist Management ───────────────────────────────────────
 
 export async function getAdminArtists(

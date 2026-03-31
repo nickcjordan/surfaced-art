@@ -106,6 +106,7 @@ function createMockPrisma(overrides?: {
       findUnique: vi.fn().mockResolvedValue(overrides?.applicationDetail ?? null),
       count: vi.fn().mockResolvedValue(applicationCount),
       update: vi.fn().mockResolvedValue({}),
+      delete: vi.fn().mockResolvedValue({}),
     },
     artistProfile: {
       findUnique: vi.fn().mockResolvedValue(null),
@@ -297,5 +298,100 @@ describe('GET /admin/applications/:id', () => {
 
     const body = await res.json()
     expect(body.reviewerName).toBe('Reviewer Admin')
+  })
+})
+
+// ─── GET /admin/applications/stats ───────────────────────────────────
+
+describe('GET /admin/applications/stats', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await app.request('/admin/applications/stats')
+    expect(res.status).toBe(401)
+  })
+
+  it('should return counts by status', async () => {
+    const prisma = createMockPrisma()
+    // Override count to return specific values per status
+    let callIndex = 0
+    ;(prisma.artistApplication.count as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      const values = [3, 10, 2] // pending, approved, rejected
+      return Promise.resolve(values[callIndex++])
+    })
+    const app = createTestApp(prisma)
+
+    const res = await app.request('/admin/applications/stats', {}, createAuthEnv())
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body).toEqual({ pending: 3, approved: 10, rejected: 2 })
+  })
+})
+
+// ─── DELETE /admin/applications/:id ─────────────────────────────────
+
+function deleteApplication(app: ReturnType<typeof createTestApp>, id: string, env?: Record<string, unknown>) {
+  return app.request(`/admin/applications/${id}`, { method: 'DELETE' }, env)
+}
+
+describe('DELETE /admin/applications/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should return 401 without auth token', async () => {
+    const prisma = createMockPrisma()
+    const app = createTestApp(prisma)
+
+    const res = await deleteApplication(app, 'app-uuid-1')
+    expect(res.status).toBe(401)
+  })
+
+  it('should return 403 without admin role', async () => {
+    const prisma = createMockPrisma({ adminRoles: ['buyer'] })
+    const app = createTestApp(prisma)
+
+    const res = await deleteApplication(app, 'app-uuid-1', createAuthEnv())
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 404 when application not found', async () => {
+    const prisma = createMockPrisma({ applicationDetail: null })
+    const app = createTestApp(prisma)
+
+    const res = await deleteApplication(app, 'nonexistent-uuid', createAuthEnv())
+    expect(res.status).toBe(404)
+  })
+
+  it('should delete application and return success', async () => {
+    const detail = { ...mockApplications[0] }
+    const prisma = createMockPrisma({ applicationDetail: detail })
+    ;(prisma.artistApplication as unknown as { delete: ReturnType<typeof vi.fn> }).delete = vi.fn().mockResolvedValue(detail)
+    const app = createTestApp(prisma)
+
+    const res = await deleteApplication(app, 'app-uuid-1', createAuthEnv())
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.message).toContain('deleted')
+
+    expect((prisma.artistApplication as unknown as { delete: ReturnType<typeof vi.fn> }).delete).toHaveBeenCalledWith({
+      where: { id: 'app-uuid-1' },
+    })
+  })
+
+  it('should not allow deleting approved applications', async () => {
+    const detail = { ...mockApplications[1] } // status: 'approved'
+    const prisma = createMockPrisma({ applicationDetail: detail })
+    const app = createTestApp(prisma)
+
+    const res = await deleteApplication(app, 'app-uuid-2', createAuthEnv())
+    expect(res.status).toBe(409)
   })
 })
