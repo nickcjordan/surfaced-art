@@ -15,7 +15,7 @@ const QUALIFYING_STATUSES = ['paid', 'shipped', 'delivered', 'complete'] as cons
 function buildDateFilter(from?: string, to?: string) {
   if (!from && !to) return undefined
   const filter: { gte?: Date; lte?: Date } = {}
-  if (from) filter.gte = new Date(from)
+  if (from) filter.gte = new Date(`${from}T00:00:00.000Z`)
   if (to) filter.lte = new Date(`${to}T23:59:59.999Z`)
   return filter
 }
@@ -82,6 +82,7 @@ export function createAdminFinancialRoutes(prisma: PrismaClient) {
       by: ['artistId'],
       where: {
         status: { in: [...QUALIFYING_STATUSES] },
+        artistId: { not: null },
         ...(dateFilter ? { createdAt: dateFilter } : {}),
       },
       _sum: {
