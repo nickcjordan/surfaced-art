@@ -151,7 +151,8 @@ resource "aws_cognito_user_pool_client" "main" {
   # Auth flows
   explicit_auth_flows = [
     "ALLOW_REFRESH_TOKEN_AUTH",
-    "ALLOW_USER_SRP_AUTH"
+    "ALLOW_USER_SRP_AUTH",
+    "ALLOW_USER_PASSWORD_AUTH"
   ]
 
   # Prevent user existence errors

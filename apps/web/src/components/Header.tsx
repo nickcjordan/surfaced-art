@@ -12,7 +12,8 @@ import { SkipToContent } from './SkipToContent'
 import { Container } from './ui/container'
 import { cn } from '@/lib/utils'
 
-const SCROLL_THRESHOLD = 50
+const SCROLL_CONDENSE_THRESHOLD = 50
+const SCROLL_EXPAND_THRESHOLD = 20
 
 /**
  * Global site header — single-row layout.
@@ -23,6 +24,9 @@ const SCROLL_THRESHOLD = 50
  *
  * On scroll, the header condenses: wordmark shrinks and vertical padding reduces.
  * When search is open, category navigation hides to make room.
+ *
+ * Uses hysteresis (separate thresholds for condensing vs expanding) to prevent
+ * flickering when the height change shifts scroll position back across the threshold.
  */
 export function Header() {
   const [isCondensed, setIsCondensed] = useState(false)
@@ -34,7 +38,11 @@ export function Header() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsCondensed(window.scrollY > SCROLL_THRESHOLD)
+      const scrollY = window.scrollY
+      setIsCondensed((prev) => {
+        if (prev) return scrollY > SCROLL_EXPAND_THRESHOLD
+        return scrollY > SCROLL_CONDENSE_THRESHOLD
+      })
     }
 
     // Check initial scroll position (e.g. page refresh mid-scroll)
