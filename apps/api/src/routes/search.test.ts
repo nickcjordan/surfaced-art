@@ -183,4 +183,77 @@ describe('GET /search', () => {
       expect(body.query).toBe('ceramic')
     })
   })
+
+  describe('artist name matching listings (SUR-296)', () => {
+    it('should return listings when artist name matches but listing title does not', async () => {
+      // Scenario: user searches "keiko" — listing title is "Woven Tapestry"
+      // but the artist is "Keiko Watanabe". Listings should still appear.
+      vi.clearAllMocks()
+      const artistNameMatchedListing = {
+        ...mockListingResult,
+        title: 'Woven Tapestry',
+        medium: 'Fiber Art',
+        artistName: 'Keiko Watanabe',
+        artistSlug: 'keiko-watanabe',
+      }
+      mockPrisma = createMockPrisma({
+        listings: [artistNameMatchedListing],
+        artists: [{ ...mockArtistResult, slug: 'keiko-watanabe', displayName: 'Keiko Watanabe' }],
+      })
+      app = createTestApp(mockPrisma)
+
+      const res = await app.request('/search?q=keiko')
+      expect(res.status).toBe(200)
+
+      const body = await res.json()
+      // The key assertion: listings should be returned even when only artist name matches
+      expect(body.listings.data).toHaveLength(1)
+      expect(body.listings.data[0].artistName).toBe('Keiko Watanabe')
+      expect(body.artists.data).toHaveLength(1)
+    })
+  })
+
+  describe('partial query failure resilience (SUR-295)', () => {
+    it('should return 200 with empty listings when listings query throws', async () => {
+      vi.clearAllMocks()
+      let callCount = 0
+      const prisma = {
+        $queryRaw: vi.fn().mockImplementation(() => {
+          callCount++
+          if (callCount === 1) return Promise.reject(new Error('DB connection failed'))
+          return Promise.resolve([mockArtistResult])
+        }),
+      } as unknown as Parameters<typeof createSearchRoutes>[0]
+      app = createTestApp(prisma)
+
+      const res = await app.request('/search?q=keiko')
+      expect(res.status).toBe(200)
+
+      const body = await res.json()
+      expect(body.listings.data).toEqual([])
+      expect(body.listings.total).toBe(0)
+      expect(body.artists.data).toHaveLength(1)
+    })
+
+    it('should return 200 with empty artists when artists query throws', async () => {
+      vi.clearAllMocks()
+      let callCount = 0
+      const prisma = {
+        $queryRaw: vi.fn().mockImplementation(() => {
+          callCount++
+          if (callCount === 1) return Promise.resolve([mockListingResult])
+          return Promise.reject(new Error('DB connection failed'))
+        }),
+      } as unknown as Parameters<typeof createSearchRoutes>[0]
+      app = createTestApp(prisma)
+
+      const res = await app.request('/search?q=ceramic')
+      expect(res.status).toBe(200)
+
+      const body = await res.json()
+      expect(body.listings.data).toHaveLength(1)
+      expect(body.artists.data).toEqual([])
+      expect(body.artists.total).toBe(0)
+    })
+  })
 })

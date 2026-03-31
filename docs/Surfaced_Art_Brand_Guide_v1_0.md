@@ -2,6 +2,8 @@
 
 **Version 1.0 | February 2026**
 
+> **⚠️ DEPRECATED** — Superseded by `Surfaced_Art_Brand_Design_System_v2_0.md`. The palette described below (muted gold #B8956A, terracotta #C4775A) is no longer active. The current palette is warm monochrome (black/white/grays) with selective use of logo red (#AA1D45). See v2.0 for all current values.
+
 ---
 
 ## How to Use This Document

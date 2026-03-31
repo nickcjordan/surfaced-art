@@ -34,7 +34,8 @@ export function createSearchRoutes(prisma: PrismaClient) {
 
     // Two parallel queries: listings (paginated) and artists (top 8)
     // plainto_tsquery safely converts user input to AND-joined lexemes
-    const [listingsResult, artistsResult] = await Promise.all([
+    // Use Promise.allSettled so one query failure doesn't kill the other (SUR-295)
+    const [listingsOutcome, artistsOutcome] = await Promise.allSettled([
       prisma.$queryRaw`
         SELECT
           l.id,
@@ -48,11 +49,15 @@ export function createSearchRoutes(prisma: PrismaClient) {
           (SELECT height FROM listing_images li WHERE li.listing_id = l.id ORDER BY li.sort_order ASC LIMIT 1) AS "primaryImageHeight",
           ap.display_name AS "artistName",
           ap.slug AS "artistSlug",
-          ts_rank(l.search_vector, plainto_tsquery('english', ${q})) AS rank,
+          GREATEST(
+            ts_rank(l.search_vector, plainto_tsquery('english', ${q})),
+            ts_rank(ap.search_vector, plainto_tsquery('english', ${q}))
+          ) AS rank,
           COUNT(*) OVER() AS "totalCount"
         FROM listings l
         JOIN artist_profiles ap ON l.artist_id = ap.id
-        WHERE l.search_vector @@ plainto_tsquery('english', ${q})
+        WHERE (l.search_vector @@ plainto_tsquery('english', ${q})
+           OR ap.search_vector @@ plainto_tsquery('english', ${q}))
           AND l.status IN ('available', 'reserved_system')
           AND ap.status = 'approved'
         ORDER BY rank DESC, l.created_at DESC
@@ -71,12 +76,15 @@ export function createSearchRoutes(prisma: PrismaClient) {
           COALESCE(
             (SELECT ARRAY_AGG(sub.url ORDER BY sub.rn)
              FROM (
-               SELECT DISTINCT ON (l2.id) li.url, ROW_NUMBER() OVER (ORDER BY l2.created_at DESC) AS rn
-               FROM listings l2
-               JOIN listing_images li ON li.listing_id = l2.id AND li.is_process_photo = false
-               WHERE l2.artist_id = ap.id
-                 AND l2.status IN ('available', 'reserved_system')
-               ORDER BY l2.id, li.sort_order ASC
+               SELECT url, ROW_NUMBER() OVER (ORDER BY created_at DESC) AS rn
+               FROM (
+                 SELECT DISTINCT ON (l2.id) li.url, l2.created_at
+                 FROM listings l2
+                 JOIN listing_images li ON li.listing_id = l2.id AND li.is_process_photo = false
+                 WHERE l2.artist_id = ap.id
+                   AND l2.status IN ('available', 'reserved_system')
+                 ORDER BY l2.id, li.sort_order ASC
+               ) deduped
              ) sub
              WHERE sub.rn <= 4),
             '{}'::text[]
@@ -90,6 +98,21 @@ export function createSearchRoutes(prisma: PrismaClient) {
         LIMIT 8
       ` as Promise<RawArtistRow[]>,
     ])
+
+    // Extract results, falling back to empty on failure (SUR-295)
+    const listingsResult = listingsOutcome.status === 'fulfilled'
+      ? listingsOutcome.value
+      : [] as RawListingRow[]
+    const artistsResult = artistsOutcome.status === 'fulfilled'
+      ? artistsOutcome.value
+      : [] as RawArtistRow[]
+
+    if (listingsOutcome.status === 'rejected') {
+      logger.error('Listing search query failed', { query: q, error: String(listingsOutcome.reason) })
+    }
+    if (artistsOutcome.status === 'rejected') {
+      logger.error('Artist search query failed', { query: q, error: String(artistsOutcome.reason) })
+    }
 
     // Raw queries return BigInt for COUNT — convert to number
     const listingsTotal = listingsResult.length > 0 ? Number(listingsResult[0]!.totalCount) : 0
