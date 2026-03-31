@@ -45,6 +45,7 @@ export function AdminUserDetail({ userId }: { userId: string }) {
     try {
       const token = await getIdToken()
       if (!token) throw new Error('Not authenticated')
+      if (!effectiveSelectedRole) throw new Error('No role selected to grant')
       await grantRole(token, userId, effectiveSelectedRole as UserRoleType)
       await fetchUser()
     } catch (err) {
