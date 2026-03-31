@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { AdminArtistListItem, PaginatedResponse } from '@surfaced-art/types'
 
-const STATUSES = ['approved', 'suspended'] as const
+const STATUSES = ['pending', 'approved', 'suspended'] as const
 
 export function AdminArtistList() {
   const { getIdToken } = useAuth()
@@ -178,6 +178,7 @@ export function AdminArtistList() {
 
 function statusBadgeClass(status: string): string {
   switch (status) {
+    case 'pending': return 'bg-warning/10 text-warning'
     case 'approved': return 'bg-success/10 text-success'
     case 'suspended': return 'bg-error/10 text-error'
     default: return ''
