@@ -66,7 +66,7 @@ app.use(
 // Rate limiting for sensitive endpoints
 app.use('/waitlist', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
 app.use('/artists/apply', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
-app.use('/artists/*/contact', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
+app.use('/artists/:slug/contact', rateLimiter({ maxRequests: 5, windowMs: 60_000 }))
 app.use('/uploads/*', rateLimiter({ maxRequests: 10, windowMs: 60_000 }))
 app.use('/me/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
 app.use('/auth/*', rateLimiter({ maxRequests: 20, windowMs: 60_000 }))
@@ -78,7 +78,7 @@ app.use('/webhooks/*', rateLimiter({ maxRequests: 30, windowMs: 60_000 }))
 // /artists/apply has a GET that checks real-time status — exclude from public caching
 app.use('/artists/apply/*', cacheControl('private, no-cache'))
 app.use('/artists/apply', cacheControl('private, no-cache'))
-app.use('/artists/*/contact', cacheControl('private, no-cache'))
+app.use('/artists/:slug/contact', cacheControl('private, no-cache'))
 app.use('/artists/*', cacheControl('public, max-age=300'))
 app.use('/artists', cacheControl('public, max-age=300'))
 app.use('/listings/*', cacheControl('public, max-age=300'))
