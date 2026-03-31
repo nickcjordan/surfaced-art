@@ -68,6 +68,8 @@ script:pre-request {
         bru.setVar('sa_authTokenExpiresAt', String(auth.expiresAt));
         console.log('✓ sa_authToken refreshed');
       } catch (err) {
+        bru.setVar('sa_authToken', '');
+        bru.setVar('sa_authTokenExpiresAt', '0');
         console.error('✗ Failed to authenticate (sa_authToken):', err.response?.data?.message || err.message);
       }
     }
@@ -85,6 +87,8 @@ script:pre-request {
         bru.setVar('sa_buyerAuthTokenExpiresAt', String(auth.expiresAt));
         console.log('✓ sa_buyerAuthToken refreshed');
       } catch (err) {
+        bru.setVar('sa_buyerAuthToken', '');
+        bru.setVar('sa_buyerAuthTokenExpiresAt', '0');
         console.error('✗ Failed to authenticate (sa_buyerAuthToken):', err.response?.data?.message || err.message);
       }
     }
