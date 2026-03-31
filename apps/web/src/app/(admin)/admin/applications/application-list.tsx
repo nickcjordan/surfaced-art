@@ -52,8 +52,11 @@ export function AdminApplicationList() {
 
   useEffect(() => {
     void fetchStats()
+  }, [fetchStats])
+
+  useEffect(() => {
     void fetchApplications({ status: statusFilter, page })
-  }, [fetchStats, fetchApplications, statusFilter, page])
+  }, [fetchApplications, statusFilter, page])
 
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value)

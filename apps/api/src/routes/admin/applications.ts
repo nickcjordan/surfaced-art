@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
-import type { PrismaClient, Prisma } from '@surfaced-art/db'
+import { Prisma } from '@surfaced-art/db'
+import type { PrismaClient } from '@surfaced-art/db'
 import { logger, generateSlug, isReservedSlug } from '@surfaced-art/utils'
 import { adminReviewBody, adminApplicationsQuery } from '@surfaced-art/types'
 import type {
@@ -413,9 +414,17 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
       return conflict(c, 'Cannot delete an approved application. The associated artist profile must be removed first.')
     }
 
-    await prisma.artistApplication.delete({
-      where: { id },
-    })
+    try {
+      await prisma.artistApplication.delete({
+        where: { id },
+      })
+    } catch (err) {
+      // Handle race condition: another admin deleted between findUnique and delete
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        return notFound(c, 'Application not found')
+      }
+      throw err
+    }
 
     // Audit log (fire-and-forget)
     void logAdminAction(prisma, {
