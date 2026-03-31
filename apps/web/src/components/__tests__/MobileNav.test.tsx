@@ -99,12 +99,20 @@ describe('MobileNav', () => {
     expect(inactiveLink).not.toHaveAttribute('aria-current')
   })
 
-  it('should render a For Artists link when opened', async () => {
+  it('should render a For Artists link when opened and not logged in', async () => {
     render(<MobileNav />)
     await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
 
     const link = screen.getByRole('link', { name: /for artists/i })
     expect(link).toHaveAttribute('href', '/for-artists')
+  })
+
+  it('should hide For Artists link when logged in', async () => {
+    mockAuth.user = { email: 'user@test.com', name: 'Test User' }
+    render(<MobileNav />)
+    await userEvent.click(screen.getByRole('button', { name: 'Menu' }))
+
+    expect(screen.queryByRole('link', { name: /for artists/i })).not.toBeInTheDocument()
   })
 
   describe('authenticated user links', () => {

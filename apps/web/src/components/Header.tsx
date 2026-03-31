@@ -10,6 +10,7 @@ import { AuthButton } from './AuthButton'
 import { Wordmark } from './Wordmark'
 import { SkipToContent } from './SkipToContent'
 import { Container } from './ui/container'
+import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 
 const SCROLL_CONDENSE_THRESHOLD = 50
@@ -29,6 +30,7 @@ const SCROLL_EXPAND_THRESHOLD = 20
  * flickering when the height change shifts scroll position back across the threshold.
  */
 export function Header() {
+  const { user, isArtist, isAdmin } = useAuth()
   const [isCondensed, setIsCondensed] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
@@ -91,17 +93,43 @@ export function Header() {
             </div>
           </div>
 
-          {/* Right: for-artists link + search + auth + theme toggle + mobile nav */}
+          {/* Right: role-aware links + search + auth + theme toggle + mobile nav */}
           <div className="flex items-center gap-2">
-            <Link
-              href="/for-artists"
-              className={cn(
-                'hidden md:block text-sm font-medium text-accent-primary transition-colors hover:text-foreground',
-                isSearchOpen && 'md:hidden'
-              )}
-            >
-              For Artists
-            </Link>
+            {!user && (
+              <Link
+                href="/for-artists"
+                className={cn(
+                  'hidden md:block text-sm font-medium text-accent-primary transition-colors hover:text-foreground',
+                  isSearchOpen && 'md:hidden'
+                )}
+              >
+                For Artists
+              </Link>
+            )}
+            {isArtist && (
+              <Link
+                href="/dashboard"
+                data-testid="nav-studio"
+                className={cn(
+                  'hidden md:block text-sm font-medium text-accent-primary transition-colors hover:text-foreground',
+                  isSearchOpen && 'md:hidden'
+                )}
+              >
+                Studio
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                data-testid="nav-admin"
+                className={cn(
+                  'hidden md:block text-sm font-medium text-foreground transition-colors hover:text-accent-primary',
+                  isSearchOpen && 'md:hidden'
+                )}
+              >
+                Admin
+              </Link>
+            )}
             <div className="hidden md:block">
               <SearchInput onOpenChange={handleSearchOpenChange} />
             </div>
