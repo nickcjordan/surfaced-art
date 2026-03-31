@@ -51,6 +51,8 @@ const mockArtistProfile = {
   location: 'Portland, OR',
   websiteUrl: 'https://janeart.com',
   instagramUrl: 'https://instagram.com/janeart',
+  contactEmail: 'jane@example.com',
+  contactEnabled: true,
   originZip: '97201',
   status: 'approved',
   commissionsOpen: false,

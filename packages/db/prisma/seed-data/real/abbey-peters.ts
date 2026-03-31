@@ -15,6 +15,8 @@ export const abbeyConfig: ArtistSeedConfig = {
     location: 'Denver, CO',
     websiteUrl: 'https://abbey-peters.com',
     instagramUrl: 'https://www.instagram.com/abbey_peters',
+    contactEmail: 'abbey@abbey-peters.com',
+    contactEnabled: true,
     originZip: '80210',
     status: 'approved',
     commissionsOpen: false,

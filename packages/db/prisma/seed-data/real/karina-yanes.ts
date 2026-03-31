@@ -15,6 +15,8 @@ export const karinaConfig: ArtistSeedConfig = {
     location: 'Gainesville, FL',
     websiteUrl: 'https://karinayanesceramics.squarespace.com',
     instagramUrl: 'https://www.instagram.com/karinayanes.ceramics',
+    contactEmail: 'karina@karinayanesceramics.com',
+    contactEnabled: true,
     originZip: '32601',
     status: 'approved',
     commissionsOpen: false,

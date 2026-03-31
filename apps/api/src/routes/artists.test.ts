@@ -12,6 +12,8 @@ const mockApprovedArtist = {
   location: 'Portland, OR',
   websiteUrl: 'https://abbeypeters.com',
   instagramUrl: 'https://instagram.com/abbeypeters',
+  contactEmail: 'abbey@example.com',
+  contactEnabled: true,
   stripeAccountId: null,
   originZip: '97201',
   status: 'approved' as const,
@@ -276,7 +278,7 @@ describe('GET /artists/:slug', () => {
       expect(data.listings[0].artworkHeight).toBe(0)
     })
 
-    it('should omit private fields (userId, stripeAccountId, originZip, applicationSource)', async () => {
+    it('should omit private fields (userId, stripeAccountId, originZip, applicationSource, contactEmail, contactEnabled)', async () => {
       const res = await app.request('/artists/abbey-peters')
       const data = await res.json()
 
@@ -284,6 +286,37 @@ describe('GET /artists/:slug', () => {
       expect(data).not.toHaveProperty('stripeAccountId')
       expect(data).not.toHaveProperty('originZip')
       expect(data).not.toHaveProperty('applicationSource')
+      expect(data).not.toHaveProperty('contactEmail')
+      expect(data).not.toHaveProperty('contactEnabled')
+    })
+
+    it('should include hasContactForm true when contactEmail and contactEnabled are set', async () => {
+      const res = await app.request('/artists/abbey-peters')
+      const data = await res.json()
+
+      expect(data.hasContactForm).toBe(true)
+    })
+
+    it('should include hasContactForm false when contactEmail is null', async () => {
+      const artistNoEmail = { ...mockApprovedArtist, contactEmail: null }
+      mockPrisma = createMockPrisma(artistNoEmail)
+      app = createTestApp(mockPrisma)
+
+      const res = await app.request('/artists/abbey-peters')
+      const data = await res.json()
+
+      expect(data.hasContactForm).toBe(false)
+    })
+
+    it('should include hasContactForm false when contactEnabled is false', async () => {
+      const artistDisabled = { ...mockApprovedArtist, contactEnabled: false }
+      mockPrisma = createMockPrisma(artistDisabled)
+      app = createTestApp(mockPrisma)
+
+      const res = await app.request('/artists/abbey-peters')
+      const data = await res.json()
+
+      expect(data.hasContactForm).toBe(false)
     })
 
     it('should call Prisma with correct query parameters', async () => {

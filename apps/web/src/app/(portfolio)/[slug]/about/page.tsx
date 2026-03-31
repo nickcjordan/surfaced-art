@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { getArtistProfile } from '@/lib/api'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
+import { ContactSection } from '@/components/ContactSection'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -82,6 +83,17 @@ export default async function PortfolioAboutPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      {/* Contact Info */}
+      <ContactSection
+        hasContactForm={artist.hasContactForm}
+        artistSlug={artist.slug}
+        artistName={artist.displayName}
+        websiteUrl={artist.websiteUrl}
+        instagramUrl={artist.instagramUrl}
+        location={artist.location}
+        commissionsOpen={artist.commissionsOpen}
+      />
 
       {/* Process Section */}
       {(processPhotos.length > 0 || processVideo) && (

@@ -46,6 +46,8 @@ export async function seedArtist(tx: TransactionClient, data: ArtistSeedConfig) 
       location: data.profile.location,
       websiteUrl: data.profile.websiteUrl,
       instagramUrl: data.profile.instagramUrl,
+      contactEmail: data.profile.contactEmail,
+      contactEnabled: data.profile.contactEnabled,
       originZip: data.profile.originZip,
       status: data.profile.status,
       commissionsOpen: data.profile.commissionsOpen,

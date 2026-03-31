@@ -16,6 +16,7 @@ export interface SendEmailOptions {
   to: string | string[]
   subject: string
   template: ReactElement
+  replyTo?: string
 }
 
 export interface SendEmailResult {
@@ -76,7 +77,7 @@ export async function sendEmail(
       Subject: options.subject,
       HtmlBody: html,
       TextBody: text,
-      ReplyTo: config.replyToAddress,
+      ReplyTo: options.replyTo ?? config.replyToAddress,
       MessageStream: 'outbound',
     })
     logger.info('Email sent', {

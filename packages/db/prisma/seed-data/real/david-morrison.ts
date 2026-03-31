@@ -15,6 +15,8 @@ export const davidConfig: ArtistSeedConfig = {
     location: 'Winooski, VT',
     websiteUrl: 'https://morrison-david.com',
     instagramUrl: 'https://www.instagram.com/david_morrison_ceramics',
+    contactEmail: 'davidmorrison167@gmail.com',
+    contactEnabled: true,
     originZip: '05404',
     status: 'approved',
     commissionsOpen: false,
