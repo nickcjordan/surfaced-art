@@ -16,7 +16,7 @@ export function AdminUserDetail({ userId }: { userId: string }) {
   const [user, setUser] = useState<AdminUserDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedRole, setSelectedRole] = useState<UserRoleType>('artist')
+  const [selectedRole, setSelectedRole] = useState<UserRoleType | ''>('')
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
 
@@ -45,7 +45,7 @@ export function AdminUserDetail({ userId }: { userId: string }) {
     try {
       const token = await getIdToken()
       if (!token) throw new Error('Not authenticated')
-      await grantRole(token, userId, selectedRole)
+      await grantRole(token, userId, effectiveSelectedRole as UserRoleType)
       await fetchUser()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to grant role')
@@ -90,6 +90,11 @@ export function AdminUserDetail({ userId }: { userId: string }) {
 
   const existingRoles = user.roles.map((r) => r.role)
   const grantableRoles = ALL_ROLES.filter((r) => !existingRoles.includes(r))
+
+  // Sync selectedRole to the first grantable role when user data changes
+  const effectiveSelectedRole = grantableRoles.includes(selectedRole as UserRoleType)
+    ? (selectedRole as UserRoleType)
+    : grantableRoles[0] ?? ''
 
   return (
     <div data-testid="admin-user-detail" className="space-y-8">
@@ -167,7 +172,7 @@ export function AdminUserDetail({ userId }: { userId: string }) {
           <div className="flex items-center gap-2 pt-2 border-t border-border/50">
             <select
               data-testid="grant-role-select"
-              value={selectedRole}
+              value={effectiveSelectedRole}
               onChange={(e) => setSelectedRole(e.target.value as UserRoleType)}
               className="h-9 rounded-md border border-border bg-transparent px-3 text-sm text-foreground"
             >
