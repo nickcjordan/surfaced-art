@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
-import type { PrismaClient, Prisma } from '@surfaced-art/db'
+import { Prisma } from '@surfaced-art/db'
+import type { PrismaClient } from '@surfaced-art/db'
 import { logger, generateSlug, isReservedSlug } from '@surfaced-art/utils'
 import { adminReviewBody, adminApplicationsQuery } from '@surfaced-art/types'
 import type {

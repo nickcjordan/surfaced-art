@@ -82,7 +82,6 @@ export function createAdminFinancialRoutes(prisma: PrismaClient) {
       by: ['artistId'],
       where: {
         status: { in: [...QUALIFYING_STATUSES] },
-        artistId: { not: null },
         ...(dateFilter ? { createdAt: dateFilter } : {}),
       },
       _sum: {
