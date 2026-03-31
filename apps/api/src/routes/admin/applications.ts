@@ -229,7 +229,7 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
           },
         })
 
-        // 2. Create artist profile
+        // 2. Create artist profile (auto-approved — application review is the vetting step)
         const newProfile = await tx.artistProfile.create({
           data: {
             userId: targetUser.id,
@@ -238,6 +238,7 @@ export function createAdminApplicationRoutes(prisma: PrismaClient) {
             bio: application.statement ?? '',
             location: '',
             originZip: '',
+            status: 'approved',
           },
         })
 

@@ -301,6 +301,73 @@ describe('GET /admin/applications/:id', () => {
   })
 })
 
+// ─── POST /admin/artists/:userId/approve ─────────────────────────────
+
+describe('POST /admin/artists/:userId/approve', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should create artist profile with approved status', async () => {
+    const targetUser = {
+      id: 'target-user-uuid',
+      cognitoId: 'cognito-target',
+      email: 'artist1@example.com',
+      fullName: 'Jane Artist',
+      roles: [],
+    }
+
+    const mockCreate = vi.fn().mockResolvedValue({
+      id: 'profile-uuid',
+      slug: 'jane-artist',
+      displayName: 'Jane Artist',
+    })
+
+    const prisma = createMockPrisma()
+    // Override user lookup to return the target user for the userId param
+    ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockImplementation(
+      ({ where }: { where: { cognitoId?: string; id?: string } }) => {
+        if (where.cognitoId === 'cognito-admin') {
+          return Promise.resolve(mockAdminUser)
+        }
+        if (where.id === 'target-user-uuid') {
+          return Promise.resolve(targetUser)
+        }
+        return Promise.resolve(null)
+      },
+    )
+    // Override findFirst to return a pending application
+    ;(prisma.artistApplication.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(mockApplications[0])
+    // Override $transaction to capture the create call
+    ;(prisma.$transaction as ReturnType<typeof vi.fn>).mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) => {
+        return fn({
+          artistApplication: { update: vi.fn().mockResolvedValue({}) },
+          artistProfile: { findFirst: vi.fn().mockResolvedValue(null), create: mockCreate },
+          userRole: { create: vi.fn().mockResolvedValue({}) },
+        })
+      },
+    )
+
+    const app = createTestApp(prisma)
+    const res = await app.request('/admin/artists/target-user-uuid/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    }, createAuthEnv())
+
+    expect(res.status).toBe(200)
+
+    // Verify the artist profile was created with status 'approved'
+    expect(mockCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'target-user-uuid',
+        status: 'approved',
+      }),
+    })
+  })
+})
+
 // ─── GET /admin/applications/stats ───────────────────────────────────
 
 describe('GET /admin/applications/stats', () => {
