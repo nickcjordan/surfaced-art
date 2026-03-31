@@ -25,6 +25,9 @@ export function AdminArtistDetail({ artistId }: { artistId: string }) {
   // Unsuspend state
   const [showUnsuspendConfirm, setShowUnsuspendConfirm] = useState(false)
 
+  // Activate state
+  const [showActivateConfirm, setShowActivateConfirm] = useState(false)
+
   // Edit state
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -93,6 +96,24 @@ export function AdminArtistDetail({ artistId }: { artistId: string }) {
       await fetchArtist()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to unsuspend')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleActivate = async () => {
+    setActionError(null)
+    setActionSuccess(null)
+    setActionLoading(true)
+    try {
+      const token = await getIdToken()
+      if (!token) throw new Error('Not authenticated')
+      await updateAdminArtist(token, artistId, { status: 'approved' })
+      setActionSuccess('Artist activated successfully')
+      setShowActivateConfirm(false)
+      await fetchArtist()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to activate')
     } finally {
       setActionLoading(false)
     }
@@ -318,8 +339,17 @@ export function AdminArtistDetail({ artistId }: { artistId: string }) {
       <div className="border border-border rounded-md p-4 space-y-4">
         <h2 className="text-sm font-medium text-muted-foreground">Actions</h2>
 
-        {!showSuspendConfirm && !showUnsuspendConfirm && (
+        {!showSuspendConfirm && !showUnsuspendConfirm && !showActivateConfirm && (
           <div className="flex gap-3">
+            {artist.status === 'pending' && (
+              <Button
+                data-testid="activate-btn"
+                onClick={() => setShowActivateConfirm(true)}
+                disabled={actionLoading}
+              >
+                Activate
+              </Button>
+            )}
             {artist.status === 'approved' && (
               <Button
                 data-testid="suspend-btn"
@@ -339,6 +369,30 @@ export function AdminArtistDetail({ artistId }: { artistId: string }) {
                 Unsuspend
               </Button>
             )}
+          </div>
+        )}
+
+        {showActivateConfirm && (
+          <div className="space-y-3">
+            <p className="text-sm text-foreground">
+              Activate <strong>{artist.displayName}</strong>? Their profile will become publicly visible.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                data-testid="confirm-activate-btn"
+                onClick={handleActivate}
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Activating...' : 'Confirm Activate'}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowActivateConfirm(false)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         )}
 
@@ -420,6 +474,7 @@ function StatCard({ testId, label, value }: { testId: string; label: string; val
 
 function statusBadgeClass(status: string): string {
   switch (status) {
+    case 'pending': return 'bg-warning/10 text-warning'
     case 'approved': return 'bg-success/10 text-success'
     case 'suspended': return 'bg-error/10 text-error'
     default: return ''
