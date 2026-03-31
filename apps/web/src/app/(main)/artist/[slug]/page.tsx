@@ -282,7 +282,7 @@ export default async function ArtistProfilePage({ params }: Props) {
         <h2 className="mb-6 font-heading text-2xl text-foreground">Available Work</h2>
         {availableListings.length > 0 ? (
           <MasonryGrid
-            columns={[2, 2, 3, 3]}
+            columns={[1, 2, 3, 3]}
             itemHeights={availableListings.map((l) =>
               estimateCardHeight(l.images[0]?.width, l.images[0]?.height)
             )}
@@ -318,7 +318,7 @@ export default async function ArtistProfilePage({ params }: Props) {
         <section data-testid="archive-section">
           <h2 className="mb-6 font-heading text-2xl text-foreground">Collection Archive</h2>
           <MasonryGrid
-            columns={[2, 2, 3, 3]}
+            columns={[1, 2, 3, 3]}
             className="opacity-75"
             itemHeights={soldListings.map((l) =>
               estimateCardHeight(l.images[0]?.width, l.images[0]?.height)

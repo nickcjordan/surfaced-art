@@ -34,7 +34,7 @@ export default async function PortfolioWorkPage({ params }: Props) {
       {availableListings.length > 0 && (
         <section data-testid="available-work">
           <MasonryGrid
-            columns={[2, 2, 3, 3]}
+            columns={[1, 2, 3, 3]}
             itemHeights={availableListings.map((l) =>
               estimateCardHeight(l.images[0]?.width, l.images[0]?.height)
             )}
@@ -62,7 +62,7 @@ export default async function PortfolioWorkPage({ params }: Props) {
         <section data-testid="archive-section" className="mt-16">
           <h2 className="mb-6 font-heading text-2xl text-muted-text">Archive</h2>
           <MasonryGrid
-            columns={[2, 2, 3, 3]}
+            columns={[1, 2, 3, 3]}
             className="opacity-60 grayscale-[20%]"
             itemHeights={soldListings.map((l) =>
               estimateCardHeight(l.images[0]?.width, l.images[0]?.height)

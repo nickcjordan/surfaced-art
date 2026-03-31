@@ -233,22 +233,22 @@ export function SplitHero() {
             A Place for Artists
           </h1>
 
-          <div className="mt-8 grid grid-cols-4 gap-4 sm:gap-6">
+          <div className="mt-8 grid grid-cols-4 gap-2 sm:gap-6">
             <div className="flex flex-col items-center gap-2">
               <Images className="h-7 w-7 text-accent-primary" strokeWidth={1.5} />
-              <span className="text-sm font-medium text-foreground">Portfolio</span>
+              <span className="text-xs sm:text-sm font-medium text-foreground">Portfolio</span>
             </div>
             <div className="flex flex-col items-center gap-2">
               <BadgeDollarSign className="h-7 w-7 text-accent-primary" strokeWidth={1.5} />
-              <span className="text-sm font-medium text-foreground">Sales</span>
+              <span className="text-xs sm:text-sm font-medium text-foreground">Sales</span>
             </div>
             <div className="flex flex-col items-center gap-2">
               <Users className="h-7 w-7 text-accent-primary" strokeWidth={1.5} />
-              <span className="text-sm font-medium text-foreground">Community</span>
+              <span className="text-xs sm:text-sm font-medium text-foreground">Community</span>
             </div>
             <div className="flex flex-col items-center gap-2">
               <Search className="h-7 w-7 text-accent-primary" strokeWidth={1.5} />
-              <span className="text-sm font-medium text-foreground">Discovery</span>
+              <span className="text-xs sm:text-sm font-medium text-foreground">Discovery</span>
             </div>
           </div>
 
