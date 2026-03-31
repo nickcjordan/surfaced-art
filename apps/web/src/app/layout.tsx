@@ -49,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${josefinSans.variable} ${dmSans.variable}`} suppressHydrationWarning>
-      <body className="antialiased min-h-screen flex flex-col">
+      <body className="antialiased min-h-screen flex flex-col overflow-x-hidden">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <AnalyticsProvider>

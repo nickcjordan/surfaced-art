@@ -98,7 +98,7 @@ export default async function Home() {
             </Link>
           </div>
           <MasonryGrid
-            columns={[2, 2, 3, 3]}
+            columns={[1, 2, 3, 3]}
             itemHeights={listings.map((l) =>
               estimateCardHeight(l.primaryImage?.width, l.primaryImage?.height)
             )}
