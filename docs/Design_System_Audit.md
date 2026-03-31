@@ -1,5 +1,7 @@
 # Surfaced Art -- Design System Audit
 
+> **⚠️ HISTORICAL** — This audit was run on 2026-02-23 against an earlier version of the design system. Color values referenced below (#B8956A, #C4775A) are no longer active. The current palette is warm monochrome (black/white/grays) with selective use of logo red (#AA1D45). See `Surfaced_Art_Brand_Design_System_v2_0.md` for current values.
+
 **Date**: 2026-02-23
 **Branch**: `dev`
 **Auditor**: Claude Code (automated audit)

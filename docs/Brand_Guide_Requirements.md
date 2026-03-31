@@ -1,5 +1,7 @@
 # Surfaced Art -- Brand Guide Requirements
 
+> **⚠️ HISTORICAL** — This requirements doc was used during the initial brand exploration. The palette decisions below (muted gold #B8956A, terracotta #C4775A) have been superseded. The current palette is warm monochrome (black/white/grays) with selective use of logo red (#AA1D45). See `Surfaced_Art_Brand_Design_System_v2_0.md` for all current values.
+
 **Purpose**: This document captures every visual and brand decision the front-end implementation depends on. The COO fills in decisions; the CTO uses them to implement the design system.
 
 **How to use this document**: For each item, you will see the current tentative value (what is implemented today as a placeholder), why the decision matters, and a clear question for you to answer. Fill in the "Your Decision" field. If you are unsure, write "keep tentative" and we will revisit.

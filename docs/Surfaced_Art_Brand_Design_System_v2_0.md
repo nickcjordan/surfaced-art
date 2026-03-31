@@ -187,12 +187,12 @@ ShadCN components consume their own token names. These alias our brand tokens so
   /* Sidebar */
   --sidebar: #F2F0ED;
   --sidebar-foreground: #1A1A1A;
-  --sidebar-primary: #B8956A;
+  --sidebar-primary: #2C2926;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #F2F0ED;
   --sidebar-accent-foreground: #1A1A1A;
   --sidebar-border: #E5E0DB;
-  --sidebar-ring: #B8956A;
+  --sidebar-ring: #2C2926;
 
   /* Font stacks */
   --active-font-sans: var(--font-dm-sans), 'DM Sans', sans-serif;
@@ -627,7 +627,7 @@ ShadCN Card sub-components available: `Card`, `CardHeader`, `CardTitle`, `CardDe
 | Background | Transparent (shows page background) |
 | Text | `--foreground` |
 | Placeholder text | `--muted` |
-| Focus state | Border color changes to `--accent-primary` (#B8956A) |
+| Focus state | Border color changes to `--accent-primary` (#2C2926) |
 | Error state | Border color changes to `--error` (#C4534A) |
 | Transition | 200ms ease-in-out on border-color |
 | Padding | 10px 14px |
