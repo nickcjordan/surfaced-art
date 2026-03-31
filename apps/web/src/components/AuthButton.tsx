@@ -18,7 +18,7 @@ import {
  * Menu items adapt based on the user's roles (artist, admin).
  */
 export function AuthButton() {
-  const { user, loading, signOut, isArtist, isAdmin } = useAuth()
+  const { user, loading, signOut } = useAuth()
 
   if (loading) {
     return <div data-testid="auth-loading" className="h-10 w-20" />
@@ -65,32 +65,6 @@ export function AuthButton() {
           <DropdownMenuLabel data-testid="menu-user-name">
             {user.name || user.email}
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild data-testid="menu-dashboard">
-            <Link href="/dashboard">Dashboard</Link>
-          </DropdownMenuItem>
-
-          {isArtist && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild data-testid="menu-artist-profile">
-                <Link href="/dashboard/profile">Artist Profile</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild data-testid="menu-manage-listings">
-                <Link href="/dashboard/listings">Manage Listings</Link>
-              </DropdownMenuItem>
-            </>
-          )}
-
-          {isAdmin && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild data-testid="menu-admin">
-                <Link href="/admin">Admin Panel</Link>
-              </DropdownMenuItem>
-            </>
-          )}
-
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild data-testid="menu-settings">
             <Link href="/dashboard/settings">Settings</Link>

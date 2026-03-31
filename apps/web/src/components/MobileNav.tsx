@@ -166,16 +166,18 @@ export function MobileNav() {
               </ul>
             </nav>
 
-            {/* For Artists link */}
-            <div className="px-6 mt-4">
-              <Link
-                href="/for-artists"
-                onClick={close}
-                className="block py-3 text-base font-medium tracking-wide text-accent-primary transition-colors hover:text-foreground"
-              >
-                For Artists
-              </Link>
-            </div>
+            {/* For Artists link — only shown when not logged in */}
+            {!user && (
+              <div className="px-6 mt-4">
+                <Link
+                  href="/for-artists"
+                  onClick={close}
+                  className="block py-3 text-base font-medium tracking-wide text-accent-primary transition-colors hover:text-foreground"
+                >
+                  For Artists
+                </Link>
+              </div>
+            )}
 
             {/* Auth-aware links */}
             {user && (

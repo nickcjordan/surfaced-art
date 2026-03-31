@@ -79,33 +79,21 @@ describe('AuthButton', () => {
       expect(screen.getByTestId('menu-user-name')).toHaveTextContent('buyer@test.com')
     })
 
-    it('should show Dashboard and Settings for all authenticated users', async () => {
+    it('should show Settings and Sign Out for all authenticated users', async () => {
       mockAuth.user = { email: 'buyer@test.com', name: 'Test Buyer' }
       const user = userEvent.setup()
 
       render(<AuthButton />)
       await user.click(screen.getByTestId('user-menu-trigger'))
 
-      expect(screen.getByTestId('menu-dashboard')).toBeInTheDocument()
       expect(screen.getByTestId('menu-settings')).toBeInTheDocument()
       expect(screen.getByTestId('menu-sign-out')).toBeInTheDocument()
     })
 
-    it('should show artist items when user has artist role', async () => {
-      mockAuth.user = { email: 'artist@test.com', name: 'Test Artist' }
+    it('should not show artist or admin items in dropdown (moved to top-level nav)', async () => {
+      mockAuth.user = { email: 'both@test.com', name: 'Both Roles' }
       mockAuth.isArtist = true
-      const user = userEvent.setup()
-
-      render(<AuthButton />)
-      await user.click(screen.getByTestId('user-menu-trigger'))
-
-      expect(screen.getByTestId('menu-artist-profile')).toBeInTheDocument()
-      expect(screen.getByTestId('menu-manage-listings')).toBeInTheDocument()
-    })
-
-    it('should not show artist items when user lacks artist role', async () => {
-      mockAuth.user = { email: 'buyer@test.com', name: 'Test Buyer' }
-      mockAuth.isArtist = false
+      mockAuth.isAdmin = true
       const user = userEvent.setup()
 
       render(<AuthButton />)
@@ -113,28 +101,8 @@ describe('AuthButton', () => {
 
       expect(screen.queryByTestId('menu-artist-profile')).not.toBeInTheDocument()
       expect(screen.queryByTestId('menu-manage-listings')).not.toBeInTheDocument()
-    })
-
-    it('should show admin link when user has admin role', async () => {
-      mockAuth.user = { email: 'admin@test.com', name: 'Admin User' }
-      mockAuth.isAdmin = true
-      const user = userEvent.setup()
-
-      render(<AuthButton />)
-      await user.click(screen.getByTestId('user-menu-trigger'))
-
-      expect(screen.getByTestId('menu-admin')).toBeInTheDocument()
-    })
-
-    it('should not show admin link when user lacks admin role', async () => {
-      mockAuth.user = { email: 'buyer@test.com', name: 'Test Buyer' }
-      mockAuth.isAdmin = false
-      const user = userEvent.setup()
-
-      render(<AuthButton />)
-      await user.click(screen.getByTestId('user-menu-trigger'))
-
       expect(screen.queryByTestId('menu-admin')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('menu-dashboard')).not.toBeInTheDocument()
     })
 
     it('should call signOut when sign out is clicked', async () => {
