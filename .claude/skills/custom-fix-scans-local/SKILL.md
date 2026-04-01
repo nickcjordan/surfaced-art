@@ -1,5 +1,5 @@
 ---
-name: fix-scans-local
+name: custom-fix-scans-local
 description: Run all local security scans (npm audit, Trivy FS, Trivy IaC, Semgrep, Dependabot), triage every finding, implement fixes on a feature branch, and open a PR.
 disable-model-invocation: true
 allowed-tools: Bash, Read, Edit, Write, Grep, Glob, TodoWrite

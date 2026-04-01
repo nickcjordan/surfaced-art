@@ -1,5 +1,5 @@
 ---
-name: process-reviews
+name: custom-process-reviews
 description: Scan #ai-code-review Slack for unaddressed bot reviews, triage, fix bugs, and report back.
 disable-model-invocation: true
 argument-hint: [--dry-run]

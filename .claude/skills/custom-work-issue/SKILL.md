@@ -1,5 +1,5 @@
 ---
-name: work-issue
+name: custom-work-issue
 description: Pick up a GitHub issue, create a feature branch, implement with TDD, run quality gates, push, and open a PR.
 disable-model-invocation: true
 argument-hint: [issue-number]

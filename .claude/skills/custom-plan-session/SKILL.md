@@ -1,5 +1,5 @@
 ---
-name: plan-session
+name: custom-plan-session
 description: Run a full planning session with 7 specialized agents — synthesizes status, creates stage plans, updates 7 living planning documents, creates Linear issues, and updates Notion.
 disable-model-invocation: true
 ---

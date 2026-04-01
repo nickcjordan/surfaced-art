@@ -1,5 +1,5 @@
 ---
-name: fix-scans
+name: custom-fix-scans
 description: Find the latest failed Security Scan CI run (or a specific PR), read all scan findings, triage, implement fixes on a feature branch, and open a PR.
 disable-model-invocation: true
 argument-hint: [pr-number]

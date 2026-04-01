@@ -1,5 +1,5 @@
 ---
-name: fix-pr-review
+name: custom-fix-pr-review
 description: Fetch bot review comments from a GitHub PR, analyze the suggestions, implement fixes, run quality gates, commit, and push.
 disable-model-invocation: true
 argument-hint: <pr-number>

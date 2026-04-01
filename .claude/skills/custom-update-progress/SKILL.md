@@ -1,5 +1,5 @@
 ---
-name: update-progress
+name: custom-update-progress
 description: Research project state across docs, Notion, and GitHub issues; fix inconsistencies; post a progress brief to the Progress Tracker Notion database.
 disable-model-invocation: true
 ---

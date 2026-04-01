@@ -64,7 +64,8 @@
       "Bash(grep -r '\"\"vite\"\"' package.json apps/*/package.json packages/*/package.json)",
       "Bash(grep '\"\"type\"\"' tools/migrate/package.json)",
       "Bash(ls c:/dev/src/surfaced-art/apps/web/src/app/\\\\\\(main\\\\\\)/)",
-      "Bash(ls \"c:/dev/src/surfaced-art/apps/web/src/app/\\(main\\)/hero-concepts/\")"
+      "Bash(ls \"c:/dev/src/surfaced-art/apps/web/src/app/\\(main\\)/hero-concepts/\")",
+      "mcp__linear__save_issue"
     ],
     "additionalDirectories": [
       "C:\\dev\\src\\surfaced-art\\apps\\web\\src\\app\\(studio)\\studio",

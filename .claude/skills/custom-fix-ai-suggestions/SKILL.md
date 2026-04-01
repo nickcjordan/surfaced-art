@@ -1,5 +1,5 @@
 ---
-name: fix-ai-suggestions
+name: custom-fix-ai-suggestions
 description: Discover AI bot review comments on recent PRs via GitHub API, triage each suggestion, and implement valid fixes. This skill should be used when the user runs /fix-ai-suggestions.
 disable-model-invocation: true
 ---
