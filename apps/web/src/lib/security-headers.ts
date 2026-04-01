@@ -24,6 +24,15 @@ const POSTHOG_HOST_TRIMMED = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim()
 const POSTHOG_ASSETS_TRIMMED = POSTHOG_HOST_TRIMMED
   ? POSTHOG_HOST_TRIMMED.replace(/^(https?:\/\/)([^.]+)\./, '$1$2-assets.')
   : undefined
+// Sentry ingest origin — events go through /monitoring tunnel route but the
+// replay and source-map SDKs may connect directly to the ingest endpoint.
+const SENTRY_INGEST = process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? (() => {
+      const match = process.env.NEXT_PUBLIC_SENTRY_DSN.match(/https:\/\/[^@]+@([^/]+)/)
+      return match ? `https://${match[1]}` : undefined
+    })()
+  : undefined
+
 // Vercel Live is injected into preview/development deployments but not production
 const VERCEL_LIVE =
   process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production'
@@ -32,11 +41,11 @@ const VERCEL_LIVE =
 
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval'${POSTHOG_HOST_TRIMMED ? ` ${POSTHOG_HOST_TRIMMED}` : ''}${POSTHOG_ASSETS_TRIMMED ? ` ${POSTHOG_ASSETS_TRIMMED}` : ''}${VERCEL_LIVE ? ` ${VERCEL_LIVE}` : ''}`,
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval'${POSTHOG_HOST_TRIMMED ? ` ${POSTHOG_HOST_TRIMMED}` : ''}${POSTHOG_ASSETS_TRIMMED ? ` ${POSTHOG_ASSETS_TRIMMED}` : ''}${SENTRY_INGEST ? ` ${SENTRY_INGEST}` : ''}${VERCEL_LIVE ? ` ${VERCEL_LIVE}` : ''}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   `img-src 'self' data: ${CDN_DOMAINS_TRIMMED}`,
-  `connect-src 'self' ${API_ORIGIN} ${COGNITO_IDP_TRIMMED}${POSTHOG_HOST_TRIMMED ? ` ${POSTHOG_HOST_TRIMMED}` : ''}${POSTHOG_ASSETS_TRIMMED ? ` ${POSTHOG_ASSETS_TRIMMED}` : ''}${VERCEL_LIVE ? ` ${VERCEL_LIVE}` : ''}`,
+  `connect-src 'self' ${API_ORIGIN} ${COGNITO_IDP_TRIMMED}${POSTHOG_HOST_TRIMMED ? ` ${POSTHOG_HOST_TRIMMED}` : ''}${POSTHOG_ASSETS_TRIMMED ? ` ${POSTHOG_ASSETS_TRIMMED}` : ''}${SENTRY_INGEST ? ` ${SENTRY_INGEST}` : ''}${VERCEL_LIVE ? ` ${VERCEL_LIVE}` : ''}`,
   `frame-src 'self'${VERCEL_LIVE ? ` ${VERCEL_LIVE}` : ''}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",

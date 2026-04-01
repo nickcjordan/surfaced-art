@@ -18,6 +18,7 @@
     "test:visual-qa:report": "playwright show-report e2e/visual-qa/report"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.47.0",
     "@surfaced-art/types": "*",
     "@surfaced-art/utils": "*",
     "@testing-library/jest-dom": "^6.9.1",

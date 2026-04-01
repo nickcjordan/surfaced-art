@@ -171,4 +171,25 @@ describe('CSP environment overrides', () => {
     vi.unstubAllEnvs()
     vi.resetModules()
   })
+
+  it('CSP should allow Sentry ingest in script-src and connect-src when DSN is set', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SENTRY_DSN', 'https://abc123@o99999.ingest.us.sentry.io/12345')
+    vi.resetModules()
+    const { SECURITY_HEADERS } = await import('../security-headers')
+    const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).toMatch(/script-src[^;]*o99999\.ingest\.us\.sentry\.io/)
+    expect(csp.value).toMatch(/connect-src[^;]*o99999\.ingest\.us\.sentry\.io/)
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  it('CSP should not include Sentry domains when DSN is not set', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SENTRY_DSN', '')
+    vi.resetModules()
+    const { SECURITY_HEADERS } = await import('../security-headers')
+    const csp = SECURITY_HEADERS.find((h) => h.key === 'Content-Security-Policy')!
+    expect(csp.value).not.toContain('sentry.io')
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
 })
