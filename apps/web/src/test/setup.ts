@@ -10,6 +10,8 @@ process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID = 'test-client-id'
 process.env.NEXT_PUBLIC_POSTHOG_KEY = 'phc_test'
 process.env.NEXT_PUBLIC_POSTHOG_HOST = 'https://us.i.posthog.com'
 process.env.NEXT_PUBLIC_POSTHOG_ENV = 'test'
+process.env.NEXT_PUBLIC_SENTRY_DSN = 'https://test@o12345.ingest.us.sentry.io/67890'
+process.env.SENTRY_DSN = 'https://test@o12345.ingest.us.sentry.io/67890'
 
 // IntersectionObserver is not implemented in jsdom. Provide a minimal stub.
 global.IntersectionObserver = class IntersectionObserver {
